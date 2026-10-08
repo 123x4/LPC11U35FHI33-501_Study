@@ -18,10 +18,10 @@
 //#define HAPTIC_V4
 //#define P723_POC
 //#define GEN_2_H_V1
-//#define IRPT_V4
+#define IRPT_V4
 //#define P723_POC_PCB1_V07
 //#define V4_HALL_HPTIC_V4
-#define V4_HALL_HPTIC_V4_G2_0923
+// #define V4_HALL_HPTIC_V4_G2_0923
 
 
 
