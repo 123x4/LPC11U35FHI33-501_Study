@@ -6,6 +6,13 @@
 
 ---
 
+> 📂 **文件位置说明**：本讲义里写的 `Src/...`、`Inc/...`、`Build/...`，都是相对于
+> `M300S/MG380U_BootLoader/20190228_ReduceDiscriptor_issue/` 这个文件夹。
+> 例如 `Src/Source.c` 的完整路径是 `M300S/MG380U_BootLoader/20190228_ReduceDiscriptor_issue/Src/Source.c`。
+> 最方便的看法是用 Keil 打开这个文件夹里的 `M800.uvproj`，左侧工程树里就能找到所有文件。
+
+---
+
 ## 第 1 步：先确认读的代码就是板上跑的那份
 
 杰哥给的源码目录名带日期，不一定和板上的版本完全一样。核对方法：反汇编板上固件 `materials/Z_M300S FW Update/merge_firmware.bin` 的前 16KB，和源码编译出的 `Build/BootLoader_2018.axf` 对比。
@@ -17,7 +24,10 @@
 
 结论：**这份源码可以当作板上的 Bootloader 来读。**
 
-## 第 2 步：Bootloader 的 `main()` 第一行 —— `CheckAP()`（`Src/Source.c:68`）
+## 第 2 步：Bootloader 的 `main()` 第一行 —— 调用 `CheckAP()`
+
+> 调用处：`Src/main.c` 第 141 行（`main()` 从第 135 行开始）
+> 函数定义：`Src/Source.c` 第 68 行
 
 Bootloader 一启动，先调用 `CheckAP()`，判断两件事：**Flash 里有没有可用的应用程序？应用程序有没有要求“留在 Bootloader 升级”？**
 
