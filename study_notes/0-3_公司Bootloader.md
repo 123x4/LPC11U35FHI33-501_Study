@@ -206,3 +206,20 @@ void Bootloadable_Load(void)
 1. 📖 UM p27 Table 16：**POR** 位的复位值是多少？刚上电时 SYSRSTSTAT 的 bit4 是 0 还是 1？据此说明，为什么上电时即使 RAM 里碰巧是 0xAA，鼠标也不会卡在 Bootloader。
 2. 应用程序向量表第 1 项是 0x0000 7F1D，Reset_Handler 实际在哪个地址？下一课我们会在启动文件里找到它。
 3. 如果有人把 `Bootloadable_Load()` 里的 `NVIC_SystemReset()` 换成“拔插 USB 重新上电”，升级还能进入 Bootloader 吗？为什么？
+
+---
+
+## 补充问答
+
+**Q1：ROM 怎么判断 0x0000 处有没有有效程序？**
+📖 UM p392 “Criterion for Valid User Code”：Flash 0x0000 开头的前 8 个字（向量表前 8 项）加起来必须等于 0。板上 Bootloader 的这 8 个字之和正好是 0，其中第 7 项 0xEFFFF095 就是专门用来凑这个和的。
+
+**Q2：UM p18 Figure 6 最下面几格 Flash 怎么读？**
+各型号的 Flash **都从 0x0000 0000 开始**，图上每一格只表示“比下一档型号多出来的部分”。标着 “64 kB on-chip flash (LPC11U35)” 的那一格（0xC000~0x10000）的意思是：LPC11U35 的 Flash 一直到这一格顶端 0x0001 0000 为止，所以范围是 0x0000 0000 ~ 0x0000 FFFF。
+我们的分配：0x0000~0x3FFF Bootloader（16KB），0x4000~0xFFFF app（48KB，其中 0xFE00 起的一页是 Bootloader 的标志页）。
+
+**Q3：Bootloader 占前 16KB，手册里有规定吗？**
+没有，这是公司自己定的，写在 `M800.uvproj`（Flash 从 0x0 开始，大小 0x3FFF）、`Sample.uvproj`（Flash 从 0x4000 开始）和 `Inc/Source.h:25`（`application_address 0x00004000`）里。
+但分界线的位置受手册约束：📖 UM p397~398，Flash 按 **4KB 扇区**擦除，分界线必须落在扇区边界上，否则升级 app 时擦扇区会顺带擦掉 Bootloader。0x4000 是扇区 4 的起点，Bootloader 占扇区 0~3，app 占扇区 4~15（`EraseFlash()` 擦的正是 4~15）。
+
+**注意区分**：Figure 6 里的 “16 kB boot ROM”（0x1FFF 0000）是 NXP 固化在芯片 ROM 里的程序，和放在 Flash 0x0000 的公司 Bootloader 是两回事，大小一样只是巧合。
