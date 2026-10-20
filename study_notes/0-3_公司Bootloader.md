@@ -229,3 +229,19 @@ void Bootloadable_Load(void)
 向量表是放在程序最开头的一张**地址清单**，每项 4 字节：第 0 项是初始栈指针，第 1 项是复位入口，后面每一项是一种中断（异常）的处理函数地址。第 n 项的地址 = n × 4（📖 UM p445 Table 421：Reset 在 0x04、NMI 在 0x08、HardFault 在 0x0C）。外设中断从第 16 项开始，IRQ 编号 k 对应第 16+k 项（📖 UM p68 第 6 章中断源表）。
 CPU 上电时**硬件自动**从 0x0 读栈指针、从 0x4 读复位入口；中断发生时**硬件自动**从“编号×4”处取函数地址并跳过去，不需要软件去调用。所以 CPU 只认地址 0 处的那张表。
 代码里，这张表就是 `src/startup_LPC11Uxx.s` 中 `__Vectors` 下面那一串 `DCD`，每个 `DCD` 占 4 字节，链接器会把对应函数的真实地址填进去。
+
+**Q5：为什么栈顶是 0x1000 1BD8，而不是 0x1000 0000？**
+① 📖 UM p434 24.3.1.2：*“The processor uses a full descending stack … When the processor pushes a new item onto the stack, it decrements the stack pointer and then writes the item.”* 栈是**往低地址长**的：每次压栈先把 SP 减 4 再写入。所以 SP 的初始值必须放在栈区的**最高端**。如果 SP 从 0x1000 0000 开始，第一次压栈就会写到 0x0FFF FFFC，那是 reserved 区（不是 RAM），会进入 HardFault。
+② 栈区在 `src/startup_LPC11Uxx.s` 第 33~37 行定义：`Stack_Size EQU 0x200`（512 字节），`Stack_Mem SPACE Stack_Size` 预留 512 字节，紧跟其后的标号 `__initial_sp` 就是这 512 字节的**结束地址**。向量表第 0 项写的正是 `DCD __initial_sp`。
+③ 栈区放在哪里由**链接器**决定：从 Keil 设置的 RAM 起点 0x1000 0100 开始，先放全局变量，再放栈。所以这份固件的栈区是 0x1000 19D8 ~ 0x1000 1BD7，SP 初始值 0x1000 1BD8。精确位置可以在 Keil 编译生成的 `List\Sample.map` 里搜 `__initial_sp` 和 `STACK` 核对。
+```
+0x1000 1F5F  app 可用 RAM 的末尾（之后留给 IAP）
+             （约 904 字节未使用）
+0x1000 1BD8  ← __initial_sp：SP 初始值（栈顶）
+             栈 512 字节，向下增长 ↓
+0x1000 19D8  ← Stack_Mem：栈底
+             全局变量、静态变量
+0x1000 0100  app RAM 起点
+             向量表副本（Bootloader 复制过来的）
+0x1000 0000
+```
