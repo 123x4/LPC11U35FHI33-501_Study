@@ -1,25 +1,14 @@
-# Build and Release Folders
-bin-debug/
-bin-release/
-[Oo]bj/
-[Bb]in/
+# Keep build outputs (including List/, output/, bin/ and obj/) tracked
+# so remote AI tools can inspect firmware, maps, listings and build logs.
 
 # Other files and folders
 .settings/
-
-# Executables
-*.swf
-*.air
-*.ipa
-*.apk
 
 # Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
 # should NOT be excluded as they contain compiler settings and other important
 # information for Eclipse / Flash Builder.
 
-# Keil generated build outputs and local UI state
-/output/
-/List/
+# Keil local UI state and backups
 *.uvgui.*
 *.uvguix.*
 *.bak
