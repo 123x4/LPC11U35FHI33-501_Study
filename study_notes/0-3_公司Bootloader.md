@@ -258,3 +258,21 @@ map 第 1576 行：`Size: 0x00001ad8, Max: 0x00001e60`：用了 6872 字节，�
 ④ **由此得到的两点**：
 - 栈溢出时会往下覆盖紧挨着的 `ram_malloc.o` 的变量（0x1000 18C7 起），这类 bug 表现为“某个变量莫名其妙变了值”，很难查；
 - RAM 里最大的一块是 `flash_emptyData[4096]`，大小等于 `H_Flash_Sector_Size`（老项目外部 SPI Flash 的扇区大小）。当前项目 `USE_INSIDE_EEPROM = 1`，它是否还需要，读到 `gtech_flash.c` 时再确认。
+
+**Q6：0x1000 0000~0x1000 00FF 和 0x1000 1F60~0x1000 1FFF 放了什么？**
+（SRAM0 的最后一个字节是 0x1000 1FFF，0x1000 2000 已经不属于 SRAM0。）
+
+先看两个程序各自的 RAM 范围（来自各自的分散加载文件）：
+- Bootloader：`Build/BootLoader_2018.sct`：`RW_IRAM1 0x10000100 0x00001E00`，即 0x1000 0100 ~ **0x1000 1EFF**；
+- app：`output/Sample.sct`：`RW_IRAM1 0x10000100 0x00001E60`，即 0x1000 0100 ~ **0x1000 1F5F**。
+
+| 地址 | 内容 | 依据 |
+|---|---|---|
+| 0x1000 0000 ~ 0x1000 00BF | app 向量表的副本（48 项 × 4 字节），`SYSMEMREMAP = 1` 后 CPU 从这里取中断地址 | Bootloader `boot_jump()`；UM p23 Table 7 |
+| 0x1000 00C0 ~ 0x1000 00FF | Flash 0x40C0~0x40FF 的副本（app 启动代码 `__main` 的开头几条指令），**没有用处** | `boot_jump()` 复制了 512 字节，比向量表多；`List/Sample.map` 第 596 行 |
+| 0x1000 1F00 | **“请求升级”标志**：app 写 0xAA 后软件复位 | `app/custom.c:26`；Bootloader `Inc/Source.h:17` |
+| 0x1000 1F01 ~ 0x1000 1FDF | 两个程序都没有使用，算作余量 | 两份 map 文件 |
+| 0x1000 1FE0 ~ 0x1000 1FFF | IAP 程序的工作区（32 字节） | UM p394 20.8.9 |
+
+**为什么标志放在 0x1000 1F00？** 它正好是 Bootloader RAM 范围（到 0x1000 1EFF）之外的第一个字节。Bootloader 启动时，启动代码会先把自己 RAM 范围内的 ZI 变量全部清零，然后才执行 `main()` → `CheckAP()`。如果标志放在 Bootloader 的 RAM 范围内，还没等 `CheckAP()` 去读就已经被清零了。
+**app 这边**：0x1000 1F00 在 app 的 RAM 范围内，但 app 实际只用到 0x1000 1BD7，所以不冲突。将来如果 app 的变量增长到超过 0x1000 1F00，就要注意这个地址。
