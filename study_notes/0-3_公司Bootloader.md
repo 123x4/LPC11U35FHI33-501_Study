@@ -290,3 +290,23 @@ map 第 1576 行：`Size: 0x00001ad8, Max: 0x00001e60`：用了 6872 字节，�
 | 何时清除 | 升级开始时随 app 区一起被擦掉 | 升级结束时由 Bootloader 清零（`Src/main.c:384`） |
 
 **Bootloader 也有自己的 RAM 范围**（`Build/BootLoader_2018.sct`：0x1000 0100 ~ 0x1000 1EFF，实际只用了 0x9D8 字节）。它和 app 用的是同一块 SRAM0，但两个程序不会同时运行，所以范围重叠没有关系。只有标志 ② 要从 app 传给 Bootloader，因此它放在 Bootloader 不会清零的地址（0x1000 1F00，正好在 Bootloader 范围之外），app 也不会用到这个地址。
+
+**Q8：插到电脑上之后整体是怎么运行的？“复位”是谁操作的？**
+复位就是让芯片从头开始运行（相当于重启）。📖 UM p27 Table 16 列出了复位来源：上电（POR）、复位引脚（EXTRST）、看门狗（WDT）、掉电（BOD）、软件复位（SYSRST）。**升级过程中的复位不用人操作**，是代码调用 `NVIC_SystemReset()` 让芯片自己重启。
+
+场景一：平时插上鼠标
+1. 人：插上 USB → 芯片通电，**上电复位**；
+2. ROM 程序：PIO0_1 为高、地址 0 有有效程序 → 跳到公司 Bootloader；
+3. Bootloader `CheckAP()`：Flash 0xFE00 是 0xAA，且不是软件复位 → `boot_jump()` 进入 app；
+4. app 初始化 → 电脑识别到 **1A81:2071** → 鼠标可用。
+
+场景二：用 Fw Update 升级（人只点一次“更新”）
+1. 工具通过 USB 给 app 发 `PC_CMD_BOOTLOADER`；
+2. app 关线圈 → RAM 0x1000 1F00 写 0xAA → **软件复位**（1A81:2071 从电脑上消失）；
+3. ROM → Bootloader `CheckAP()`：RAM 标志是 0xAA 且是软件复位 → 留在 Bootloader；
+4. Bootloader 以 **17EF:6155** 连上电脑（工具界面上显示的就是它）；
+5. 工具发送 hex → Bootloader 擦旧 app、写新 app → 最后在 Flash 0xFE00 写 0xAA；
+6. 工具发“退出” → Bootloader 清 RAM 标志 → **软件复位**（17EF:6155 消失）；
+7. ROM → Bootloader → 跳进新 app → 1A81:2071 重新出现，工具提示升级成功。
+
+可以用设备管理器或 USBTreeView 观察：1A81:2071 消失 → 17EF:6155 出现 → 17EF:6155 消失 → 1A81:2071 出现。
