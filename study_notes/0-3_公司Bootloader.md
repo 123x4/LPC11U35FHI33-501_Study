@@ -230,18 +230,31 @@ void Bootloadable_Load(void)
 CPU 上电时**硬件自动**从 0x0 读栈指针、从 0x4 读复位入口；中断发生时**硬件自动**从“编号×4”处取函数地址并跳过去，不需要软件去调用。所以 CPU 只认地址 0 处的那张表。
 代码里，这张表就是 `src/startup_LPC11Uxx.s` 中 `__Vectors` 下面那一串 `DCD`，每个 `DCD` 占 4 字节，链接器会把对应函数的真实地址填进去。
 
-**Q5：为什么栈顶是 0x1000 1BD8，而不是 0x1000 0000？**
-① 📖 UM p434 24.3.1.2：*“The processor uses a full descending stack … When the processor pushes a new item onto the stack, it decrements the stack pointer and then writes the item.”* 栈是**往低地址长**的：每次压栈先把 SP 减 4 再写入。所以 SP 的初始值必须放在栈区的**最高端**。如果 SP 从 0x1000 0000 开始，第一次压栈就会写到 0x0FFF FFFC，那是 reserved 区（不是 RAM），会进入 HardFault。
-② 栈区在 `src/startup_LPC11Uxx.s` 第 33~37 行定义：`Stack_Size EQU 0x200`（512 字节），`Stack_Mem SPACE Stack_Size` 预留 512 字节，紧跟其后的标号 `__initial_sp` 就是这 512 字节的**结束地址**。向量表第 0 项写的正是 `DCD __initial_sp`。
-③ 栈区放在哪里由**链接器**决定：从 Keil 设置的 RAM 起点 0x1000 0100 开始，先放全局变量，再放栈。所以这份固件的栈区是 0x1000 19D8 ~ 0x1000 1BD7，SP 初始值 0x1000 1BD8。精确位置可以在 Keil 编译生成的 `List\Sample.map` 里搜 `__initial_sp` 和 `STACK` 核对。
+**Q5：为什么栈顶是 0x1000 1BD8，而不是 0x1000 0000？**（数据来自编译产物 `output/Sample.sct` 和 `List/Sample.map`）
+
+① **栈往低地址长**。📖 UM p434 24.3.1.2：*“The processor uses a full descending stack … it decrements the stack pointer and then writes the item.”* 压栈时 SP 先减 4 再写入，所以 SP 的初始值要放在栈区的**最高端**。
+
+② **栈区多大**：`src/startup_LPC11Uxx.s` 第 33~37 行，`Stack_Size EQU 0x200`、`Stack_Mem SPACE Stack_Size` 预留 512 字节，紧跟其后的标号 `__initial_sp` 就是结束地址。
+
+③ **栈区放在哪**：由链接器按 `output/Sample.sct`（分散加载文件）分配：
 ```
-0x1000 1F5F  app 可用 RAM 的末尾（之后留给 IAP）
-             （约 904 字节未使用）
-0x1000 1BD8  ← __initial_sp：SP 初始值（栈顶）
-             栈 512 字节，向下增长 ↓
-0x1000 19D8  ← Stack_Mem：栈底
-             全局变量、静态变量
-0x1000 0100  app RAM 起点
-             向量表副本（Bootloader 复制过来的）
-0x1000 0000
+RW_IRAM1 0x10000100 0x00001E60  {   ; app 的 RAM：从 0x1000 0100 开始，最多 0x1E60 字节
+   .ANY (+RW +ZI)                   ; 所有 RW（有初值的变量）和 ZI（初值为 0 的变量、栈）都放这里
+}
 ```
+`List/Sample.map` 第 1576 行起列出了实际结果，按地址从低到高依次是：
+
+| 地址 | 内容 | 大小 |
+|---|---|---|
+| 0x1000 0100 ~ 0x1000 0457 | RW 数据（`.data`，有初值的全局变量） | 856 字节 |
+| 0x1000 0458 ~ 0x1000 19D7 | ZI 数据（`.bss`，初值为 0 的全局变量） | 5504 字节 |
+| 　其中 0x1000 0650 | `flash_emptyData[4096]`（`src/gtech_flash.c:28`） | **4096 字节** |
+| 0x1000 19D8 ~ 0x1000 1BD7 | **STACK**（map 第 829 行） | 512 字节 |
+| 0x1000 1BD8 | **`__initial_sp`**（map 第 1449 行） | — |
+| 0x1000 1BD8 ~ 0x1000 1F5F | 未使用 | 904 字节 |
+
+map 第 1576 行：`Size: 0x00001ad8, Max: 0x00001e60`：用了 6872 字节，上限 7776 字节，**已用 88%**。
+
+④ **由此得到的两点**：
+- 栈溢出时会往下覆盖紧挨着的 `ram_malloc.o` 的变量（0x1000 18C7 起），这类 bug 表现为“某个变量莫名其妙变了值”，很难查；
+- RAM 里最大的一块是 `flash_emptyData[4096]`，大小等于 `H_Flash_Sector_Size`（老项目外部 SPI Flash 的扇区大小）。当前项目 `USE_INSIDE_EEPROM = 1`，它是否还需要，读到 `gtech_flash.c` 时再确认。
