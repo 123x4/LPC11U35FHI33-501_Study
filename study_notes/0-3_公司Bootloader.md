@@ -276,3 +276,17 @@ map 第 1576 行：`Size: 0x00001ad8, Max: 0x00001e60`：用了 6872 字节，�
 
 **为什么标志放在 0x1000 1F00？** 它正好是 Bootloader RAM 范围（到 0x1000 1EFF）之外的第一个字节。Bootloader 启动时，启动代码会先把自己 RAM 范围内的 ZI 变量全部清零，然后才执行 `main()` → `CheckAP()`。如果标志放在 Bootloader 的 RAM 范围内，还没等 `CheckAP()` 去读就已经被清零了。
 **app 这边**：0x1000 1F00 在 app 的 RAM 范围内，但 app 实际只用到 0x1000 1BD7，所以不冲突。将来如果 app 的变量增长到超过 0x1000 1F00，就要注意这个地址。
+
+**Q7：Flash 0xFE00 的 0xAA 和 RAM 0x1000 1F00 的 0xAA 是一回事吗？**
+不是，是两个独立的标志，只是值都用了 0xAA：
+
+| | 标志 ①：应用程序有效 | 标志 ②：请求升级 |
+|---|---|---|
+| 地址 | Flash 0x0000 FE00 | RAM 0x1000 1F00 |
+| 断电后 | 还在 | 消失（软件复位不会消失） |
+| 含义 | Flash 里有完整可用的 app | app 要求这次复位后留在 Bootloader 升级 |
+| 谁写 | Bootloader：升级完成时写入 | app：收到升级命令时写入（`app/custom.c:26、81`） |
+| 谁读 | Bootloader `CheckAP()` 第 73~77 行 | Bootloader `CheckAP()` 第 90~104 行 |
+| 何时清除 | 升级开始时随 app 区一起被擦掉 | 升级结束时由 Bootloader 清零（`Src/main.c:384`） |
+
+**Bootloader 也有自己的 RAM 范围**（`Build/BootLoader_2018.sct`：0x1000 0100 ~ 0x1000 1EFF，实际只用了 0x9D8 字节）。它和 app 用的是同一块 SRAM0，但两个程序不会同时运行，所以范围重叠没有关系。只有标志 ② 要从 app 传给 Bootloader，因此它放在 Bootloader 不会清零的地址（0x1000 1F00，正好在 Bootloader 范围之外），app 也不会用到这个地址。
