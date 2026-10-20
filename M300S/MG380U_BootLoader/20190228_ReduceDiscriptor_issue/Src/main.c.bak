@@ -1,0 +1,3132 @@
+/*----------------------------------------------------------------------------
+ *      Name:    MAIN.C
+ *      Purpose: USB HID Main
+ *      Version: V1.20
+ *----------------------------------------------------------------------------
+ *      This software is supplied "AS IS" without any warranties, express,
+ *      implied or statutory, including but not limited to the implied
+ *      warranties of fitness for purpose, satisfactory quality and
+ *      noninfringement. Keil extends you a royalty-free right to reproduce
+ *      and distribute executable files created using this software for use
+ *      on NXP Semiconductors LPC microcontroller devices only. Nothing else
+ *      gives you the right to use this software.
+ *
+ * Copyright (c) 2009 Keil - An ARM Company. All rights reserved.
+ * 2012/11/19 add MAC SW4,5 use Macro Key
+ * 2012/11/19 Fix ubuntu mouse bug,modify usbdesc.c
+ *---------------------------------------------------------------------------*/
+#define  _MAIN_C_
+
+//#define  __KEYTBL_C__			
+//#include "Keytbl.h"
+
+#include "lpc11Uxx.h"                        /* LPC11xx definitions */
+#include "type.h"
+//#include "wdt.h"
+#include "usb.h"
+#include "usbcfg.h"
+#include "usbhw.h"
+#include "usbcore.h"
+#include "main.h"
+#include "Timer16.h"
+#include "Gpio.h"
+#include "uart.h"
+#include "hiduser.h"
+#include "Keytbl.h"
+#include "Ssp.h"
+//#include "Flash.h"
+#include "usbuser.h"
+#include "Timer32.h"
+#include "system_LPC11Uxx.h"
+//#include "I2c.h"
+#include "MouseDatabase.h"
+#include "usbdesc.h"
+#include "pmu.h"
+#include	"Pixart_Sensor.h"
+#include "led.h"
+
+
+
+#include "Mouse.h"
+
+//#define ENABLE_MMAP 1
+//#define Boot_loader 0
+#define USER_RAM 1   //  remap to SRAM
+//#define USER_ROM 2   // remap to flash Rom
+//#define VECTOR_ROM ((unsigned char *)0x00000000) //ROM Start addr
+//#define VECTOR_RAM ((unsigned char *)0x10000000) //RAM Start addr
+//#define VECTOR_BOOT ((unsigned char *)0x1FFF0000) //Boot Load Start addr
+
+#define PC_AP_DELAY 1
+
+#if POWERDOWN_MODE_USB_WAKEUP
+extern volatile uint32_t SuspendFlag;
+extern volatile uint32_t timer16_0_counter;
+extern volatile uint32_t USBWakeupInterruptFlag;
+volatile uint8_t WakeupFlag = 0;
+#endif
+
+extern bool Read_Sensor_ID(void);
+
+ LPC11Uxx_DATABASE_MOUSE_GENSETTING g_dMouse;	// For HansH Add
+
+
+U8 u8MarcoKeyIn;
+bool LED_COLOR_CHANGE_ENABLE=false;
+
+void EP0_Send(void){
+	U8 Cnt;
+	//g_USBCore_Setting.EP0Data.pData = g_USBCore_Setting.EP0Buf;
+	//nsAPI_USB_DataInStage();/* send requested data */
+	
+	Cnt = nsAPI_USB_WriteEP(0x80, g_USBCore_Setting.EP0Buf, 8);
+	g_USBCore_Setting.EP0Data.pData += Cnt;
+	g_USBCore_Setting.EP0Data.Count -= Cnt;
+}
+
+//2016_0608_Hsiang
+#if 0
+void Main_Consumer_Loader_Clr(void)
+{
+	nsAPI_Main_Clr_ConsumerEvent();
+	g_Repot_Process.Consumer_Report_In = 1;
+}
+
+void Main_DPI_Loader_Ready(U8 u8DPISwitch,U8 u8DPIStage ,U8 u8DPIValue)
+{
+	g_Main_Setting.ConsumerInReport[GIdx0] = 0x07;
+	g_Main_Setting.ConsumerInReport[GIdx1] = 0x41;
+	g_Main_Setting.ConsumerInReport[GIdx2] = g_dMouse.GeneralSetting.dbProfileIndex;
+	g_Main_Setting.ConsumerInReport[GIdx3] = u8DPISwitch ;//0x06:DPI_Y,0x07:DPI_W,0xF0:DPI_SW
+	g_Main_Setting.ConsumerInReport[GIdx4] = u8DPIStage;//AP Index0~5 , 6:Snipper , 7:Current DPI
+	g_Main_Setting.ConsumerInReport[GIdx5] = u8DPIValue;
+	g_Main_Setting.ConsumerInReport[GIdx6] = 0;
+	g_Main_Setting.ConsumerInReport[GIdx7] = 0;
+	g_Repot_Process.Consumer_Report_In = 1;
+
+	if(g_Repot_Process.Consumer_Report_In == 1)
+		nsAPI_Main_ConsumerInReportHandler();
+
+	Main_Consumer_Loader_Clr();
+}
+
+void Main_Send_Keyboard(U8 Key_Matrix_Num){
+	g_Main_Setting.KeyboardInReport[GIdx0] = 0;		//Function key
+	g_Main_Setting.KeyboardInReport[GIdx1] = 0;		//Always 0x00
+	g_Main_Setting.KeyboardInReport[GIdx2] = g_Key_Matrix[Key_Matrix_Num].Key_Assignment[1];		//Keycode
+	g_Main_Setting.KeyboardInReport[GIdx3] = 0;		//Keycode
+	g_Main_Setting.KeyboardInReport[GIdx4] = 0;		//Keycode
+	//g_Main_Setting.KeyboardInReport[GIdx5] = 0;		//Keycode
+	//g_Main_Setting.KeyboardInReport[GIdx6] = 0;		//Keycode
+	//g_Main_Setting.KeyboardInReport[GIdx7] = 0;		//Keycode
+	g_Key_Matrix[Key_Matrix_Num].Changed = 0;
+	g_Repot_Process.Keyboard_Report_In = 1;
+}
+
+void Main_Media_Loader_Ready(U8 u8Byte1, U8 u8Byte2 ,U8 u8Byte3, U8 u8Byte4)
+{
+	g_Main_Setting.ConsumerInReport[GIdx0] = 0x07;
+	g_Main_Setting.ConsumerInReport[GIdx1] = 0x42 ;
+	g_Main_Setting.ConsumerInReport[GIdx2] = g_dMouse.GeneralSetting.dbProfileIndex;
+	g_Main_Setting.ConsumerInReport[GIdx3] = u8Byte1;//MODE_MEDIA
+	g_Main_Setting.ConsumerInReport[GIdx4] = u8Byte2;
+	g_Main_Setting.ConsumerInReport[GIdx5] = u8Byte3;
+	g_Main_Setting.ConsumerInReport[GIdx6] = u8Byte4;
+	g_Main_Setting.ConsumerInReport[GIdx7] = 0;
+	g_Repot_Process.Consumer_Report_In = 1;
+
+    while(g_Repot_Process.Consumer_Report_In == 1){
+		nsAPI_Main_ConsumerInReportHandler();
+    }
+	//Main_Consumer_Loader_Clr();
+}
+
+void Main_Send_Media(U8 Key_Matrix_Num){
+	g_Main_Setting.MediaInReport[GIdx0] = 0x03;		//Function key
+	g_Main_Setting.MediaInReport[GIdx1] = g_Key_Matrix[Key_Matrix_Num].Key_Assignment[3];
+	g_Main_Setting.MediaInReport[GIdx2] = g_Key_Matrix[Key_Matrix_Num].Key_Assignment[2];
+	g_Main_Setting.MediaInReport[GIdx3] = 0;		//Keycode
+	g_Main_Setting.MediaInReport[GIdx4] = 0;		//Keycode
+	g_Main_Setting.MediaInReport[GIdx5] = 0;		//Keycode
+	g_Main_Setting.MediaInReport[GIdx6] = 0;		//Keycode
+	g_Main_Setting.MediaInReport[GIdx7] = 0;		//Keycode
+	g_Key_Matrix[Key_Matrix_Num].Changed = 0;
+	g_Repot_Process.Media_Report_In = 1;
+}
+
+void Main_Clr_Media(U8 Key_Matrix_Num){
+	g_Main_Setting.MediaInReport[GIdx0] = 0x03;		//Function key
+	g_Main_Setting.MediaInReport[GIdx1] = 0;
+	g_Main_Setting.MediaInReport[GIdx2] = 0;
+	g_Main_Setting.MediaInReport[GIdx3] = 0;		//Keycode
+	g_Main_Setting.MediaInReport[GIdx4] = 0;		//Keycode
+	g_Main_Setting.MediaInReport[GIdx5] = 0;		//Keycode
+	g_Main_Setting.MediaInReport[GIdx6] = 0;		//Keycode
+	g_Main_Setting.MediaInReport[GIdx7] = 0;		//Keycode
+	g_Key_Matrix[Key_Matrix_Num].Changed = 0;
+	g_Repot_Process.Media_Report_In = 1;
+}
+
+
+void Main_Send_ShortCut(U8 Key_Matrix_Num){
+	g_Main_Setting.ShortcutInReport[GIdx0] = g_Key_Matrix[Key_Matrix_Num].Key_Assignment[1];		//Function key
+	g_Main_Setting.ShortcutInReport[GIdx1] = 0;		//Always 0x00
+	g_Main_Setting.ShortcutInReport[GIdx2] = g_Key_Matrix[Key_Matrix_Num].Key_Assignment[2];		//Keycode
+	g_Main_Setting.ShortcutInReport[GIdx3] = 0;		//Keycode
+	g_Main_Setting.ShortcutInReport[GIdx4] = 0;		//Keycode
+	g_Main_Setting.ShortcutInReport[GIdx5] = 0;		//Keycode
+	g_Main_Setting.ShortcutInReport[GIdx6] = 0;		//Keycode
+	g_Main_Setting.ShortcutInReport[GIdx7] = 0;		//Keycode
+	g_Key_Matrix[Key_Matrix_Num].Changed = 0;
+	g_Repot_Process.Shortcut_Report_In = 1;
+}
+
+void Main_Send_System(U8 Key_Matrix_Num){
+	g_Main_Setting.SystemInReport[GIdx0] = 0x02;		//Report ID
+	g_Main_Setting.SystemInReport[GIdx1] = g_Key_Matrix[Key_Matrix_Num].Key_Assignment[2];
+	g_Main_Setting.SystemInReport[GIdx2] = 0;		//0
+	g_Main_Setting.SystemInReport[GIdx3] = 0;		//0
+	g_Main_Setting.SystemInReport[GIdx4] = 0;		//0
+	g_Main_Setting.SystemInReport[GIdx5] = 0;		//0
+	g_Main_Setting.SystemInReport[GIdx6] = 0;		//0
+	g_Main_Setting.SystemInReport[GIdx7] = 0;		//0
+	g_Key_Matrix[Key_Matrix_Num].Changed = 0;
+	g_Repot_Process.System_Report_In = 1;
+}
+
+void Main_Send_Mouse(U8 Key_Matrix_Num){
+    #if  (SUPPORT_MAC_BOOT_AND_DOS_MODE)
+	if (g_USBCore_Setting.EP0_DosMode)
+	{
+		switch(g_Key_Matrix[Key_Matrix_Num].Key_Assignment[1]){
+			case 0xf0:
+				g_Main_Setting.MouseInReport[0] |= 0x01;		//Button L
+			break;
+			case 0xf1:
+				g_Main_Setting.MouseInReport[0] |= 0x02;		//Button M
+			break;
+			case 0xf2:
+				g_Main_Setting.MouseInReport[0] |= 0x04;		//Button R
+			break;
+			case 0xf3:
+				g_Main_Setting.MouseInReport[5] = QIE_FORWARD;		//Scroll
+			break;
+			case 0xf4:
+				g_Main_Setting.MouseInReport[5] = QIE_BACKWARD;		//Scroll
+			break;
+			case 0xf5:
+				g_Main_Setting.MouseInReport[6] = 0xff;
+			break;
+			case 0xf6:
+				g_Main_Setting.MouseInReport[6] = 0x01;
+			break;
+			case 0xf8:
+                if(g_Main_Setting.OS_ModeType == WINDOW_OS_MODE)
+                {
+				    g_Main_Setting.MouseInReport[0] |= 0x08;		//Button 4 //page up
+                }
+			break;
+			case 0xf9:
+
+				if(g_Main_Setting.OS_ModeType == WINDOW_OS_MODE)
+                {
+				    g_Main_Setting.MouseInReport[0] |= 0x10;		//Button 5 //page dn
+                }
+
+			break;
+		}
+	}
+	else
+    #endif //(SUPPORT_MAC_BOOT_AND_DOS_MODE)
+	{
+		switch(g_Key_Matrix[Key_Matrix_Num].Key_Assignment[1]){
+			case 0xf0:
+				g_Main_Setting.MouseInReport[1] |= 0x01;		//Button L
+			break;
+			case 0xf1:
+				g_Main_Setting.MouseInReport[1] |= 0x02;		//Button M
+			break;
+			case 0xf2:
+				g_Main_Setting.MouseInReport[1] |= 0x04;		//Button R
+			break;
+			case 0xf3:
+				g_Main_Setting.MouseInReport[6] = QIE_FORWARD;		//Scroll
+			break;
+			case 0xf4:
+				g_Main_Setting.MouseInReport[6] = QIE_BACKWARD;		//Scroll
+			break;
+			case 0xf5:
+				g_Main_Setting.MouseInReport[7] = 0xff;
+			break;
+			case 0xf6:
+				g_Main_Setting.MouseInReport[7] = 0x01;
+			break;
+			case 0xf8:
+				if(g_Main_Setting.OS_ModeType == WINDOW_OS_MODE)
+                {
+				    g_Main_Setting.MouseInReport[1] |= 0x08;		//Button 4 //page up
+                }
+			break;
+			case 0xf9:
+				if(g_Main_Setting.OS_ModeType == WINDOW_OS_MODE)
+                {
+				    g_Main_Setting.MouseInReport[1] |= 0x10;		//Button 5 //page dn
+                }
+
+			break;
+		}
+		g_Main_Setting.MouseInReport[0] = 0x01;		//Mouse report ID
+	}
+
+	g_Key_Matrix[Key_Matrix_Num].Changed = 0;
+	g_Repot_Process.Mouse_Report_In = 1;
+}
+
+void Main_Process_DPI(U8 Key_Matrix_Num){
+	switch(g_Key_Matrix[Key_Matrix_Num].Key_Assignment[1]){
+		case 0x06:
+			g_GpioKeyboard.Y_DPI_Press = 1;
+			//nsAPI_SSP_ADNS9800_Next_YResolution();
+		break;
+		case 0x07:
+			g_GpioKeyboard.X_DPI_Press = 1;
+			//nsAPI_SSP_ADNS9800_Next_XResolution();
+		break;
+		case 0xf0:
+			//nsAPI_SSP_ADNS9800_Next_XYResolution();
+			//nsAPI_SSP_ADNS9800_Next_LED_XYResolution();
+		       g_dMouse.SensorSetting.dbXDPICrtValue =(g_dMouse.SensorSetting.dbXDPILevel[g_dMouse.SensorSetting.dbDPIStage])&0x7F;
+		       g_dMouse.SensorSetting.dbYDPICrtValue =(g_dMouse.SensorSetting.dbYDPILevel[g_dMouse.SensorSetting.dbDPIStage])&0x7F;
+			Main_DPI_Loader_Ready(g_Key_Matrix[Key_Matrix_Num].Key_Assignment[1],g_dMouse.SensorSetting.dbDPIStage,0);
+		break;
+		case 0x08: //DPI Snipper
+			//nsAPI_SSP_Set_Sensor_X_Resolution(6,TRUE);
+			//nsAPI_SSP_Set_Sensor_Y_Resolution(6,TRUE);
+			Main_DPI_Loader_Ready(g_Key_Matrix[Key_Matrix_Num].Key_Assignment[1],6,0);
+		break;
+	}
+	g_Key_Matrix[Key_Matrix_Num].Changed = 0;
+
+}
+void Main_Release_Keyboard(U8 Key_Matrix_Num){
+	g_Main_Setting.KeyboardInReport[GIdx0] = 0;		//Function key
+	g_Main_Setting.KeyboardInReport[GIdx1] = 0;		//Always 0x00
+	g_Main_Setting.KeyboardInReport[GIdx2] = 0;		//Keycode
+	g_Main_Setting.KeyboardInReport[GIdx3] = 0;		//Keycode
+	g_Main_Setting.KeyboardInReport[GIdx4] = 0;		//Keycode
+	g_Main_Setting.KeyboardInReport[GIdx5] = 0;		//Keycode
+	g_Main_Setting.KeyboardInReport[GIdx6] = 0;		//Keycode
+	g_Main_Setting.KeyboardInReport[GIdx7] = 0;		//Keycode
+	g_Key_Matrix[Key_Matrix_Num].Changed = 0;
+	g_Repot_Process.Keyboard_Report_In = 1;
+}
+void Main_Release_Shortcut(U8 Key_Matrix_Num){
+	g_Main_Setting.ShortcutInReport[GIdx0] = 0;		//Function key
+	g_Main_Setting.ShortcutInReport[GIdx1] = 0;		//Always 0x00
+	g_Main_Setting.ShortcutInReport[GIdx2] = 0;		//Keycode
+	g_Main_Setting.ShortcutInReport[GIdx3] = 0;		//Keycode
+	g_Main_Setting.ShortcutInReport[GIdx4] = 0;		//Keycode
+	g_Main_Setting.ShortcutInReport[GIdx5] = 0;		//Keycode
+	g_Main_Setting.ShortcutInReport[GIdx6] = 0;		//Keycode
+	g_Main_Setting.ShortcutInReport[GIdx7] = 0;		//Keycode
+	g_Key_Matrix[Key_Matrix_Num].Changed = 0;
+	g_Repot_Process.Shortcut_Report_In = 1;
+}
+
+void Main_Release_Mouse(U8 Key_Matrix_Num){
+	
+    #if (SUPPORT_MAC_BOOT_AND_DOS_MODE)
+ 	if (g_USBCore_Setting.EP0_DosMode)
+ 	{
+		switch(g_Key_Matrix[Key_Matrix_Num].Key_Assignment[1])
+		{
+			case 0xf0:
+				 g_Main_Setting.MouseInReport[0] &=~ 0x01;
+				break;
+			case 0xf1:
+				 g_Main_Setting.MouseInReport[0] &=~ 0x02;
+				break;
+			case 0xf2:
+				 g_Main_Setting.MouseInReport[0] &=~ 0x04;
+				break;
+            case 0xf8: //(Add)Abellee 20121123 fix SW4,SW5 bug
+                //#if (SUPPORT_MAC_OS_PAGE_UP_DN_KEY)
+				if(g_Main_Setting.OS_ModeType == WINDOW_OS_MODE)
+                //#endif//SUPPORT_MAC_OS_PAGE_UP_DN_KEY
+                {
+				    g_Main_Setting.MouseInReport[0] &=~ 0x08;
+                }
+				break;
+
+            case 0xf9:
+                //#if (SUPPORT_MAC_OS_PAGE_UP_DN_KEY)
+				if(g_Main_Setting.OS_ModeType == WINDOW_OS_MODE)
+                //#endif//SUPPORT_MAC_OS_PAGE_UP_DN_KEY
+                {
+				    g_Main_Setting.MouseInReport[0] &=~ 0x10;
+                }
+				break;
+			default:
+				g_Main_Setting.MouseInReport[0] = 0;
+				break;
+		}
+ 	}
+	else
+    #endif
+	 {
+		g_Main_Setting.MouseInReport[0] = 0x01;
+		switch(g_Key_Matrix[Key_Matrix_Num].Key_Assignment[1])
+		{
+			case 0xf0:
+				 g_Main_Setting.MouseInReport[1] &=~ 0x01;
+				break;
+			case 0xf1:
+				 g_Main_Setting.MouseInReport[1] &=~ 0x02;
+				break;
+			case 0xf2:
+				 g_Main_Setting.MouseInReport[1] &=~ 0x04;
+				break;
+
+            case 0xf8: //(Add)Abellee 20121123 fix SW4,SW5 bug
+                //#if (SUPPORT_MAC_OS_PAGE_UP_DN_KEY)
+				if(g_Main_Setting.OS_ModeType == WINDOW_OS_MODE)
+                //#endif//SUPPORT_MAC_OS_PAGE_UP_DN_KEY
+                {
+				    g_Main_Setting.MouseInReport[1] &=~ 0x08;
+                }
+				break;
+
+            case 0xf9:
+                //#if (SUPPORT_MAC_OS_PAGE_UP_DN_KEY)
+				if(g_Main_Setting.OS_ModeType == WINDOW_OS_MODE)
+                //#endif//SUPPORT_MAC_OS_PAGE_UP_DN_KEY
+                {
+				    g_Main_Setting.MouseInReport[1] &=~ 0x10;
+                }
+				break;
+			default:
+				g_Main_Setting.MouseInReport[1] = 0;
+				break;
+		}
+ 	}
+
+	g_Main_Setting.MouseInReport[6] = 0;
+	g_Main_Setting.MouseInReport[7] = 0;
+	g_Key_Matrix[Key_Matrix_Num].Changed = 0;
+	g_Repot_Process.Mouse_Report_In = 1;
+}
+
+void Main_Release_Media(U8 Key_Matrix_Num){
+	g_Main_Setting.MediaInReport[0] = 0x03;
+	g_Main_Setting.MediaInReport[1] = 0;
+	g_Main_Setting.MediaInReport[2] = 0;
+	g_Main_Setting.MediaInReport[3] = 0;
+	g_Key_Matrix[Key_Matrix_Num].Changed = 0;
+	g_Repot_Process.Media_Report_In = 1;
+}
+
+void Main_Release_System(U8 Key_Matrix_Num){
+	g_Main_Setting.SystemInReport[0] = 0x02;
+	g_Main_Setting.SystemInReport[1] = 0;
+	g_Main_Setting.SystemInReport[2] = 0;
+	g_Main_Setting.SystemInReport[3] = 0;
+	g_Key_Matrix[Key_Matrix_Num].Changed = 0;
+	g_Repot_Process.System_Report_In = 1;
+}
+
+void Main_Zoon_In(void){
+	g_Main_Setting.KeyboardInReport[GIdx0] = 0x01;		//Ctrl key
+	g_Repot_Process.Keyboard_Report_In = 1;
+	//nsAPI_Main_KeyboardInReportHandler();
+	while(g_Repot_Process.Keyboard_Report_In==1){
+		nsAPI_Main_KeyboardInReportHandler();
+	}
+	g_Main_Setting.MouseInReport[0] = 0x01;		//Mouse report ID
+	g_Main_Setting.MouseInReport[6] = QIE_BACKWARD;		//Scroll
+	g_Repot_Process.Mouse_Report_In = 1;
+	//nsAPI_Main_MouseInReportHandler();
+	while(g_Repot_Process.Mouse_Report_In==1){
+		nsAPI_Main_MouseInReportHandler();
+	}
+
+	g_Main_Setting.KeyboardInReport[GIdx0] = 0x00;		//Release
+	g_Repot_Process.Keyboard_Report_In = 1;				//Ctrl Key release
+	//nsAPI_Main_KeyboardInReportHandler();
+	while(g_Repot_Process.Keyboard_Report_In==1){
+		nsAPI_Main_KeyboardInReportHandler();
+	}
+}
+
+void Main_Zoon_Out(void){
+	g_Main_Setting.KeyboardInReport[GIdx0] = 0x01;		//Ctrl key
+	g_Repot_Process.Keyboard_Report_In = 1;
+	//nsAPI_Main_KeyboardInReportHandler();
+	while(g_Repot_Process.Keyboard_Report_In==1){
+		nsAPI_Main_KeyboardInReportHandler();
+	}
+	g_Main_Setting.MouseInReport[6] = QIE_FORWARD;		//Scroll
+	g_Repot_Process.Mouse_Report_In = 1;
+	//nsAPI_Main_MouseInReportHandler();
+	while(g_Repot_Process.Mouse_Report_In==1){
+		nsAPI_Main_MouseInReportHandler();
+	}
+
+	g_Main_Setting.KeyboardInReport[GIdx0] = 0x00;		//Release
+	g_Repot_Process.Keyboard_Report_In = 1;				//Ctrl Key release
+	//nsAPI_Main_KeyboardInReportHandler();
+	while(g_Repot_Process.Keyboard_Report_In==1){
+		nsAPI_Main_KeyboardInReportHandler();
+	}
+}
+
+void Main_Fire_Key(U8 u8RepeatValue){
+	unsigned char KeyRepeat;
+
+	for(KeyRepeat = 0; KeyRepeat < u8RepeatValue; KeyRepeat++)
+	{
+		g_Main_Setting.MouseInReport[1] |= 0x01;	//Button L
+		g_Repot_Process.Mouse_Report_In = 1;
+		//nsAPI_Main_MouseInReportHandler();
+		while(g_Repot_Process.Mouse_Report_In==1)
+		{
+			nsAPI_Main_MouseInReportHandler();
+		}
+
+		g_Repot_Process.Mouse_Report_In = 1;		//Release
+		g_Main_Setting.MouseInReport[1] &= ~0x01;	// Release Button L
+		//nsAPI_Main_MouseInReportHandler();
+		while(g_Repot_Process.Mouse_Report_In==1){
+			nsAPI_Main_MouseInReportHandler();
+		}
+
+	}
+}
+void Main_Launch_AP(void){
+	U16	ID;
+	ID = USB_VID;
+	g_Main_Setting.ConsumerInReport[GIdx0] = 0x07;
+	g_Main_Setting.ConsumerInReport[GIdx1] = 0xA3;
+	g_Main_Setting.ConsumerInReport[GIdx2] = (ID>>8);
+	g_Main_Setting.ConsumerInReport[GIdx3] = (ID&0xff);
+	ID = USB_PID;
+	g_Main_Setting.ConsumerInReport[GIdx4] = (ID>>8);
+	g_Main_Setting.ConsumerInReport[GIdx5] = (ID&0xff);
+	g_Main_Setting.ConsumerInReport[GIdx6] = 0;
+	g_Main_Setting.ConsumerInReport[GIdx7] = 0;
+	g_Repot_Process.Consumer_Report_In = 1;
+}
+
+/* Main Program */
+
+
+
+void Main_Process_Profile(U8 u8Profile) 
+{
+	//nsAPI_I2C_Read_Database(RM_PROFILE_NUMBER_ADR,&g_dMouse.GeneralSetting.dbProfileIndex,1);
+	//g_dMouse.GeneralSetting.dbProfileIndex++;
+	g_dMouse.GeneralSetting.dbProfileIndex = u8Profile;
+	if(g_dMouse.GeneralSetting.dbProfileIndex > 0x06){
+		g_dMouse.GeneralSetting.dbProfileIndex = 0;
+	}
+	//nsAPI_I2C_Write_Database(RM_PROFILE_NUMBER_ADR,&g_dMouse.GeneralSetting.dbProfileIndex,1);
+	//nsAPI_Database_Init();
+}
+
+///==================================================================== HansH
+
+//	xprintf("\r\n String",0);	// Print Sample Code
+//	xprintf("\r\n Press:%d",Key_Loop);	// Print Sample Code
+
+
+//void nsAPI_Database_Init(void){
+//}
+
+//RetU8 nsAPI_Database_Button_Get_ProfileGroup_Index(void){
+//	U8 R_Return=0;
+//	return R_Return;
+//}
+
+#endif
+
+
+void Mapp_Main_Init(void)
+{
+	nsAPI_USB_EndPointClr();
+}
+
+void S_FeatureReport_Send(void){
+
+
+#if 1
+
+
+
+#if 0
+	g_Main_Setting.FeatureInReport[GIdx0] = 0x07;//Report ID
+
+	if(nsAPI_USB_EP_Status(0x80))//if((g_Main_Setting.EPInOutReq & EP1_IN) == EP1_IN)  //modify 20120808
+	{
+		nsAPI_USB_WriteEP(0x80,&g_Main_Setting.FeatureInReport[0],8);
+		
+		nsAPI_Main_Clr_EP1Event();
+		
+		//g_Main_Setting.EPInOutReq &= ~EP1_IN;
+		
+		g_Repot_Process.Feature_Report_In = 0;
+	}
+#else
+
+	g_Main_Setting.FeatureInReport[GIdx0] = 0x07;//Report ID
+
+	if(nsAPI_USB_EP_Status(HID_EP1_IN))//if((g_Main_Setting.EPInOutReq & EP1_IN) == EP1_IN)  //modify 20120808
+	{
+
+	#if 1
+							
+		nsAPI_USB_WriteEP(HID_EP1_IN,&g_Main_Setting.FeatureInReport[0],8);			
+				
+		nsAPI_Main_Clr_EP1Event();
+		
+		g_Main_Setting.EPInOutReq &= ~EP1_IN;
+		
+		g_Repot_Process.Feature_Report_In = 0;
+	#else
+
+		if(F_S_ReturnFeatureIn ==1){
+
+			nsAPI_USB_WriteEP(HID_EP1_IN,&g_Main_Setting.FeatureInReport[8],8);			
+				
+			nsAPI_Main_Clr_EP1Event();
+		
+			g_Main_Setting.EPInOutReq &= ~EP1_IN;
+
+			F_S_ReturnFeatureIn--;
+			
+		}
+		else{
+
+			nsAPI_USB_WriteEP(HID_EP1_IN,&g_Main_Setting.FeatureInReport[0],8);			
+				
+			nsAPI_Main_Clr_EP1Event();
+		
+			g_Main_Setting.EPInOutReq &= ~EP1_IN;
+		
+			g_Repot_Process.Feature_Report_In = 0;			
+		}
+
+		
+	#endif
+		
+	}
+
+
+#endif
+
+
+
+
+#else
+
+	g_USBCore_Setting.EP0Buf[0] = 0x07;		// Report ID
+	g_USBCore_Setting.EP0Buf[1] = 0xab;
+	g_USBCore_Setting.EP0Buf[2] = 0xcd;
+
+	EP0_Send();
+
+	g_Repot_Process.Feature_Report_In = 0;
+	
+#endif
+	
+}
+
+//======================================================================
+// ASUS command process
+//----------------------------------------------------------------
+void ASUS_command_process(void)				// hawk
+{
+	U32 cnt,i;
+	cnt = nsAPI_USB_ReadEP(HID_EP4_OUT, g_USBCore_Setting.EP0Buf);
+
+	for(i = 0;i < cnt; i++)
+	{
+		g_Main_Setting.InReport[i] = g_USBCore_Setting.EP0Buf[i];
+		g_USBCore_Setting.EP0Buf[i] = 0;
+	}
+
+	if(cnt > CUSTOMER_IN_REPORT_SIZE)
+		cnt = CUSTOMER_IN_REPORT_SIZE;
+	
+	 if(nsAPI_USB_EP_Status(HID_EP3_IN))	//if((g_Main_Setting.EPInOutReq & EP1_IN) == EP1_IN)  //modify 20120808
+	{	
+		nsAPI_USB_WriteEP(HID_EP3_IN, g_Main_Setting.InReport, cnt);
+		nsAPI_Main_Clr_EP3Event();
+		g_Main_Setting.EPInOutReq &= ~EP3_IN;
+	}
+
+
+}
+
+
+
+///==================================================================== HansH
+
+#define _ERASE_EERPOM_ 1
+U16 LED_PWM=1000;
+int main (void)
+{
+
+
+	///--------------------------------------------------------------------------Flash Remapping
+	//U8 flag=0;
+	//U32 i;
+	
+	#if (ENABLE_MMAP==1)
+	U16 Size;
+	volatile U32 *Dst = (volatile U32 *) 0x10000000;
+	volatile const U32 *Src = (volatile U32 *)0x00003000;
+	#endif
+
+	#if _ERASE_EERPOM_
+	//U32 k ;//, j;
+	//U32 u32Addr;
+	//U8 temp[64];
+	#endif
+	
+	/* It's very important that POWERDOWN_MODE_USB_WAKEUP and REMOTE_WAKEUP_ENABLE
+	flags should not be turned on at the same time!!!!!! */
+	//U8 u8Temp = 0,u8PreLEDSetting = 0;
+
+	#if (ENABLE_MMAP==1)
+	// Copy vectors table from 0x00003000 to RAM(0x10000000)
+	Size =0x100;
+	do
+	{
+		*Dst++ = *Src++;
+	}while (--Size);
+
+	LPC_SYSCON->SYSMEMREMAP = USER_RAM;	// remap to SRAM
+
+	#endif
+	///--------------------------------------------------------------------------Flash Remapping
+
+	g_Main_Setting.OS_ModeType = WINDOW_OS_MODE; //default window OS
+	g_StaticMachineEvent1Type = SM_EVENT1_MOUSE_MONITOR; //2016_0407_Hsiang
+	g_StaticMachineEvent2Type = SM_EVENT2_IDLE;
+	g_StaticMachineEvent3Type = SM_EVENT3_IDLE;
+
+	#if 0	
+	g_StaticMachineEvent6Type = SM_EVENT6_IDLE;
+	g_StaticMachineEvent7Type = SM_EVENT7_IDLE;
+	#endif	
+	
+	g_USBCore_Setting.EP0_SetReq=0;
+	g_USBCore_Setting.EP0_GetReq=0;
+	g_USBCore_Setting.EP0_DosMode=0;
+
+	//g_dMouse.SensorSetting.dbReportRate =1;	// Report 1mSec	
+	
+	g_Repot_Process.Mouse_Report_In =0;
+	g_Repot_Process.Media_Report_In =0;
+	g_Repot_Process.System_Report_In =0;
+	g_Repot_Process.Keyboard_Report_In =0;
+	g_Repot_Process.Macro_Keyboard_Report_In =0;
+	g_Repot_Process.Consumer_Report_In =0;
+	
+       u8MarcoKeyIn =0;
+	   
+	g_Instant_Key.u8InstantKyeEnable =0;
+	g_Instant_Key.u8InstantKyeNum =0xFF;
+	g_Instant_Key.u8InstantProfile=0xFF;
+
+	///--------------------------------------------------------------------------
+	nsAPI_System_Init();
+	nsAPI_USB_Init();/* USB Initialization */		
+	Mapp_Main_Init();	// for USB 
+	nsAPI_Sensor_Init();			//2016_0517_Hsiang
+	LED_INIT();	
+	//nsAPI_Timer32_B0M3_PWM_Init(1);
+	NDrv_GPIO_SetBitValue(PORT0, 21, HIGH);
+	NDrv_GPIO_SetDir(PORT1, 25, GPIOOUT);	
+	NDrv_GPIO_SetBitValue(PORT1, 25, HIGH);
+	//nsAPI_Timer16_B0M3_PWM_Init(0);
+	LED_COLOR_CHANGE_ENABLE=true;
+	while(1)
+	{
+		#if 1
+		__WFI();
+		if(LED_COLOR_FLAG)
+		{
+			NDrv_GPIO_SetBitValue(PORT1, 25, LOW);
+			LED_COLOR_CHANGE_ENABLE=false;
+			LED_COLOR_TIMES=0;
+			LED_COLOR_CHANGE(HSV);
+			HSV.h+=2;
+			if(HSV.h==256)
+				HSV.h=0;
+			LED_COLOR_FLAG=false;
+			LED_COLOR_CHANGE_ENABLE=true;
+			NDrv_GPIO_SetBitValue(PORT1, 25, HIGH);
+		}
+			
+		//NDrv_GPIO_SetBitValue(PORT0, 21, LOW);
+		//nsAPI_SSP_Sensor_Delsyus(800);	//base on 2us
+		//NDrv_GPIO_SetBitValue(PORT0, 21, HIGH);
+		//nsAPI_SSP_Sensor_Delsyus(200);	//base on 2us
+		#else
+		for(i=500; i<30000;i+=100){
+		LED_AUDIOIN_ON();
+		ISSI3731_Software_showdown(FALSE);
+		nsAPI_SSP_Sensor_Delsyus(i);
+		//S_Idle_Delay_uSec(1);	// 200uSec
+		LED_AUDIOIN_OFF();
+		ISSI3731_Software_showdown(TRUE);
+		nsAPI_SSP_Sensor_Delsyus(30000-i);
+		//nsAPI_SSP_Sensor_Delsyus(9000);
+		}
+		for(i=500; i<30000;i+=100){
+		LED_AUDIOIN_ON();
+		ISSI3731_Software_showdown(FALSE);
+		nsAPI_SSP_Sensor_Delsyus(30000-i);
+		//S_Idle_Delay_uSec(1);	// 200uSec
+		LED_AUDIOIN_OFF();
+		ISSI3731_Software_showdown(TRUE);
+		nsAPI_SSP_Sensor_Delsyus(i);
+		//nsAPI_SSP_Sensor_Delsyus(9000);
+		}
+		#endif
+		
+		
+	}
+		
+	#if 1	
+	while(1)
+	{
+		U8 i;
+		/*
+		if(flag==0){
+			NDrv_GPIO_SetBitValue(PORT1, 31, LOW);
+			flag=1;
+		}else{
+			NDrv_GPIO_SetBitValue(PORT1, 31, HIGH);
+			flag=0;
+		}
+		*/
+		//if (rSuspendFlag ==0)	// when not enter sleep than check Flash Run
+		//{
+		//	nsAPI_Sensor_Init();
+		//}
+
+		///====================================================== for Usb Get/Set Report
+		
+		//**************************************
+		//Check Set report Host --> MS
+		//**************************************
+		if(g_USBCore_Setting.EP0_SetReq ==1)
+		{	
+			nsAPI_USB_DataOutStage();/* receive data */
+			
+			g_USBCore_Setting.EP0_SetReq = 0;		// Clear USB Set Report Flag
+			for(i = 0;i < USB_PACKET_SIZE; i++)
+			{
+				g_Main_Setting.OutReport[i] = g_USBCore_Setting.EP0Buf[i];
+			}
+			S_USBReport_GetFromHost();				
+		}
+		//***************************************
+		//Process Get report MS-->Host
+		//***************************************
+		if(g_USBCore_Setting.EP0_GetReq ==1)
+		{			
+			//Mapp_StaticMachineEvent7();
+			S_USBReport_SendtoHost();		
+		}
+		
+		///====================================================== for Usb Get/Set Report		
+		
+		///====================================================== for ASUS commnd received
+		if(g_Main_Setting.EPInOutReq & EP4_OUT)       // hawk
+		{
+			g_Main_Setting.EPInOutReq &= ~EP4_OUT;
+			ASUS_command_process();
+
+		}
+
+		///====================================================== for Nomo Polling
+		#if 1
+		//***************************************
+		//State machine
+		//***************************************
+		
+		Mapp_StaticMachineEvent1(); //Sensor Key monitor	//Polling MS Sensor and Key
+		
+		//Mapp_StaticMachineEvent2(); //Key parser			// No Use
+		
+		//Mapp_StaticMachineEvent3(); //Macro key
+
+
+		if(g_Repot_Process.Mouse_Report_In == 1 || g_Sensor_Data.Changed == 1)
+		//if(g_Sensor_Data.Changed == 1)
+		{
+			// Up MS Report to USB Send (EP1-ID1)
+			//xprintf("\r\n -MS-",0);	
+			nsAPI_Main_MouseInReportHandler();
+		}
+		
+		
+		#if 1	//2016_0408_Hsiang
+		
+		if(g_Repot_Process.Keyboard_Report_In == 1)
+		{
+			// Up KB Report to USB Send (EP2)	
+			//xprintf("\r\n -KB-",0);
+			nsAPI_Main_KeyboardInReportHandler();
+		}
+
+		if(g_Repot_Process.Media_Report_In == 1)
+		{			
+			// Up Media to USB Send(EP1-ID3)
+
+		#if 0
+			if(rSuspendFlag==1)
+			{ //Check when get WakeUp Evemt
+				g_Repot_Process.Media_Report_In = 0;
+
+				g_Main_Setting.MouseInReport[0] = 0x01;	//Mouse report ID			
+				g_Repot_Process.Mouse_Report_In = 1;	// Set UpReport Flag
+				
+				nsAPI_Main_MouseInReportHandler();				
+			}
+			else
+			{
+				nsAPI_Main_MediaInReportHandler();
+			}
+		#else
+			nsAPI_Main_MediaInReportHandler();
+		#endif
+		}
+		
+		
+		if(g_Repot_Process.Feature_Report_In == 1)
+		{		// Up Feature to USB Send (EP1-ID7)
+			S_FeatureReport_Send();
+		}
+		#endif
+		#if 0
+		if(g_Repot_Process.Consumer_Report_In == 1){
+			nsAPI_Main_ConsumerInReportHandler();
+		}
+		#endif
+
+	/*		
+		if(g_Repot_Process.Shortcut_Report_In == 1){
+			nsAPI_Main_ShortcutInReportHandler();
+		}
+								
+
+		
+		if(g_Repot_Process.System_Report_In == 1){
+			nsAPI_Main_SystemInReportHandler();
+		}
+	*/	
+		#endif	
+		#if 1
+		///====================================================== for Nomo Polling
+		if (rSuspendFlag ==0)	// when not enter sleep than check Flash Run
+		{	
+			//S_Y_PWM_Running_Check();	//2016_0525_Hsiang
+        	}
+		///====================================================== for Nomo Polling
+		#if 1
+		#if REMOTE_WAKEUP_ENABLE
+		if (rSuspendFlag ==1)
+		{
+			uint32_t regVal;
+
+			//if(S_Y_SleepCheck()){
+				PMU_Init();
+				//S_PWM_Disable();
+				//S_9800_Shutdown();
+				regVal = LPC_SYSCON->PDSLEEPCFG;	//read deep sleep configuration regiters
+				regVal &= ~(WDT_OSC_PD | BOD_PD);	
+				PMU_Sleep( MCU_POWER_DOWN, regVal );
+			
+			//}	
+				
+        	}
+		
+		#endif
+		#endif
+		#endif
+		///====================================================== for Nomo Polling
+		
+  	}
+	#else
+	while(1)/* Loop forever */
+	{
+		U8 i;
+		
+		//xprintf("\r\n ...FF...",0);			
+		#if 0
+		if(g_Main_Setting.SensorReset == 1){
+			g_Main_Setting.SensorReset = 0;
+			nsAPI_SSP_ADNS9800_Reset();
+			nsAPI_Database_Init();
+		}
+		#endif
+
+		if (rSuspendFlag ==0)	// when not enter sleep than check Flash Run
+		{        
+			S_ADNS9800_INIT();
+		}
+
+///====================================================== for Usb Get/Set Report
+
+		//**************************************
+		//Check Set report Host --> MS
+		//**************************************
+		if(g_USBCore_Setting.EP0_SetReq ==1)
+		{	
+			nsAPI_USB_DataOutStage();/* receive data */
+			
+			g_USBCore_Setting.EP0_SetReq = 0;		// Clear USB Set Report Flag
+			for(i = 0;i < USB_PACKET_SIZE; i++)
+			{
+				g_Main_Setting.OutReport[i] = g_USBCore_Setting.EP0Buf[i];
+			}
+			//Cnt = nsAPI_USB_ReadEP(0x00, g_Main_Setting.OutReport);
+			//if(Cnt > 0){
+				//nsAPI_USB_WriteEP(0x80, NULL, 0); //IN_Stage();  EP0 
+				
+				//Mapp_StaticMachineEvent6();
+
+			S_USBReport_GetFromHost();				
+		}
+		//***************************************
+		//Process Get report MS-->Host
+		//***************************************
+		if(g_USBCore_Setting.EP0_GetReq ==1)
+		{
+			
+			//addr = (U32*)USB_GetEPCmdStatusPtr( EPNum );
+			//g_USBCore_Setting.EP0_GetReq = 0;
+			//g_Main_Setting.ConsumerInReport[GIdx0]=REPORT_ID;
+			
+			#if 0
+			nsAPI_USB_DataOutStage();/* receive data */			
+
+			g_USBCore_Setting.EP0_SetReq = 0;		// Clear USB Set Report Flag
+			for(i = 0;i < USB_PACKET_SIZE; i++)
+			{
+				g_Main_Setting.OutReport[i] = g_USBCore_Setting.EP0Buf[i];
+			}
+			#endif
+			
+			//Mapp_StaticMachineEvent7();
+			S_USBReport_SendtoHost();
+				
+		}
+		
+		///====================================================== for Usb Get/Set Report		
+
+		///====================================================== for Nomo Polling
+		#if 1
+		//***************************************
+		//State machine
+		//***************************************
+		Mapp_StaticMachineEvent1(); //Sensor Key monitor	//Polling MS Sensor and Key
+		
+		//Mapp_StaticMachineEvent2(); //Key parser			// No Use
+		
+		//Mapp_StaticMachineEvent3(); //Macro key
+
+
+		if(g_Repot_Process.Mouse_Report_In == 1){			// Up MS Report to USB Send (EP1-ID1)
+			//xprintf("\r\n -MS-",0);	
+			nsAPI_Main_MouseInReportHandler();
+		}
+		
+		if(g_Repot_Process.Keyboard_Report_In == 1){		// Up KB Report to USB Send (EP2)	
+			//xprintf("\r\n -KB-",0);
+			nsAPI_Main_KeyboardInReportHandler();
+		}
+
+		if(g_Repot_Process.Media_Report_In == 1){			// Up Media to USB Send(EP1-ID3)
+
+		#if 0
+			if(rSuspendFlag==1){ //Check when get WakeUp Evemt
+				g_Repot_Process.Media_Report_In = 0;
+
+				g_Main_Setting.MouseInReport[0] = 0x01;	//Mouse report ID			
+				g_Repot_Process.Mouse_Report_In = 1;	// Set UpReport Flag
+				
+				nsAPI_Main_MouseInReportHandler();				
+			}
+			else{
+				nsAPI_Main_MediaInReportHandler();
+			}
+		#else
+			nsAPI_Main_MediaInReportHandler();
+		#endif
+
+			
+		}	
+		
+		if(g_Repot_Process.Feature_Report_In == 1){		// Up Feature to USB Send (EP1-ID7)
+			S_FeatureReport_Send();
+		}
+		
+		#if 0
+		if(g_Repot_Process.Consumer_Report_In == 1){
+			nsAPI_Main_ConsumerInReportHandler();
+		}
+		#endif
+
+	/*		
+		if(g_Repot_Process.Shortcut_Report_In == 1){
+			nsAPI_Main_ShortcutInReportHandler();
+		}
+								
+
+		
+		if(g_Repot_Process.System_Report_In == 1){
+			nsAPI_Main_SystemInReportHandler();
+		}
+	*/	
+		#endif	
+		
+		#if 0	//2016_0408_Hsiang
+		///====================================================== for Nomo Polling
+
+		if (rSuspendFlag ==0)	// when not enter sleep than check Flash Run
+		{	
+			S_Y_PWM_Running_Check();
+    }
+
+		///====================================================== for Nomo Polling
+		#if 1
+		#if REMOTE_WAKEUP_ENABLE
+		if (rSuspendFlag ==1)
+		{
+			uint32_t regVal;
+
+			//if(S_Y_SleepCheck()){
+				PMU_Init();
+
+				//S_PWM_Disable();
+				//S_9800_Shutdown();
+				regVal = LPC_SYSCON->PDSLEEPCFG;
+				regVal &= ~(WDT_OSC_PD | BOD_PD);			
+				//PMU_Sleep( MCU_DEEP_SLEEP, regVal );	MCU_POWER_DOWN
+				PMU_Sleep( MCU_POWER_DOWN, regVal );
+			
+			//}	
+				
+        	}
+		
+		#endif
+		#endif
+		///====================================================== for Nomo Polling
+		#endif
+		
+  	}
+	#endif	
+	
+}
+
+
+
+#if 0
+ void Mapp_StaticMachineEvent1(void)
+{
+	switch(g_StaticMachineEvent1Type)
+	{
+		#if 1	//2016_0407_Hsiang
+		 case SM_EVENT1_MOUSE_MONITOR:
+		 	//nsAPI_GPIO_MouseButtonMonitor();
+		 	if(nsAPI_USB_EP_Status(HID_EP1_IN))//if((g_Main_Setting.EPInOutReq & EP1_IN) == EP1_IN) //modify 20120808
+		 		S_Sensor_MotionCheck();
+			 g_StaticMachineEvent1Type = SM_EVENT1_KEYBOARD_MONITOR;
+		 break;
+		 #else
+		 case SM_EVENT1_MOUSE_MONITOR:
+		 	if(nsAPI_USB_EP_Status(HID_EP1_IN))
+		 		S_Sensor_MotionCheck();
+			 g_StaticMachineEvent1Type = SM_EVENT1_KEYBOARD_MONITOR;
+		 break;
+		 #endif
+		
+		 case SM_EVENT1_KEYBOARD_MONITOR:
+		 	nsAPI_GPIO_KeyboardEventMointor();
+			g_StaticMachineEvent1Type = SM_EVENT1_MOUSE_MONITOR;	//2016_0407_Hsiang
+		 break;
+
+		 case SM_EVENT1_IDLE:
+		 default:
+		 break;
+	}
+
+}
+#else
+void Mapp_StaticMachineEvent1(void)
+{
+	switch(g_StaticMachineEvent1Type)
+	{
+		 case SM_EVENT1_MOUSE_MONITOR:
+		 	if(nsAPI_USB_EP_Status(HID_EP1_IN))
+		 		S_Sensor_MotionCheck();
+			 g_StaticMachineEvent1Type = SM_EVENT1_KEYBOARD_MONITOR;
+		 break;
+		 
+		 case SM_EVENT1_KEYBOARD_MONITOR:
+		 	nsAPI_GPIO_ButtonEventMointor();
+			g_StaticMachineEvent1Type = SM_EVENT1_MOUSE_MONITOR;	//2016_0407_Hsiang
+		 break;
+
+		 case SM_EVENT1_IDLE:
+		 default:
+		 break;
+	}
+
+}
+
+#endif
+#if 1
+
+void Mapp_StaticMachineEvent2(void)
+{
+	switch(g_StaticMachineEvent2Type)		//Button handle
+	{
+		case SM_EVENT2_BUTTON_HANDLER:
+		{		
+			g_StaticMachineEvent2Type = SM_EVENT2_IDLE;
+		}
+		break;
+///================================================================== KeyScan
+		case SM_EVENT2_IDLE:
+		{
+			if(g_Sensor_Data.Changed == 1)
+			{
+				nsAPI_Main_MouseInReportHandler();
+			}
+		}
+		default:
+		break;
+	}
+
+}
+#else
+ 
+void Mapp_StaticMachineEvent2(void)
+{
+	switch(g_StaticMachineEvent2Type)		//Button handle
+	{
+		case SM_EVENT2_BUTTON_HANDLER:
+		{
+
+			
+///------------------------------------------------------------------------	
+#if 0
+			//S_KeyScsan_UpUSBReport();
+		
+#endif	
+///------------------------------------------------------------------------	
+#if 0
+///------------------------------------------------------------------------			
+			U8 Key_Loop;
+
+			for(Key_Loop = 0;Key_Loop<12;Key_Loop++){
+				if(g_Key_Matrix[Key_Loop].Changed==1){
+					//xprintf("Key_IN:0x%x",g_Key_Matrix[Key_Loop].Key_Assignment[0]);
+
+                    if(g_Key_Matrix[Key_Loop].Key_Assignment[0]==MODE_MOUSE)
+                    {
+                        U8 j;
+                        switch(g_Key_Matrix[Key_Loop].Key_Assignment[1]){
+
+                            case 0xf8://[ //forward //0x2f //page up
+                                if(g_Main_Setting.OS_ModeType == MAC_OS_MODE)
+                                {
+                                    g_Key_Matrix[Key_Loop].Key_Assignment[0] = MODE_MACRO;        //Button 4 //page up
+                                    g_Key_Matrix[Key_Loop].Key_Assignment[3] = KEY_MAC_OS_NUM-1;
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].Repeat_Count = 1;  //repeat time
+
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].Key_Attr[0].bit.Press = 1;           //Press
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].Key_Attr[0].bit.Delay = 40;      //Timebase = 20ms
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].KeyCode[0] = 0xE3;
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].Key_Attr[1].bit.Press = 1;       //Release
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].Key_Attr[1].bit.Delay = 40;      //Timebase = 20ms
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].KeyCode[1] = 0x2F;
+
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].Key_Attr[2].bit.Press = 0;           //Press
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].Key_Attr[2].bit.Delay = 20;      //Timebase = 20ms
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].KeyCode[2] = 0x2F;
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].Key_Attr[3].bit.Press = 0;       //Release
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].Key_Attr[3].bit.Delay = 20;      //Timebase = 20ms
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].KeyCode[3] = 0xE3;
+
+                            		for ( j = 4 ; j <40 ; j++)
+                            		{
+                            			g_Macro_Key[KEY_MAC_OS_NUM-1].Key_Attr[j].u16Value = 0; //Release //Timebase = 0ms
+                            			g_Macro_Key[KEY_MAC_OS_NUM-1].KeyCode[j] = 0;
+                            		}
+
+                                }
+                            break;
+                            case 0xf9://] // backward //0x30 //page down
+                                if(g_Main_Setting.OS_ModeType == MAC_OS_MODE)
+                                {
+                                    g_Key_Matrix[Key_Loop].Key_Assignment[0] = MODE_MACRO;        //Button 5 //page up
+                                    g_Key_Matrix[Key_Loop].Key_Assignment[3] = KEY_MAC_OS_NUM-1;
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].Repeat_Count = 1;  //repeat time
+
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].Key_Attr[0].bit.Press = 1;           //Press
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].Key_Attr[0].bit.Delay = 40;      //Timebase = 20ms
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].KeyCode[0] = 0xE3;
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].Key_Attr[1].bit.Press = 1;       //Release
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].Key_Attr[1].bit.Delay = 40;      //Timebase = 20ms
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].KeyCode[1] = 0x30;
+
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].Key_Attr[2].bit.Press = 0;           //Press
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].Key_Attr[2].bit.Delay = 20;      //Timebase = 20ms
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].KeyCode[2] = 0x30;
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].Key_Attr[3].bit.Press = 0;       //Release
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].Key_Attr[3].bit.Delay = 20;      //Timebase = 20ms
+                                    g_Macro_Key[KEY_MAC_OS_NUM-1].KeyCode[3] = 0xE3;
+
+                                    for ( j = 4 ; j <40 ; j++)
+                            		{
+                            			g_Macro_Key[KEY_MAC_OS_NUM-1].Key_Attr[j].u16Value = 0; //Release //Timebase = 0ms
+                            			g_Macro_Key[KEY_MAC_OS_NUM-1].KeyCode[j] = 0;
+                            		}
+
+                                }
+                            break;
+                        }
+
+                    }
+
+		///--------------------------------------------------------------------
+					switch(g_Key_Matrix[Key_Loop].Key_Assignment[0]){
+						case MODE_KEYBOARD:
+							if(g_Key_Matrix[Key_Loop].Press){
+								Main_Send_Keyboard(Key_Loop);
+								if(g_Main_Setting.MacroStopMode == MACRO_PRESS_ANY){
+									if(g_StaticMachineEvent3Type == SM_EVENT3_MACRO_HANDLER){
+										g_StaticMachineEvent3Type = SM_EVENT3_IDLE;
+										g_Key_Matrix[Key_Loop].Changed = 0;
+										break;
+									}
+								}
+							}
+							else{
+								Main_Release_Keyboard(Key_Loop);
+							}
+						break;
+						case MODE_MOUSE:
+							
+							if(g_Key_Matrix[Key_Loop].Press){
+								Main_Send_Mouse(Key_Loop);
+								if(g_Main_Setting.MacroStopMode == MACRO_PRESS_ANY){
+									if(g_StaticMachineEvent3Type == SM_EVENT3_MACRO_HANDLER){
+										g_StaticMachineEvent3Type = SM_EVENT3_IDLE;
+										g_Key_Matrix[Key_Loop].Changed = 0;
+										break;
+									}
+								}
+							}
+							else{
+								Main_Release_Mouse(Key_Loop);
+							}
+							
+						break;
+						case MODE_SYSTEM:
+							if(g_Key_Matrix[Key_Loop].Press){
+								Main_Send_System(Key_Loop);
+								if(g_Main_Setting.MacroStopMode == MACRO_PRESS_ANY){
+									if(g_StaticMachineEvent3Type == SM_EVENT3_MACRO_HANDLER){
+										g_StaticMachineEvent3Type = SM_EVENT3_IDLE;
+										g_Key_Matrix[Key_Loop].Changed = 0;
+										break;
+									}
+								}
+							}
+							else{
+								Main_Release_System(Key_Loop);
+							}
+						break;
+						case MODE_MEDIA:
+							if(g_Key_Matrix[Key_Loop].Press){
+								Main_Send_Media(Key_Loop);
+								Main_Media_Loader_Ready(g_Key_Matrix[Key_Loop].Key_Assignment[0],g_Key_Matrix[Key_Loop].Key_Assignment[1],\
+														    g_Key_Matrix[Key_Loop].Key_Assignment[2],g_Key_Matrix[Key_Loop].Key_Assignment[3]);
+								if(g_Main_Setting.MacroStopMode == MACRO_PRESS_ANY){
+									if(g_StaticMachineEvent3Type == SM_EVENT3_MACRO_HANDLER){
+										g_StaticMachineEvent3Type = SM_EVENT3_IDLE;
+										g_Key_Matrix[Key_Loop].Changed = 0;
+										break;
+									}
+								}
+							}
+							else{
+								Main_Release_Media(Key_Loop);
+								Main_Consumer_Loader_Clr();
+							}
+						break;
+						case MODE_SHORTCUT:
+							if(g_Key_Matrix[Key_Loop].Press){
+								Main_Send_ShortCut(Key_Loop);
+								if(g_Main_Setting.MacroStopMode == MACRO_PRESS_ANY){
+									if(g_StaticMachineEvent3Type == SM_EVENT3_MACRO_HANDLER){
+										g_StaticMachineEvent3Type = SM_EVENT3_IDLE;
+										g_Key_Matrix[Key_Loop].Changed = 0;
+										break;
+									}
+								}
+							}
+							else{
+								Main_Release_Keyboard(Key_Loop);
+							}
+						break;
+						case MODE_DPI:
+							if(g_Key_Matrix[Key_Loop].Press){
+								Main_Process_DPI(Key_Loop);
+								if(g_Main_Setting.MacroStopMode == MACRO_PRESS_ANY){
+									if(g_StaticMachineEvent3Type == SM_EVENT3_MACRO_HANDLER){
+										g_StaticMachineEvent3Type = SM_EVENT3_IDLE;
+										g_Key_Matrix[Key_Loop].Changed = 0;
+										break;
+									}
+								}
+							}
+							else{
+								if(g_Key_Matrix[Key_Loop].Key_Assignment[1] == 0x07){
+									g_GpioKeyboard.X_DPI_Press = 0;
+								}
+								if(g_Key_Matrix[Key_Loop].Key_Assignment[1] == 0x06){
+									g_GpioKeyboard.Y_DPI_Press = 0;
+								}
+								if(g_Key_Matrix[Key_Loop].Key_Assignment[1] == 0x08){ //return DPI_SW
+
+									//nsAPI_SSP_ADNS9800_Next_LED_XYResolution();
+									nsAPI_SSP_Set_Sensor_XY_Resolution();
+								       g_dMouse.SensorSetting.dbXDPICrtValue = (g_dMouse.SensorSetting.dbXDPILevel[g_dMouse.SensorSetting.dbDPIStage])&0x7F;
+								       g_dMouse.SensorSetting.dbYDPICrtValue = (g_dMouse.SensorSetting.dbYDPILevel[g_dMouse.SensorSetting.dbDPIStage])&0x7F;
+								}
+								g_Key_Matrix[Key_Loop].Changed = 0;
+							}
+						break;
+
+						case MODE_PROFILE_SWITCH:
+							if(g_Key_Matrix[Key_Loop].Press){
+								if(g_Main_Setting.MacroStopMode == MACRO_PRESS_ANY){
+									if(g_StaticMachineEvent3Type == SM_EVENT3_MACRO_HANDLER){
+										g_StaticMachineEvent3Type = SM_EVENT3_IDLE;
+										g_Key_Matrix[Key_Loop].Changed = 0;
+										break;
+									}
+								}
+
+								Main_Process_Profile(g_Key_Matrix[Key_Loop].Key_Assignment[1]);
+								Main_DPI_Loader_Ready(0,0,0);
+							}
+						break;
+						case MODE_INSTANT_PROFILE:
+							if(g_Key_Matrix[Key_Loop].Press){
+								if(g_Main_Setting.MacroStopMode == MACRO_PRESS_ANY){
+									if(g_Instant_Key.u8InstantKyeEnable==0)
+									{
+										if(g_StaticMachineEvent3Type == SM_EVENT3_MACRO_HANDLER){
+											g_StaticMachineEvent3Type = SM_EVENT3_IDLE;
+											g_Key_Matrix[Key_Loop].Changed = 0;
+											break;
+										}
+
+										g_Instant_Key.u8InstantProfile = g_dMouse.GeneralSetting.dbProfileIndex;
+										g_Instant_Key.u8InstantKyeNum = Key_Loop ;
+										g_Instant_Key.u8InstantKyeEnable = 1 ;
+										Main_Process_Profile(g_Key_Matrix[Key_Loop].Key_Assignment[1]);
+										Main_DPI_Loader_Ready(0,0,0);
+
+									}
+								}
+
+							}
+							else
+							{
+								if(g_Instant_Key.u8InstantKyeEnable)
+								{
+
+									if(g_Main_Setting.MacroStopMode == MACRO_PRESS_ANY){
+										if(g_StaticMachineEvent3Type == SM_EVENT3_MACRO_HANDLER){
+											g_StaticMachineEvent3Type = SM_EVENT3_IDLE;
+											//g_Key_Matrix[Key_Loop].Changed = 0;
+											//break;
+										}
+									}
+
+									g_Instant_Key.u8InstantKyeEnable = 0 ;
+									g_Instant_Key.u8InstantKyeNum = 0xFF ;
+									Main_Process_Profile(g_Instant_Key.u8InstantProfile);
+									Main_DPI_Loader_Ready(0,0,0);
+
+								}
+							}
+						break;
+
+						case MODE_SPECIAL:
+							if(g_Key_Matrix[Key_Loop].Press){
+								if(g_Main_Setting.MacroStopMode == MACRO_PRESS_ANY){
+									if(g_StaticMachineEvent3Type == SM_EVENT3_MACRO_HANDLER){
+										g_StaticMachineEvent3Type = SM_EVENT3_IDLE;
+										g_Key_Matrix[Key_Loop].Changed = 0;
+										break;
+									}
+								}
+								switch(g_Key_Matrix[Key_Loop].Key_Assignment[3]){
+									case 0x20:
+										Main_Zoon_In();
+									break;
+									case 0x21:
+										Main_Zoon_Out();
+									break;
+									case 0x22:
+										Main_Fire_Key(g_Key_Matrix[Key_Loop].Key_Assignment[2]);
+									break;
+									case 0x23:
+										Main_Launch_AP();
+									break;
+								}
+								g_Key_Matrix[Key_Loop].Changed = 0;
+							}
+						break;
+						case MODE_MACRO:
+							if(g_Key_Matrix[Key_Loop].Press){
+								if(g_StaticMachineEvent3Type != SM_EVENT3_MACRO_HANDLER){
+									g_Key_Matrix_Attr.KeyTableNum = g_Key_Matrix[Key_Loop].Key_Assignment[3];
+									g_Key_Matrix_Attr.KeyLoop = g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].Repeat_Count;
+									g_Key_Matrix_Attr.DecKeyLoop= g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].Repeat_Count;
+									g_Key_Matrix_Attr.KeyAction = 0;
+									g_Key_Matrix_Attr.KeyDelay = 0;
+									g_Key_Matrix_Attr.fKeyDelay = 0;
+									g_StaticMachineEvent3Type = SM_EVENT3_MACRO_HANDLER;	//Enable macro key sending
+
+								}
+								else{
+									g_StaticMachineEvent3Type = SM_EVENT3_IDLE;
+
+								}
+								g_Key_Matrix[Key_Loop].Changed = 0;
+							}
+							else{
+							#if 0
+								if(g_Main_Setting.MacroStopMode == MACRO_RELEASE_KEY){
+									g_StaticMachineEvent3Type = SM_EVENT3_IDLE;
+								}
+							#endif
+								//Check macro stop mode
+
+							}
+
+						break;
+					}
+				}
+			}
+///------------------------------------------------------------ Temp 1
+			if(g_Key_Matrix[12].Changed == 1){
+				g_Key_Matrix[12].Changed = 0;
+				//xprintf("B",0);
+				//Scroll action
+				if(g_GpioKeyboard.X_DPI_Press == 1){
+					//DPI Process;
+					//nsAPI_SSP_ADNS9800_INC_XResolution();
+					//Main_DPI_Loader_Ready(0x07,g_dMouse.SensorSetting.dbDPIStage,g_dMouse.SensorSetting.dbXDPILevelIndex);
+					nsAPI_SSP_ADNS9800_Wheel_INC_XResolution();
+					Main_DPI_Loader_Ready(0x07,g_dMouse.SensorSetting.dbDPIStage,g_dMouse.SensorSetting.dbXDPICrtValue);
+				}
+				else if(g_GpioKeyboard.Y_DPI_Press == 1){
+					//DPI Process;
+					//nsAPI_SSP_ADNS9800_INC_YResolution();
+					//Main_DPI_Loader_Ready(0x06,g_dMouse.SensorSetting.dbDPIStage,g_dMouse.SensorSetting.dbYDPILevelIndex);
+					nsAPI_SSP_ADNS9800_Wheel_INC_YResolution();
+					Main_DPI_Loader_Ready(0x06,g_dMouse.SensorSetting.dbDPIStage,g_dMouse.SensorSetting.dbYDPICrtValue);
+
+				}
+				else{	//process key
+					switch(g_Key_Matrix[12].Key_Assignment[0]){
+						case MODE_KEYBOARD:
+							if(g_Key_Matrix[12].Press){
+								Main_Send_Keyboard(12);
+								while(g_Repot_Process.Keyboard_Report_In==1){
+									nsAPI_Main_KeyboardInReportHandler();
+								}
+								g_Repot_Process.Keyboard_Report_In=1;
+								while(g_Repot_Process.Keyboard_Report_In==1){
+									nsAPI_Main_KeyboardInReportHandler();
+								}
+							}
+						break;
+						case MODE_MOUSE:
+							if(g_Key_Matrix[12].Press){
+								Main_Send_Mouse(12);
+								while(g_Repot_Process.Mouse_Report_In==1){
+									nsAPI_Main_MouseInReportHandler();
+								}
+								g_Repot_Process.Mouse_Report_In=1;
+								while(g_Repot_Process.Mouse_Report_In==1){
+									nsAPI_Main_MouseInReportHandler();
+								}
+							}
+						break;
+						case MODE_SYSTEM:
+							if(g_Key_Matrix[12].Press){
+								Main_Send_System(12);
+							}
+							else{
+								Main_Release_System(12);
+							}
+						break;
+						case MODE_MEDIA:
+							if(g_Key_Matrix[12].Press){
+								Main_Send_Media(12);
+								while(g_Repot_Process.Media_Report_In == 1){
+								nsAPI_Main_MediaInReportHandler();
+								}
+								Main_Media_Loader_Ready(g_Key_Matrix[12].Key_Assignment[0],g_Key_Matrix[12].Key_Assignment[1],\
+														    g_Key_Matrix[12].Key_Assignment[2],g_Key_Matrix[12].Key_Assignment[3]);
+								Main_Consumer_Loader_Clr();
+								while(g_Repot_Process.Consumer_Report_In == 1)
+								nsAPI_Main_ConsumerInReportHandler();
+
+								Main_Clr_Media(12);
+								g_Repot_Process.Media_Report_In = 1;
+								while(g_Repot_Process.Media_Report_In==1){
+									nsAPI_Main_MediaInReportHandler();
+								}
+								//Main_Consumer_Loader_Clr();
+							}
+						break;
+						case MODE_SHORTCUT:
+							if(g_Key_Matrix[12].Press){
+								Main_Send_ShortCut(12);
+								while(g_Repot_Process.Shortcut_Report_In==1){
+									nsAPI_Main_ShortcutInReportHandler();
+								}
+								g_Repot_Process.Shortcut_Report_In=1;
+								while(g_Repot_Process.Shortcut_Report_In==1){
+									nsAPI_Main_ShortcutInReportHandler();
+								}
+							}
+						break;
+						case MODE_DPI:
+							if(g_Key_Matrix[12].Press){
+								switch(g_Key_Matrix[12].Key_Assignment[1]){
+									case 0x06:
+										//nsAPI_SSP_ADNS9800_INC_YResolution();
+										//Main_DPI_Loader_Ready(g_Key_Matrix[12].Key_Assignment[1],g_dMouse.SensorSetting.dbDPIStage,g_dMouse.SensorSetting.dbYDPILevelIndex);
+										nsAPI_SSP_ADNS9800_Wheel_INC_YResolution();
+										Main_DPI_Loader_Ready(g_Key_Matrix[12].Key_Assignment[1],g_dMouse.SensorSetting.dbDPIStage,g_dMouse.SensorSetting.dbYDPICrtValue);
+									break;
+									case 0x07:
+										//nsAPI_SSP_ADNS9800_INC_XResolution();
+										//Main_DPI_Loader_Ready(g_Key_Matrix[12].Key_Assignment[1],g_dMouse.SensorSetting.dbDPIStage,g_dMouse.SensorSetting.dbXDPILevelIndex);
+										nsAPI_SSP_ADNS9800_Wheel_INC_XResolution();
+										Main_DPI_Loader_Ready(g_Key_Matrix[12].Key_Assignment[1],g_dMouse.SensorSetting.dbDPIStage,g_dMouse.SensorSetting.dbXDPICrtValue);
+									break;
+									case 0xf0:
+										nsAPI_SSP_ADNS9800_INC_XYResolution();
+										Main_DPI_Loader_Ready(g_Key_Matrix[12].Key_Assignment[1],g_dMouse.SensorSetting.dbDPIStage,0);
+									break;
+								}
+							}
+						break;
+
+						case MODE_PROFILE_SWITCH:
+							if(g_Key_Matrix[12].Press){
+								Main_Process_Profile(g_Key_Matrix[12].Key_Assignment[1]);
+								Main_DPI_Loader_Ready(0,0,0);
+							}
+						break;
+
+						case MODE_SPECIAL:
+							if(g_Key_Matrix[12].Press){
+								if(g_Main_Setting.MacroStopMode == MACRO_PRESS_ANY){
+									if(g_StaticMachineEvent3Type == SM_EVENT3_MACRO_HANDLER){
+										g_StaticMachineEvent3Type = SM_EVENT3_IDLE;
+										g_Key_Matrix[12].Changed = 0;
+										break;
+									}
+								}
+								switch(g_Key_Matrix[12].Key_Assignment[3]){
+									case 0x20:
+										Main_Zoon_In();
+									break;
+									case 0x21:
+										Main_Zoon_Out();
+									break;
+									case 0x22:
+										Main_Fire_Key(g_Key_Matrix[Key_Loop].Key_Assignment[2]);
+									break;
+									case 0x23:
+										Main_Launch_AP();
+									break;
+								}
+								g_Key_Matrix[12].Changed = 0;
+							}
+						break;
+						case MODE_MACRO:
+							if(g_StaticMachineEvent3Type != SM_EVENT3_MACRO_HANDLER){
+								g_Key_Matrix_Attr.KeyTableNum = g_Key_Matrix[12].Key_Assignment[3];
+								g_Key_Matrix_Attr.KeyLoop = g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].Repeat_Count;
+								g_Key_Matrix_Attr.DecKeyLoop= g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].Repeat_Count;
+								g_Key_Matrix_Attr.KeyAction = 0;
+								g_Key_Matrix_Attr.KeyDelay = 0;
+								g_Key_Matrix_Attr.fKeyDelay = 0;
+								g_StaticMachineEvent3Type = SM_EVENT3_MACRO_HANDLER;	//Enable macro key sending
+
+							}
+							else{
+								g_StaticMachineEvent3Type = SM_EVENT3_IDLE;
+
+							}
+						break;
+					}
+
+				}
+			}
+			else{
+
+
+			}
+///------------------------------------------------------------ Temp 12
+			if(g_Key_Matrix[13].Changed == 1){
+				g_Key_Matrix[13].Changed = 0;
+				//xprintf("F",0);
+				//Scroll action
+				if(g_GpioKeyboard.X_DPI_Press == 1){
+					//DPI Process;
+					//nsAPI_SSP_ADNS9800_DEC_XResolution();
+					//Main_DPI_Loader_Ready(0x07,g_dMouse.SensorSetting.dbDPIStage,g_dMouse.SensorSetting.dbXDPILevelIndex);
+					nsAPI_SSP_ADNS9800_Wheel_DEC_XResolution();
+					Main_DPI_Loader_Ready(0x07,g_dMouse.SensorSetting.dbDPIStage,g_dMouse.SensorSetting.dbXDPICrtValue);
+				}
+				else if(g_GpioKeyboard.Y_DPI_Press == 1){
+					//DPI Process;
+					//nsAPI_SSP_ADNS9800_DEC_YResolution();
+					//Main_DPI_Loader_Ready(0x06,g_dMouse.SensorSetting.dbDPIStage,g_dMouse.SensorSetting.dbYDPILevelIndex);
+					nsAPI_SSP_ADNS9800_Wheel_DEC_YResolution();
+					Main_DPI_Loader_Ready(0x06,g_dMouse.SensorSetting.dbDPIStage,g_dMouse.SensorSetting.dbYDPICrtValue);
+				}
+				else{	//process key
+					switch(g_Key_Matrix[13].Key_Assignment[0]){
+						case MODE_KEYBOARD:
+							if(g_Key_Matrix[13].Press){
+								Main_Send_Keyboard(13);
+								while(g_Repot_Process.Keyboard_Report_In==1){
+									nsAPI_Main_KeyboardInReportHandler();
+								}
+								g_Repot_Process.Keyboard_Report_In=1;
+								while(g_Repot_Process.Keyboard_Report_In==1){
+									nsAPI_Main_KeyboardInReportHandler();
+								}
+							}
+						break;
+						case MODE_MOUSE:
+							if(g_Key_Matrix[13].Press){
+								Main_Send_Mouse(13);
+								while(g_Repot_Process.Mouse_Report_In==1){
+									nsAPI_Main_MouseInReportHandler();
+								}
+								g_Repot_Process.Mouse_Report_In=1;
+								while(g_Repot_Process.Mouse_Report_In==1){
+									nsAPI_Main_MouseInReportHandler();
+								}
+							}
+						break;
+						case MODE_SYSTEM:
+							if(g_Key_Matrix[13].Press){
+								Main_Send_System(13);
+							}
+							else{
+								Main_Release_System(13);
+							}
+						break;
+						case MODE_MEDIA:
+							if(g_Key_Matrix[13].Press){
+								Main_Send_Media(13);
+								while(g_Repot_Process.Media_Report_In == 1){
+								nsAPI_Main_MediaInReportHandler();
+								}
+								Main_Media_Loader_Ready(g_Key_Matrix[13].Key_Assignment[0],g_Key_Matrix[13].Key_Assignment[1],\
+														    g_Key_Matrix[13].Key_Assignment[2],g_Key_Matrix[13].Key_Assignment[3]);
+								Main_Consumer_Loader_Clr();
+								while(g_Repot_Process.Media_Report_In==1){
+									nsAPI_Main_MediaInReportHandler();
+								}
+								Main_Clr_Media(13);
+								g_Repot_Process.Media_Report_In=1;
+								while(g_Repot_Process.Media_Report_In==1){
+									nsAPI_Main_MediaInReportHandler();
+								}
+								//Main_Consumer_Loader_Clr();
+							}
+						break;
+						case MODE_SHORTCUT:
+							if(g_Key_Matrix[13].Press){
+								Main_Send_ShortCut(13);
+								while(g_Repot_Process.Shortcut_Report_In==1){
+									nsAPI_Main_ShortcutInReportHandler();
+								}
+								g_Repot_Process.Shortcut_Report_In=1;
+								while(g_Repot_Process.Shortcut_Report_In==1){
+									nsAPI_Main_ShortcutInReportHandler();
+								}
+							}
+						break;
+						case MODE_DPI:
+							if(g_Key_Matrix[13].Press){
+								switch(g_Key_Matrix[13].Key_Assignment[1]){
+									case 0x06:
+										//nsAPI_SSP_ADNS9800_DEC_YResolution();
+										//Main_DPI_Loader_Ready(g_Key_Matrix[13].Key_Assignment[1],g_dMouse.SensorSetting.dbDPIStage,g_dMouse.SensorSetting.dbYDPILevelIndex);
+										nsAPI_SSP_ADNS9800_Wheel_DEC_YResolution();
+										Main_DPI_Loader_Ready(g_Key_Matrix[13].Key_Assignment[1],g_dMouse.SensorSetting.dbDPIStage,g_dMouse.SensorSetting.dbYDPICrtValue);
+									break;
+									case 0x07:
+										//nsAPI_SSP_ADNS9800_DEC_XResolution();
+										//Main_DPI_Loader_Ready(g_Key_Matrix[13].Key_Assignment[1],g_dMouse.SensorSetting.dbDPIStage,g_dMouse.SensorSetting.dbXDPILevelIndex);
+										nsAPI_SSP_ADNS9800_Wheel_DEC_XResolution();
+										Main_DPI_Loader_Ready(g_Key_Matrix[13].Key_Assignment[1],g_dMouse.SensorSetting.dbDPIStage,g_dMouse.SensorSetting.dbXDPICrtValue);
+									break;
+									case 0xf0:
+										nsAPI_SSP_ADNS9800_DEC_XYResolution();
+										Main_DPI_Loader_Ready(g_Key_Matrix[13].Key_Assignment[1],g_dMouse.SensorSetting.dbDPIStage,0);
+									break;
+								}
+							}
+						break;
+						case MODE_PROFILE_SWITCH:
+							if(g_Key_Matrix[13].Press){
+								Main_Process_Profile(g_Key_Matrix[13].Key_Assignment[1]);
+								Main_DPI_Loader_Ready(0,0,0);
+							}
+						break;
+
+						case MODE_SPECIAL:
+							if(g_Key_Matrix[13].Press){
+								if(g_Main_Setting.MacroStopMode == MACRO_PRESS_ANY){
+									if(g_StaticMachineEvent3Type == SM_EVENT3_MACRO_HANDLER){
+										g_StaticMachineEvent3Type = SM_EVENT3_IDLE;
+										g_Key_Matrix[13].Changed = 0;
+										break;
+									}
+								}
+								switch(g_Key_Matrix[13].Key_Assignment[3]){
+									case 0x20:
+										Main_Zoon_In();
+									break;
+									case 0x21:
+										Main_Zoon_Out();
+									break;
+									case 0x22:
+										Main_Fire_Key(g_Key_Matrix[Key_Loop].Key_Assignment[2]);
+									break;
+									case 0x23:
+										Main_Launch_AP();
+									break;
+								}
+								g_Key_Matrix[13].Changed = 0;
+							}
+						break;
+						case MODE_MACRO:
+							if(g_StaticMachineEvent3Type != SM_EVENT3_MACRO_HANDLER){
+								g_Key_Matrix_Attr.KeyTableNum = g_Key_Matrix[13].Key_Assignment[3];
+								g_Key_Matrix_Attr.KeyLoop = g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].Repeat_Count;
+								g_Key_Matrix_Attr.DecKeyLoop= g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].Repeat_Count;
+								g_Key_Matrix_Attr.KeyAction = 0;
+								g_Key_Matrix_Attr.KeyDelay = 0;
+								g_Key_Matrix_Attr.fKeyDelay = 0;
+								g_StaticMachineEvent3Type = SM_EVENT3_MACRO_HANDLER;	//Enable macro key sending
+
+							}
+							else{
+								g_StaticMachineEvent3Type = SM_EVENT3_IDLE;
+
+							}
+						break;
+					}
+
+				}
+			}
+///------------------------------------------------------------ Temp 13
+#endif
+			
+			g_StaticMachineEvent2Type = SM_EVENT2_IDLE;
+		}
+		break;
+///================================================================== KeyScan
+		case SM_EVENT2_IDLE:
+			if(g_Sensor_Data.Changed == 1){
+				nsAPI_Main_MouseInReportHandler();
+			}
+		default:
+		break;
+	}
+
+}
+#endif
+
+#ifdef M_Macro_Key
+void Mapp_StaticMachineEvent3(void)
+{
+	switch(g_StaticMachineEvent3Type)
+	{
+		case SM_EVENT3_MACRO_HANDLER:
+			MacroKey_Handler();
+		break;
+
+		case SM_EVENT3_IDLE:
+			if (u8MarcoKeyIn)
+			{
+				MarcoKey_Release_Key();
+			}
+		default:
+		break;
+	}
+}
+#endif
+
+#ifdef M_EVENT6_7
+void Mapp_StaticMachineEvent6(void)
+{
+	U8 i;
+
+	 switch(g_StaticMachineEvent6Type){
+		 case SM_EVENT6_IDLE:
+			 switch(g_Main_Setting.OutReport[GIdx0]){
+				 case REPORT_ID:
+					 switch(g_Main_Setting.OutReport[GIdx1]){
+						 //Get Report Command
+						 case GET_FIRMWAVE_VERSION:
+							 g_StaticMachineEvent7Type = SM_EVENT7_GET_FIRMWAVE_VERSION;
+						 break;
+						 case GET_REPORT_RATE:
+							 g_StaticMachineEvent7Type = SM_EVENT7_GET_REPORT_RATE;
+						 break;
+						 case GET_CURRENT_PROFILE:
+							 g_StaticMachineEvent7Type = SM_EVENT7_GET_CURRENT_PROFILE;
+						 break;
+						 case GET_DPI_Stage:
+							 g_StaticMachineEvent7Type = SM_EVENT7_GET_DPI_Stage;
+						 break;
+					 #if 0
+						 case GET_MACRO_STOP_MODE:
+							 g_StaticMachineEvent7Type = SM_EVENT7_GET_MACRO_STOP_MODE;
+						 break;
+					 #endif
+						 case GET_LED_COLOR:
+							 g_dMouse.GeneralSetting.dbProfileIndex=g_Main_Setting.OutReport[GIdx2];
+							 g_dMouse.GeneralSetting.dbLedArea=g_Main_Setting.OutReport[GIdx3];
+							 g_StaticMachineEvent7Type = SM_EVENT7_GET_LED_COLOR;
+						 break;
+						 case GET_LED_INTENSITY:
+							 g_dMouse.GeneralSetting.dbProfileIndex=g_Main_Setting.OutReport[GIdx2];
+							 g_dMouse.GeneralSetting.dbLedArea=g_Main_Setting.OutReport[GIdx3];
+							 g_StaticMachineEvent7Type = SM_EVENT7_GET_LED_INTENSITY;
+						 break;
+						 case GET_LED_PULSATION_EFFECT:
+							 g_dMouse.GeneralSetting.dbProfileIndex=g_Main_Setting.OutReport[GIdx2];
+							 g_dMouse.GeneralSetting.dbLedArea=g_Main_Setting.OutReport[GIdx3];
+							 g_StaticMachineEvent7Type = SM_EVENT7_GET_LED_PULSATION_EFFECT;
+						 break;
+					 #if 0 //no use
+						 case GET_X_Y_SENSITIVITY:
+							 g_StaticMachineEvent7Type = SM_EVENT7_GET_X_Y_SENSITIVITY;
+						 break;
+					 #endif
+						 case GET_ANGLE_SNAPPING:
+							 g_StaticMachineEvent7Type = SM_EVENT7_GET_ANGLE_SNAPPING;
+						 break;
+						 case GET_LIFT_DETECTION:
+							 g_StaticMachineEvent7Type = SM_EVENT7_GET_LIFT_DETECTION;
+						 break;
+                        case GET_OS_MODE:
+                            g_StaticMachineEvent7Type = SM_EVENT7_GET_OS_MODE;
+                            break;
+						 case GET_DPI:
+							 g_Main_Setting.Total_Size = 2;
+							 g_StaticMachineEvent7Type = SM_EVENT7_GET_DPI;
+							 g_USBCore_Setting.EP0_GetReq = 1;			 //Send Data;
+						 break;
+						 case GET_SENSOR_STATUS:
+							 g_StaticMachineEvent7Type = SM_EVENT7_GET_SENSOR_STATUS;
+						 break;
+						 case GET_KEY_MATRIX:
+							 g_dMouse.GeneralSetting.dbProfileIndex = g_Main_Setting.OutReport[GIdx2];
+							 g_StaticMachineEvent7Type = SM_EVENT7_GET_KEY_MATRIX;
+							 g_Main_Setting.Total_Size = 7;
+							 g_USBCore_Setting.EP0_GetReq = 1;
+						 break;
+					 #if 0
+						 case GET_SENSOR_SROM:
+							 g_StaticMachineEvent7Type = SM_EVENT7_GET_SENSOR_SROM;
+							 g_Main_Setting.Total_Size =384;// 3070/8->383*8+6
+							 g_Main_Setting.ADR_Offset=0;
+							 g_USBCore_Setting.EP0_GetReq = 1;
+						 break;
+					 #endif
+						 case GET_MARCO_KEY:
+							 g_dMouse.GeneralSetting.dbProfileIndex = g_Main_Setting.OutReport[GIdx2];
+							 g_StaticMachineEvent7Type = SM_EVENT7_GET_MARCO_KEY;
+							 g_Main_Setting.Total_Size =1708;// 1708/8->213*8+4
+							 g_Set_Matrix.Action = 0;
+							 g_Set_Matrix.Key_Group=0;
+							 g_Set_Matrix.M_Data_Byte = 0;
+							 g_Main_Setting.ADR_Offset=0;
+							 g_USBCore_Setting.EP0_GetReq = 1;
+						 break;
+					 #if 0
+						 case GET_FLASH_INFO:
+							 g_StaticMachineEvent7Type = SM_EVENT7_GET_FLASH_INFO;
+							 g_Main_Setting.Total_Size =2;
+							 g_Main_Setting.ADR_Offset=0;
+							 g_USBCore_Setting.EP0_GetReq = 1;
+						 break;
+					 #endif
+						 //Set Report Command
+						 case SM_EVENT6_SET_REPORT_RATE:
+							// g_SSP_ADNS9800_Setting.sSensorStatus |= SSP_FLAG_ADNS9800_SAVE_REPORT_RATE;
+							 //nsAPI_SSP_ADNS9800_SetReportRate(g_Main_Setting.OutReport[GIdx2]);
+							 //nsAPI_I2C_Write_Database(RM_REPORT_RATE_ADR,&g_dMouse.SensorSetting.dbReportRate,1);
+						 #if 0
+							 WDT_CLK_Setup(1);
+							 WDTInit();
+							 while(1);
+						 #else
+							 //NVIC_SystemReset();
+
+							 NDrv_USB_Connect(FALSE);/* USB Dis-Connect */
+							 NDrv_USB_Reset();
+							 NDrv_USB_Connect(TRUE);/* USB Connect */
+							// nsAPI_Database_Init();
+						 #endif
+							 //g_USBCore_Setting.EP0_SetReq = 0; //Command finish
+						 break;
+						 case SM_EVENT6_SET_SENSOR_STATUS:
+							 g_dMouse.SensorSetting.dbSensorStatus = g_Main_Setting.OutReport[GIdx2];
+							 //nsAPI_SSP_ADNS9800_Set_SensorStatus(g_dMouse.SensorSetting.dbSensorStatus);
+							 //nsAPI_I2C_Write_Database(RM_SENSOR_STATUS_ADR,&g_dMouse.SensorSetting.dbSensorStatus,1);
+							 //g_USBCore_Setting.EP0_SetReq = 0; //Command finish
+						 break;
+						 case SM_EVENT6_SET_CURRENT_PROFILE:
+							 g_dMouse.GeneralSetting.dbProfileIndex = g_Main_Setting.OutReport[GIdx2];
+							 //nsAPI_I2C_Write_Database(RM_PROFILE_NUMBER_ADR,&g_dMouse.GeneralSetting.dbProfileIndex,1);
+							 //g_USBCore_Setting.EP0_SetReq = 0; //Command finish
+							 //nsAPI_Database_Init();
+						 break;
+						 case SM_EVENT6_SET_KEY_MATRIX:
+							 g_dMouse.GeneralSetting.dbProfileIndex = g_Main_Setting.OutReport[GIdx2];
+							 g_Main_Setting.Total_Size = 7; 	 //14Key Total 56 bytes, send 7 times
+							 g_Main_Setting.ADR_Offset = 0;
+							 g_StaticMachineEvent6Type = SM_EVENT6_SET_KEY_MATRIX; //Command not finish
+						 break;
+					 #if 1
+						 case SM_EVENT6_SET_MACRO:
+							 g_dMouse.GeneralSetting.dbProfileIndex = g_Main_Setting.OutReport[GIdx2];
+							 g_Main_Setting.Total_Size = 1708;//213*8+4=1708 //14Key 122 bytes/Key,
+							 g_Set_Matrix.Key_Group = 0;
+							 g_Set_Matrix.Action = 0;
+							 g_Set_Matrix.M_Data_Byte = 0;
+							 g_Main_Setting.ADR_Offset = 0;
+							 g_StaticMachineEvent6Type = SM_EVENT6_SET_MACRO; //Command not finish
+						 break;
+					 #endif
+						 case SM_EVENT6_SET_DPI:
+							 g_dMouse.GeneralSetting.dbProfileIndex = g_Main_Setting.OutReport[GIdx2];
+							 g_Main_Setting.Total_Size =2;//16;
+							 g_Main_Setting.ADR_Offset = 0;
+							 g_StaticMachineEvent6Type = SM_EVENT6_SET_DPI;
+						 break;
+				 #if 0
+						 case SM_EVENT6_SET_MACRO_STOP_MODE:
+							 g_dMouse.GeneralSetting.dbProfileIndex = g_Main_Setting.OutReport[GIdx2];
+							 g_StaticMachineEvent6Type = SM_EVENT6_SET_MACRO_STOP_MODE;
+							 //g_USBCore_Setting.EP0_SetReq = 0; //Command finish
+						 break;
+				 #endif
+						 case SM_EVENT6_STOP_MACRO:
+							 //g_StaticMachineEvent6Type = SM_EVENT6_STOP_MACRO;
+							 //xprintf("\r\n g_StaticMachineEvent3Type=%x",g_StaticMachineEvent3Type);
+							 if(g_StaticMachineEvent3Type == SM_EVENT3_MACRO_HANDLER){
+								 g_StaticMachineEvent3Type = SM_EVENT3_IDLE;
+								 g_Key_Matrix_Attr.DecKeyLoop=0;
+							 }
+						 break;
+						 case SM_EVENT6_SET_DIP_STAGE:
+						  {
+							 g_dMouse.GeneralSetting.dbProfileIndex = g_Main_Setting.OutReport[GIdx2];
+							 g_dMouse.SensorSetting.dbDPIStage=g_Main_Setting.OutReport[GIdx3];
+							// nsAPI_SSP_ADNS9800_Next_LED_XYResolution();
+							 //nsAPI_SSP_Set_Sensor_XY_Resolution();
+							 #if 0
+							 g_dMouse.SensorSetting.dbXDPILevelIndex =g_dMouse.SensorSetting.dbDPIStage;
+							 g_dMouse.SensorSetting.dbYDPILevelIndex =g_dMouse.SensorSetting.dbDPIStage;
+							 g_dMouse.SensorSetting.dbXDPICrtValue =g_dMouse.SensorSetting.dbXDPILevel[g_dMouse.SensorSetting.dbXDPILevelIndex];
+							 g_dMouse.SensorSetting.dbYDPICrtValue =g_dMouse.SensorSetting.dbYDPILevel[g_dMouse.SensorSetting.dbXDPILevelIndex];
+							 #else
+							 g_dMouse.SensorSetting.dbXDPICrtValue =(g_dMouse.SensorSetting.dbXDPILevel[g_dMouse.SensorSetting.dbDPIStage])&0x7F;
+							 g_dMouse.SensorSetting.dbYDPICrtValue =(g_dMouse.SensorSetting.dbYDPILevel[g_dMouse.SensorSetting.dbDPIStage])&0x7F;
+							 #endif
+
+							 if(g_dMouse.GeneralSetting.dbProfileIndex>0)
+							 {
+								 //nsAPI_I2C_Write_Database(RM_PROFILE_0_START_ADR+(RM_PROFILE_LEN*(g_dMouse.GeneralSetting.dbProfileIndex-1))+DPI_STAGE_OFFSET,&g_dMouse.SensorSetting.dbDPIStage,DPI_STAGE_SIZE);
+								 #if 0
+								 //if(g_dMouse.SensorSetting.dbDPIStage <=6)
+								 {
+									 nsAPI_I2C_Write_Database(RM_PROFILE_0_START_ADR+(RM_PROFILE_LEN*(g_dMouse.GeneralSetting.dbProfileIndex-1))+X_STAGE_OFFSET,&g_dMouse.SensorSetting.dbXDPILevelIndex,X_STAGE_SIZE);
+									 nsAPI_I2C_Write_Database(RM_PROFILE_0_START_ADR+(RM_PROFILE_LEN*(g_dMouse.GeneralSetting.dbProfileIndex-1))+Y_STAGE_OFFSET,&g_dMouse.SensorSetting.dbYDPILevelIndex,Y_STAGE_SIZE);
+									 nsAPI_I2C_Write_Database(RM_PROFILE_0_START_ADR+(RM_PROFILE_LEN*(g_dMouse.GeneralSetting.dbProfileIndex-1))+X_CURRENT_DPI_OFFSET,&g_dMouse.SensorSetting.dbXDPICrtValue,X_CURRENT_DPI_SIZE);
+									 nsAPI_I2C_Write_Database(RM_PROFILE_0_START_ADR+(RM_PROFILE_LEN*(g_dMouse.GeneralSetting.dbProfileIndex-1))+Y_CURRENT_DPI_OFFSET,&g_dMouse.SensorSetting.dbYDPICrtValue,Y_CURRENT_DPI_SIZE);
+								 }
+								 #endif
+							 }
+							 //g_USBCore_Setting.EP0_SetReq = 0; //Command finish
+						  }
+						 break;
+						 case SM_EVENT6_SET_LED_COLOR:
+
+							 g_dMouse.GeneralSetting.dbProfileIndex = g_Main_Setting.OutReport[GIdx2];
+							 g_dMouse.GeneralSetting.dbLedArea=g_Main_Setting.OutReport[GIdx3];
+							 g_dMouse.GeneralSetting.dbLedColor[g_dMouse.GeneralSetting.dbLedArea].R=g_Main_Setting.OutReport[GIdx4];
+							 g_dMouse.GeneralSetting.dbLedColor[g_dMouse.GeneralSetting.dbLedArea].G=g_Main_Setting.OutReport[GIdx5];
+							 g_dMouse.GeneralSetting.dbLedColor[g_dMouse.GeneralSetting.dbLedArea].B=g_Main_Setting.OutReport[GIdx6];
+
+							 #if 0
+							 nsAPI_SSP_ADNS9800_Set_LEDColor(g_dMouse.GeneralSetting.dbLedArea,\
+																  g_dMouse.GeneralSetting.dbLedColor[g_dMouse.GeneralSetting.dbLedArea].R,\
+																  g_dMouse.GeneralSetting.dbLedColor[g_dMouse.GeneralSetting.dbLedArea].G,\
+																  g_dMouse.GeneralSetting.dbLedColor[g_dMouse.GeneralSetting.dbLedArea].B);
+							 #endif
+							 
+							 if(g_dMouse.GeneralSetting.dbProfileIndex>0)
+							 {
+								 //nsAPI_I2C_Write_Database(RM_PROFILE_0_START_ADR+(RM_PROFILE_LEN*(g_dMouse.GeneralSetting.dbProfileIndex-1))+AREA_1_LED_R_VALUE_OFFSET+(g_dMouse.GeneralSetting.dbLedArea*3),\
+															(U8 *)&g_dMouse.GeneralSetting.dbLedColor[g_dMouse.GeneralSetting.dbLedArea],AREA_1_LED_R_VALUE_SIZE*3);
+							 }
+							 //g_USBCore_Setting.EP0_SetReq = 0; //Command finish
+						 break;
+						 case SM_EVENT6_SET_LED_PULSATIOM:
+								 g_dMouse.GeneralSetting.dbProfileIndex = g_Main_Setting.OutReport[GIdx2];
+							 g_dMouse.GeneralSetting.dbLedArea=g_Main_Setting.OutReport[GIdx3];
+							 g_dMouse.GeneralSetting.dbLedPulsationEffect[g_dMouse.GeneralSetting.dbLedArea]=g_Main_Setting.OutReport[GIdx4];
+							 //nsAPI_SSP_ADNS9800_Set_LEDPulsationEffect(g_dMouse.GeneralSetting.dbLedArea,\
+																		 g_dMouse.GeneralSetting.dbLedPulsationEffect[g_dMouse.GeneralSetting.dbLedArea]);
+							 if(g_dMouse.GeneralSetting.dbProfileIndex>0)
+							 {
+								 //nsAPI_I2C_Write_Database(RM_PROFILE_0_START_ADR+(RM_PROFILE_LEN*(g_dMouse.GeneralSetting.dbProfileIndex-1))+AREA_1_LED_PULSATION_OFFSET+\
+														 (g_dMouse.GeneralSetting.dbLedArea*1),&g_dMouse.GeneralSetting.dbLedPulsationEffect[g_dMouse.GeneralSetting.dbLedArea],AREA_1_LED_PULSATION_SIZE);
+							 }
+							 //g_USBCore_Setting.EP0_SetReq = 0; //Command finish
+						 break;
+						 case SM_EVENT6_SET_LED_INTENSITY:
+							 g_dMouse.GeneralSetting.dbProfileIndex = g_Main_Setting.OutReport[GIdx2];
+							 g_dMouse.GeneralSetting.dbLedArea=g_Main_Setting.OutReport[GIdx3];
+							 g_dMouse.GeneralSetting.dbLedintensity[g_dMouse.GeneralSetting.dbLedArea]=g_Main_Setting.OutReport[GIdx4];
+							 //nsAPI_SSP_ADNS9800_Set_LEDIntensity(g_Main_Setting.OutReport[GIdx3],g_Main_Setting.OutReport[GIdx4]);
+							 if(g_dMouse.GeneralSetting.dbProfileIndex>0)
+							 {
+								// nsAPI_I2C_Write_Database(RM_PROFILE_0_START_ADR+(RM_PROFILE_LEN*(g_dMouse.GeneralSetting.dbProfileIndex-1))+AREA_1_LED_INTENSITY_OFFSET+\
+														 (g_dMouse.GeneralSetting.dbLedArea*1),&g_dMouse.GeneralSetting.dbLedintensity[g_dMouse.GeneralSetting.dbLedArea],AREA_1_LED_INTENSITY_SIZE);
+							  }
+							 //g_USBCore_Setting.EP0_SetReq = 0; //Command finish
+						 break;
+				 #if 0
+						 case SM_EVENT6_SET_SENSOR_SROM:
+						 {
+							 U8 u8Temp;
+							 g_Main_Setting.Total_Size =ADNS9800_SROM_TABLE_SIZE;
+							 g_Main_Setting.ADR_Offset = 0;
+							 g_StaticMachineEvent6Type = SM_EVENT6_SET_SENSOR_SROM; //Command not finish
+
+						 #if 1
+							 nsAPI_SSP_ADNS9800_Write(ADNS9800_CONFIGURATION_IV_ADDR,0x02);/*3K SROM Size*/
+							 nsAPI_SSP_ADNS9800_Write(ADNS9800_SROM_ENABLE_ADDR,0x1D);/*SROM Enable*/
+							 nsAPI_SSP_ADNS9800_Write(ADNS9800_SROM_ENABLE_ADDR,0x18);
+							 NDrv_SSP_ADNS9800_SSEL(LOW);
+							 u8Temp = (ADNS9800_SROM_LOAD_BURST_ADDR|0x80);
+							 nsAPI_SSP_Send(&u8Temp,1);
+						 #endif
+						 }
+						 break;
+				 #endif
+				 #if 0
+						 case SM_EVENT6_SET_SENSITIVITY:
+							 g_dMouse.GeneralSetting.dbProfileIndex = g_Main_Setting.OutReport[GIdx2];
+							 g_dMouse.SensorSetting.dbXSensitivity=g_Main_Setting.OutReport[GIdx3];
+							 g_dMouse.SensorSetting.dbYSensitivity=g_Main_Setting.OutReport[GIdx4];
+
+							 if(g_dMouse.GeneralSetting.dbProfileIndex>0)
+							 {
+								 nsAPI_I2C_Write_Database(RM_PROFILE_0_START_ADR+(RM_PROFILE_LEN*(g_dMouse.GeneralSetting.dbProfileIndex-1))+\
+															 X_SENSITIVITY_OFFSET,&g_dMouse.SensorSetting.dbXSensitivity,X_SENSITIVITY_SIZE);
+								 nsAPI_I2C_Write_Database(RM_PROFILE_0_START_ADR+(RM_PROFILE_LEN*(g_dMouse.GeneralSetting.dbProfileIndex-1))+\
+															 Y_SENSITIVITY_OFFSET,&g_dMouse.SensorSetting.dbYSensitivity,Y_SENSITIVITY_SIZE);
+							 }
+							 //g_USBCore_Setting.EP0_SetReq = 0; //Command finish
+						 break;
+				 #endif
+
+						 case SM_EVENT6_SET_ANGLE_SNAPPING:
+							 g_dMouse.GeneralSetting.dbProfileIndex = g_Main_Setting.OutReport[GIdx2];
+							 g_dMouse.SensorSetting.dbAngleSnapping=g_Main_Setting.OutReport[GIdx3];
+							 //nsAPI_SSP_ADNS9800_Set_AngleSnapping(g_Main_Setting.OutReport[GIdx3]);
+							 if(g_dMouse.GeneralSetting.dbProfileIndex>0)
+							 {
+								// nsAPI_I2C_Write_Database(RM_PROFILE_0_START_ADR+(RM_PROFILE_LEN*(g_dMouse.GeneralSetting.dbProfileIndex-1))+ANGLE_SNAPPING_OFFSET,\
+															 &g_dMouse.SensorSetting.dbAngleSnapping,ANGLE_SNAPPING_SIZE);
+							 }
+							 //g_USBCore_Setting.EP0_SetReq = 0; //Command finish
+						 break;
+						 case SM_EVENT6_SET_LIFT_DETECTION:
+							 g_dMouse.GeneralSetting.dbProfileIndex = g_Main_Setting.OutReport[GIdx2];
+							 g_dMouse.SensorSetting.dbLiftDetection=g_Main_Setting.OutReport[GIdx3];
+							 //nsAPI_SSP_ADNS9800_Set_LeftDetection(g_Main_Setting.OutReport[GIdx3]);
+							 if(g_dMouse.GeneralSetting.dbProfileIndex>0)
+							 {
+								// nsAPI_I2C_Write_Database(RM_PROFILE_0_START_ADR+(RM_PROFILE_LEN*(g_dMouse.GeneralSetting.dbProfileIndex-1))+LIFT_DETECTION_OFFSET,\
+															&g_dMouse.SensorSetting.dbLiftDetection,LIFT_DETECTION_SIZE);
+							 }
+							 //g_USBCore_Setting.EP0_SetReq = 0; //Command finish
+						 break;
+                         case SM_EVENT6_SET_OS_MODE: //Bit[0]: Window ,Bit[1]:MAC //0x00 => non-Know OS , 0x01:Window , 0x02:MAC
+                            g_Main_Setting.OS_ModeType = g_Main_Setting.OutReport[GIdx2];
+                            break;
+						 case SM_EVENT6_UPDATE_FIRMWARE: //BootLoader
+							 i = BL_UPGRADE;
+							// nsAPI_I2C_Write_Database(RM_BOOTLOADER_STATUS_ADR,&i,1);	 //Update firmware notice
+						 #if 0
+							 WDT_CLK_Setup(1);
+							 WDTInit();
+							 while(1);
+						 #else
+                             NDrv_USB_Connect(FALSE);//(Add)Abellee 20131126 Add USB DisConnect
+                             NDrv_USB_Reset(); //(Add)Abellee 20131126 Add USB Reset
+                             //nsAPI_SSP_Sensor_Delsyms(5);
+							 NVIC_SystemReset();
+						 #endif
+
+						 //break;
+					 }
+				 break;
+				 default:
+				 break;
+			 }
+		 break;
+
+		 case SM_EVENT6_SET_KEY_MATRIX:
+		 {
+			 U8 Key_Loop,Key_Number;
+			 Key_Number = 7-g_Main_Setting.Total_Size;
+			 Key_Number *= 2;
+			 for(Key_Loop = 0; Key_Loop < KEY_MATRIX_LEN; Key_Loop++){
+				 g_Key_Matrix[Key_Number].Key_Assignment[Key_Loop] = g_Main_Setting.OutReport[Key_Loop];
+				 g_Key_Matrix[Key_Number+1].Key_Assignment[Key_Loop] = g_Main_Setting.OutReport[Key_Loop+KEY_MATRIX_LEN];
+			 }
+			 if(g_dMouse.GeneralSetting.dbProfileIndex>0)
+			 {
+				// nsAPI_I2C_Write_Database(RM_PROFILE_0_START_ADR+(RM_PROFILE_LEN*(g_dMouse.GeneralSetting.dbProfileIndex-1))+KEY_MATRIX_OFFSET+g_Main_Setting.ADR_Offset,&g_Main_Setting.OutReport[0],8);
+			 }
+			 g_Main_Setting.Total_Size -= 1;
+			 g_Main_Setting.ADR_Offset += 8;
+
+			 if(g_Main_Setting.Total_Size  == 0){
+				 g_StaticMachineEvent6Type = SM_EVENT6_IDLE;
+			 }
+		 }
+		 break;
+
+		 case SM_EVENT6_SET_MACRO:
+		 {
+			 U8 Data_Pos;
+			 Data_Pos=0;
+			 while(Data_Pos < 8){
+				 if((g_Main_Setting.Total_Size% 122)==0){
+					 g_Macro_Key[g_Set_Matrix.Key_Group].Repeat_Count = g_Main_Setting.OutReport[Data_Pos];
+					 Data_Pos++;
+					 g_Macro_Key[g_Set_Matrix.Key_Group].Repeat_Count *= 256;
+					 g_Macro_Key[g_Set_Matrix.Key_Group].Repeat_Count += g_Main_Setting.OutReport[Data_Pos];
+					 g_Main_Setting.Total_Size--;
+				 }
+				 else{
+					 switch(g_Set_Matrix.M_Data_Byte){
+						 case 0:
+							 g_Macro_Key[g_Set_Matrix.Key_Group].Key_Attr[g_Set_Matrix.Action].u16Value = (U16)(g_Main_Setting.OutReport[Data_Pos]<<8);
+							 g_Set_Matrix.M_Data_Byte++;
+						 break;
+						 case 1:
+							 g_Macro_Key[g_Set_Matrix.Key_Group].Key_Attr[g_Set_Matrix.Action].u16Value += g_Main_Setting.OutReport[Data_Pos];
+							 g_Set_Matrix.M_Data_Byte++;
+						 break;
+						 case 2:
+							 g_Macro_Key[g_Set_Matrix.Key_Group].KeyCode[g_Set_Matrix.Action] = g_Main_Setting.OutReport[Data_Pos];
+							 g_Set_Matrix.Action++;
+							 if(g_Set_Matrix.Action>=40){
+								 g_Set_Matrix.Action = 0;
+								 g_Set_Matrix.Key_Group++;
+								 if(g_Set_Matrix.Key_Group >= 14){
+									 g_Set_Matrix.Key_Group=0;
+								 }
+							 }
+							 g_Set_Matrix.M_Data_Byte = 0;
+						 break;
+					 }
+
+				 }
+
+				 if(g_Main_Setting.Total_Size >0)
+					 g_Main_Setting.Total_Size--;
+
+				 if(g_Main_Setting.Total_Size  ==0)
+					 Data_Pos=8;
+
+				 Data_Pos++;
+			 }
+
+		 #if 0 //(ENABLE_UART)
+			 xprintf("\r\n S=%d",g_Main_Setting.Total_Size);
+			 xprintf("\r\n G=%d ",g_Set_Matrix.Key_Group);
+			 xprintf("\r\n O=%d ",g_Main_Setting.ADR_Offset);
+		 #endif
+
+			 if(g_dMouse.GeneralSetting.dbProfileIndex>0)
+			 {
+				 //if(g_Main_Setting.Total_Size ==0)
+				//	 nsAPI_I2C_Write_Database(RM_PROFILE_0_START_ADR+(RM_PROFILE_LEN*(g_dMouse.GeneralSetting.dbProfileIndex-1))+MARCO_TABLE_OFFSET+g_Main_Setting.ADR_Offset,&g_Main_Setting.OutReport[0],4);
+				// else
+				//	 nsAPI_I2C_Write_Database(RM_PROFILE_0_START_ADR+(RM_PROFILE_LEN*(g_dMouse.GeneralSetting.dbProfileIndex-1))+MARCO_TABLE_OFFSET+g_Main_Setting.ADR_Offset,&g_Main_Setting.OutReport[0],8);
+			 }
+
+			 if(g_Main_Setting.Total_Size ==0)
+			 {
+				 g_StaticMachineEvent6Type = SM_EVENT6_IDLE;
+			 }
+
+			 g_Main_Setting.ADR_Offset += 8;
+		 }
+		 break;
+
+#if 0
+		 case SM_EVENT6_SET_SENSOR_SROM:
+		 {
+			 U8 i;
+
+			 if(g_Main_Setting.Total_Size > 8){
+				 nsAPI_I2C_Write_Database(RM_SENSOR_SROM_EEPROM_ADR+g_Main_Setting.ADR_Offset,g_Main_Setting.OutReport,8);
+				 //nsAPI_I2C_Write_Database(RM_SENSOR_SROM_EEPROM_ADR+g_Main_Setting.ADR_Offset,/*g_Main_Setting.OutReport*/(U8 *)&ADNS9800_SROM_Table[0]+g_Main_Setting.ADR_Offset,8);
+				 for (i =0 ; i < 8 ; i++)
+				 {
+					 nsAPI_SSP_Send((U8 *)&g_Main_Setting.OutReport[0]+i, 1);
+					 //nsAPI_SSP_Send((U8 *)&ADNS9800_SROM_Table[0]+g_Main_Setting.ADR_Offset+i, 1);
+				 }
+
+				 g_Main_Setting.Total_Size -= 8;
+
+				 if(g_Main_Setting.Total_Size  == 0){
+					 g_StaticMachineEvent6Type = SM_EVENT6_IDLE;
+				 }
+			 }
+			 else{
+
+				 nsAPI_I2C_Write_Database(RM_SENSOR_SROM_EEPROM_ADR+g_Main_Setting.ADR_Offset,g_Main_Setting.OutReport,6);
+				 //nsAPI_I2C_Write_Database(RM_SENSOR_SROM_EEPROM_ADR+g_Main_Setting.ADR_Offset,(U8 *)&ADNS9800_SROM_Table[0]+g_Main_Setting.ADR_Offset,6);
+				 for (i =0 ; i < 6 ; i++)
+				 {
+					 nsAPI_SSP_Send((U8 *)&g_Main_Setting.OutReport[0]+i, 1);
+					 //nsAPI_SSP_Send((U8 *)&ADNS9800_SROM_Table[0]+g_Main_Setting.ADR_Offset+i, 1);
+				 }
+
+			 #if 1
+				 NDrv_SSP_ADNS9800_SSEL(HIGH);
+				 nsAPI_SSP_Sensor_Delsyus(180);/*180us*/
+			 #endif
+
+				 g_Main_Setting.Total_Size = 0;
+				 g_StaticMachineEvent6Type = SM_EVENT6_IDLE;
+			 }
+
+			 g_Main_Setting.ADR_Offset += 8;
+		 }
+		 break;
+ #endif
+
+		 case SM_EVENT6_SET_DPI:
+		 {
+			 if(g_Main_Setting.Total_Size > 1)
+			 {
+				 for(i =0 ; i < 8 ; i ++)
+				 {
+					 g_dMouse.SensorSetting.dbXDPILevel[i]=g_Main_Setting.OutReport[i];
+				 }
+
+				 //nsAPI_SSP_Switch_DPILevel();
+
+				 if(g_dMouse.GeneralSetting.dbProfileIndex>0)
+				 {
+				//	 nsAPI_I2C_Write_Database(RM_PROFILE_0_START_ADR+(RM_PROFILE_LEN*(g_dMouse.GeneralSetting.dbProfileIndex-1))+X_DPI_SET_OFFSET,\
+												 &g_dMouse.SensorSetting.dbXDPILevel[0],X_DPI_SET_SIZE);
+				 }
+				 g_Main_Setting.Total_Size --;
+				 //if(g_Main_Setting.Total_Size  == 0)
+					 //g_StaticMachineEvent6Type = SM_EVENT6_IDLE;
+			 }
+			 else
+			 {
+				 for(i =0 ; i < 8 ; i ++)
+				 {
+					 g_dMouse.SensorSetting.dbYDPILevel[i]=g_Main_Setting.OutReport[i];
+				 }
+
+				 if(g_dMouse.GeneralSetting.dbProfileIndex>0)
+				 {
+				//	 nsAPI_I2C_Write_Database(RM_PROFILE_0_START_ADR+(RM_PROFILE_LEN*(g_dMouse.GeneralSetting.dbProfileIndex-1))+Y_DPI_SET_OFFSET,\
+												 &g_dMouse.SensorSetting.dbYDPILevel[0],Y_DPI_SET_SIZE);
+				  }
+
+				 #if 0
+				 nsAPI_SSP_Set_Sensor_X_Resolution(7,TRUE); //current DPI
+				 nsAPI_SSP_Set_Sensor_Y_Resolution(7,TRUE); //current DPI
+				 #else
+				 g_dMouse.SensorSetting.dbDPIStage=7; //current DPI
+				// nsAPI_SSP_Set_Sensor_X_Resolution(g_dMouse.SensorSetting.dbDPIStage,TRUE);
+				 //nsAPI_SSP_Set_Sensor_Y_Resolution(g_dMouse.SensorSetting.dbDPIStage,TRUE);
+				 g_dMouse.SensorSetting.dbXDPICrtValue = (g_dMouse.SensorSetting.dbXDPILevel[g_dMouse.SensorSetting.dbDPIStage])&0x7F;
+				 g_dMouse.SensorSetting.dbYDPICrtValue = (g_dMouse.SensorSetting.dbYDPILevel[g_dMouse.SensorSetting.dbDPIStage])&0x7F;
+				 #endif
+				 g_StaticMachineEvent6Type = SM_EVENT6_IDLE;
+				 g_Main_Setting.Total_Size = 0;
+			 }
+		 }
+		 break;
+	 #if 0
+		 case SM_EVENT6_SET_MACRO_STOP_MODE:
+			 g_Main_Setting.MacroStopMode = g_Main_Setting.OutReport[GIdx3];
+		 break;
+	 #endif
+	 }
+
+}
+
+void Mapp_StaticMachineEvent7(void)
+{
+	switch(g_StaticMachineEvent7Type)
+	{
+		case SM_EVENT7_IDLE:
+			g_USBCore_Setting.EP0_GetReq = 0;
+		break;
+		
+		case SM_EVENT7_GET_FIRMWAVE_VERSION:
+		g_USBCore_Setting.EP0Buf[GIdx1] = (PRODUCT_ID & 0x00F0) >> 4;
+		g_USBCore_Setting.EP0Buf[GIdx2] = (PRODUCT_ID & 0x000F) >> 0;
+		EP0_Send();
+		g_StaticMachineEvent7Type=SM_EVENT7_IDLE;
+		break;
+
+		case SM_EVENT7_GET_REPORT_RATE:
+		g_USBCore_Setting.EP0Buf[GIdx1] =g_dMouse.SensorSetting.dbReportRate;
+		EP0_Send();
+		g_StaticMachineEvent7Type=SM_EVENT7_IDLE;
+		break;
+
+		case SM_EVENT7_GET_CURRENT_PROFILE:
+		//g_USBCore_Setting.EP0Buf[GIdx1] =nsAPI_Database_Button_Get_ProfileGroup_Index();
+		EP0_Send();
+		g_StaticMachineEvent7Type=SM_EVENT7_IDLE;
+		break;
+
+		case SM_EVENT7_GET_DPI:
+			switch(g_Main_Setting.Total_Size){
+				U8 Data_Loop;
+				case 2:
+					for(Data_Loop = 0;Data_Loop<8;Data_Loop++){
+						g_Main_Setting.ConsumerInReport[Data_Loop] = g_dMouse.SensorSetting.dbXDPILevel[Data_Loop];
+					}
+
+					//nsAPI_SSP_Switch_DPILevel();
+					if(g_Repot_Process.Consumer_Report_In == 0){		//Check EP3 Status
+						g_Repot_Process.Consumer_Report_In =1;
+						g_Main_Setting.Total_Size --;
+					}
+				break;
+				case 1:
+					for(Data_Loop = 0;Data_Loop<8;Data_Loop++){
+						g_Main_Setting.ConsumerInReport[Data_Loop] = g_dMouse.SensorSetting.dbYDPILevel[Data_Loop];
+					}
+					if(g_Repot_Process.Consumer_Report_In == 0){		//Check EP3 Status
+						g_Repot_Process.Consumer_Report_In = 1;
+						g_StaticMachineEvent7Type=SM_EVENT7_IDLE;
+						g_Main_Setting.Total_Size=0;
+					}
+				break;
+
+			}
+
+		#if PC_AP_DELAY
+			nsAPI_SSP_Sensor_Delsyms(20);
+		#endif
+		break;
+
+		case SM_EVENT7_GET_DPI_Stage:
+		//g_USBCore_Setting.EP0Buf[GIdx1] =nsAPI_Database_Button_Get_ProfileGroup_Index();
+		g_USBCore_Setting.EP0Buf[GIdx2] =g_dMouse.SensorSetting.dbDPIStage;
+		EP0_Send();
+		g_StaticMachineEvent7Type=SM_EVENT7_IDLE;
+		break;
+
+	#if 0
+		case SM_EVENT7_GET_MACRO_STOP_MODE:
+		g_USBCore_Setting.EP0Buf[GIdx1] =nsAPI_Database_Button_Get_ProfileGroup_Index();
+		g_USBCore_Setting.EP0Buf[GIdx2] =g_Main_Setting.MacroStopMode;
+		EP0_Send();
+		g_StaticMachineEvent7Type=SM_EVENT7_IDLE;
+		break;
+	#endif
+
+		case SM_EVENT7_GET_LED_COLOR:
+		//g_USBCore_Setting.EP0Buf[GIdx1] =nsAPI_Database_Button_Get_ProfileGroup_Index();
+		g_USBCore_Setting.EP0Buf[GIdx2] =g_dMouse.GeneralSetting.dbLedArea;
+		g_USBCore_Setting.EP0Buf[GIdx3] =g_dMouse.GeneralSetting.dbLedColor[g_dMouse.GeneralSetting.dbLedArea].R;
+		g_USBCore_Setting.EP0Buf[GIdx4] =g_dMouse.GeneralSetting.dbLedColor[g_dMouse.GeneralSetting.dbLedArea].G;
+		g_USBCore_Setting.EP0Buf[GIdx5] =g_dMouse.GeneralSetting.dbLedColor[g_dMouse.GeneralSetting.dbLedArea].B;
+		EP0_Send();
+		g_StaticMachineEvent7Type=SM_EVENT7_IDLE;
+		break;
+
+		case SM_EVENT7_GET_LED_INTENSITY:
+		//g_USBCore_Setting.EP0Buf[GIdx1] =nsAPI_Database_Button_Get_ProfileGroup_Index();
+		g_USBCore_Setting.EP0Buf[GIdx2] =g_dMouse.GeneralSetting.dbLedArea;
+		g_USBCore_Setting.EP0Buf[GIdx3] =g_dMouse.GeneralSetting.dbLedintensity[g_dMouse.GeneralSetting.dbLedArea];
+		EP0_Send();
+		g_StaticMachineEvent7Type=SM_EVENT7_IDLE;
+		break;
+
+		case SM_EVENT7_GET_LED_PULSATION_EFFECT:
+		//g_USBCore_Setting.EP0Buf[GIdx1] =nsAPI_Database_Button_Get_ProfileGroup_Index();
+		g_USBCore_Setting.EP0Buf[GIdx2] =g_dMouse.GeneralSetting.dbLedArea;
+		g_USBCore_Setting.EP0Buf[GIdx3] =g_dMouse.GeneralSetting.dbLedPulsationEffect[g_dMouse.GeneralSetting.dbLedArea];
+		EP0_Send();
+		g_StaticMachineEvent7Type=SM_EVENT7_IDLE;
+		break;
+	#if 0 //no use
+		case SM_EVENT7_GET_X_Y_SENSITIVITY:
+		g_USBCore_Setting.EP0Buf[GIdx1] =nsAPI_Database_Button_Get_ProfileGroup_Index();
+		g_USBCore_Setting.EP0Buf[GIdx2] =g_dMouse.SensorSetting.dbXSensitivity;
+		g_USBCore_Setting.EP0Buf[GIdx3] =g_dMouse.SensorSetting.dbYSensitivity;
+		EP0_Send();
+		g_StaticMachineEvent7Type=SM_EVENT7_IDLE;
+		break;
+	#endif
+		case SM_EVENT7_GET_SENSOR_STATUS:
+		g_USBCore_Setting.EP0Buf[GIdx1] =g_dMouse.SensorSetting.dbSensorStatus;
+		EP0_Send();
+		g_StaticMachineEvent7Type=SM_EVENT7_IDLE;
+		break;
+		case SM_EVENT7_GET_ANGLE_SNAPPING:
+		//g_USBCore_Setting.EP0Buf[GIdx1] =nsAPI_Database_Button_Get_ProfileGroup_Index();
+		g_USBCore_Setting.EP0Buf[GIdx2] =g_dMouse.SensorSetting.dbAngleSnapping;
+		EP0_Send();
+		g_StaticMachineEvent7Type=SM_EVENT7_IDLE;
+		break;
+
+		case SM_EVENT7_GET_LIFT_DETECTION:
+		//g_USBCore_Setting.EP0Buf[GIdx1] =nsAPI_Database_Button_Get_ProfileGroup_Index();
+		g_USBCore_Setting.EP0Buf[GIdx2] =g_dMouse.SensorSetting.dbLiftDetection;
+		EP0_Send();
+		g_StaticMachineEvent7Type=SM_EVENT7_IDLE;
+		break;
+        case SM_EVENT7_GET_OS_MODE:
+        g_USBCore_Setting.EP0Buf[GIdx1] = g_Main_Setting.OS_ModeType;
+        g_USBCore_Setting.EP0Buf[GIdx2] = 0;
+        EP0_Send();
+		g_StaticMachineEvent7Type=SM_EVENT7_IDLE;
+        break;
+		case SM_EVENT7_GET_KEY_MATRIX:
+		{
+			U8 Data_Loop;
+			if(g_Repot_Process.Consumer_Report_In == 0){		//Check EP3 Status
+				for(Data_Loop = 0;Data_Loop<KEY_MATRIX_LEN;Data_Loop++){
+					g_Main_Setting.ConsumerInReport[Data_Loop] = g_Key_Matrix[(14-2*g_Main_Setting.Total_Size)].Key_Assignment[Data_Loop];
+					g_Main_Setting.ConsumerInReport[Data_Loop+KEY_MATRIX_LEN] = g_Key_Matrix[(15-2*g_Main_Setting.Total_Size)].Key_Assignment[Data_Loop];
+				}
+				g_Repot_Process.Consumer_Report_In = 1;
+				g_Main_Setting.Total_Size -= 1;
+			}
+
+		#if PC_AP_DELAY
+			nsAPI_SSP_Sensor_Delsyms(25);
+		#endif
+
+			if( g_Main_Setting.Total_Size == 0){
+				g_StaticMachineEvent7Type=SM_EVENT7_IDLE;
+			}
+		}
+		break;
+	#if 0
+		case SM_EVENT7_GET_SENSOR_SROM:
+			{
+				if(g_Repot_Process.Consumer_Report_In == 0){	//Check EP3 Status
+
+					nsAPI_I2C_Read_Database(RM_SENSOR_SROM_EEPROM_ADR+g_Main_Setting.ADR_Offset,g_Main_Setting.ConsumerInReport ,CONSUMER_IN_REPORT_SIZE);
+
+					if(g_Main_Setting.Total_Size==1)
+					{
+						g_Main_Setting.ConsumerInReport[6]=0x00;
+						g_Main_Setting.ConsumerInReport[7]=0x00;
+					}
+
+					g_Repot_Process.Consumer_Report_In = 1;
+					g_Main_Setting.Total_Size -= 1;
+				}
+				g_Main_Setting.ADR_Offset += 8;
+
+				if( g_Main_Setting.Total_Size == 0){
+					g_StaticMachineEvent7Type=SM_EVENT7_IDLE;
+				}
+			}
+		break;
+	#endif
+		case SM_EVENT7_GET_MARCO_KEY:
+			{
+				U8 Data_Pos;
+				Data_Pos=0;
+
+				if(g_Repot_Process.Consumer_Report_In == 0){	//Check EP3 Status
+
+					while(Data_Pos < 8)
+					{
+						if((g_Main_Setting.Total_Size% 122)==0)
+						{
+							g_Main_Setting.ConsumerInReport[Data_Pos]=((g_Macro_Key[g_Set_Matrix.Key_Group].Repeat_Count &0xff00)>>8);
+							Data_Pos++;
+							g_Main_Setting.ConsumerInReport[Data_Pos]=(g_Macro_Key[g_Set_Matrix.Key_Group].Repeat_Count & 0x00ff);
+							g_Main_Setting.Total_Size--;
+						}
+						else
+						{
+							switch(g_Set_Matrix.M_Data_Byte)
+							{
+								case 0:
+									g_Main_Setting.ConsumerInReport[Data_Pos]=((g_Macro_Key[g_Set_Matrix.Key_Group].Key_Attr[g_Set_Matrix.Action].u16Value)>>8);
+									g_Set_Matrix.M_Data_Byte++;
+									break;
+								case 1:
+									g_Main_Setting.ConsumerInReport[Data_Pos]=(g_Macro_Key[g_Set_Matrix.Key_Group].Key_Attr[g_Set_Matrix.Action].u16Value & 0x00ff);
+									g_Set_Matrix.M_Data_Byte++;
+									break;
+								case 2:
+									g_Main_Setting.ConsumerInReport[Data_Pos]=g_Macro_Key[g_Set_Matrix.Key_Group].KeyCode[g_Set_Matrix.Action] ;
+									g_Set_Matrix.Action++;
+									if(g_Set_Matrix.Action>=40){
+										g_Set_Matrix.Action = 0;
+										g_Set_Matrix.Key_Group++;
+										if(g_Set_Matrix.Key_Group >=14 ){
+											g_Set_Matrix.Key_Group=0;
+										}
+									}
+									g_Set_Matrix.M_Data_Byte = 0;
+									break;
+							}
+
+						}
+
+						if(g_Main_Setting.Total_Size >0)
+							g_Main_Setting.Total_Size--;
+
+						if(g_Main_Setting.Total_Size ==0)
+							Data_Pos=8;
+
+						Data_Pos++;
+
+					 }
+
+
+					if(g_Main_Setting.Total_Size==0)
+					{
+						g_Main_Setting.ConsumerInReport[4]=0x00;
+						g_Main_Setting.ConsumerInReport[5]=0x00;
+						g_Main_Setting.ConsumerInReport[6]=0x00;
+						g_Main_Setting.ConsumerInReport[7]=0x00;
+					}
+
+					g_Repot_Process.Consumer_Report_In = 1;
+				}
+
+			#if PC_AP_DELAY
+				nsAPI_SSP_Sensor_Delsyms(20);
+			#endif
+
+				if( g_Main_Setting.Total_Size ==0)
+				{
+					g_StaticMachineEvent7Type=SM_EVENT7_IDLE;
+				}
+			}
+		break;
+	#if 0
+		case SM_EVENT7_GET_FLASH_INFO:
+			{
+				if(g_Repot_Process.Consumer_Report_In == 0){	//Check EP3 Status
+
+					nsAPI_I2C_Read_Database(RM_FLASH_INFO_ADR+g_Main_Setting.ADR_Offset,g_Main_Setting.ConsumerInReport ,CONSUMER_IN_REPORT_SIZE);
+					g_Repot_Process.Consumer_Report_In = 1;
+					g_Main_Setting.Total_Size -= 1;
+				}
+				g_Main_Setting.ADR_Offset += 8;
+
+				if( g_Main_Setting.Total_Size == 0){
+					g_StaticMachineEvent7Type=SM_EVENT7_IDLE;
+				}
+			}
+		break;
+	#endif
+		default:
+			g_StaticMachineEvent7Type=SM_EVENT7_IDLE;
+			break;
+	}
+
+}
+#endif
+#if 0
+void nsAPI_Main_MouseInReportHandler(void)
+{
+	S_Y_Sleep_ReCheck();
+
+	#if REMOTE_WAKEUP_ENABLE
+	if ( rSuspendFlag == 1 ) 
+	{
+		rSuspendFlag = 0;
+		
+		///------	
+		
+		//S_PWM_Enable();
+		//S_PWM_Enable_WakeUp();	
+		S_PWM_INIT();
+		//S_ADN9800_INIT_ValueReset();	//2016_0517_Hsiang
+		nsAPI_Sensor_Init();
+		
+		
+		///------	
+		
+		RemoteWakeupEvent();
+		g_Main_Setting.SensorReset = 1;
+		g_Repot_Process.Mouse_Report_In = 0;
+		return;
+  	}
+	#endif
+
+
+	#if (SUPPORT_MAC_BOOT_AND_DOS_MODE)
+	if (g_USBCore_Setting.EP0_DosMode)
+	{
+		if(g_Sensor_Data.Changed == 1)
+		{
+			g_Main_Setting.MouseInReport[GIdx1] = g_Sensor_Data.X1;
+			g_Main_Setting.MouseInReport[GIdx2] = g_Sensor_Data.Y1;
+			g_Main_Setting.MouseInReport[GIdx3] = 0;
+			g_Main_Setting.MouseInReport[GIdx4] = 0;
+		}
+	}
+	else
+	#endif //SUPPORT_MAC_BOOT_AND_DOS_MODE
+	{
+		g_Main_Setting.MouseInReport[GIdx0] = 0x01;//Report ID
+		//if(g_Sensor_Data.Changed == 1)
+		{
+			g_Main_Setting.MouseInReport[GIdx2] = g_Sensor_Data.X1;
+			g_Main_Setting.MouseInReport[GIdx3] = g_Sensor_Data.X2;
+			g_Main_Setting.MouseInReport[GIdx4] = g_Sensor_Data.Y1;
+			g_Main_Setting.MouseInReport[GIdx5] = g_Sensor_Data.Y2;
+		}
+	}
+
+	 if(nsAPI_USB_EP_Status(HID_EP1_IN))	//if((g_Main_Setting.EPInOutReq & EP1_IN) == EP1_IN)  //modify 20120808
+	{		
+		//g_Main_Setting.MouseInReport[7] = R_DPI_Index;		// HansH Fix Report for DPI Index
+			
+		nsAPI_USB_WriteEP(HID_EP1_IN,&g_Main_Setting.MouseInReport[0],MOUSE_IN_REPORT_SIZE);
+		nsAPI_Main_Clr_EP1Event();
+		g_Main_Setting.EPInOutReq &= ~EP1_IN;
+		g_Repot_Process.Mouse_Report_In = 0;
+		g_Sensor_Data.Changed = 0;
+	}
+	 
+}
+#else
+void nsAPI_Main_MouseInReportHandler(void)
+{
+	S_Y_Sleep_ReCheck();
+
+	#if REMOTE_WAKEUP_ENABLE
+	if ( rSuspendFlag == 1 ) 
+	{
+		rSuspendFlag = 0;
+		S_PWM_INIT();
+		//S_ADN9800_INIT_ValueReset();	//2016_0517_Hsiang
+		nsAPI_Sensor_Init();		
+		RemoteWakeupEvent();
+		g_Main_Setting.SensorReset = 1;
+		g_Repot_Process.Mouse_Report_In = 0;
+		return;
+  	}
+	#endif
+
+
+	#if (SUPPORT_MAC_BOOT_AND_DOS_MODE)
+	if (g_USBCore_Setting.EP0_DosMode)
+	{
+		if(g_Sensor_Data.Changed == 1)
+		{
+			//g_Main_Setting.MouseInReport[GIdx1] = g_Sensor_Data.X1;
+			//g_Main_Setting.MouseInReport[GIdx2] = g_Sensor_Data.Y1;
+			//g_Main_Setting.MouseInReport[GIdx3] = 0;
+			//g_Main_Setting.MouseInReport[GIdx4] = 0;
+			//org size is 8 byte, 2016_0608 become 6 byte and remove id
+			g_Main_Setting.MouseInReport[GIdx0] = g_Sensor_Data.X1;
+			g_Main_Setting.MouseInReport[GIdx1] = g_Sensor_Data.Y1;
+			g_Main_Setting.MouseInReport[GIdx2] = 0;
+			g_Main_Setting.MouseInReport[GIdx3] = 0;
+		}
+	}
+	else
+	#endif //SUPPORT_MAC_BOOT_AND_DOS_MODE
+	{
+		//g_Main_Setting.MouseInReport[GIdx0] = 0x01;//Report ID
+		//if(g_Sensor_Data.Changed == 1)
+		{
+			g_Main_Setting.MouseInReport[GIdx1] = g_Sensor_Data.X1;
+			g_Main_Setting.MouseInReport[GIdx2] = g_Sensor_Data.X2;
+			g_Main_Setting.MouseInReport[GIdx3] = g_Sensor_Data.Y1;
+			g_Main_Setting.MouseInReport[GIdx4] = g_Sensor_Data.Y2;
+		}
+	}
+
+	 if(nsAPI_USB_EP_Status(HID_EP1_IN))	//if((g_Main_Setting.EPInOutReq & EP1_IN) == EP1_IN)  //modify 20120808
+	{	
+		nsAPI_USB_WriteEP(HID_EP1_IN, &g_Main_Setting.MouseInReport[0], MOUSE_IN_REPORT_SIZE);
+		nsAPI_Main_Clr_EP1Event();
+		g_Main_Setting.EPInOutReq &= ~EP1_IN;
+		g_Repot_Process.Mouse_Report_In = 0;
+		g_Sensor_Data.Changed = 0;
+	}
+	 
+}
+
+#endif
+void nsAPI_Main_MediaInReportHandler(void)
+{
+
+#if REMOTE_WAKEUP_ENABLE
+	if ( rSuspendFlag == 1 ) {
+		rSuspendFlag = 0;
+		
+		///------	
+		//S_PWM_Enable();
+		//S_PWM_Enable_WakeUp();	
+		S_PWM_INIT();
+
+		//S_ADN9800_INIT_ValueReset();	//2016_0517_Hsiang
+		nsAPI_Sensor_Init();
+	///------		
+		
+		RemoteWakeupEvent();
+		g_Main_Setting.SensorReset = 1;
+		g_Repot_Process.Mouse_Report_In = 0;
+		return;
+  	}
+#endif
+
+	g_Main_Setting.MouseInReport[GIdx0] = 0x03;//Report ID
+
+	if(nsAPI_USB_EP_Status(HID_EP1_IN))//if((g_Main_Setting.EPInOutReq & EP1_IN) == EP1_IN)  //modify 20120808
+	{
+		nsAPI_USB_WriteEP(HID_EP1_IN,&g_Main_Setting.MediaInReport[0],MEDIA_IN_REPORT_SIZE);
+		nsAPI_Main_Clr_EP1Event();
+		g_Main_Setting.EPInOutReq &= ~EP1_IN;
+		g_Repot_Process.Media_Report_In = 0;
+	}
+}
+
+void nsAPI_Main_SystemInReportHandler(void)
+{
+	g_Main_Setting.MediaInReport[GIdx0] = 0x02;//Report ID
+
+	 if(nsAPI_USB_EP_Status(HID_EP1_IN))//if((g_Main_Setting.EPInOutReq & EP1_IN) == EP1_IN)  //modify 20120808
+	{
+		nsAPI_USB_WriteEP(HID_EP1_IN,&g_Main_Setting.SystemInReport[0],SYSTEM_IN_REPORT_SIZE);
+		nsAPI_Main_Clr_EP1Event();
+		g_Main_Setting.EPInOutReq &= ~EP1_IN;
+		g_Repot_Process.System_Report_In = 0;
+	}
+}
+
+
+void nsAPI_Main_KeyboardInReportHandler(void)
+{
+	if(nsAPI_USB_EP_Status(HID_EP2_IN))//if((g_Main_Setting.EPInOutReq & EP2_IN) == EP2_IN)
+	{
+		nsAPI_USB_WriteEP(HID_EP2_IN,&g_Main_Setting.KeyboardInReport[0],KEYBOARD_IN_REPORT_SIZE);
+		nsAPI_Main_Clr_KeyboardEvent();
+		g_Main_Setting.EPInOutReq &= ~EP2_IN;
+		g_Repot_Process.Keyboard_Report_In = 0;
+	}
+}
+
+void nsAPI_Main_MacroKeyInReportHandler(void)
+{
+	if(nsAPI_USB_EP_Status(HID_EP2_IN))//if((g_Main_Setting.EPInOutReq & EP2_IN) == EP2_IN)
+	{
+		nsAPI_USB_WriteEP(HID_EP2_IN,&g_Main_Setting.KeyboardInReport[0],KEYBOARD_IN_REPORT_SIZE);
+		//nsAPI_Main_Clr_KeyboardEvent();
+		g_Main_Setting.EPInOutReq &= ~EP2_IN;
+		g_Repot_Process.Macro_Keyboard_Report_In = 0;
+	}
+}
+
+void nsAPI_Main_ShortcutInReportHandler(void)
+{
+	if(nsAPI_USB_EP_Status(HID_EP2_IN))//if((g_Main_Setting.EPInOutReq & EP2_IN) == EP2_IN)
+	{
+		nsAPI_USB_WriteEP(HID_EP2_IN,&g_Main_Setting.ShortcutInReport[0],SHORTCUT_IN_REPORT_SIZE);
+		nsAPI_Main_Clr_KeyboardEvent();
+		g_Main_Setting.EPInOutReq &= ~EP2_IN;
+		g_Repot_Process.Shortcut_Report_In = 0;
+	}
+}
+
+void nsAPI_Main_ConsumerInReportHandler(void)
+{
+	if(nsAPI_USB_EP_Status(HID_EP3_IN))//if((g_Main_Setting.EPInOutReq & EP3_IN) == EP3_IN)
+	{
+		nsAPI_USB_WriteEP(HID_EP3_IN,&g_Main_Setting.ConsumerInReport[0],CONSUMER_IN_REPORT_SIZE);		
+		
+		nsAPI_Main_Clr_ConsumerEvent();
+		g_Main_Setting.EPInOutReq &= ~EP3_IN;
+		g_Repot_Process.Consumer_Report_In = 0;
+	}
+}
+
+void nsAPI_Main_Clr_EP1Event(void)
+{
+	//org size is 8 byte, 2016_0608 become 6 byte and remove id
+	/*
+	if(g_Main_Setting.MouseInReport[GIdx0] != 1)
+	{
+		g_Main_Setting.MouseInReport[GIdx0] = 0;
+		g_Main_Setting.MouseInReport[GIdx1] = 0;
+	}
+	else
+	*/
+	{
+		g_Main_Setting.MouseInReport[GIdx1] = 0;
+		g_Main_Setting.MouseInReport[GIdx2] = 0;
+		g_Main_Setting.MouseInReport[GIdx3] = 0;
+		g_Main_Setting.MouseInReport[GIdx4] = 0;
+		g_Main_Setting.MouseInReport[GIdx5] = 0;
+		//g_Main_Setting.MouseInReport[GIdx7] = 0;
+	}
+
+}
+
+void nsAPI_Main_Clr_KeyboardEvent(void)
+{
+	g_Main_Setting.KeyboardInReport[GIdx0] = 1;
+	g_Main_Setting.KeyboardInReport[GIdx1] = 0;
+	g_Main_Setting.KeyboardInReport[GIdx2] = 0;
+	g_Main_Setting.KeyboardInReport[GIdx3] = 0;
+	g_Main_Setting.KeyboardInReport[GIdx4] = 0;
+	g_Main_Setting.KeyboardInReport[GIdx5] = 0;
+	g_Main_Setting.KeyboardInReport[GIdx6] = 0;
+	g_Main_Setting.KeyboardInReport[GIdx7] = 0;
+	g_Main_Setting.KeyboardInReport[GIdx8] = 0;	
+}
+
+void nsAPI_Main_Clr_ConsumerEvent(void)
+{
+	g_Main_Setting.ConsumerInReport[GIdx0] = 2;
+	g_Main_Setting.ConsumerInReport[GIdx1] = 0;
+	g_Main_Setting.ConsumerInReport[GIdx2] = 0;
+//	g_Main_Setting.ConsumerInReport[GIdx3] = 0;   //hawk
+//	g_Main_Setting.ConsumerInReport[GIdx4] = 0;   //hawk
+//	g_Main_Setting.ConsumerInReport[GIdx5] = 0;   //hawk
+//	g_Main_Setting.ConsumerInReport[GIdx6] = 0;   //hawk
+//	g_Main_Setting.ConsumerInReport[GIdx7] = 0;   //hawk
+}
+
+void nsAPI_Main_Clr_EP3Event(void)      // hawk
+{
+	U8 i;
+
+	for(i=0;i<CUSTOMER_IN_REPORT_SIZE;i++)
+		g_Main_Setting.InReport[i] = 0;
+}
+
+#ifdef M_Macro_Key
+void MacroKey_Handler(){
+	U8 Temp;
+
+		#if 0
+		U16 u16Delay;
+		if ( g_Key_Matrix_Attr.KeyAction==0)
+			u16Delay =0;
+		else
+			u16Delay = (g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].Key_Attr[g_Key_Matrix_Attr.KeyAction-1].bit.Delay)
+		#endif
+
+		if( g_Key_Matrix_Attr.KeyDelay >= (g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].Key_Attr[g_Key_Matrix_Attr.KeyAction].bit.Delay)){	//Timebase = 2* 10ms
+			//g_Key_Matrix_Attr.KeyDelay = g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].Key_Attr[g_Key_Matrix_Attr.KeyAction].bit.Delay;//Keep delay time, don't overflow
+		           #if 0
+				xprintf("\r\nKeyTableNum[%x],",g_Key_Matrix_Attr.KeyTableNum);
+				xprintf("act[%x],",g_Key_Matrix_Attr.KeyAction);
+				xprintf("Keycode[%x],",g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].KeyCode[g_Key_Matrix_Attr.KeyAction]);
+				xprintf("Press[%x],",g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].Key_Attr[g_Key_Matrix_Attr.KeyAction].bit.Press);
+				xprintf("Delay = [%d]", (g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].Key_Attr[g_Key_Matrix_Attr.KeyAction].bit.Delay));
+			    #endif
+
+			if((g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].Key_Attr[g_Key_Matrix_Attr.KeyAction].bit.Press)==1){ //Press or not
+			    u8MarcoKeyIn =1;
+				//xprintf("%x,",g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].Key_Attr[g_Key_Matrix_Attr.KeyAction].bit.Press);
+				//xprintf("%x,",g_Macro_Key[0].Key_Attr[g_Key_Matrix_Attr.KeyAction].bit.Press);
+
+				if(g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].KeyCode[g_Key_Matrix_Attr.KeyAction] >= 0xE0 && g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].KeyCode[g_Key_Matrix_Attr.KeyAction] <= 0xE7){
+					Temp = g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].KeyCode[g_Key_Matrix_Attr.KeyAction] - 0xE0;
+					g_Main_Setting.KeyboardInReport[GIdx0] |= 1<<Temp;
+				}
+				else{
+					for(Temp = 2;Temp<8;Temp++){
+						if(g_Main_Setting.KeyboardInReport[Temp] == 0){
+							g_Main_Setting.KeyboardInReport[Temp] = g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].KeyCode[g_Key_Matrix_Attr.KeyAction];
+							break;
+						}
+					}
+				}
+			}
+			//else send break;
+			else{
+				if(g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].KeyCode[g_Key_Matrix_Attr.KeyAction] >= 0xE0 && g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].KeyCode[g_Key_Matrix_Attr.KeyAction] <= 0xE7){
+					Temp = g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].KeyCode[g_Key_Matrix_Attr.KeyAction] - 0xE0;
+					g_Main_Setting.KeyboardInReport[GIdx0] &= 0xfe<<Temp;
+				}
+				else{
+					for(Temp = 2;Temp<8;Temp++){
+						if(g_Main_Setting.KeyboardInReport[Temp] == g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].KeyCode[g_Key_Matrix_Attr.KeyAction]){
+							g_Main_Setting.KeyboardInReport[Temp] = 0;
+							break;
+						}
+					}
+				}
+			}
+
+			g_Repot_Process.Macro_Keyboard_Report_In = 1;
+			nsAPI_Main_MacroKeyInReportHandler();
+			while(g_Repot_Process.Macro_Keyboard_Report_In==1){
+			nsAPI_Main_MacroKeyInReportHandler();
+			}
+
+			g_Key_Matrix_Attr.KeyAction++;
+			if(g_Key_Matrix_Attr.KeyAction < MAX_MACRO_ACTION)
+			{
+				while((g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].KeyCode[g_Key_Matrix_Attr.KeyAction] &0x7f) ==0x00)
+				{
+					g_Key_Matrix_Attr.KeyAction++;
+					if(g_Key_Matrix_Attr.KeyAction <= MAX_MACRO_ACTION)
+						continue;
+					else
+						break;
+				}
+			}
+
+			if(g_Key_Matrix_Attr.KeyAction >= MAX_MACRO_ACTION){
+
+				 if((g_Key_Matrix_Attr.KeyLoop >1)&&(g_Key_Matrix_Attr.DecKeyLoop >1))
+				{
+					g_Key_Matrix_Attr.KeyAction = 0;
+					g_Key_Matrix_Attr.DecKeyLoop--;
+					g_Key_Matrix_Attr.KeyDelay = 0;
+					g_Key_Matrix_Attr.fKeyDelay = 0;
+				}
+				else
+				{
+
+					if(g_Key_Matrix_Attr.KeyLoop ==0)
+					{
+						g_Key_Matrix_Attr.KeyAction = 0;
+						g_Key_Matrix_Attr.KeyDelay = 0;
+						g_Key_Matrix_Attr.fKeyDelay = 0;
+					}
+					else
+					{
+						//Clear Macrokey flag
+						MarcoKey_Release_Key();
+						g_StaticMachineEvent3Type = SM_EVENT3_IDLE;
+					}
+
+				}
+			}
+			g_Key_Matrix_Attr.KeyDelay = 0;
+			g_Key_Matrix_Attr.fKeyDelay = 0;
+		}
+}
+
+
+void MarcoKey_Release_Key(void)
+{
+	U8 Temp;
+	g_Key_Matrix_Attr.KeyDelay = 0;
+	g_Key_Matrix_Attr.fKeyDelay = 0;
+	g_Key_Matrix_Attr.DecKeyLoop =0;
+
+    for (g_Key_Matrix_Attr.KeyAction =0; g_Key_Matrix_Attr.KeyAction < MAX_MACRO_ACTION ;g_Key_Matrix_Attr.KeyAction++)
+    {
+        if((g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].Key_Attr[g_Key_Matrix_Attr.KeyAction].bit.Press)==1)
+        { //0 is Press Key
+
+			//xprintf("%x,",g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].Key_Attr[g_Key_Matrix_Attr.KeyAction].bit.Press);
+			//xprintf("%x,",g_Key_Matrix_Attr.KeyAction);
+			//xprintf("%x,",g_Macro_Key[0].Key_Attr[g_Key_Matrix_Attr.KeyAction].bit.Press);
+			if(g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].KeyCode[g_Key_Matrix_Attr.KeyAction] >= 0xE0 && g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].KeyCode[g_Key_Matrix_Attr.KeyAction] <= 0xE7)
+            		{
+				Temp = g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].KeyCode[g_Key_Matrix_Attr.KeyAction] - 0xE0;
+				g_Main_Setting.KeyboardInReport[GIdx0] &= 0xfe<<Temp;
+			}
+			else
+            		{
+				for(Temp = 2;Temp<8;Temp++)
+               		{
+					if(g_Main_Setting.KeyboardInReport[Temp] == g_Macro_Key[g_Key_Matrix_Attr.KeyTableNum].KeyCode[g_Key_Matrix_Attr.KeyAction])
+                    			{
+						g_Main_Setting.KeyboardInReport[Temp] = 0;
+						break;
+					}
+				}
+			}
+
+			g_Repot_Process.Macro_Keyboard_Report_In = 1;
+			nsAPI_Main_MacroKeyInReportHandler();
+			while(g_Repot_Process.Macro_Keyboard_Report_In==1)
+           		 {
+				nsAPI_Main_MacroKeyInReportHandler();
+            		}
+        }
+
+    }
+    u8MarcoKeyIn =0;
+    g_Key_Matrix_Attr.KeyAction =0;
+}
+
+#endif
+
+/*
+void HardFault_Handler(void)
+{
+	 xprintf("Hard Fail ",0);
+}
+*/
+
