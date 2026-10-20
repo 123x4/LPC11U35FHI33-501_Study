@@ -1,0 +1,21 @@
+<!-- ************************************************************
+	   Code Red IDE script file for use in creating a library
+	   project, plus associated examples for a particular MCU range
+	   from the code provided in NXP Sample Software Suite
+
+	   This script is in a format suitable for use with the
+	   "Import Project(s) from XML Description" of the Code Red IDE.
+     *********************************************************** -->
+
+<workspace xmlns:xi="http://www.w3.org/2001/XInclude">
+<project description="lpc_chip_11uxx_lib/lpc_chip_11uxx_lib.xml" />
+<project description="nxp_lpcxpresso_11u37h_board_lib/nxp_lpcxpresso_11u37h_board_lib.xml" />
+<project description="usbd_rom/nxp_lpcxpresso_11u37h_usbd_rom_cdc/nxp_lpcxpresso_11u37h_usbd_rom_cdc.xml" />
+<project description="usbd_rom/nxp_lpcxpresso_11u37h_usbd_rom_cdc_uart/nxp_lpcxpresso_11u37h_usbd_rom_cdc_uart.xml" />
+<project description="usbd_rom/nxp_lpcxpresso_11u37h_usbd_rom_composite/nxp_lpcxpresso_11u37h_usbd_rom_composite.xml" />
+<project description="usbd_rom/nxp_lpcxpresso_11u37h_usbd_rom_hid_generic/nxp_lpcxpresso_11u37h_usbd_rom_hid_generic.xml" />
+<project description="usbd_rom/nxp_lpcxpresso_11u37h_usbd_rom_hid_i2c/nxp_lpcxpresso_11u37h_usbd_rom_hid_i2c.xml" />
+<project description="usbd_rom/nxp_lpcxpresso_11u37h_usbd_rom_hid_keyboard/nxp_lpcxpresso_11u37h_usbd_rom_hid_keyboard.xml" />
+<project description="usbd_rom/nxp_lpcxpresso_11u37h_usbd_rom_hid_mouse/nxp_lpcxpresso_11u37h_usbd_rom_hid_mouse.xml" />
+<project description="usbd_rom/nxp_lpcxpresso_11u37h_usbd_rom_libusb/nxp_lpcxpresso_11u37h_usbd_rom_libusb.xml" />
+</workspace>

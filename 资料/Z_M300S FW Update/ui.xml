@@ -1,0 +1,26 @@
+<UI>
+    <Language file=".\lan.ini"> </Language>
+    <System language="" screen_width="1024" screen_height="768">
+        <IDD_MAIN class="Dialog" font_size="14" font_name="Arial" x="0" y="0" width="500" height="400" color_disable0="0xc0c0c0" scroll_image="image\scrollbar.bmp" menu_check0="image\menu_check.bmp" menu_arrow0="image\menu_arrow.bmp" menu_separate0="image\menu_separtor.bmp" item_image0="image\listback.bmp" image_normal0="image\main_n.bmp" image_hover0="image\main_h.bmp" image_selected0="image\main_s.bmp" image_disable0="image\main_n.bmp">
+            <IDC_STATIC_CAPTION class="Static"  style="DT_LEFT" x="5" y="15" width="290" height="20" />
+            
+            <IDC_BTN_MINIMIZED class="Button" x="428" y="14" width="20" height="20" />
+            <IDC_BTN_CLOSED class="Button" x="466" y="14" width="20" height="20" />
+
+            <IDC_COMBO_LANGUAGE class="ComboBoxEx" x="303" y="12" width="115" height="26" />
+			
+			<IDC_STATIC_DEVICES class="Static"  style="DT_LEFT" x="5" y="60" width="64" height="20" />
+			<IDC_COMBO_DEVICES_LIST class="ComboBoxEx" x="70" y="60" width="120" height="20" />
+			<IDC_STATIC_SELECTED_DEVICE class="Static"  style="DT_LEFT" x="200" y="60" width="150" height="20" />
+			
+            <IDC_STATIC_FILE_PATH class="Static"  style="DT_LEFT" x="5" y="100" width="64" height="20" />
+            <IDC_STATIC_FILE_PATH_VALUE class="Static"  style="DT_LEFT" x="33" y="131" width="348" height="20" />
+            <IDC_BTN_BROWSE class="Button" x="402" y="131" width="36" height="23" />
+
+            <IDC_BTN_UPDATE class="Button" font_size="24" x="398" y="190" width="98" height="75" />
+
+            <IDC_STATIC_UPDATE_STATUS class="Static"  style="DT_LEFT" x="5" y="165" width="120" height="20" />
+            <IDC_STATIC_UPDATE_STATUS_VALUE class="Static"  style="DT_LEFT" x="33" y="195" width="348" height="20" />
+        </IDD_MAIN>
+    </System>
+</UI>

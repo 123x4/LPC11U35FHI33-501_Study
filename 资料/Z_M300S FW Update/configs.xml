@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configs>
+    <language>
+        <ID_LAN_ENGLISH>English</ID_LAN_ENGLISH>
+        <ID_LAN_SIMPLIFIED_CHINESE>SimplifiedChinese</ID_LAN_SIMPLIFIED_CHINESE>
+    </language>
+    <devices selected="vid_17EF&amp;pid_6155" dll="FwUpdate.dll">
+        <vid_17EF&pid_6155 name="MG380U Mouse">
+            <file>Sample.hex</file>
+            <bootloader>vid_17EF&amp;pid_6155</bootloader>
+            <command_channel>vid_1A81&amp;pid_2071&amp;mi_02</command_channel>
+            <restoreLegion>1</restoreLegion>
+            <postrun>
+                <param>-h</param>
+            </postrun>
+        </vid_17EF&pid_6155>
+    </devices>
+    <properties>
+        <disableSelectDevice>0</disableSelectDevice>
+        <disableSelectFile>0</disableSelectFile>
+    </properties>
+</configs>
