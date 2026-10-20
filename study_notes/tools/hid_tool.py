@@ -55,6 +55,7 @@ def build_packet(cmd, sub, vk, data=b""):
 
 def parse_packet(buf):
     """返回 (cmd, sub, vk, data)，不是合法的响应报文时返回 None"""
+    buf = bytes(buf)  # hidapi 的 read() 返回的是 list，struct 需要 bytes
     if len(buf) < 10 or buf[0] != PREAMBLE or buf[1] != ID_HOST:
         return None
     _, dst, src, csum, n = struct.unpack_from("<BBBBH", buf)
