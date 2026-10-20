@@ -1,0 +1,72 @@
+{
+    "todo-tree.ripgrep.ripgrep": "C:/Users/GT028625/.vscode/extensions/openai.chatgpt-26.1007.21434-win32-x64/bin/windows-x86_64/rg.exe",
+    "todo-tree.highlights.enabled": true,
+    "todo-tree.general.tags": [
+        "BUG", "FIXME", "TODO", "Adjusting", "XXX", "NOTE", "INFO", "WARNING", "DONE", "[ ]", "[x]"
+    ],
+    "todo-tree.highlights.useColourScheme": false,
+    "todo-tree.highlights.defaultHighlight": {
+        "foreground": "#FFFFFF",
+        "background": "#1D4ED8",
+        "type": "text-and-comment"
+    },
+    "todo-tree.highlights.customHighlight": {
+        "BUG": {
+            "icon": "bug",
+            "foreground": "#FFFFFF",
+            "background": "#B42318",
+            "type": "text-and-comment",
+            "iconColour": "#B42318"
+        },
+        "FIXME": {
+            "icon": "flame",
+            "background": "#C2410C",
+            "iconColour": "#C2410C"
+        },
+        "TODO": {
+            "icon": "checklist",
+            "background": "#1D4ED8",
+            "iconColour": "#1D4ED8"
+        },
+        "Adjusting": {
+            "icon": "tools",
+            "background": "#7E22CE",
+            "iconColour": "#7E22CE"
+        },
+        "XXX": {
+            "icon": "x",
+            "background": "#BE185D",
+            "iconColour": "#BE185D"
+        },
+        "NOTE": {
+            "icon": "note",
+            "background": "#0E7490",
+            "iconColour": "#0E7490"
+        },
+        "INFO": {
+            "icon": "info",
+            "background": "#0E7490",
+            "iconColour": "#0E7490"
+        },
+        "WARNING": {
+            "icon": "alert",
+            "background": "#A16207",
+            "iconColour": "#A16207"
+        },
+        "DONE": {
+            "icon": "issue-closed",
+            "background": "#15803D",
+            "iconColour": "#15803D"
+        },
+        "[ ]": {
+            "icon": "issue-opened",
+            "background": "#1D4ED8",
+            "iconColour": "#1D4ED8"
+        },
+        "[x]": {
+            "icon": "issue-closed",
+            "background": "#15803D",
+            "iconColour": "#15803D"
+        }
+    }
+}

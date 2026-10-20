@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        {
+            "name": "LPC11U37 (Keil ARMCC5)",
+            "includePath": [
+                "${workspaceFolder}/inc",
+                "${workspaceFolder}/inc/Led_Effect_H",
+                "D:/Keil5/Core/ARM/ARMCC/include"
+            ],
+            "defines": [
+                "__CC_ARM=1",
+                "__TARGET_CPU_CORTEX_M0=1",
+                "__packed=",
+                "__align(x)=__declspec(align(x))"
+            ],
+            "compilerPath": "",
+            "intelliSenseMode": "windows-msvc-arm",
+            "cStandard": "c99",
+            "cppStandard": "c++11"
+        }
+    ],
+    "version": 4
+}
