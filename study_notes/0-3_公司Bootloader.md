@@ -223,3 +223,9 @@ void Bootloadable_Load(void)
 但分界线的位置受手册约束：📖 UM p397~398，Flash 按 **4KB 扇区**擦除，分界线必须落在扇区边界上，否则升级 app 时擦扇区会顺带擦掉 Bootloader。0x4000 是扇区 4 的起点，Bootloader 占扇区 0~3，app 占扇区 4~15（`EraseFlash()` 擦的正是 4~15）。
 
 **注意区分**：Figure 6 里的 “16 kB boot ROM”（0x1FFF 0000）是 NXP 固化在芯片 ROM 里的程序，和放在 Flash 0x0000 的公司 Bootloader 是两回事，大小一样只是巧合。
+
+**Q4：向量表到底是什么？**
+📖 UM p446 24.3.3.4：*“The vector table contains the reset value of the stack pointer, and the start addresses, also called exception vectors, for all exception handlers.”* p447：*“The vector table is fixed at address 0x00000000.”*
+向量表是放在程序最开头的一张**地址清单**，每项 4 字节：第 0 项是初始栈指针，第 1 项是复位入口，后面每一项是一种中断（异常）的处理函数地址。第 n 项的地址 = n × 4（📖 UM p445 Table 421：Reset 在 0x04、NMI 在 0x08、HardFault 在 0x0C）。外设中断从第 16 项开始，IRQ 编号 k 对应第 16+k 项（📖 UM p68 第 6 章中断源表）。
+CPU 上电时**硬件自动**从 0x0 读栈指针、从 0x4 读复位入口；中断发生时**硬件自动**从“编号×4”处取函数地址并跳过去，不需要软件去调用。所以 CPU 只认地址 0 处的那张表。
+代码里，这张表就是 `src/startup_LPC11Uxx.s` 中 `__Vectors` 下面那一串 `DCD`，每个 `DCD` 占 4 字节，链接器会把对应函数的真实地址填进去。
