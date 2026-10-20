@@ -1,0 +1,33 @@
+
+#ifndef __ADNS9800_SROM_H__ 
+#define __ADNS9800_SROM_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "Type.h"
+
+#ifdef __ADNS9800_SROM_C__
+#define INTERFACE
+#else
+#define INTERFACE extern
+#endif
+
+
+#define ADNS9800_SROM_TABLE_SIZE_1 3070
+#define ADNS9800_SROM_CRC               0x30 
+//#define LASERCURRENTSETTINGTABLEXSIZE 2
+//#define LASERCURRENTSSTTINGTABLEYSIZE 256
+
+INTERFACE const U8 ADNS9800_SROM_Table[ADNS9800_SROM_TABLE_SIZE_1]; 
+
+//INTERFACE const U8 LASER_CURRENT_SETTING_TABLE[LASERCURRENTSSTTINGTABLEYSIZE][LASERCURRENTSETTINGTABLEXSIZE];
+//INTERFACE RetU8 nsAPI_ADNS9800_Get_LC_Setting_Table(U8 u8YIndex,U8 u8XIndex);
+
+#undef INTERFACE
+#ifdef __cplusplus
+}
+#endif
+#endif /*__ADNS9800_SROM_91_H__  */
+

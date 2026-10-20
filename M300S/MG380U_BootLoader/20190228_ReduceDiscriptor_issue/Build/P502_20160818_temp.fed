@@ -1,0 +1,137 @@
+;#<FEEDBACK># ARM Linker, 5040049: Last Updated: Tue Sep 20 09:30:24 2016
+;VERSION 0.2
+;FILE eepromapi.o
+__asm___11_eepromAPI_c_5b49bf93____REV16 <= USED 0
+__asm___11_eepromAPI_c_5b49bf93____REVSH <= USED 0
+readEEPROM <= USED 0
+writeEEPROM <= USED 0
+;FILE gpio.o
+ALL_GPIO_INIT_CONFIG <= USED 0
+GPIOSetGroupedInterrupt <= USED 0
+GPIO_Check_Key <= USED 0
+__asm___6_gpio_c_590a8c55____REV16 <= USED 0
+__asm___6_gpio_c_590a8c55____REVSH <= USED 0
+nsAPI_GPIO_LEDSetting <= USED 0
+;FILE hiduser.o
+HID_GetReport <= USED 0
+HID_SetReport <= USED 0
+;FILE i2c.o
+__asm___5_I2c_c_930b201d____REV16 <= USED 0
+__asm___5_I2c_c_930b201d____REVSH <= USED 0
+nsAPI_I2C_Engine <= USED 0
+nsAPI_I2C_Read_Database <= USED 0
+nsAPI_I2C_Write_Database <= USED 0
+;FILE main.o
+EP0_Send <= USED 0
+Mapp_StaticMachineEvent2 <= USED 0
+__asm___6_main_c_VecDst____REV16 <= USED 0
+__asm___6_main_c_VecDst____REVSH <= USED 0
+nsAPI_Main_Clr_ConsumerEvent <= USED 0
+nsAPI_Main_Clr_EP3Event <= USED 0
+nsAPI_Main_Clr_KeyboardEvent <= USED 0
+nsAPI_Main_ConsumerInReportHandler <= USED 0
+nsAPI_Main_KeyboardInReportHandler <= USED 0
+nsAPI_Main_MacroKeyInReportHandler <= USED 0
+nsAPI_Main_MediaInReportHandler <= USED 0
+nsAPI_Main_ShortcutInReportHandler <= USED 0
+nsAPI_Main_SystemInReportHandler <= USED 0
+;FILE mouse.o
+Choose_Profile <= USED 0
+Clean_Button_Counts <= USED 0
+Load_Default_Mouse_Button_Func <= USED 0
+Load_Default_Mouse_Led <= USED 0
+Load_Default_Mouse_Seansor_Calibration_Param <= USED 0
+Load_Default_Mouse_status <= USED 0
+Load_Profile_to_CurParam <= USED 0
+PROFILE_CHECK_AND_LOAD <= USED 0
+Profile_Init <= USED 0
+S_Clear_EP0_Buffer <= USED 0
+S_Clear_Feature_PartBuffer <= USED 0
+S_Clear_OutReport_Buffer <= USED 0
+S_IO_Suspend_Setting <= USED 0
+Set_ALL_Profile_Param_to_Default <= USED 0
+Set_CurParam_from_CurProfile <= USED 0
+Set_CurProfile_From_Default_Param <= USED 0
+Set_Cur_Profile_Param_From_Default <= USED 0
+Test_Func <= USED 0
+__asm___7_Mouse_c_88cc80ff____REV16 <= USED 0
+__asm___7_Mouse_c_88cc80ff____REVSH <= USED 0
+;FILE pixart_sensor.o
+Sensor_Lift_Cut_Off_Calibration <= USED 0
+__asm___15_Pixart_Sensor_c_4dcee60c____REV16 <= USED 0
+__asm___15_Pixart_Sensor_c_4dcee60c____REVSH <= USED 0
+esd_Check <= USED 0
+nsAPI_SSP1_Sensor_Monitor <= USED 0
+nsAPI_SSP1_Sensor_Read <= USED 0
+nsAPI_Sensor_Hard_Reset <= USED 0
+nsAPI_Sensor_Shutdown <= USED 0
+;FILE pmu.o
+PMU_Init <= USED 0
+PMU_Sleep <= USED 0
+__asm___5_pmu_c_PMU_Init____REV16 <= USED 0
+__asm___5_pmu_c_PMU_Init____REVSH <= USED 0
+;FILE source.o
+DrvDataCheck <= USED 0
+__asm___8_Source_c_CheckAP____REV16 <= USED 0
+__asm___8_Source_c_CheckAP____REVSH <= USED 0
+;FILE ssp.o
+__asm___5_ssp_c_83790e90____REV16 <= USED 0
+__asm___5_ssp_c_83790e90____REVSH <= USED 0
+nsAPI_SSP1_Init <= USED 0
+nsAPI_SSP1_Receive <= USED 0
+nsAPI_SSP_Sensor_Delsyms <= USED 0
+nsAPI_SSP_Sensor_Delsyus <= USED 0
+;FILE startup_lpc11uxx.o
+;FILE system_lpc11uxx.o
+__asm___17_system_LPC11Uxx_c_728c7b45____REV16 <= USED 0
+__asm___17_system_LPC11Uxx_c_728c7b45____REVSH <= USED 0
+;FILE systick.o
+__asm___9_Systick_c_167cf89a____REV16 <= USED 0
+__asm___9_Systick_c_167cf89a____REVSH <= USED 0
+;FILE timer16.o
+PWM_TIMER_ENABLE <= USED 0
+__asm___9_timer16_c_5b3a8116____REV16 <= USED 0
+__asm___9_timer16_c_5b3a8116____REVSH <= USED 0
+nsAPI_Timer16_B0M3_PWM_Init <= USED 0
+;FILE timer32.o
+NDrv_Timer32_B0_Disable <= USED 0
+NDrv_Timer32_B0_Enable <= USED 0
+NDrv_Timer32_B0_Reset <= USED 0
+NDrv_Timer32_Disable <= USED 0
+NDrv_Timer32_Enable <= USED 0
+NDrv_Timer32_Reset <= USED 0
+__asm___9_timer32_c_0abd98ad____REV16 <= USED 0
+__asm___9_timer32_c_0abd98ad____REVSH <= USED 0
+nsAPI_Timer32PWM_Breathing_ReSetting <= USED 0
+nsAPI_Timer32PWM_Init <= USED 0
+nsAPI_Timer32_B0M3_PWM_Init <= USED 0
+nsAPI_Timer32_B0M3_Setting_MatchFunction <= USED 0
+nsAPI_Timer32_Setting_Color <= USED 0
+nsAPI_Timer32_Setting_MatchFunction <= USED 0
+;FILE uart.o
+__asm___6_uart_c____REV16 <= USED 0
+__asm___6_uart_c____REVSH <= USED 0
+;FILE usbcore.o
+;FILE usbhw.o
+USB_WakeUp <= USED 0
+__asm___7_usbhw_c_f2ca8f3d____REV16 <= USED 0
+__asm___7_usbhw_c_f2ca8f3d____REVSH <= USED 0
+;FILE usbuser.o
+USB_WakeUp_Event <= USED 0
+;FILE wdt.o
+WDTInit <= USED 0
+WDT_CLK_Setup <= USED 0
+__asm___5_wdt_c_WDTInit____REV16 <= USED 0
+__asm___5_wdt_c_WDTInit____REVSH <= USED 0
+;FILE wflash.o
+FlashBlankChkSec <= USED 0
+FlashCompare <= USED 0
+FlashCopyRAMToFlash <= USED 0
+FlashReadBootVer <= USED 0
+FlashReadParID <= USED 0
+FlashReinvokeISP <= USED 0
+__asm___8_WFLASH_c_26f24efb____REV16 <= USED 0
+__asm___8_WFLASH_c_26f24efb____REVSH <= USED 0
+;FILE wheel.o
+__asm___7_Wheel_c_2b29455f____REV16 <= USED 0
+__asm___7_Wheel_c_2b29455f____REVSH <= USED 0

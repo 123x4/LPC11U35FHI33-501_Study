@@ -1,0 +1,17 @@
+.\color_cycle_group.o: Led_Effect_Gruop_Code\color_cycle_group.c
+.\color_cycle_group.o: .\inc\Led_Effect_H\color_cycle_group.h
+.\color_cycle_group.o: .\inc\Led_Effect_H\led_effect_group_code.h
+.\color_cycle_group.o: .\inc\Led_Effect_H\external_configuration.h
+.\color_cycle_group.o: .\inc\gloab.h
+.\color_cycle_group.o: .\inc\usb.h
+.\color_cycle_group.o: .\inc\Type.h
+.\color_cycle_group.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\color_cycle_group.o: .\inc\hiduser.h
+.\color_cycle_group.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
+.\color_cycle_group.o: .\inc\Led_Effect_H\led1.h
+.\color_cycle_group.o: .\inc\device.h
+.\color_cycle_group.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\color_cycle_group.o: .\inc\LedControl.h
+.\color_cycle_group.o: .\inc\Led_Effect_H\led_effect.h
+.\color_cycle_group.o: .\inc\Led_Effect_H\ram_malloc.h
+.\color_cycle_group.o: .\inc\Led_Effect_H\test.h

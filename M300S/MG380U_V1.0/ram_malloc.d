@@ -1,0 +1,9 @@
+.\ram_malloc.o: Led_Effect_Gruop_Code\ram_malloc.c
+.\ram_malloc.o: .\inc\Led_Effect_H\ram_malloc.h
+.\ram_malloc.o: .\inc\gloab.h
+.\ram_malloc.o: .\inc\usb.h
+.\ram_malloc.o: .\inc\Type.h
+.\ram_malloc.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\ram_malloc.o: .\inc\hiduser.h
+.\ram_malloc.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
+.\ram_malloc.o: .\inc\Led_Effect_H\test.h

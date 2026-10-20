@@ -1,0 +1,15 @@
+.\output\button_1.o: app\button.c
+.\output\button_1.o: .\inc\button.h
+.\output\button_1.o: .\inc\../inc/LPC11Uxx.h
+.\output\button_1.o: .\inc\../inc/core_cm0.h
+.\output\button_1.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\output\button_1.o: .\inc\core_cmInstr.h
+.\output\button_1.o: .\inc\core_cmFunc.h
+.\output\button_1.o: .\inc\../inc/system_LPC11Uxx.h
+.\output\button_1.o: .\inc\device.h
+.\output\button_1.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\output\button_1.o: .\inc\Type.h
+.\output\button_1.o: .\inc\gloab.h
+.\output\button_1.o: .\inc\usb.h
+.\output\button_1.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
+.\output\button_1.o: .\inc\Led_Effect_H\test.h

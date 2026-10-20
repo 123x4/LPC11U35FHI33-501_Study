@@ -1,0 +1,43 @@
+*** Creating Trace Output File '.\Build\MS_3360_20160511.tra' Ok.
+### Preparing for ADS-LD.
+### Creating ADS-LD Command Line
+### List of Objects: adding '".\build\startup_lpc11uxx.o"'
+### List of Objects: adding '".\build\core_cm0.o"'
+### List of Objects: adding '".\build\gpio.o"'
+### List of Objects: adding '".\build\hiduser.o"'
+### List of Objects: adding '".\build\i2c.o"'
+### List of Objects: adding '".\build\keytbl.o"'
+### List of Objects: adding '".\build\main.o"'
+### List of Objects: adding '".\build\pmu.o"'
+### List of Objects: adding '".\build\ssp.o"'
+### List of Objects: adding '".\build\system_lpc11uxx.o"'
+### List of Objects: adding '".\build\systick.o"'
+### List of Objects: adding '".\build\timer16.o"'
+### List of Objects: adding '".\build\timer32.o"'
+### List of Objects: adding '".\build\uart.o"'
+### List of Objects: adding '".\build\usbcore.o"'
+### List of Objects: adding '".\build\usbdesc.o"'
+### List of Objects: adding '".\build\usbhw.o"'
+### List of Objects: adding '".\build\usbuser.o"'
+### List of Objects: adding '".\build\wdt.o"'
+### List of Objects: adding '".\build\pixart_sensor.o"'
+### List of Objects: adding '".\build\srom.o"'
+### List of Objects: adding '".\build\mouse.o"'
+### List of Objects: adding '".\build\wheel.o"'
+### List of Objects: adding '".\build\led.o"'
+### ADS-LD Command completed:
+--cpu Cortex-M0 ".\build\startup_lpc11uxx.o" ".\build\core_cm0.o" ".\build\gpio.o" ".\build\hiduser.o" ".\build\i2c.o" ".\build\keytbl.o" ".\build\main.o" ".\build\pmu.o" ".\build\ssp.o" ".\build\system_lpc11uxx.o" ".\build\systick.o" ".\build\timer16.o" ".\build\timer32.o" ".\build\uart.o" ".\build\usbcore.o" ".\build\usbdesc.o" ".\build\usbhw.o" ".\build\usbuser.o" ".\build\wdt.o" ".\build\pixart_sensor.o" ".\build\srom.o" ".\build\mouse.o" ".\build\wheel.o" ".\build\led.o" 
+--strict --scatter ".\Build\MS_3360_20160511.sct" 
+--summary_stderr --info summarysizes --map --xref --callgraph --symbols 
+--info sizes --info totals --info unused --info veneers 
+ --list ".\MS_3360_20160511.map" -o .\Build\MS_3360_20160511.axf### Preparing Environment (PrepEnvAds)
+### ADS-LD Output File: '.\Build\MS_3360_20160511.axf'
+### ADS-LD Command File: '.\Build\MS_3360_20160511.lnp'
+### Checking for dirty Components...
+### Creating CmdFile '.\Build\MS_3360_20160511.lnp', Handle=0x000012F8
+### Writing '.lnp' file
+### ADS-LD Command file '.\Build\MS_3360_20160511.lnp' is ready.
+### ADS-LD: About to start ADS-LD Thread.
+### ADS-LD: executed with 0 errors
+### Updating obj list
+### LDADS_file() completed.

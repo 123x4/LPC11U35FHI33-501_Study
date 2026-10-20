@@ -1,0 +1,28 @@
+---- R_KeyStatus Matches (28 in 2 files) ----
+F_M800.c (src):U16 R_KeyStatus =0;
+F_M800.c (src):U16 R_KeyStatus_Old =0;
+F_M800.c (src):	if(R_GPIO_Value != R_KeyStatus)
+F_M800.c (src):			R_KeyStatus_Old = R_KeyStatus;
+F_M800.c (src):			R_KeyStatus = R_GPIO_Value;		// Reload Value
+F_M800.c (src):				xprintf("\r\n P.Old.%x",R_KeyStatus_Old);
+F_M800.c (src):			if(R_KeyStatus ==0)
+F_M800.c (src):				if(R_KeyStatus_Old &(V_Side_L1|V_Side_L2|V_Side_R1|V_Side_R2))
+F_M800.c (src):				if(R_KeyStatus&(V_SW_L|V_SW_M|V_SW_R|V_Side_R1|V_Side_R2|V_Side_L1|V_Side_L2))	// When Get Nomo Key
+F_M800.c (src):					//g_Main_Setting.MouseInReport[1] = R_KeyStatus & 0x07;	// UpData				
+F_M800.c (src):					g_Main_Setting.MouseInReport[1] = R_KeyStatus & 0x7f;	// UpData						
+F_M800.c (src):				else if(R_KeyStatus &(V_Side_R1|V_Side_R2)){	// Get Vol Up/Down
+F_M800.c (src):					if(R_KeyStatus & V_Side_R1){
+F_M800.c (src):				else if(R_KeyStatus &(V_Side_L1|V_Side_L2)){	// Get Page ForWard/Back
+F_M800.c (src):					if(R_KeyStatus & V_Side_L1){
+F_M800.c (src):				else if(R_KeyStatus & V_SW_DPI)		// Get DPI Change
+F_M800.c (src):	if(R_KeyScan_Temp != R_KeyStatus){
+F_M800.c (src):			xprintf("\r\n P.Old.%x",R_KeyStatus);
+F_M800.c (src):				if(R_KeyStatus & V_SW_DPI){
+F_M800.c (src):				else if(R_KeyStatus &(V_Side_L1|V_Side_L2)){
+F_M800.c (src):				if(R_KeyStatus &(V_Side_L1|V_Side_L2)){					
+F_M800.c (src):				else if(R_KeyStatus &(V_Side_R1|V_Side_R2)){	// Get Page Up/Down
+F_M800.c (src):			R_KeyStatus = R_KeyScan_Temp;			// Get New Data to Old Data Ram
+F_M800.c (src):	R_KeyStatus=0;							// for KeyScan INIT Ram Value
+F_M800.c (src):		R_KeyStatus_Old =0;
+F_M800.c (src):		R_KeyStatus=0;
+Gpio.c (src):	R_KeyStatus=0;							// for KeyScan INIT Ram Value

@@ -1,0 +1,218 @@
+#ifndef __MouseDatabase_H__
+#define __MouseDatabase_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "Type.h"
+#if (ENABLE_MMAP==0)
+//#include "ADNS9800_SROM_Table.h"
+#endif
+
+#ifdef  __MouseDatabase_C__
+#define INTERFACE
+#else
+#define INTERFACE extern
+#endif
+
+#if 0
+#define _DEBUG_MOUSEBATABASE_(x) x
+#else
+#define _DEBUG_MOUSEBATABASE_(x)
+#endif
+
+#define WRITE_SORM_TO_EEPROM  0
+#define SUPPORT_MAC_BOOT_AND_DOS_MODE 1
+
+/*Gaming Mouse Protocol*/
+#define REPORT_ID 0x07
+#define GET_FIRMWAVE_VERSION 0x41
+#define GET_REPORT_RATE 0x81
+#define GET_SENSOR_STATUS 0x82
+#define GET_KEY_MATRIX 0x84
+#define GET_CURRENT_PROFILE 0x83
+#define GET_DPI 0x86
+//#define GET_MACRO_STOP_MODE	0x87
+#define GET_DPI_Stage 0x89
+#define GET_LED_COLOR 0x8A
+#define GET_LED_PULSATION_EFFECT 0x8B
+#define GET_LED_INTENSITY 0x8C
+//#define GET_X_Y_SENSITIVITY 0x92
+#define GET_PLAYING_MODE 0xA2
+#define GET_LAUNCH_APPLICATION 0xA2
+#define GET_ANGLE_SNAPPING 0x93
+#define GET_LIFT_DETECTION  0x94
+
+#define GET_OS_MODE         0x97
+
+#define GET_SENSOR_SROM  0x8D
+#define GET_FLASH_INFO  0x20
+#define GET_MARCO_KEY  0x85
+
+
+// Profile Size
+#define PROFILE_SIZE				1807	//0x70F
+#define X_DPI_SET_SIZE				8
+#define Y_DPI_SET_SIZE				8
+#define X_STAGE_SIZE				1
+#define Y_STAGE_SIZE				1
+#define X_CURRENT_DPI_SIZE			1
+#define Y_CURRENT_DPI_SIZE			1
+#define STOP_MARCO_MODE_SIZE		1
+#define AREA_1_LED_R_VALUE_SIZE		1
+//#define AREA_1_LED_G_VALUE_SIZE		1
+//#define AREA_1_LED_B_VALUE_SIZE		1
+//#define AREA_2_LED_R_VALUE_SIZE		1
+//#define AREA_2_LED_G_VALUE_SIZE		1
+//#define AREA_2_LED_B_VALUE_SIZE		1
+//#define AREA_3_LED_R_VALUE_SIZE		1
+//#define AREA_3_LED_G_VALUE_SIZE		1
+//#define AREA_3_LED_B_VALUE_SIZE		1
+#define AREA_1_LED_PULSATION_SIZE	1
+//#define AREA_2_LED_PULSATION_SIZE	1
+//#define AREA_3_LED_PULSATION_SIZE	1
+#define AREA_1_LED_INTENSITY_SIZE	1
+//#define AREA_2_LED_INTENSITY_SIZE	1
+//#define AREA_3_LED_INTENSITY_SIZE	1
+#define X_SENSITIVITY_SIZE			1
+#define Y_SENSITIVITY_SIZE			1
+#define PLAYING_MODE_SIZE			1
+#define REPORT_RATE_SIZE			1
+#define ANGLE_SNAPPING_SIZE		1
+#define LIFT_DETECTION_SIZE		1
+#define DPI_STAGE_SIZE				1
+#define MARCO_TABLE_SIZE			0x6AC
+#define KEY_MATRIX_SIZE				0x38
+// Offset Address
+#define	X_DPI_SET_OFFSET			0
+#define Y_DPI_SET_OFFSET			8
+#define X_STAGE_OFFSET				0x10
+#define Y_STAGE_OFFSET				0x11
+#define X_CURRENT_DPI_OFFSET		0x12
+#define Y_CURRENT_DPI_OFFSET		0x13
+#define STOP_MARCO_MODE_OFFSET		0x14
+#define AREA_1_LED_R_VALUE_OFFSET	0x15
+#define AREA_1_LED_G_VALUE_OFFSET	0x16
+#define AREA_1_LED_B_VALUE_OFFSET	0x17
+#define AREA_2_LED_R_VALUE_OFFSET	0x18
+#define AREA_2_LED_G_VALUE_OFFSET	0x19
+#define AREA_2_LED_B_VALUE_OFFSET	0x1A
+#define AREA_3_LED_R_VALUE_OFFSET	0x1B
+#define AREA_3_LED_G_VALUE_OFFSET	0x1C
+#define AREA_3_LED_B_VALUE_OFFSET	0x1D
+#define AREA_1_LED_PULSATION_OFFSET	0x1E
+#define AREA_2_LED_PULSATION_OFFSET	0x1F
+#define AREA_3_LED_PULSATION_OFFSET	0x20
+#define AREA_1_LED_INTENSITY_OFFSET	0x21
+#define AREA_2_LED_INTENSITY_OFFSET	0x22
+#define AREA_3_LED_INTENSITY_OFFSET	0x23
+#define X_SENSITIVITY_OFFSET		0x24
+#define Y_SENSITIVITY_OFFSET		0x25
+#define PLAYING_MODE_OFFSET			0x26
+#define REPORT_RATE_OFFSET				0x27
+#define ANGLE_SNAPPING_OFFSET			0x28
+#define LIFT_DETECTION_OFFSET			0x29
+#define DPI_STAGE_OFFSET				0x2A
+#define MARCO_TABLE_OFFSET			0x2B
+#define KEY_MATRIX_OFFSET				0x6D7
+
+#define  eLED_AREA_SIZE 3
+
+#if 0
+#define MOUSE_DATABASE_VERSION 0x0001
+#define MOUSE_DATABASE_ID 0x5AA5
+typedef __packed struct _LPC11Uxx_DATABASE_ID_
+{
+      	U16 dbVersion;
+	U16 dbID;
+}LPC11Uxx_DATABASE_ID;
+#endif
+
+typedef __packed struct _LPC11Uxx_DATABASE_SENSOR_SETTING_
+{
+	//U8 dbLCTRL0;
+	//U8 dbLCTRL1;
+	//U8 dbLCFG0;
+	//U8 dbLCFG1;
+	U8 dbLiftDetection;
+	U8 dbReportRate;
+	U8 dbXDPILevel[X_DPI_SET_SIZE];
+	U8 dbYDPILevel[Y_DPI_SET_SIZE];
+	U8 dbXDPILevelIndex;
+	U8 dbYDPILevelIndex;
+	U8 dbXDPICrtValue;
+	U8 dbYDPICrtValue;
+	U8 dbDPIStage;
+	//U8 dbXSensitivity;
+	//U8 dbYSensitivity;
+	BOOLEAN dbSensorStatus;
+	BOOLEAN dbAngleSnapping;
+}LPC11Uxx_DATABASE_SENSOR_SETTING;
+
+typedef __packed struct _LPC11Uxx_DATABASE_LED_COLOR_CLASS_
+{
+	U8  R;
+	U8  G;
+	U8  B;
+}LPC11Uxx_DATABASE_LED_COLOR_CLASS;
+
+typedef __packed struct _LPC11Uxx_DATABASE_GENERAL_SETTING_
+{
+	U8 dbProfileIndex;
+	U8 dbLedArea;
+	LPC11Uxx_DATABASE_LED_COLOR_CLASS dbLedColor[eLED_AREA_SIZE];
+	U8 dbLedintensity[eLED_AREA_SIZE];
+	U8 dbLedPulsationEffect[eLED_AREA_SIZE];
+}LPC11Uxx_DATABASE_GENERAL_SETTING;
+
+typedef  struct _LPC11Uxx_DATABASE_MOUSE_GENSETTING_
+{
+	LPC11Uxx_DATABASE_SENSOR_SETTING SensorSetting;
+	LPC11Uxx_DATABASE_GENERAL_SETTING GeneralSetting;
+}LPC11Uxx_DATABASE_MOUSE_GENSETTING;
+
+//INTERFACE LPC11Uxx_DATABASE_MOUSE_GENSETTING g_dMouse;
+
+//#define ADNS9800_SROM_TABLE_SIZE 3070
+
+/*<< Mouse EEPROM Map >>*/
+//#define RM_DATABASE_START_ADR 0
+//#define RM_SENSOR_SROM_EEPROM_ADR RM_DATABASE_START_ADR
+//#define RM_SENSOR_SROM_EEPROM_LEN  ADNS9800_SROM_TABLE_SIZE
+//#define RM_PROFILE_LEN PROFILE_SIZE
+//#define RM_PROFILE_0_START_ADR (RM_SENSOR_SROM_EEPROM_ADR + RM_SENSOR_SROM_EEPROM_LEN)
+//#define RM_PROFILE_1_START_ADR (RM_PROFILE_0_START_ADR + RM_PROFILE_LEN)
+//#define RM_PROFILE_2_START_ADR (RM_PROFILE_1_START_ADR + RM_PROFILE_LEN)
+//#define RM_PROFILE_3_START_ADR (RM_PROFILE_2_START_ADR + RM_PROFILE_LEN)
+//#define RM_PROFILE_4_START_ADR (RM_PROFILE_3_START_ADR + RM_PROFILE_LEN)
+//#define RM_PROFILE_5_START_ADR (RM_PROFILE_4_START_ADR + RM_PROFILE_LEN)
+//#define RM_PROFILE_NUMBER_ADR (RM_PROFILE_5_START_ADR+RM_PROFILE_LEN)
+//#define RM_REPORT_RATE_ADR (RM_PROFILE_NUMBER_ADR+1)
+//#define RM_SENSOR_STATUS_ADR (RM_REPORT_RATE_ADR+1)
+//#define RM_FLASH_INFO_ADR (RM_SENSOR_STATUS_ADR+16) // 0~15byte
+
+//#define RM_BOOTLOADER_STATUS_ADR 0x3A97
+//#define RM_BOOTLOADER_STATUS_LEN 2
+//#define RM_BOOTLOADER_DEF_ADR	0x3A97
+
+//INTERFACE BOOLEAN nsAPI_Database_ID_Check(void);
+//INTERFACE void nsAPI_Database_Init(void);
+//INTERFACE void nsAPI_Database_Mouse_Save(void);
+//INTERFACE void nsAPI_Database_Load_From_EEPROM(void);
+INTERFACE void nsAPI_Database_Load_From_Code(void);
+INTERFACE void nsAPI_Database_Write_Profile_Init(void);
+//INTERFACE void nsAPI_Database_Button_AllProfile_Init(void);
+//INTERFACE void nsAPI_Database_Button_Profile_x_Init(eMOUSE_PROFILE_SIZE eProfile);
+//INTERFACE RetU8 nsAPI_Database_Button_Get_ProfileGroup_Index(void);
+#if WRITE_SORM_TO_EEPROM
+INTERFACE void nsAPI_Database_Write_SROM_To_EEPROM(void);
+#endif
+
+
+#undef INTERFACE
+#ifdef __cplusplus
+}
+#endif
+#endif /* __MacrokeyDatabash_H__  */
+

@@ -1,0 +1,10 @@
+.\output\fingerprint.o: app\Fingerprint.c
+.\output\fingerprint.o: app\../inc/Fingerprint.h
+.\output\fingerprint.o: app\../inc/../inc/SPI.h
+.\output\fingerprint.o: app\../inc/../inc/../inc/led.h
+.\output\fingerprint.o: app\../inc/../inc/../inc/gloab.h
+.\output\fingerprint.o: app\../inc/../inc/../inc/usb.h
+.\output\fingerprint.o: app\../inc/../inc/../inc/Type.h
+.\output\fingerprint.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\output\fingerprint.o: app\../inc/../inc/../inc/hiduser.h
+.\output\fingerprint.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h

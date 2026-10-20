@@ -1,0 +1,17 @@
+.\breathe_group.o: Led_Effect_Gruop_Code\breathe_group.c
+.\breathe_group.o: .\inc\Led_Effect_H\breathe_group.h
+.\breathe_group.o: .\inc\Led_Effect_H\led_effect_group_code.h
+.\breathe_group.o: .\inc\Led_Effect_H\external_configuration.h
+.\breathe_group.o: .\inc\gloab.h
+.\breathe_group.o: .\inc\usb.h
+.\breathe_group.o: .\inc\Type.h
+.\breathe_group.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\breathe_group.o: .\inc\hiduser.h
+.\breathe_group.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
+.\breathe_group.o: .\inc\Led_Effect_H\led1.h
+.\breathe_group.o: .\inc\device.h
+.\breathe_group.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\breathe_group.o: .\inc\LedControl.h
+.\breathe_group.o: .\inc\Led_Effect_H\led_effect.h
+.\breathe_group.o: .\inc\Led_Effect_H\ram_malloc.h
+.\breathe_group.o: .\inc\Led_Effect_H\test.h

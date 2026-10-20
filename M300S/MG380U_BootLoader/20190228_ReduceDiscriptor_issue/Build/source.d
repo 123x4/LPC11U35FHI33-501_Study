@@ -1,0 +1,13 @@
+.\build\source.o: Src\Source.c
+.\build\source.o: Src\../inc/LPC11Uxx.h
+.\build\source.o: Src\../inc/core_cm0.h
+.\build\source.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\build\source.o: Src\../inc/core_cmInstr.h
+.\build\source.o: Src\../inc/core_cmFunc.h
+.\build\source.o: Src\../inc/system_LPC11Uxx.h
+.\build\source.o: Src\../inc/Type.h
+.\build\source.o: Src\../inc/Main.h
+.\build\source.o: Src\../inc/usbcfg.h
+.\build\source.o: Src\../inc/SOURCE.h
+.\build\source.o: Src\../inc/WFLASH.h
+.\build\source.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h

@@ -1,0 +1,11 @@
+.\build\wflash.o: Src\WFLASH.c
+.\build\wflash.o: Src\../inc/LPC11Uxx.h
+.\build\wflash.o: Src\../inc/core_cm0.h
+.\build\wflash.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\build\wflash.o: Src\../inc/core_cmInstr.h
+.\build\wflash.o: Src\../inc/core_cmFunc.h
+.\build\wflash.o: Src\../inc/system_LPC11Uxx.h
+.\build\wflash.o: Src\../inc/Type.h
+.\build\wflash.o: Src\../inc/Main.h
+.\build\wflash.o: Src\../inc/usbcfg.h
+.\build\wflash.o: Src\../inc/WFLASH.h

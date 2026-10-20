@@ -1,0 +1,17 @@
+.\waves_group.o: Led_Effect_Gruop_Code\waves_group.c
+.\waves_group.o: .\inc\Led_Effect_H\waves_group.h
+.\waves_group.o: .\inc\Led_Effect_H\led_effect_group_code.h
+.\waves_group.o: .\inc\Led_Effect_H\external_configuration.h
+.\waves_group.o: .\inc\gloab.h
+.\waves_group.o: .\inc\usb.h
+.\waves_group.o: .\inc\Type.h
+.\waves_group.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\waves_group.o: .\inc\hiduser.h
+.\waves_group.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
+.\waves_group.o: .\inc\Led_Effect_H\led1.h
+.\waves_group.o: .\inc\device.h
+.\waves_group.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\waves_group.o: .\inc\LedControl.h
+.\waves_group.o: .\inc\Led_Effect_H\led_effect.h
+.\waves_group.o: .\inc\Led_Effect_H\ram_malloc.h
+.\waves_group.o: .\inc\Led_Effect_H\test.h

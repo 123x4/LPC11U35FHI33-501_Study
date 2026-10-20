@@ -1,0 +1,11 @@
+.\uart.o: src\UART.c
+.\uart.o: src\../inc/LPC11Uxx.h
+.\uart.o: src\../inc/core_cm0.h
+.\uart.o: src\../inc/LPC11Uxx.h
+.\uart.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\uart.o: .\inc\core_cmInstr.h
+.\uart.o: .\inc\core_cmFunc.h
+.\uart.o: src\../inc/system_LPC11Uxx.h
+.\uart.o: src\../inc/OSC.h
+.\uart.o: src\../inc/UART.h
+.\uart.o: .\inc\type.h

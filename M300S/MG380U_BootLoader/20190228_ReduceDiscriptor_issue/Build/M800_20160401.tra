@@ -1,0 +1,41 @@
+*** Creating Trace Output File '.\Build\M800_20160401.tra' Ok.
+### Preparing for ADS-LD.
+### Creating ADS-LD Command Line
+### List of Objects: adding '".\build\startup_lpc11uxx.o"'
+### List of Objects: adding '".\build\core_cm0.o"'
+### List of Objects: adding '".\build\f_m800.o"'
+### List of Objects: adding '".\build\gpio.o"'
+### List of Objects: adding '".\build\hiduser.o"'
+### List of Objects: adding '".\build\i2c.o"'
+### List of Objects: adding '".\build\keytbl.o"'
+### List of Objects: adding '".\build\main.o"'
+### List of Objects: adding '".\build\pmu.o"'
+### List of Objects: adding '".\build\ssp.o"'
+### List of Objects: adding '".\build\system_lpc11uxx.o"'
+### List of Objects: adding '".\build\systick.o"'
+### List of Objects: adding '".\build\timer16.o"'
+### List of Objects: adding '".\build\timer32.o"'
+### List of Objects: adding '".\build\uart.o"'
+### List of Objects: adding '".\build\usbcore.o"'
+### List of Objects: adding '".\build\usbdesc.o"'
+### List of Objects: adding '".\build\usbhw.o"'
+### List of Objects: adding '".\build\usbuser.o"'
+### List of Objects: adding '".\build\wdt.o"'
+### List of Objects: adding '".\build\pixart_sensor.o"'
+### List of Objects: adding '".\build\srom.o"'
+### ADS-LD Command completed:
+--cpu Cortex-M0 ".\build\startup_lpc11uxx.o" ".\build\core_cm0.o" ".\build\f_m800.o" ".\build\gpio.o" ".\build\hiduser.o" ".\build\i2c.o" ".\build\keytbl.o" ".\build\main.o" ".\build\pmu.o" ".\build\ssp.o" ".\build\system_lpc11uxx.o" ".\build\systick.o" ".\build\timer16.o" ".\build\timer32.o" ".\build\uart.o" ".\build\usbcore.o" ".\build\usbdesc.o" ".\build\usbhw.o" ".\build\usbuser.o" ".\build\wdt.o" ".\build\pixart_sensor.o" ".\build\srom.o" 
+--strict --scatter ".\Build\M800_20160401.sct" 
+--summary_stderr --info summarysizes --map --xref --callgraph --symbols 
+--info sizes --info totals --info unused --info veneers 
+ --list ".\M800_20160401.map" -o .\Build\M800_20160401.axf### Preparing Environment (PrepEnvAds)
+### ADS-LD Output File: '.\Build\M800_20160401.axf'
+### ADS-LD Command File: '.\Build\M800_20160401.lnp'
+### Checking for dirty Components...
+### Creating CmdFile '.\Build\M800_20160401.lnp', Handle=0x00000484
+### Writing '.lnp' file
+### ADS-LD Command file '.\Build\M800_20160401.lnp' is ready.
+### ADS-LD: About to start ADS-LD Thread.
+### ADS-LD: executed with 0 errors
+### Updating obj list
+### LDADS_file() completed.

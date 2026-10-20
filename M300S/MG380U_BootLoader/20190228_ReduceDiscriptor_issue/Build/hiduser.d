@@ -1,0 +1,9 @@
+.\build\hiduser.o: Src\hiduser.c
+.\build\hiduser.o: .\Inc\type.h
+.\build\hiduser.o: .\Inc\usb.h
+.\build\hiduser.o: .\Inc\hid.h
+.\build\hiduser.o: .\Inc\usbcfg.h
+.\build\hiduser.o: .\Inc\usbcore.h
+.\build\hiduser.o: .\Inc\hiduser.h
+.\build\hiduser.o: .\Inc\main.h
+.\build\hiduser.o: .\Inc\uart.h

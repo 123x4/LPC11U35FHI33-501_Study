@@ -1,0 +1,9 @@
+.\osc.o: src\OSC.c
+.\osc.o: src\../inc/LPC11Uxx.h
+.\osc.o: src\../inc/core_cm0.h
+.\osc.o: src\../inc/LPC11Uxx.h
+.\osc.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\osc.o: .\inc\core_cmInstr.h
+.\osc.o: .\inc\core_cmFunc.h
+.\osc.o: src\../inc/system_LPC11Uxx.h
+.\osc.o: src\../inc/OSC.h

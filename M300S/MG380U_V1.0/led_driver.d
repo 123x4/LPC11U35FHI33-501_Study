@@ -1,0 +1,13 @@
+.\led_driver.o: app\led_driver.c
+.\led_driver.o: app\../inc/LPC11Uxx.h
+.\led_driver.o: app\../inc/core_cm0.h
+.\led_driver.o: app\../inc/LPC11Uxx.h
+.\led_driver.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\led_driver.o: .\inc\core_cmInstr.h
+.\led_driver.o: .\inc\core_cmFunc.h
+.\led_driver.o: app\../inc/system_LPC11Uxx.h
+.\led_driver.o: app\../inc/GPIO.h
+.\led_driver.o: app\../inc/OSC.h
+.\led_driver.o: app\../inc/I2C.h
+.\led_driver.o: app\../inc/led_driver.h
+.\led_driver.o: .\inc\type.h

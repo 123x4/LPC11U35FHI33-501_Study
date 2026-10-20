@@ -1,0 +1,9 @@
+.\build\uart.o: Src\uart.c
+.\build\uart.o: .\Inc\LPC11Uxx.h
+.\build\uart.o: .\Inc\core_cm0.h
+.\build\uart.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\build\uart.o: .\Inc\core_cmInstr.h
+.\build\uart.o: .\Inc\core_cmFunc.h
+.\build\uart.o: .\Inc\system_LPC11Uxx.h
+.\build\uart.o: .\Inc\Type.h
+.\build\uart.o: .\Inc\uart.h

@@ -1,0 +1,1 @@
+.\output\srom_0x04.o: app\SROM_0x04.c

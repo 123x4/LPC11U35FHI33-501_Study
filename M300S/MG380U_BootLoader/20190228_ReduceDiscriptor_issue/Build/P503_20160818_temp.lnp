@@ -1,0 +1,5 @@
+--cpu Cortex-M0 ".\build\startup_lpc11uxx.o" ".\build\core_cm0.o" ".\build\gpio.o" ".\build\hiduser.o" ".\build\i2c.o" ".\build\keytbl.o" ".\build\main.o" ".\build\pmu.o" ".\build\ssp.o" ".\build\system_lpc11uxx.o" ".\build\systick.o" ".\build\timer16.o" ".\build\timer32.o" ".\build\uart.o" ".\build\usbcore.o" ".\build\usbdesc.o" ".\build\usbhw.o" ".\build\usbuser.o" ".\build\wdt.o" ".\build\pixart_sensor.o" ".\build\srom.o" ".\build\mouse.o" ".\build\wheel.o" ".\build\led.o" ".\build\eepromapi.o" 
+--strict --scatter ".\Build\P503_20160818_temp.sct" 
+--summary_stderr --info summarysizes --map --xref --callgraph --symbols 
+--info sizes --info totals --info unused --info veneers 
+ --list ".\P503_20160818_temp.map" -o .\Build\P503_20160818_temp.axf

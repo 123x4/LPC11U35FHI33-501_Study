@@ -1,0 +1,9 @@
+.\build\eepromapi.o: Src\eepromAPI.c
+.\build\eepromapi.o: .\Inc\LPC11Uxx.h
+.\build\eepromapi.o: .\Inc\core_cm0.h
+.\build\eepromapi.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\build\eepromapi.o: .\Inc\core_cmInstr.h
+.\build\eepromapi.o: .\Inc\core_cmFunc.h
+.\build\eepromapi.o: .\Inc\system_LPC11Uxx.h
+.\build\eepromapi.o: .\Inc\Type.h
+.\build\eepromapi.o: .\Inc\eepromAPI.h

@@ -1,0 +1,174 @@
+<html>
+<body>
+<pre>
+<h1>µVision Build Log</h1>
+<h2>Project:</h2>
+D:\NXP\Bono_\M800.uvproj
+Project File Date:  04/26/2016
+
+<h2>Output:</h2>
+Rebuild target 'Target 1'
+assembling startup_LPC11Uxx.s...
+startup_LPC11Uxx.s: ARM Assembler, 5.02 [Build 28] 
+startup_LPC11Uxx.s: Error: A9932E: Cannot obtain license for Assembler (feature mdk_std_armasm5) with license version >= 5.0201207
+startup_LPC11Uxx.s: Licensed number of users already reached.
+startup_LPC11Uxx.s: Feature:       mdk_std_armasm5
+startup_LPC11Uxx.s: License path:  8224@NPTHQINTA01.PRIMAX-ELEC.COM;
+startup_LPC11Uxx.s: FLEXnet Licensing error:-4,132
+startup_LPC11Uxx.s: For further information, refer to the FLEXnet Licensing documentation,
+startup_LPC11Uxx.s: available at "www.flexerasoftware.com".
+Target not created
+Rebuild target 'Target 1'
+assembling startup_LPC11Uxx.s...
+startup_LPC11Uxx.s: ARM Assembler, 5.02 [Build 28] 
+startup_LPC11Uxx.s: Error: A9932E: Cannot obtain license for Assembler (feature mdk_std_armasm5) with license version >= 5.0201207
+startup_LPC11Uxx.s: Licensed number of users already reached.
+startup_LPC11Uxx.s: Feature:       mdk_std_armasm5
+startup_LPC11Uxx.s: License path:  8224@NPTHQINTA01.PRIMAX-ELEC.COM;
+startup_LPC11Uxx.s: FLEXnet Licensing error:-4,132
+startup_LPC11Uxx.s: For further information, refer to the FLEXnet Licensing documentation,
+startup_LPC11Uxx.s: available at "www.flexerasoftware.com".
+Target not created
+Rebuild target 'Target 1'
+assembling startup_LPC11Uxx.s...
+startup_LPC11Uxx.s: ARM Assembler, 5.02 [Build 28] 
+startup_LPC11Uxx.s: Error: A9932E: Cannot obtain license for Assembler (feature mdk_std_armasm5) with license version >= 5.0201207
+startup_LPC11Uxx.s: Licensed number of users already reached.
+startup_LPC11Uxx.s: Feature:       mdk_std_armasm5
+startup_LPC11Uxx.s: License path:  8224@NPTHQINTA01.PRIMAX-ELEC.COM;
+startup_LPC11Uxx.s: FLEXnet Licensing error:-4,132
+startup_LPC11Uxx.s: For further information, refer to the FLEXnet Licensing documentation,
+startup_LPC11Uxx.s: available at "www.flexerasoftware.com".
+Target not created
+Rebuild target 'Target 1'
+assembling startup_LPC11Uxx.s...
+startup_LPC11Uxx.s: ARM Assembler, 5.02 [Build 28] 
+startup_LPC11Uxx.s: Error: A9932E: Cannot obtain license for Assembler (feature mdk_std_armasm5) with license version >= 5.0201207
+startup_LPC11Uxx.s: Licensed number of users already reached.
+startup_LPC11Uxx.s: Feature:       mdk_std_armasm5
+startup_LPC11Uxx.s: License path:  8224@NPTHQINTA01.PRIMAX-ELEC.COM;
+startup_LPC11Uxx.s: FLEXnet Licensing error:-4,132
+startup_LPC11Uxx.s: For further information, refer to the FLEXnet Licensing documentation,
+startup_LPC11Uxx.s: available at "www.flexerasoftware.com".
+Target not created
+Rebuild target 'Target 1'
+assembling startup_LPC11Uxx.s...
+startup_LPC11Uxx.s: ARM Assembler, 5.02 [Build 28] 
+startup_LPC11Uxx.s: Error: A9932E: Cannot obtain license for Assembler (feature mdk_std_armasm5) with license version >= 5.0201207
+startup_LPC11Uxx.s: Licensed number of users already reached.
+startup_LPC11Uxx.s: Feature:       mdk_std_armasm5
+startup_LPC11Uxx.s: License path:  8224@NPTHQINTA01.PRIMAX-ELEC.COM;
+startup_LPC11Uxx.s: FLEXnet Licensing error:-4,132
+startup_LPC11Uxx.s: For further information, refer to the FLEXnet Licensing documentation,
+startup_LPC11Uxx.s: available at "www.flexerasoftware.com".
+Target not created
+Rebuild target 'Target 1'
+assembling startup_LPC11Uxx.s...
+startup_LPC11Uxx.s: ARM Assembler, 5.02 [Build 28] 
+startup_LPC11Uxx.s: Error: A9932E: Cannot obtain license for Assembler (feature mdk_std_armasm5) with license version >= 5.0201207
+startup_LPC11Uxx.s: Licensed number of users already reached.
+startup_LPC11Uxx.s: Feature:       mdk_std_armasm5
+startup_LPC11Uxx.s: License path:  8224@NPTHQINTA01.PRIMAX-ELEC.COM;
+startup_LPC11Uxx.s: FLEXnet Licensing error:-4,132
+startup_LPC11Uxx.s: For further information, refer to the FLEXnet Licensing documentation,
+startup_LPC11Uxx.s: available at "www.flexerasoftware.com".
+Target not created
+Rebuild target 'Target 1'
+assembling startup_LPC11Uxx.s...
+startup_LPC11Uxx.s: ARM Assembler, 5.02 [Build 28] 
+startup_LPC11Uxx.s: Error: A9932E: Cannot obtain license for Assembler (feature mdk_std_armasm5) with license version >= 5.0201207
+startup_LPC11Uxx.s: Licensed number of users already reached.
+startup_LPC11Uxx.s: Feature:       mdk_std_armasm5
+startup_LPC11Uxx.s: License path:  8224@NPTHQINTA01.PRIMAX-ELEC.COM;
+startup_LPC11Uxx.s: FLEXnet Licensing error:-4,132
+startup_LPC11Uxx.s: For further information, refer to the FLEXnet Licensing documentation,
+startup_LPC11Uxx.s: available at "www.flexerasoftware.com".
+Target not created
+Rebuild target 'Target 1'
+assembling startup_LPC11Uxx.s...
+startup_LPC11Uxx.s: ARM Assembler, 5.02 [Build 28] 
+startup_LPC11Uxx.s: Error: A9932E: Cannot obtain license for Assembler (feature mdk_std_armasm5) with license version >= 5.0201207
+startup_LPC11Uxx.s: Licensed number of users already reached.
+startup_LPC11Uxx.s: Feature:       mdk_std_armasm5
+startup_LPC11Uxx.s: License path:  8224@NPTHQINTA01.PRIMAX-ELEC.COM;
+startup_LPC11Uxx.s: FLEXnet Licensing error:-4,132
+startup_LPC11Uxx.s: For further information, refer to the FLEXnet Licensing documentation,
+startup_LPC11Uxx.s: available at "www.flexerasoftware.com".
+Target not created
+Rebuild target 'Target 1'
+assembling startup_LPC11Uxx.s...
+startup_LPC11Uxx.s: ARM Assembler, 5.02 [Build 28] 
+startup_LPC11Uxx.s: Error: A9932E: Cannot obtain license for Assembler (feature mdk_std_armasm5) with license version >= 5.0201207
+startup_LPC11Uxx.s: Licensed number of users already reached.
+startup_LPC11Uxx.s: Feature:       mdk_std_armasm5
+startup_LPC11Uxx.s: License path:  8224@NPTHQINTA01.PRIMAX-ELEC.COM;
+startup_LPC11Uxx.s: FLEXnet Licensing error:-4,132
+startup_LPC11Uxx.s: For further information, refer to the FLEXnet Licensing documentation,
+startup_LPC11Uxx.s: available at "www.flexerasoftware.com".
+Target not created
+Rebuild target 'Target 1'
+assembling startup_LPC11Uxx.s...
+startup_LPC11Uxx.s: ARM Assembler, 5.02 [Build 28] 
+startup_LPC11Uxx.s: Error: A9932E: Cannot obtain license for Assembler (feature mdk_std_armasm5) with license version >= 5.0201207
+startup_LPC11Uxx.s: Licensed number of users already reached.
+startup_LPC11Uxx.s: Feature:       mdk_std_armasm5
+startup_LPC11Uxx.s: License path:  8224@NPTHQINTA01.PRIMAX-ELEC.COM;
+startup_LPC11Uxx.s: FLEXnet Licensing error:-4,132
+startup_LPC11Uxx.s: For further information, refer to the FLEXnet Licensing documentation,
+startup_LPC11Uxx.s: available at "www.flexerasoftware.com".
+Target not created
+Rebuild target 'Target 1'
+assembling startup_LPC11Uxx.s...
+startup_LPC11Uxx.s: ARM Assembler, 5.02 [Build 28] 
+startup_LPC11Uxx.s: Error: A9932E: Cannot obtain license for Assembler (feature mdk_std_armasm5) with license version >= 5.0201207
+startup_LPC11Uxx.s: Licensed number of users already reached.
+startup_LPC11Uxx.s: Feature:       mdk_std_armasm5
+startup_LPC11Uxx.s: License path:  8224@NPTHQINTA01.PRIMAX-ELEC.COM;
+startup_LPC11Uxx.s: FLEXnet Licensing error:-4,132
+startup_LPC11Uxx.s: For further information, refer to the FLEXnet Licensing documentation,
+startup_LPC11Uxx.s: available at "www.flexerasoftware.com".
+Target not created
+Rebuild target 'Target 1'
+assembling startup_LPC11Uxx.s...
+startup_LPC11Uxx.s: ARM Assembler, 5.02 [Build 28] 
+startup_LPC11Uxx.s: Error: A9932E: Cannot obtain license for Assembler (feature mdk_std_armasm5) with license version >= 5.0201207
+startup_LPC11Uxx.s: Licensed number of users already reached.
+startup_LPC11Uxx.s: Feature:       mdk_std_armasm5
+startup_LPC11Uxx.s: License path:  8224@NPTHQINTA01.PRIMAX-ELEC.COM;
+startup_LPC11Uxx.s: FLEXnet Licensing error:-4,132
+startup_LPC11Uxx.s: For further information, refer to the FLEXnet Licensing documentation,
+startup_LPC11Uxx.s: available at "www.flexerasoftware.com".
+Target not created
+Rebuild target 'Target 1'
+assembling startup_LPC11Uxx.s...
+startup_LPC11Uxx.s: ARM Assembler, 5.02 [Build 28] 
+startup_LPC11Uxx.s: Error: A9932E: Cannot obtain license for Assembler (feature mdk_std_armasm5) with license version >= 5.0201207
+startup_LPC11Uxx.s: Licensed number of users already reached.
+startup_LPC11Uxx.s: Feature:       mdk_std_armasm5
+startup_LPC11Uxx.s: License path:  8224@NPTHQINTA01.PRIMAX-ELEC.COM;
+startup_LPC11Uxx.s: FLEXnet Licensing error:-4,132
+startup_LPC11Uxx.s: For further information, refer to the FLEXnet Licensing documentation,
+startup_LPC11Uxx.s: available at "www.flexerasoftware.com".
+Target not created
+Rebuild target 'Target 1'
+assembling startup_LPC11Uxx.s...
+startup_LPC11Uxx.s: ARM Assembler, 5.02 [Build 28] 
+startup_LPC11Uxx.s: Error: A9932E: Cannot obtain license for Assembler (feature mdk_std_armasm5) with license version >= 5.0201207
+startup_LPC11Uxx.s: Licensed number of users already reached.
+startup_LPC11Uxx.s: Feature:       mdk_std_armasm5
+startup_LPC11Uxx.s: License path:  8224@NPTHQINTA01.PRIMAX-ELEC.COM;
+startup_LPC11Uxx.s: FLEXnet Licensing error:-4,132
+startup_LPC11Uxx.s: For further information, refer to the FLEXnet Licensing documentation,
+startup_LPC11Uxx.s: available at "www.flexerasoftware.com".
+Target not created
+Rebuild target 'Target 1'
+assembling startup_LPC11Uxx.s...
+startup_LPC11Uxx.s: ARM Assembler, 5.02 [Build 28] 
+startup_LPC11Uxx.s: Error: A9932E: Cannot obtain license for Assembler (feature mdk_std_armasm5) with license version >= 5.0201207
+startup_LPC11Uxx.s: Licensed number of users already reached.
+startup_LPC11Uxx.s: Feature:       mdk_std_armasm5
+startup_LPC11Uxx.s: License path:  8224@NPTHQINTA01.PRIMAX-ELEC.COM;
+startup_LPC11Uxx.s: FLEXnet Licensing error:-4,132
+startup_LPC11Uxx.s: For further information, refer to the FLEXnet Licensing documentation,
+startup_LPC11Uxx.s: available at "www.flexerasoftware.com".
+Target not created

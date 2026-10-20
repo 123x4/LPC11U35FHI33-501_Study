@@ -1,0 +1,17 @@
+.\reaction_group.o: Led_Effect_Gruop_Code\reaction_group.c
+.\reaction_group.o: .\inc\Led_Effect_H\reaction_group.h
+.\reaction_group.o: .\inc\Led_Effect_H\led_effect_group_code.h
+.\reaction_group.o: .\inc\Led_Effect_H\external_configuration.h
+.\reaction_group.o: .\inc\gloab.h
+.\reaction_group.o: .\inc\usb.h
+.\reaction_group.o: .\inc\Type.h
+.\reaction_group.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\reaction_group.o: .\inc\hiduser.h
+.\reaction_group.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
+.\reaction_group.o: .\inc\Led_Effect_H\led1.h
+.\reaction_group.o: .\inc\device.h
+.\reaction_group.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\reaction_group.o: .\inc\LedControl.h
+.\reaction_group.o: .\inc\Led_Effect_H\led_effect.h
+.\reaction_group.o: .\inc\Led_Effect_H\ram_malloc.h
+.\reaction_group.o: .\inc\Led_Effect_H\test.h

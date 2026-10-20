@@ -1,0 +1,11 @@
+.\scroll.o: app\scroll.c
+.\scroll.o: app\../inc/scroll.h
+.\scroll.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\scroll.o: app\../inc/../inc/GPIO.h
+.\scroll.o: app\../inc/../inc/device.h
+.\scroll.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\scroll.o: app\../inc/../inc/Type.h
+.\scroll.o: app\../inc/../inc/gloab.h
+.\scroll.o: app\../inc/../inc/usb.h
+.\scroll.o: app\../inc/../inc/hiduser.h
+.\scroll.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h

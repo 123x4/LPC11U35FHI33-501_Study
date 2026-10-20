@@ -1,0 +1,9 @@
+.\build\bod.o: Src\bod.c
+.\build\bod.o: .\Inc\LPC11Uxx.h
+.\build\bod.o: .\Inc\core_cm0.h
+.\build\bod.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\build\bod.o: .\Inc\core_cmInstr.h
+.\build\bod.o: .\Inc\core_cmFunc.h
+.\build\bod.o: .\Inc\system_LPC11Uxx.h
+.\build\bod.o: .\Inc\Type.h
+.\build\bod.o: .\Inc\bod.h

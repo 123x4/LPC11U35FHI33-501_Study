@@ -1,0 +1,9 @@
+.\build\wdt.o: Src\wdt.c
+.\build\wdt.o: .\Inc\LPC11Uxx.h
+.\build\wdt.o: .\Inc\core_cm0.h
+.\build\wdt.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\build\wdt.o: .\Inc\core_cmInstr.h
+.\build\wdt.o: .\Inc\core_cmFunc.h
+.\build\wdt.o: .\Inc\system_LPC11Uxx.h
+.\build\wdt.o: .\Inc\Type.h
+.\build\wdt.o: .\Inc\wdt.h

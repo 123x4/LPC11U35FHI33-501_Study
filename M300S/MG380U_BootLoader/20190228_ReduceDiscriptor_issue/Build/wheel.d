@@ -1,0 +1,16 @@
+.\build\wheel.o: Src\Wheel.c
+.\build\wheel.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\build\wheel.o: .\Inc\LPC11Uxx.h
+.\build\wheel.o: .\Inc\core_cm0.h
+.\build\wheel.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\build\wheel.o: .\Inc\core_cmInstr.h
+.\build\wheel.o: .\Inc\core_cmFunc.h
+.\build\wheel.o: .\Inc\system_LPC11Uxx.h
+.\build\wheel.o: .\Inc\Type.h
+.\build\wheel.o: Src\Mouse.h
+.\build\wheel.o: .\Inc\Main.h
+.\build\wheel.o: .\Inc\usbcfg.h
+.\build\wheel.o: .\Inc\gpio.h
+.\build\wheel.o: .\Inc\MouseDatabase.h
+.\build\wheel.o: .\Inc\systick.h
+.\build\wheel.o: .\Inc\Wheel.h

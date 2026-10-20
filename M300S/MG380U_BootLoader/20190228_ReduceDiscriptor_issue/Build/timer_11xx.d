@@ -1,0 +1,12 @@
+.\Build\timer_11xx.o: Src\timer_11xx.c
+.\Build\timer_11xx.o: .\Inc\LPC11Uxx.h
+.\Build\timer_11xx.o: .\Inc\core_cm0.h
+.\Build\timer_11xx.o: D:\Keil_v4_ARM\ARM\ARMCC\bin\..\include\stdint.h
+.\Build\timer_11xx.o: .\Inc\core_cmInstr.h
+.\Build\timer_11xx.o: .\Inc\core_cmFunc.h
+.\Build\timer_11xx.o: .\Inc\system_LPC11Uxx.h
+.\Build\timer_11xx.o: .\Inc\Type.h
+.\Build\timer_11xx.o: .\Inc\Main.h
+.\Build\timer_11xx.o: .\Inc\usbcfg.h
+.\Build\timer_11xx.o: .\Inc\Timer_11xx.h
+.\Build\timer_11xx.o: D:\Keil_v4_ARM\ARM\ARMCC\bin\..\include\stdbool.h

@@ -1,0 +1,9 @@
+.\hiduser.o: src\hiduser.c
+.\hiduser.o: .\inc\type.h
+.\hiduser.o: .\inc\usb.h
+.\hiduser.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\hiduser.o: .\inc\hiduser.h
+.\hiduser.o: .\inc\hid.h
+.\hiduser.o: .\inc\usbcfg.h
+.\hiduser.o: .\inc\usbcore.h
+.\hiduser.o: .\inc\uart.h

@@ -1,0 +1,10 @@
+.\adc.o: src\ADC.c
+.\adc.o: src\../inc/LPC11Uxx.h
+.\adc.o: src\../inc/core_cm0.h
+.\adc.o: src\../inc/LPC11Uxx.h
+.\adc.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\adc.o: .\inc\core_cmInstr.h
+.\adc.o: .\inc\core_cmFunc.h
+.\adc.o: src\../inc/system_LPC11Uxx.h
+.\adc.o: src\../inc/OSC.h
+.\adc.o: src\../inc/ADC.h

@@ -1,0 +1,10 @@
+.\main.o: src\Main.c
+.\main.o: src\../inc/Main.h
+.\main.o: src\../inc/device.h
+.\main.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\main.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\main.o: src\../inc/Type.h
+.\main.o: src\../inc/gloab.h
+.\main.o: src\../inc/usb.h
+.\main.o: src\../inc/hiduser.h
+.\main.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h

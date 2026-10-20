@@ -1,0 +1,14 @@
+.\build\timer16.o: Src\timer16.c
+.\build\timer16.o: .\Inc\LPC11Uxx.h
+.\build\timer16.o: .\Inc\core_cm0.h
+.\build\timer16.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\build\timer16.o: .\Inc\core_cmInstr.h
+.\build\timer16.o: .\Inc\core_cmFunc.h
+.\build\timer16.o: .\Inc\system_LPC11Uxx.h
+.\build\timer16.o: .\Inc\Type.h
+.\build\timer16.o: .\Inc\timer16.h
+.\build\timer16.o: .\Inc\Gpio.h
+.\build\timer16.o: .\Inc\MouseDatabase.h
+.\build\timer16.o: .\Inc\systick.h
+.\build\timer16.o: .\Inc\Led.h
+.\build\timer16.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h

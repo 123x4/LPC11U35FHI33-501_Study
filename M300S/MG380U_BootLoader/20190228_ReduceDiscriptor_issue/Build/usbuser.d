@@ -1,0 +1,10 @@
+.\build\usbuser.o: Src\usbuser.c
+.\build\usbuser.o: .\Inc\type.h
+.\build\usbuser.o: .\Inc\usb.h
+.\build\usbuser.o: .\Inc\usbcfg.h
+.\build\usbuser.o: .\Inc\usbhw.h
+.\build\usbuser.o: .\Inc\usbcore.h
+.\build\usbuser.o: .\Inc\usbuser.h
+.\build\usbuser.o: .\Inc\hiduser.h
+.\build\usbuser.o: .\Inc\main.h
+.\build\usbuser.o: .\Inc\uart.h

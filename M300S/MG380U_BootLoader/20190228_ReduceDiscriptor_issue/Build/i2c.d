@@ -1,0 +1,15 @@
+.\build\i2c.o: Src\I2c.c
+.\build\i2c.o: .\Inc\LPC11Uxx.h
+.\build\i2c.o: .\Inc\core_cm0.h
+.\build\i2c.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\build\i2c.o: .\Inc\core_cmInstr.h
+.\build\i2c.o: .\Inc\core_cmFunc.h
+.\build\i2c.o: .\Inc\system_LPC11Uxx.h
+.\build\i2c.o: .\Inc\Type.h
+.\build\i2c.o: .\Inc\i2c.h
+.\build\i2c.o: .\Inc\ssp.h
+.\build\i2c.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\build\i2c.o: .\Inc\Gpio.h
+.\build\i2c.o: .\Inc\MouseDatabase.h
+.\build\i2c.o: .\Inc\systick.h
+.\build\i2c.o: .\Inc\uart.h

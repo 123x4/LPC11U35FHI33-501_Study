@@ -1,0 +1,13 @@
+.\usb.o: src\usb.c
+.\usb.o: .\inc\usb.h
+.\usb.o: .\inc\Type.h
+.\usb.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\usb.o: .\inc\hiduser.h
+.\usb.o: .\inc\usbcore.h
+.\usb.o: .\inc\usbcfg.h
+.\usb.o: .\inc\Led_Effect_H\test.h
+.\usb.o: .\inc\gloab.h
+.\usb.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
+.\usb.o: .\inc\usbhw.h
+.\usb.o: .\inc\device.h
+.\usb.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h

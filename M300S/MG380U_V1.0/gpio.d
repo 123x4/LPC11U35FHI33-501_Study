@@ -1,0 +1,15 @@
+.\gpio.o: src\GPIO.c
+.\gpio.o: src\../inc/LPC11Uxx.h
+.\gpio.o: src\../inc/core_cm0.h
+.\gpio.o: src\../inc/LPC11Uxx.h
+.\gpio.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\gpio.o: .\inc\core_cmInstr.h
+.\gpio.o: .\inc\core_cmFunc.h
+.\gpio.o: src\../inc/system_LPC11Uxx.h
+.\gpio.o: .\inc\usbhw.h
+.\gpio.o: .\inc\Type.h
+.\gpio.o: .\inc\Usb.h
+.\gpio.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\gpio.o: .\inc\hiduser.h
+.\gpio.o: .\inc\usbcfg.h
+.\gpio.o: .\inc\usbcore.h

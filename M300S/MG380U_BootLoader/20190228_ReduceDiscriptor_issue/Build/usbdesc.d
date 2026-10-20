@@ -1,0 +1,9 @@
+.\build\usbdesc.o: Src\usbdesc.c
+.\build\usbdesc.o: .\Inc\type.h
+.\build\usbdesc.o: .\Inc\usb.h
+.\build\usbdesc.o: .\Inc\hid.h
+.\build\usbdesc.o: .\Inc\usbcfg.h
+.\build\usbdesc.o: .\Inc\usbdesc.h
+.\build\usbdesc.o: .\Inc\..\Src\Mouse.h
+.\build\usbdesc.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\build\usbdesc.o: .\Inc\hiduser.h

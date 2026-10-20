@@ -1,0 +1,13 @@
+.\build\timer32.o: Src\timer32.c
+.\build\timer32.o: .\Inc\LPC11Uxx.h
+.\build\timer32.o: .\Inc\core_cm0.h
+.\build\timer32.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\build\timer32.o: .\Inc\core_cmInstr.h
+.\build\timer32.o: .\Inc\core_cmFunc.h
+.\build\timer32.o: .\Inc\system_LPC11Uxx.h
+.\build\timer32.o: .\Inc\Type.h
+.\build\timer32.o: .\Inc\timer32.h
+.\build\timer32.o: .\Inc\Timer16.h
+.\build\timer32.o: .\Inc\Gpio.h
+.\build\timer32.o: .\Inc\MouseDatabase.h
+.\build\timer32.o: .\Inc\systick.h

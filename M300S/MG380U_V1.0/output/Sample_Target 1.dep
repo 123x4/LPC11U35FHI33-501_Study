@@ -1,0 +1,778 @@
+Dependencies for Project 'Sample', Target 'Target 1': (DO NOT MODIFY !)
+F (.\src\Main.c)(0x5C483E3D)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\main.o --omf_browse .\output\main.crf --depend .\output\main.d)
+I (src\../inc/Main.h)(0x5BF8CE1E)
+I (src\../inc/device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (src\../inc/Type.h)(0x5A0E55FE)
+I (src\../inc/gloab.h)(0x5A589382)
+I (src\../inc/usb.h)(0x5A586D9D)
+I (src\../inc/hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+F (.\src\GPIO.c)(0x6278C329)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\gpio.o --omf_browse .\output\gpio.crf --depend .\output\gpio.d)
+I (src\../inc/LPC11Uxx.h)(0x5A5EBF5B)
+I (src\../inc/core_cm0.h)(0x5AB30D2F)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\core_cmInstr.h)(0x50875B7E)
+I (.\inc\core_cmFunc.h)(0x50875B7E)
+I (src\../inc/system_LPC11Uxx.h)(0x4F34B6AC)
+I (.\inc\usbhw.h)(0x5DE754ED)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (.\inc\Usb.h)(0x5A586D9D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (.\inc\usbcfg.h)(0x5CD13696)
+I (.\inc\usbcore.h)(0x5D88860D)
+I (.\inc\gloab.h)(0x5A589382)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+F (.\src\I2C.c)(0x5C2051E0)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\i2c.o --omf_browse .\output\i2c.crf --depend .\output\i2c.d)
+I (src\../inc/LPC11Uxx.h)(0x5A5EBF5B)
+I (src\../inc/core_cm0.h)(0x5AB30D2F)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\core_cmInstr.h)(0x50875B7E)
+I (.\inc\core_cmFunc.h)(0x50875B7E)
+I (src\../inc/system_LPC11Uxx.h)(0x4F34B6AC)
+I (src\../inc/OSC.h)(0x5A618511)
+I (src\../inc/I2C.h)(0x5C2051E0)
+F (.\src\OSC.c)(0x5A3B4C9D)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\osc.o --omf_browse .\output\osc.crf --depend .\output\osc.d)
+I (src\../inc/LPC11Uxx.h)(0x5A5EBF5B)
+I (src\../inc/core_cm0.h)(0x5AB30D2F)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\core_cmInstr.h)(0x50875B7E)
+I (.\inc\core_cmFunc.h)(0x50875B7E)
+I (src\../inc/system_LPC11Uxx.h)(0x4F34B6AC)
+I (src\../inc/OSC.h)(0x5A618511)
+F (.\src\SPI.c)(0x5DCB6156)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\spi.o --omf_browse .\output\spi.crf --depend .\output\spi.d)
+I (src\../inc/LPC11Uxx.h)(0x5A5EBF5B)
+I (src\../inc/core_cm0.h)(0x5AB30D2F)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\core_cmInstr.h)(0x50875B7E)
+I (.\inc\core_cmFunc.h)(0x50875B7E)
+I (src\../inc/system_LPC11Uxx.h)(0x4F34B6AC)
+I (src\../inc/GPIO.h)(0x4E099BF6)
+I (src\../inc/OSC.h)(0x5A618511)
+I (src\../inc/device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (src\../inc/Type.h)(0x5A0E55FE)
+I (src\../inc/gloab.h)(0x5A589382)
+I (src\../inc/usb.h)(0x5A586D9D)
+I (src\../inc/hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (src\../inc/SPI.h)(0x5D74CAD8)
+I (src\../inc/../inc/led.h)(0x5BF9133B)
+I (src\../inc/optical_3389.h)(0x5C586760)
+F (.\src\Timer.c)(0x6278C26B)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\timer.o --omf_browse .\output\timer.crf --depend .\output\timer.d)
+I (src\../inc/LPC11Uxx.h)(0x5A5EBF5B)
+I (src\../inc/core_cm0.h)(0x5AB30D2F)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\core_cmInstr.h)(0x50875B7E)
+I (.\inc\core_cmFunc.h)(0x50875B7E)
+I (src\../inc/system_LPC11Uxx.h)(0x4F34B6AC)
+I (src\../inc/Timer.h)(0x62676EAC)
+I (src\../inc/gloab.h)(0x5A589382)
+I (src\../inc/usb.h)(0x5A586D9D)
+I (src\../inc/Type.h)(0x5A0E55FE)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (src\../inc/hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\Led_Effect_H\led1.h)(0x5D9054EE)
+I (.\inc\device.h)(0x5DB1558D)
+I (.\inc\LedControl.h)(0x5A7AD07B)
+I (.\inc\Led_Effect_H\custom.h)(0x61E52095)
+I (.\inc\keydef.h)(0x5A585565)
+I (.\inc\Led_Effect_H\led_effect.h)(0x5D905411)
+I (.\inc\Led_Effect_H\led_effect_group_code.h)(0x5DAFB592)
+I (.\inc\Led_Effect_H\external_configuration.h)(0x5A3B7FA7)
+I (.\inc\Led_Effect_H\ram_malloc.h)(0x62788424)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+I (.\inc\usbhw.h)(0x5DE754ED)
+I (.\inc\usbcfg.h)(0x5CD13696)
+I (.\inc\macro.h)(0x5D75E9B1)
+I (.\inc\operation_flash.h)(0x5DAFB543)
+I (.\inc\gtech_flash.h)(0x6221CC67)
+I (.\inc\pc_communicate.h)(0x6221CAB2)
+I (.\inc\optical_3389.h)(0x5C586760)
+I (.\inc\spi.h)(0x5D74CAD8)
+I (.\inc\../inc/led.h)(0x5BF9133B)
+I (.\inc\usbcore.h)(0x5D88860D)
+I (.\inc\OSC.h)(0x5A618511)
+I (.\inc\GPIO.h)(0x4E099BF6)
+F (.\src\UART.c)(0x5D819350)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\uart.o --omf_browse .\output\uart.crf --depend .\output\uart.d)
+I (src\../inc/LPC11Uxx.h)(0x5A5EBF5B)
+I (src\../inc/core_cm0.h)(0x5AB30D2F)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\core_cmInstr.h)(0x50875B7E)
+I (.\inc\core_cmFunc.h)(0x50875B7E)
+I (src\../inc/system_LPC11Uxx.h)(0x4F34B6AC)
+I (src\../inc/OSC.h)(0x5A618511)
+I (src\../inc/UART.h)(0x5D818CBB)
+I (.\inc\type.h)(0x5A0E55FE)
+F (.\src\ADC.c)(0x5BCFE3F0)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\adc.o --omf_browse .\output\adc.crf --depend .\output\adc.d)
+I (src\../inc/LPC11Uxx.h)(0x5A5EBF5B)
+I (src\../inc/core_cm0.h)(0x5AB30D2F)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\core_cmInstr.h)(0x50875B7E)
+I (.\inc\core_cmFunc.h)(0x50875B7E)
+I (src\../inc/system_LPC11Uxx.h)(0x4F34B6AC)
+I (src\../inc/OSC.h)(0x5A618511)
+I (src\../inc/ADC.h)(0x5191A8EA)
+F (.\src\gtech_flash.c)(0x627B5392)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\gtech_flash.o --omf_browse .\output\gtech_flash.crf --depend .\output\gtech_flash.d)
+I (src\../inc/LPC11Uxx.h)(0x5A5EBF5B)
+I (src\../inc/core_cm0.h)(0x5AB30D2F)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\core_cmInstr.h)(0x50875B7E)
+I (.\inc\core_cmFunc.h)(0x50875B7E)
+I (src\../inc/system_LPC11Uxx.h)(0x4F34B6AC)
+I (src\../inc/UART.h)(0x5D818CBB)
+I (.\inc\gtech_flash.h)(0x6221CC67)
+I (.\inc\gloab.h)(0x5A589382)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+I (.\inc\OSC.h)(0x5A618511)
+I (.\inc\eeprom.h)(0x605008A4)
+I (.\inc\spi.h)(0x5D74CAD8)
+I (.\inc\../inc/led.h)(0x5BF9133B)
+I (.\inc\timer.h)(0x62676EAC)
+I (.\inc\Led_Effect_H\led1.h)(0x5D9054EE)
+I (.\inc\device.h)(0x5DB1558D)
+I (.\inc\LedControl.h)(0x5A7AD07B)
+I (.\inc\Led_Effect_H\custom.h)(0x61E52095)
+I (.\inc\keydef.h)(0x5A585565)
+I (.\inc\Led_Effect_H\led_effect.h)(0x5D905411)
+I (.\inc\Led_Effect_H\led_effect_group_code.h)(0x5DAFB592)
+I (.\inc\Led_Effect_H\external_configuration.h)(0x5A3B7FA7)
+I (.\inc\Led_Effect_H\ram_malloc.h)(0x62788424)
+I (.\inc\gpio.h)(0x4E099BF6)
+I (src\../inc/WWDT.h)(0x5C330AE1)
+F (.\src\operation_flash.c)(0x6278BC4D)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\operation_flash.o --omf_browse .\output\operation_flash.crf --depend .\output\operation_flash.d)
+I (.\inc\operation_flash.h)(0x5DAFB543)
+I (.\inc\gloab.h)(0x5A589382)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\gtech_flash.h)(0x6221CC67)
+I (.\inc\Led_Effect_H\custom.h)(0x61E52095)
+I (.\inc\keydef.h)(0x5A585565)
+I (.\inc\Led_Effect_H\led_effect.h)(0x5D905411)
+I (.\inc\Led_Effect_H\led1.h)(0x5D9054EE)
+I (.\inc\device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\LedControl.h)(0x5A7AD07B)
+I (.\inc\Led_Effect_H\led_effect_group_code.h)(0x5DAFB592)
+I (.\inc\Led_Effect_H\external_configuration.h)(0x5A3B7FA7)
+I (.\inc\Led_Effect_H\ram_malloc.h)(0x62788424)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+I (.\inc\macro.h)(0x5D75E9B1)
+I (.\inc\pc_communicate.h)(0x6221CAB2)
+I (.\inc\optical_3389.h)(0x5C586760)
+I (.\inc\spi.h)(0x5D74CAD8)
+I (.\inc\../inc/led.h)(0x5BF9133B)
+F (.\src\pc_communicate.c)(0x6278BC54)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\pc_communicate.o --omf_browse .\output\pc_communicate.crf --depend .\output\pc_communicate.d)
+I (.\inc\pc_communicate.h)(0x6221CAB2)
+I (.\inc\gloab.h)(0x5A589382)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+I (.\inc\optical_3389.h)(0x5C586760)
+I (.\inc\device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\spi.h)(0x5D74CAD8)
+I (.\inc\../inc/led.h)(0x5BF9133B)
+I (.\inc\Led_Effect_H\led_effect.h)(0x5D905411)
+I (.\inc\Led_Effect_H\led1.h)(0x5D9054EE)
+I (.\inc\LedControl.h)(0x5A7AD07B)
+I (.\inc\Led_Effect_H\custom.h)(0x61E52095)
+I (.\inc\keydef.h)(0x5A585565)
+I (.\inc\Led_Effect_H\led_effect_group_code.h)(0x5DAFB592)
+I (.\inc\Led_Effect_H\external_configuration.h)(0x5A3B7FA7)
+I (.\inc\Led_Effect_H\ram_malloc.h)(0x62788424)
+I (.\inc\gtech_flash.h)(0x6221CC67)
+I (.\inc\operation_flash.h)(0x5DAFB543)
+I (.\inc\macro.h)(0x5D75E9B1)
+I (.\inc\Led_Effect_H\led2.h)(0x627615F8)
+I (.\inc\Led_Effect_H\Production_line_test.h)(0x5DB9431B)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\string.h)(0x588B8344)
+I (.\inc\Timer.h)(0x62676EAC)
+I (.\inc\gpio.h)(0x4E099BF6)
+F (.\src\macro.c)(0x62147A27)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\macro.o --omf_browse .\output\macro.crf --depend .\output\macro.d)
+I (.\inc\macro.h)(0x5D75E9B1)
+I (.\inc\gloab.h)(0x5A589382)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+I (.\inc\Led_Effect_H\custom.h)(0x61E52095)
+I (.\inc\keydef.h)(0x5A585565)
+I (.\inc\Led_Effect_H\led_effect.h)(0x5D905411)
+I (.\inc\Led_Effect_H\led1.h)(0x5D9054EE)
+I (.\inc\device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\LedControl.h)(0x5A7AD07B)
+I (.\inc\Led_Effect_H\led_effect_group_code.h)(0x5DAFB592)
+I (.\inc\Led_Effect_H\external_configuration.h)(0x5A3B7FA7)
+I (.\inc\Led_Effect_H\ram_malloc.h)(0x62788424)
+I (.\inc\operation_flash.h)(0x5DAFB543)
+I (.\inc\gtech_flash.h)(0x6221CC67)
+I (.\inc\pc_communicate.h)(0x6221CAB2)
+I (.\inc\optical_3389.h)(0x5C586760)
+I (.\inc\spi.h)(0x5D74CAD8)
+I (.\inc\../inc/led.h)(0x5BF9133B)
+F (.\src\keydef.c)(0x5BF8F806)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\keydef.o --omf_browse .\output\keydef.crf --depend .\output\keydef.d)
+I (.\inc\keydef.h)(0x5A585565)
+I (.\inc\gloab.h)(0x5A589382)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+F (.\src\suspend.c)(0x6246AC4A)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\suspend.o --omf_browse .\output\suspend.crf --depend .\output\suspend.d)
+I (.\inc\timer.h)(0x62676EAC)
+I (.\inc\gloab.h)(0x5A589382)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\Led_Effect_H\led1.h)(0x5D9054EE)
+I (.\inc\device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\LedControl.h)(0x5A7AD07B)
+I (.\inc\Led_Effect_H\custom.h)(0x61E52095)
+I (.\inc\keydef.h)(0x5A585565)
+I (.\inc\Led_Effect_H\led_effect.h)(0x5D905411)
+I (.\inc\Led_Effect_H\led_effect_group_code.h)(0x5DAFB592)
+I (.\inc\Led_Effect_H\external_configuration.h)(0x5A3B7FA7)
+I (.\inc\Led_Effect_H\ram_malloc.h)(0x62788424)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+I (.\inc\Led_Effect_H\led2.h)(0x627615F8)
+I (.\inc\optical_3325.h)(0x61AEB330)
+I (src\../inc/SPI.h)(0x5D74CAD8)
+I (src\../inc/../inc/led.h)(0x5BF9133B)
+I (.\inc\usbhw.h)(0x5DE754ED)
+I (.\inc\usbcfg.h)(0x5CD13696)
+I (.\inc\usbcore.h)(0x5D88860D)
+I (.\inc\uart.h)(0x5D818CBB)
+I (.\inc\suspend.h)(0x5D91A9C2)
+I (.\inc\GPIO.h)(0x4E099BF6)
+I (.\inc\wnDrv_Pmu.h)(0x5A63182B)
+I (.\inc\button.h)(0x625D13D9)
+I (.\inc\../inc/LPC11Uxx.h)(0x5A5EBF5B)
+I (.\inc\../inc/core_cm0.h)(0x5AB30D2F)
+I (.\inc\core_cmInstr.h)(0x50875B7E)
+I (.\inc\core_cmFunc.h)(0x50875B7E)
+I (.\inc\../inc/system_LPC11Uxx.h)(0x4F34B6AC)
+I (.\inc\usbuser.h)(0x5A655082)
+I (.\inc\pc_communicate.h)(0x6221CAB2)
+I (.\inc\optical_3389.h)(0x5C586760)
+I (.\inc\Led_Effect_H\production_line_test.h)(0x5DB9431B)
+F (.\src\wnDrv_Pmu.c)(0x6246AC2E)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\wndrv_pmu.o --omf_browse .\output\wndrv_pmu.crf --depend .\output\wndrv_pmu.d)
+I (.\inc\GPIO.h)(0x4E099BF6)
+I (src\../inc/LPC11Uxx.h)(0x5A5EBF5B)
+I (src\../inc/core_cm0.h)(0x5AB30D2F)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\core_cmInstr.h)(0x50875B7E)
+I (.\inc\core_cmFunc.h)(0x50875B7E)
+I (src\../inc/system_LPC11Uxx.h)(0x4F34B6AC)
+I (.\inc\wnDrv_Pmu.h)(0x5A63182B)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (.\inc\button.h)(0x625D13D9)
+I (.\inc\device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\gloab.h)(0x5A589382)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+F (.\src\eeprom.c)(0x605009F2)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\eeprom.o --omf_browse .\output\eeprom.crf --depend .\output\eeprom.d)
+I (.\inc\eeprom.h)(0x605008A4)
+I (.\inc\gloab.h)(0x5A589382)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\spi.h)(0x5D74CAD8)
+I (.\inc\../inc/led.h)(0x5BF9133B)
+I (.\inc\timer.h)(0x62676EAC)
+I (.\inc\Led_Effect_H\led1.h)(0x5D9054EE)
+I (.\inc\device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\LedControl.h)(0x5A7AD07B)
+I (.\inc\Led_Effect_H\custom.h)(0x61E52095)
+I (.\inc\keydef.h)(0x5A585565)
+I (.\inc\Led_Effect_H\led_effect.h)(0x5D905411)
+I (.\inc\Led_Effect_H\led_effect_group_code.h)(0x5DAFB592)
+I (.\inc\Led_Effect_H\external_configuration.h)(0x5A3B7FA7)
+I (.\inc\Led_Effect_H\ram_malloc.h)(0x62788424)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+I (.\inc\gtech_flash.h)(0x6221CC67)
+F (.\src\WWDT.c)(0x5C330AE1)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\wwdt.o --omf_browse .\output\wwdt.crf --depend .\output\wwdt.d)
+I (src\../inc/LPC11Uxx.h)(0x5A5EBF5B)
+I (src\../inc/core_cm0.h)(0x5AB30D2F)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\core_cmInstr.h)(0x50875B7E)
+I (.\inc\core_cmFunc.h)(0x50875B7E)
+I (src\../inc/system_LPC11Uxx.h)(0x4F34B6AC)
+I (src\../inc/Main.h)(0x5BF8CE1E)
+I (src\../inc/device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (src\../inc/Type.h)(0x5A0E55FE)
+I (src\../inc/gloab.h)(0x5A589382)
+I (src\../inc/usb.h)(0x5A586D9D)
+I (src\../inc/hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (src\../inc/OSC.h)(0x5A618511)
+I (src\../inc/WWDT.h)(0x5C330AE1)
+F (.\src\hiduser.c)(0x5A3B50E6)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\hiduser.o --omf_browse .\output\hiduser.crf --depend .\output\hiduser.d)
+I (.\inc\type.h)(0x5A0E55FE)
+I (.\inc\usb.h)(0x5A586D9D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (.\inc\hid.h)(0x50D3D774)
+I (.\inc\usbcfg.h)(0x5CD13696)
+I (.\inc\usbcore.h)(0x5D88860D)
+I (.\inc\uart.h)(0x5D818CBB)
+F (.\src\usbdesc.c)(0x62676D63)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\usbdesc.o --omf_browse .\output\usbdesc.crf --depend .\output\usbdesc.d)
+I (.\inc\type.h)(0x5A0E55FE)
+I (.\inc\usb.h)(0x5A586D9D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (.\inc\hid.h)(0x50D3D774)
+I (.\inc\usbcfg.h)(0x5CD13696)
+I (.\inc\usbdesc.h)(0x6278C362)
+F (.\src\usbhw.c)(0x6278C262)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\usbhw.o --omf_browse .\output\usbhw.crf --depend .\output\usbhw.d)
+I (.\inc\LPC11Uxx.h)(0x5A5EBF5B)
+I (.\inc\core_cm0.h)(0x5AB30D2F)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\core_cmInstr.h)(0x50875B7E)
+I (.\inc\core_cmFunc.h)(0x50875B7E)
+I (.\inc\system_LPC11Uxx.h)(0x4F34B6AC)
+I (.\inc\type.h)(0x5A0E55FE)
+I (.\inc\usb.h)(0x5A586D9D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (.\inc\usbhw.h)(0x5DE754ED)
+I (.\inc\usbcfg.h)(0x5CD13696)
+I (.\inc\usbcore.h)(0x5D88860D)
+I (.\inc\usbuser.h)(0x5A655082)
+I (.\inc\device.h)(0x5DB1558D)
+I (.\inc\gloab.h)(0x5A589382)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\uart.h)(0x5D818CBB)
+I (.\inc\Timer.h)(0x62676EAC)
+I (.\inc\Led_Effect_H\led1.h)(0x5D9054EE)
+I (.\inc\LedControl.h)(0x5A7AD07B)
+I (.\inc\Led_Effect_H\custom.h)(0x61E52095)
+I (.\inc\keydef.h)(0x5A585565)
+I (.\inc\Led_Effect_H\led_effect.h)(0x5D905411)
+I (.\inc\Led_Effect_H\led_effect_group_code.h)(0x5DAFB592)
+I (.\inc\Led_Effect_H\external_configuration.h)(0x5A3B7FA7)
+I (.\inc\Led_Effect_H\ram_malloc.h)(0x62788424)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+I (.\inc\wnDrv_Pmu.h)(0x5A63182B)
+I (.\inc\button.h)(0x625D13D9)
+I (.\inc\GPIO.h)(0x4E099BF6)
+I (.\inc\WWDT.h)(0x5C330AE1)
+I (.\inc\OSC.h)(0x5A618511)
+I (.\inc\optical_3325.h)(0x61AEB330)
+I (.\inc\spi.h)(0x5D74CAD8)
+I (.\inc\../inc/led.h)(0x5BF9133B)
+I (src\../inc/optical_3389.h)(0x5C586760)
+F (.\src\usbuser.c)(0x5D5E3A1C)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\usbuser.o --omf_browse .\output\usbuser.crf --depend .\output\usbuser.d)
+I (.\inc\type.h)(0x5A0E55FE)
+I (.\inc\usb.h)(0x5A586D9D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (.\inc\usbcfg.h)(0x5CD13696)
+I (.\inc\usbhw.h)(0x5DE754ED)
+I (.\inc\usbcore.h)(0x5D88860D)
+I (.\inc\usbuser.h)(0x5A655082)
+I (.\inc\device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\gloab.h)(0x5A589382)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\uart.h)(0x5D818CBB)
+I (.\inc\Led_Effect_H\led1.h)(0x5D9054EE)
+I (.\inc\LedControl.h)(0x5A7AD07B)
+I (.\inc\SPI.h)(0x5D74CAD8)
+I (.\inc\../inc/led.h)(0x5BF9133B)
+I (.\inc\wnDrv_Pmu.h)(0x5A63182B)
+I (.\inc\button.h)(0x625D13D9)
+I (.\inc\../inc/LPC11Uxx.h)(0x5A5EBF5B)
+I (.\inc\../inc/core_cm0.h)(0x5AB30D2F)
+I (.\inc\core_cmInstr.h)(0x50875B7E)
+I (.\inc\core_cmFunc.h)(0x50875B7E)
+I (.\inc\../inc/system_LPC11Uxx.h)(0x4F34B6AC)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+I (.\inc\optical_3389.h)(0x5C586760)
+F (.\src\usb.c)(0x5DE9FFDF)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\usb.o --omf_browse .\output\usb.crf --depend .\output\usb.d)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (.\inc\usbcore.h)(0x5D88860D)
+I (.\inc\usbcfg.h)(0x5CD13696)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+I (.\inc\gloab.h)(0x5A589382)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\usbhw.h)(0x5DE754ED)
+I (.\inc\device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+F (.\src\usbcore.c)(0x5DA97151)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\usbcore.o --omf_browse .\output\usbcore.crf --depend .\output\usbcore.d)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (.\inc\usbcfg.h)(0x5CD13696)
+I (.\inc\usbhw.h)(0x5DE754ED)
+I (.\inc\usbcore.h)(0x5D88860D)
+I (.\inc\usbdesc.h)(0x6278C362)
+I (.\inc\usbuser.h)(0x5A655082)
+I (.\inc\uart.h)(0x5D818CBB)
+I (.\inc\hid.h)(0x50D3D774)
+I (.\inc\spi.h)(0x5D74CAD8)
+I (.\inc\../inc/led.h)(0x5BF9133B)
+I (.\inc\../inc/gloab.h)(0x5A589382)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+F (.\src\core_cm0.c)(0x4D8CFEC4)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\core_cm0.o --omf_browse .\output\core_cm0.crf --depend .\output\core_cm0.d)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+F (.\src\startup_LPC11Uxx.s)(0x5E44D171)(--cpu Cortex-M0 -g --apcs=interwork --pd "__MICROLIB SETA 1"-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx--pd "__UVISION_VERSION SETA 524"--list .\list\startup_lpc11uxx.lst --xref -o .\output\startup_lpc11uxx.o --depend .\output\startup_lpc11uxx.d)
+F (.\src\device.c)(0x6278C29B)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\device.o --omf_browse .\output\device.crf --depend .\output\device.d)
+I (.\inc\device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (.\inc\gloab.h)(0x5A589382)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (src\../inc/GPIO.h)(0x4E099BF6)
+I (.\inc\usbcore.h)(0x5D88860D)
+I (.\inc\usbcfg.h)(0x5CD13696)
+I (src\../inc/OSC.h)(0x5A618511)
+I (.\inc\usbhw.h)(0x5DE754ED)
+I (src\../inc/optical_3325.h)(0x61AEB330)
+I (src\../inc/scroll.h)(0x5A45C00D)
+I (src\../inc/Timer.h)(0x62676EAC)
+I (.\inc\Led_Effect_H\led1.h)(0x5D9054EE)
+I (.\inc\LedControl.h)(0x5A7AD07B)
+I (.\inc\Led_Effect_H\custom.h)(0x61E52095)
+I (.\inc\keydef.h)(0x5A585565)
+I (.\inc\Led_Effect_H\led_effect.h)(0x5D905411)
+I (.\inc\Led_Effect_H\led_effect_group_code.h)(0x5DAFB592)
+I (.\inc\Led_Effect_H\external_configuration.h)(0x5A3B7FA7)
+I (.\inc\Led_Effect_H\ram_malloc.h)(0x62788424)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+I (src\../inc/ADC.h)(0x5191A8EA)
+I (src\../inc/UART.h)(0x5D818CBB)
+I (src\../inc/SPI.h)(0x5D74CAD8)
+I (src\../inc/../inc/led.h)(0x5BF9133B)
+I (src\../inc/I2C.h)(0x5C2051E0)
+I (src\../inc/led_driver.h)(0x5A3B5346)
+I (.\inc\Led_Effect_H\led2.h)(0x627615F8)
+I (.\inc\Led_Effect_H\color_cycle.h)(0x5E13F1D7)
+I (.\inc\button.h)(0x625D13D9)
+I (.\inc\../inc/LPC11Uxx.h)(0x5A5EBF5B)
+I (.\inc\../inc/core_cm0.h)(0x5AB30D2F)
+I (.\inc\core_cmInstr.h)(0x50875B7E)
+I (.\inc\core_cmFunc.h)(0x50875B7E)
+I (.\inc\../inc/system_LPC11Uxx.h)(0x4F34B6AC)
+I (.\inc\gtech_flash.h)(0x6221CC67)
+I (.\inc\operation_flash.h)(0x5DAFB543)
+I (.\inc\macro.h)(0x5D75E9B1)
+I (.\inc\pc_communicate.h)(0x6221CAB2)
+I (.\inc\optical_3389.h)(0x5C586760)
+I (.\inc\suspend.h)(0x5D91A9C2)
+I (.\inc\wnDrv_Pmu.h)(0x5A63182B)
+I (.\inc\eeprom.h)(0x605008A4)
+I (.\inc\WWDT.h)(0x5C330AE1)
+I (.\inc\Led_Effect_H\Production_line_test.h)(0x5DB9431B)
+F (.\app\scroll.c)(0x62747EF9)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\scroll.o --omf_browse .\output\scroll.crf --depend .\output\scroll.d)
+I (app\../inc/scroll.h)(0x5A45C00D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (app\../inc/../inc/GPIO.h)(0x4E099BF6)
+I (app\../inc/../inc/device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (app\../inc/../inc/Type.h)(0x5A0E55FE)
+I (app\../inc/../inc/gloab.h)(0x5A589382)
+I (app\../inc/../inc/usb.h)(0x5A586D9D)
+I (app\../inc/../inc/hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+F (.\app\custom.c)(0x6278D963)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\custom.o --omf_browse .\output\custom.crf --depend .\output\custom.d)
+I (.\inc\Led_Effect_H\custom.h)(0x61E52095)
+I (.\inc\gloab.h)(0x5A589382)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\keydef.h)(0x5A585565)
+I (.\inc\Led_Effect_H\led_effect.h)(0x5D905411)
+I (.\inc\Led_Effect_H\led1.h)(0x5D9054EE)
+I (.\inc\device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\LedControl.h)(0x5A7AD07B)
+I (.\inc\Led_Effect_H\led_effect_group_code.h)(0x5DAFB592)
+I (.\inc\Led_Effect_H\external_configuration.h)(0x5A3B7FA7)
+I (.\inc\Led_Effect_H\ram_malloc.h)(0x62788424)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+I (.\inc\optical_3325.h)(0x61AEB330)
+I (.\inc\operation_flash.h)(0x5DAFB543)
+I (.\inc\gtech_flash.h)(0x6221CC67)
+I (.\inc\macro.h)(0x5D75E9B1)
+I (.\inc\pc_communicate.h)(0x6221CAB2)
+I (.\inc\optical_3389.h)(0x5C586760)
+I (.\inc\spi.h)(0x5D74CAD8)
+I (.\inc\../inc/led.h)(0x5BF9133B)
+I (.\inc\Led_Effect_H\led2.h)(0x627615F8)
+I (.\inc\Led_Effect_H\Production_line_test.h)(0x5DB9431B)
+I (.\inc\core_cm0.h)(0x5AB30D2F)
+I (.\inc\LPC11Uxx.h)(0x5A5EBF5B)
+I (.\inc\core_cmInstr.h)(0x50875B7E)
+I (.\inc\core_cmFunc.h)(0x50875B7E)
+I (.\inc\system_LPC11Uxx.h)(0x4F34B6AC)
+I (.\inc\GPIO.h)(0x4E099BF6)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\string.h)(0x588B8344)
+I (.\inc\button.h)(0x625D13D9)
+I (.\inc\Led_Effect_H\reaction.h)(0x5E13F1C7)
+I (.\inc\eeprom.h)(0x605008A4)
+I (.\inc\timer.h)(0x62676EAC)
+F (.\app\optical_3325.c)(0x61AEB508)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\optical_3325.o --omf_browse .\output\optical_3325.crf --depend .\output\optical_3325.d)
+I (.\inc\gloab.h)(0x5A589382)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\optical_3325.h)(0x61AEB330)
+I (.\inc\device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\timer.h)(0x62676EAC)
+I (.\inc\Led_Effect_H\led1.h)(0x5D9054EE)
+I (.\inc\LedControl.h)(0x5A7AD07B)
+I (.\inc\Led_Effect_H\custom.h)(0x61E52095)
+I (.\inc\keydef.h)(0x5A585565)
+I (.\inc\Led_Effect_H\led_effect.h)(0x5D905411)
+I (.\inc\Led_Effect_H\led_effect_group_code.h)(0x5DAFB592)
+I (.\inc\Led_Effect_H\external_configuration.h)(0x5A3B7FA7)
+I (.\inc\Led_Effect_H\ram_malloc.h)(0x62788424)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+I (.\inc\GPIO.h)(0x4E099BF6)
+I (.\inc\spi.h)(0x5D74CAD8)
+I (.\inc\../inc/led.h)(0x5BF9133B)
+I (.\inc\main.h)(0x5BF8CE1E)
+I (.\inc\uart.h)(0x5D818CBB)
+I (.\inc\wwdt.h)(0x5C330AE1)
+F (.\Led_Effect_Gruop_Code\test.c)(0x5BF77C7D)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\test.o --omf_browse .\output\test.crf --depend .\output\test.d)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+I (.\inc\gloab.h)(0x5A589382)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\macro.h)(0x5D75E9B1)
+I (.\inc\Led_Effect_H\custom.h)(0x61E52095)
+I (.\inc\keydef.h)(0x5A585565)
+I (.\inc\Led_Effect_H\led_effect.h)(0x5D905411)
+I (.\inc\Led_Effect_H\led1.h)(0x5D9054EE)
+I (.\inc\device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\LedControl.h)(0x5A7AD07B)
+I (.\inc\Led_Effect_H\led_effect_group_code.h)(0x5DAFB592)
+I (.\inc\Led_Effect_H\external_configuration.h)(0x5A3B7FA7)
+I (.\inc\Led_Effect_H\ram_malloc.h)(0x62788424)
+I (.\inc\operation_flash.h)(0x5DAFB543)
+I (.\inc\gtech_flash.h)(0x6221CC67)
+F (.\app\button.c)(0x62679284)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\button.o --omf_browse .\output\button.crf --depend .\output\button.d)
+I (.\inc\button.h)(0x625D13D9)
+I (.\inc\../inc/LPC11Uxx.h)(0x5A5EBF5B)
+I (.\inc\../inc/core_cm0.h)(0x5AB30D2F)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\core_cmInstr.h)(0x50875B7E)
+I (.\inc\core_cmFunc.h)(0x50875B7E)
+I (.\inc\../inc/system_LPC11Uxx.h)(0x4F34B6AC)
+I (.\inc\device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (.\inc\gloab.h)(0x5A589382)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+F (.\Led_Effect_Gruop_Code\Production_line_test.c)(0x61E50215)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\production_line_test.o --omf_browse .\output\production_line_test.crf --depend .\output\production_line_test.d)
+I (.\inc\Led_Effect_H\custom.h)(0x61E52095)
+I (.\inc\gloab.h)(0x5A589382)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\keydef.h)(0x5A585565)
+I (.\inc\Led_Effect_H\led_effect.h)(0x5D905411)
+I (.\inc\Led_Effect_H\led1.h)(0x5D9054EE)
+I (.\inc\device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\LedControl.h)(0x5A7AD07B)
+I (.\inc\Led_Effect_H\led_effect_group_code.h)(0x5DAFB592)
+I (.\inc\Led_Effect_H\external_configuration.h)(0x5A3B7FA7)
+I (.\inc\Led_Effect_H\ram_malloc.h)(0x62788424)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+I (.\inc\Led_Effect_H\Production_line_test.h)(0x5DB9431B)
+I (.\inc\button.h)(0x625D13D9)
+I (.\inc\../inc/LPC11Uxx.h)(0x5A5EBF5B)
+I (.\inc\../inc/core_cm0.h)(0x5AB30D2F)
+I (.\inc\core_cmInstr.h)(0x50875B7E)
+I (.\inc\core_cmFunc.h)(0x50875B7E)
+I (.\inc\../inc/system_LPC11Uxx.h)(0x4F34B6AC)
+I (.\inc\pc_communicate.h)(0x6221CAB2)
+I (.\inc\optical_3389.h)(0x5C586760)
+I (.\inc\spi.h)(0x5D74CAD8)
+I (.\inc\../inc/led.h)(0x5BF9133B)
+I (.\inc\Led_Effect_H\led2.h)(0x627615F8)
+I (.\inc\Timer.h)(0x62676EAC)
+I (.\inc\gpio.h)(0x4E099BF6)
+F (.\Led_Effect_Gruop_Code\ram_malloc.c)(0x6278845A)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\ram_malloc.o --omf_browse .\output\ram_malloc.crf --depend .\output\ram_malloc.d)
+I (.\inc\Led_Effect_H\ram_malloc.h)(0x62788424)
+I (.\inc\gloab.h)(0x5A589382)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+I (.\inc\operation_flash.h)(0x5DAFB543)
+I (.\inc\gtech_flash.h)(0x6221CC67)
+I (.\inc\Led_Effect_H\custom.h)(0x61E52095)
+I (.\inc\keydef.h)(0x5A585565)
+I (.\inc\Led_Effect_H\led_effect.h)(0x5D905411)
+I (.\inc\Led_Effect_H\led1.h)(0x5D9054EE)
+I (.\inc\device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\LedControl.h)(0x5A7AD07B)
+I (.\inc\Led_Effect_H\led_effect_group_code.h)(0x5DAFB592)
+I (.\inc\Led_Effect_H\external_configuration.h)(0x5A3B7FA7)
+I (.\inc\macro.h)(0x5D75E9B1)
+F (.\Led_Effect_Gruop_Code\breath.c)(0x6276169E)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\breath.o --omf_browse .\output\breath.crf --depend .\output\breath.d)
+I (.\inc\Led_Effect_H\breathe.h)(0x5E4A604B)
+I (.\inc\Led_Effect_H\led2.h)(0x627615F8)
+I (.\inc\device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (.\inc\gloab.h)(0x5A589382)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\Led_Effect_H\led_effect_group_code.h)(0x5DAFB592)
+I (.\inc\Led_Effect_H\external_configuration.h)(0x5A3B7FA7)
+I (.\inc\Led_Effect_H\led1.h)(0x5D9054EE)
+I (.\inc\LedControl.h)(0x5A7AD07B)
+I (.\inc\Led_Effect_H\led_effect.h)(0x5D905411)
+I (.\inc\Led_Effect_H\ram_malloc.h)(0x62788424)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+I (.\inc\Led_Effect_H\custom.h)(0x61E52095)
+I (.\inc\keydef.h)(0x5A585565)
+F (.\Led_Effect_Gruop_Code\color_cycle.c)(0x6278BBD9)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\color_cycle.o --omf_browse .\output\color_cycle.crf --depend .\output\color_cycle.d)
+I (.\inc\Led_Effect_H\color_cycle.h)(0x5E13F1D7)
+I (.\inc\gloab.h)(0x5A589382)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\Led_Effect_H\led_effect_group_code.h)(0x5DAFB592)
+I (.\inc\Led_Effect_H\external_configuration.h)(0x5A3B7FA7)
+I (.\inc\Led_Effect_H\led1.h)(0x5D9054EE)
+I (.\inc\device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (.\inc\LedControl.h)(0x5A7AD07B)
+I (.\inc\Led_Effect_H\led_effect.h)(0x5D905411)
+I (.\inc\Led_Effect_H\ram_malloc.h)(0x62788424)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+I (.\inc\Led_Effect_H\led2.h)(0x627615F8)
+I (.\inc\Led_Effect_H\custom.h)(0x61E52095)
+I (.\inc\keydef.h)(0x5A585565)
+F (.\Led_Effect_Gruop_Code\led2.c)(0x6278903A)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\led2.o --omf_browse .\output\led2.crf --depend .\output\led2.d)
+I (.\inc\Led_Effect_H\led2.h)(0x627615F8)
+I (.\inc\device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (.\inc\gloab.h)(0x5A589382)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\Led_Effect_H\led_effect_group_code.h)(0x5DAFB592)
+I (.\inc\Led_Effect_H\external_configuration.h)(0x5A3B7FA7)
+I (.\inc\Led_Effect_H\led1.h)(0x5D9054EE)
+I (.\inc\LedControl.h)(0x5A7AD07B)
+I (.\inc\Led_Effect_H\led_effect.h)(0x5D905411)
+I (.\inc\Led_Effect_H\ram_malloc.h)(0x62788424)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+I (.\inc\Led_Effect_H\custom.h)(0x61E52095)
+I (.\inc\keydef.h)(0x5A585565)
+I (.\inc\Timer.h)(0x62676EAC)
+I (.\inc\Led_Effect_H\color_cycle.h)(0x5E13F1D7)
+I (.\inc\Led_Effect_H\static.h)(0x5E13F1B3)
+I (.\inc\Led_Effect_H\breathe.h)(0x5E4A604B)
+I (.\inc\Led_Effect_H\reaction.h)(0x5E13F1C7)
+I (.\inc\Led_Effect_H\production_line_test.h)(0x5DB9431B)
+I (.\inc\pc_communicate.h)(0x6221CAB2)
+I (.\inc\optical_3389.h)(0x5C586760)
+I (.\inc\spi.h)(0x5D74CAD8)
+I (.\inc\../inc/led.h)(0x5BF9133B)
+I (.\inc\gpio.h)(0x4E099BF6)
+F (.\Led_Effect_Gruop_Code\reaction.c)(0x6276166C)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\reaction.o --omf_browse .\output\reaction.crf --depend .\output\reaction.d)
+I (.\inc\Led_Effect_H\reaction.h)(0x5E13F1C7)
+I (.\inc\Led_Effect_H\led2.h)(0x627615F8)
+I (.\inc\device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (.\inc\gloab.h)(0x5A589382)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\Led_Effect_H\led_effect_group_code.h)(0x5DAFB592)
+I (.\inc\Led_Effect_H\external_configuration.h)(0x5A3B7FA7)
+I (.\inc\Led_Effect_H\led1.h)(0x5D9054EE)
+I (.\inc\LedControl.h)(0x5A7AD07B)
+I (.\inc\Led_Effect_H\led_effect.h)(0x5D905411)
+I (.\inc\Led_Effect_H\ram_malloc.h)(0x62788424)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+I (.\inc\Led_Effect_H\custom.h)(0x61E52095)
+I (.\inc\keydef.h)(0x5A585565)
+F (.\Led_Effect_Gruop_Code\static.c)(0x627616F4)(-c --cpu Cortex-M0 -D__MICROLIB -g -O0 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IG:\exe\Keil_v5\ARM\RV31\INC-IG:\exe\Keil_v5\ARM\CMSIS\Include-IG:\exe\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="524"-o .\output\static.o --omf_browse .\output\static.crf --depend .\output\static.d)
+I (.\inc\Led_Effect_H\static.h)(0x5E13F1B3)
+I (.\inc\Led_Effect_H\led2.h)(0x627615F8)
+I (.\inc\device.h)(0x5DB1558D)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x588B8344)
+I (.\inc\Type.h)(0x5A0E55FE)
+I (.\inc\gloab.h)(0x5A589382)
+I (.\inc\usb.h)(0x5A586D9D)
+I (.\inc\hiduser.h)(0x59F025CC)
+I (G:\exe\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
+I (.\inc\Led_Effect_H\led_effect_group_code.h)(0x5DAFB592)
+I (.\inc\Led_Effect_H\external_configuration.h)(0x5A3B7FA7)
+I (.\inc\Led_Effect_H\led1.h)(0x5D9054EE)
+I (.\inc\LedControl.h)(0x5A7AD07B)
+I (.\inc\Led_Effect_H\led_effect.h)(0x5D905411)
+I (.\inc\Led_Effect_H\ram_malloc.h)(0x62788424)
+I (.\inc\Led_Effect_H\test.h)(0x5A3B6A40)
+I (.\inc\Led_Effect_H\custom.h)(0x61E52095)
+I (.\inc\keydef.h)(0x5A585565)

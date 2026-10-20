@@ -1,0 +1,10 @@
+.\i2c.o: src\I2C.c
+.\i2c.o: src\../inc/LPC11Uxx.h
+.\i2c.o: src\../inc/core_cm0.h
+.\i2c.o: src\../inc/LPC11Uxx.h
+.\i2c.o: f:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\i2c.o: .\inc\core_cmInstr.h
+.\i2c.o: .\inc\core_cmFunc.h
+.\i2c.o: src\../inc/system_LPC11Uxx.h
+.\i2c.o: src\../inc/OSC.h
+.\i2c.o: src\../inc/I2C.h

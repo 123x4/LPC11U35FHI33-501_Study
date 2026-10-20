@@ -1,0 +1,114 @@
+#ifndef _BUTTON_H_
+#define _BUTTON_H_
+
+//#include "platform.h"
+#include "../inc/LPC11Uxx.h"
+#include "device.h"
+//#include "gloab.h"
+#include "test.h"
+    
+
+
+/*Macros defining button position for all buttons of Touch Mouse RDK */ 
+//#define DPI_BUTTON_POSITION					(13u) //Port0    (1) /* Port0*/
+//#define DPI_UP_BUTTON_POSITION      (1)  //port0
+//#define DPI_DOWN_BUTTON_POSITION    (18)  //
+//#define PROFILE_BUTTON_POSITION     (19u) // Port1 (5) /* Port3 */
+#define DPI_CYCLE_BUTTON_POSITION    (11)  //
+#define MIDDLE_BUTTON_POSITION      (9u)
+#define RIGHT_BUTTON_POSITION       (17u) //port0   (3) /* Port3 */
+#define LEFT_BUTTON_POSITION        (7u) //Port0  (4) /* Port2*/
+#define VOLUME_UP_BUTTON_POSITION   (18u)
+#define VOLUME_DOWN_BUTTON_POSITION   (19u)
+#define K4_BUTTON_POSITION          (1u) //Port0 (6) /* Port3 */
+#define K5_BUTTON_POSITION					(23u) //Port0 (7) /* Port3*/
+
+
+
+
+
+/*Macros defining button mask for all buttons of Touch Mouse RDK */    
+#define LEFT_BUTTON_MASK                (1u<<LEFT_BUTTON_POSITION)
+#define K5_BUTTON_MASK                  (1u<<K5_BUTTON_POSITION)
+#define K4_BUTTON_MASK                  (1u<<K4_BUTTON_POSITION)
+#define VOLUME_UP_BUTTON_MASK           (1u<<VOLUME_UP_BUTTON_POSITION)
+#define VOLUME_DOWN_BUTTON_MASK         (1u<<VOLUME_DOWN_BUTTON_POSITION)
+#define DPI_CYCLE_BUTTON_MASK           (1u<<DPI_CYCLE_BUTTON_POSITION)
+#define MIDDLE_BUTTON_MASK              (1u<<MIDDLE_BUTTON_POSITION)
+#define RIGHT_BUTTON_MASK               (1u<<RIGHT_BUTTON_POSITION)
+//#define PROFILE_BUTTON_MASK				      (1u<<PROFILE_BUTTON_POSITION) 
+
+
+#define BUTTON_PROCESS_SCAN		0
+#define BUTTON_PROCESS_ANALYSE  1
+
+#define BUTTON_DEBOUNCE_COUNT   2
+
+#define LBFT_BUTTON_REPORT_BIT		0u
+#define RIGHT_BUTTON_REPORT_BIT		1u
+#define MIDDLE_BUTTON_REPORT_BIT	2u
+#define K4_BUTTON_REPORT_BIT		5u
+#define K5_BUTTON_REPORT_BIT		6u
+#define VOLUME_UP_BUTTON_REPORT_BIT  7u
+#define VOLUME_DOWN_BUTTON_REPORT_BIT 8u
+#define DPI_CYCLE_BUTTON_REPORT_BIT	9u
+
+#define LBFT_BUTTON_REPORT_BIT_MASK		(1u << LBFT_BUTTON_REPORT_BIT)
+#define RIGHT_BUTTON_REPORT_BIT_MASK	(1u << RIGHT_BUTTON_REPORT_BIT)
+#define MIDDLE_BUTTON_REPORT_BIT_MASK	(1u << MIDDLE_BUTTON_REPORT_BIT)
+#define K4_BUTTON_REPORT_BIT_MASK		  (1u << K4_BUTTON_REPORT_BIT)
+#define K5_BUTTON_REPORT_BIT_MASK		  (1u << K5_BUTTON_REPORT_BIT)
+#define VOLUME_UP_BUTTON_REPORT_BIT_MASK  (1u<< VOLUME_UP_BUTTON_REPORT_BIT)
+#define VOLUME_DOWN_BUTTON_REPORT_BIT_MASK (1u<<VOLUME_DOWN_BUTTON_REPORT_BIT)
+#define DPI_CYCLE_BUTTON_REPORT_BIT_MASK	(1u<<DPI_CYCLE_BUTTON_REPORT_BIT)
+
+
+#define ALL_BUTTON_REPORT_BIT ((1u << LBFT_BUTTON_REPORT_BIT) |\
+	                          (1u << RIGHT_BUTTON_REPORT_BIT) |\
+							  (1u << MIDDLE_BUTTON_REPORT_BIT) |\
+							  (1u << K4_BUTTON_REPORT_BIT) |\
+							  (1u << K5_BUTTON_REPORT_BIT) |\
+								(1u << VOLUME_UP_BUTTON_REPORT_BIT)|\
+								(1u << VOLUME_DOWN_BUTTON_REPORT_BIT) |\
+							  (1u << DPI_CYCLE_BUTTON_REPORT_BIT))
+
+
+#define LEFT_BUTTON_OFFSET		(LEFT_BUTTON_POSITION - LBFT_BUTTON_REPORT_BIT)
+#define RIGHT_BUTTON_OFFSET		(RIGHT_BUTTON_POSITION - RIGHT_BUTTON_REPORT_BIT)
+#define MIDDLE_BUTTON_OFFSET	(MIDDLE_BUTTON_POSITION - MIDDLE_BUTTON_REPORT_BIT)
+#define K4_BUTTON_OFFSET		  (K4_BUTTON_POSITION - K4_BUTTON_REPORT_BIT)
+#define K5_BUTTON_OFFSET		  (K5_BUTTON_POSITION - K5_BUTTON_REPORT_BIT)
+#define DPI_BUTTON_OFFSET		  (DPI_BUTTON_POSITION - DPI_BUTTON_REPORT_BIT)
+#define PROFILE_BUTTON_OFFSET	(PROFILE_BUTTON_POSITION - PROFILE_BUTTON_REPORT_BIT)
+
+//#define BUTTON_PORT2 ((~Port2_Pins_PS) & (RIGHT_BUTTON_MASK| MIDDLE_BUTTON_MASK))
+//#define BUTTON_PORT3 ((~Port3_Pins_PS )& (PROFILE_BUTTON_MASK | LEFT_BUTTON_MASK |K4_BUTTON_MASK |K5_BUTTON_MASK  ))
+//#define BUTTON_PORT0 ((~Port0_Pins_PS )& (DPI_BUTTON_MASK ))
+
+//#define BUTTON_PORT2 ((~Port2_Pins_PS) & (RIGHT_BUTTON_MASK| MIDDLE_BUTTON_MASK))
+//#define BUTTON_PORT1 (U32)((~LPC_GPIO->PIN[1])& (RIGHT_BUTTON_MASK |PROFILE_BUTTON_MASK | K5_BUTTON_MASK))
+
+#define BUTTON_PORT0 (U32) ((~LPC_GPIO->PIN[0])& (LEFT_BUTTON_MASK | RIGHT_BUTTON_MASK | MIDDLE_BUTTON_MASK |K4_BUTTON_MASK |\
+                                                   K5_BUTTON_MASK |VOLUME_UP_BUTTON_MASK | VOLUME_DOWN_BUTTON_MASK |DPI_CYCLE_BUTTON_MASK ))
+
+
+typedef struct
+{
+	UINT8 process_state;
+	UINT32 scan_result_cur;
+	UINT32	scan_result_pre;
+	UINT8  debounce[6];
+	BOOL button_changed;
+}BUTTON_SCAN_DATA;
+
+extern BUTTON_SCAN_DATA buttonScan_stru;
+
+
+
+
+void Button_Init(void);
+
+BOOL Button_Scan(void);
+UINT32 Button_GetState(void);
+
+#endif /* _BUTTON_H_ */
