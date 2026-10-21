@@ -71,6 +71,12 @@ table { border-collapse: collapse; width: 100%; font-size: 14px; }
 th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
 th { color: var(--muted); font-weight: 500; font-size: 13px; }
 td:first-child { color: var(--muted); white-space: nowrap; }
+table.state { min-width: 860px; font-size: 13px; }
+table.state th { vertical-align: bottom; font-size: 12.5px; }
+table.state th code, table.state td code { font-size: 11.5px; }
+table.state td { white-space: normal; }
+table.state td:first-child { white-space: nowrap; font-weight: 500; }
+table.state td.chg { background: var(--flag-bg); box-shadow: inset 0 0 0 1.5px var(--flag); font-weight: 700; }
 .tag { display: inline-block; padding: 0 8px; border-radius: 4px; font-weight: 700; border: 1.5px solid var(--flag); background: var(--flag-bg); }
 
 ol.steps { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 8px; counter-reset: s; }
@@ -318,6 +324,26 @@ svg { color: var(--fg); font-family: var(--sans); }
       </div>
       <figcaption>平时插上鼠标，走的是上排一路向右：两次 ROM 检查、两次标志检查，然后进入 app，全程约几毫秒，人感觉不到 Bootloader。只有 app 收到升级命令（上方回线），芯片才会在 Bootloader 停下来；升级完成后再复位一次（下方回线），这次两个检查都通过，就进入新 app。</figcaption>
     </figure>
+  </section>
+
+  <section>
+    <h2>图 2 放大　boot_jump：Bootloader 怎么把 CPU 交给 app</h2>
+    <p class="note">真正上电时，硬件会自动从地址 0x0 取栈指针、从 0x4 取复位入口。但地址 0 放的是 Bootloader 的向量表，所以 <code>boot_jump()</code> 要照着 app 的向量表（0x4000）用软件把这件事重做一遍，并换掉中断表。下面每一列是执行完那一行代码后的状态，高亮的格子是这一步改变的东西。代码在 <code>M300S/…/Src/Source.c</code> 第 128 行。</p>
+    <div class="scroll">
+      <table class="state">
+        <thead>
+          <tr><th></th><th>跳转前</th><th>① 关中断<br><code>__disable_irq()</code></th><th>② 复制向量表<br><code>Prepare_Copy(…512)</code></th><th>③ 换中断表<br><code>SYSMEMREMAP = 1</code></th><th>④ 开中断<br><code>__enable_irq()</code></th><th>⑤ 换栈<br><code>__set_MSP(*0x4000)</code></th><th>⑥ 跳转<br><code>entry()</code></th></tr>
+        </thead>
+        <tbody>
+          <tr><td>中断</td><td>开</td><td class="chg">关</td><td>关</td><td>关</td><td class="chg">开</td><td>开</td><td>开</td></tr>
+          <tr><td>RAM 0x1000 0000</td><td>Bootloader 的数据</td><td>同左</td><td class="chg">app 向量表副本</td><td>app 向量表副本</td><td>app 向量表副本</td><td>app 向量表副本</td><td>app 向量表副本</td></tr>
+          <tr><td>CPU 在地址 0 查中断表，读到</td><td>Bootloader 的表（Flash 0x0000）</td><td>同左</td><td>同左</td><td class="chg">app 的表（RAM 副本）</td><td>app 的表</td><td>app 的表</td><td>app 的表</td></tr>
+          <tr><td>栈指针 SP</td><td>Bootloader 的栈<br><code>0x1000 0AD8</code> 附近</td><td>同左</td><td>同左</td><td>同左</td><td>同左</td><td class="chg">app 的栈顶<br><code>0x1000 1BD8</code></td><td><code>0x1000 1BD8</code></td></tr>
+          <tr><td>CPU 正在执行</td><td>Bootloader</td><td>Bootloader</td><td>Bootloader</td><td>Bootloader</td><td>Bootloader</td><td>Bootloader</td><td class="chg">app 的 Reset_Handler<br><code>0x0000 9A1C</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">⑤ 用的是 app 向量表第 0 项，⑥ 用的是第 1 项 <code>0x0000 9A1D</code>（最低位 1 表示 Thumb 代码，真正地址是 0x9A1C，见 <code>List/Sample.map</code> 第 1118 行）。⑥ 之后 Bootloader 再也不会回来；app 从 Reset_Handler 开始，经过 <code>__main</code>、<code>main()</code>、<code>Device_Init()</code>，等 USB 初始化完成后，电脑上才出现 1A81:2071。</p>
   </section>
 
   <section>
