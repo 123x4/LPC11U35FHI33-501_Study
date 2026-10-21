@@ -6,6 +6,8 @@
 
 ---
 
+> 🖼 **全景图**：`0-3_启动与升级全景图.html`（用浏览器打开），把本课内容画成了三张图。
+>
 > 📂 **文件位置说明**：本讲义里写的 `Src/...`、`Inc/...`、`Build/...`，都是相对于
 > `M300S/MG380U_BootLoader/20190228_ReduceDiscriptor_issue/` 这个文件夹。
 > 例如 `Src/Source.c` 的完整路径是 `M300S/MG380U_BootLoader/20190228_ReduceDiscriptor_issue/Src/Source.c`。
