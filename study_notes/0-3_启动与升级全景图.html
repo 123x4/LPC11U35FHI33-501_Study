@@ -107,6 +107,22 @@ svg { color: var(--fg); font-family: var(--sans); }
 .num { fill: var(--panel); stroke: var(--fg); stroke-width: 1.4; }
 .numt { fill: var(--fg); font-size: 12px; font-family: var(--mono); font-weight: 600; }
 
+.scroll svg.tall { min-width: 640px; max-width: 900px; margin: 0 auto; }
+.band-rom { fill: var(--rom-bg); opacity: 0.55; }
+.band-boot { fill: var(--boot-bg); opacity: 0.55; }
+.band-app { fill: var(--app-bg); opacity: 0.55; }
+.bandt-rom { fill: var(--rom); font-size: 13px; font-weight: 700; }
+.bandt-boot { fill: var(--boot); font-size: 13px; font-weight: 700; }
+.bandt-app { fill: var(--app); font-size: 13px; font-weight: 700; }
+.dm-rom { fill: var(--panel); stroke: var(--rom); }
+.dm-boot { fill: var(--panel); stroke: var(--boot); }
+.nb-boot { fill: var(--panel); stroke: var(--boot); }
+.main { stroke: currentColor; fill: none; stroke-width: 3; }
+.loop { stroke: var(--muted); fill: none; stroke-width: 1.4; }
+.yn { fill: var(--fg); font-size: 13px; font-weight: 700; }
+.resetband { fill: var(--rom-bg); stroke: var(--rom); stroke-width: 1; stroke-dasharray: 5 4; }
+.rt { fill: var(--fg); font-size: 12.5px; font-weight: 500; }
+
 @media (max-width: 560px) {
   h1 { font-size: 22px; }
   section { padding: 14px; }
@@ -240,89 +256,87 @@ svg { color: var(--fg); font-family: var(--sans); }
     <h2>图 2　每次复位后，芯片走哪条路</h2>
     <figure>
       <div class="scroll">
-        <svg viewBox="0 0 1000 360" role="img" aria-label="复位后的判断流程：ROM 先检查 PIO0_1 和地址 0 的有效代码，然后 Bootloader 检查标志①和标志②，两个都允许时 boot_jump 进入 app；app 收到升级命令会写标志②并软件复位，Bootloader 升级完成后清标志②并软件复位。">
+        <svg class="tall" viewBox="0 0 900 730" role="img" aria-label="复位后的判断流程，从上往下：NXP ROM 检查 PIO0_1 是否为低、地址 0 是否有有效代码；公司 Bootloader 检查标志①是否为 0xAA、标志②是否为 0xAA 且是软件复位；都通过后 boot_jump 进入 app。PIO0_1 为低或没有有效代码时进入 ROM 的 ISP 模式；标志①不对或标志②成立时留在 Bootloader 等升级。app 收到升级命令和 Bootloader 升级写完后，都会软件复位回到起点。">
           <defs>
             <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
               <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
             </marker>
           </defs>
 
-          <!-- 上排 -->
-          <rect class="b rom" x="15" y="50" width="118" height="80" rx="6"/>
-          <text x="74" y="86" text-anchor="middle" class="t">上电</text>
-          <text x="74" y="104" text-anchor="middle" class="t">或软件复位</text>
+          <!-- 三个色带：谁在做判断 -->
+          <rect class="band-rom" x="0" y="70" width="900" height="220"/>
+          <rect class="band-boot" x="0" y="290" width="900" height="320"/>
+          <rect class="band-app" x="0" y="610" width="900" height="110"/>
+          <text x="74" y="94" class="bandt-rom">NXP ROM（芯片自带）</text>
+          <text x="74" y="314" class="bandt-boot">公司 Bootloader</text>
+          <text x="74" y="634" class="bandt-app">app</text>
 
-          <rect class="b rom" x="153" y="50" width="118" height="80" rx="6"/>
-          <text x="212" y="78" text-anchor="middle" class="ts">ROM 检查</text>
-          <text x="212" y="96" text-anchor="middle" class="t">PIO0_1 是</text>
-          <text x="212" y="114" text-anchor="middle" class="t">低电平？</text>
+          <!-- 起点 -->
+          <rect class="b cell" x="220" y="14" width="160" height="40" rx="20"/>
+          <text x="300" y="39" text-anchor="middle" class="t">上电 / 软件复位</text>
 
-          <rect class="b rom" x="291" y="50" width="118" height="80" rx="6"/>
-          <text x="350" y="78" text-anchor="middle" class="ts">ROM 检查</text>
-          <text x="350" y="96" text-anchor="middle" class="t">地址 0 是</text>
-          <text x="350" y="114" text-anchor="middle" class="t">有效代码？</text>
+          <!-- 主路径（粗线）-->
+          <path class="main" d="M300 54 L300 75" marker-end="url(#ah2)"/>
+          <polygon class="b dm-rom" points="300,78 420,120 300,162 180,120"/>
+          <text x="300" y="116" text-anchor="middle" class="t">PIO0_1</text>
+          <text x="300" y="134" text-anchor="middle" class="t">是低电平？</text>
 
-          <rect class="b boot" x="429" y="50" width="118" height="80" rx="6"/>
-          <text x="488" y="78" text-anchor="middle" class="ts">Bootloader</text>
-          <text x="488" y="96" text-anchor="middle" class="t">标志 ①</text>
-          <text x="488" y="114" text-anchor="middle" class="t">是 0xAA？</text>
+          <path class="main" d="M300 162 L300 185" marker-end="url(#ah2)"/>
+          <text x="310" y="179" class="yn">否</text>
+          <polygon class="b dm-rom" points="300,188 420,230 300,272 180,230"/>
+          <text x="300" y="226" text-anchor="middle" class="t">地址 0 是</text>
+          <text x="300" y="244" text-anchor="middle" class="t">有效代码？</text>
 
-          <rect class="b boot" x="567" y="50" width="118" height="80" rx="6"/>
-          <text x="626" y="78" text-anchor="middle" class="ts">Bootloader</text>
-          <text x="626" y="96" text-anchor="middle" class="t">② 是 0xAA 且</text>
-          <text x="626" y="114" text-anchor="middle" class="t">是软件复位？</text>
+          <path class="main" d="M300 272 L300 305" marker-end="url(#ah2)"/>
+          <text x="310" y="294" class="yn">是</text>
+          <polygon class="b dm-boot" points="300,308 420,350 300,392 180,350"/>
+          <text x="300" y="346" text-anchor="middle" class="t">标志 ①</text>
+          <text x="300" y="364" text-anchor="middle" class="t">是 0xAA？</text>
 
-          <rect class="b boot" x="705" y="50" width="118" height="80" rx="6"/>
-          <text x="764" y="78" text-anchor="middle" class="ts">boot_jump</text>
-          <text x="764" y="96" text-anchor="middle" class="t">复制向量表</text>
-          <text x="764" y="114" text-anchor="middle" class="t">REMAP=1·跳转</text>
+          <path class="main" d="M300 392 L300 415" marker-end="url(#ah2)"/>
+          <text x="310" y="409" class="yn">是</text>
+          <polygon class="b dm-boot" points="300,418 430,460 300,502 170,460"/>
+          <text x="300" y="456" text-anchor="middle" class="t">标志 ② 是 0xAA</text>
+          <text x="300" y="474" text-anchor="middle" class="t">且是软件复位？</text>
 
-          <rect class="b app" x="843" y="50" width="118" height="80" rx="6"/>
-          <text x="902" y="78" text-anchor="middle" class="tb">app 运行</text>
-          <text x="902" y="98" text-anchor="middle" class="ts">USB 设备</text>
-          <text x="902" y="116" text-anchor="middle" class="mono-t">1A81:2071</text>
+          <path class="main" d="M300 502 L300 522" marker-end="url(#ah2)"/>
+          <text x="310" y="517" class="yn">否</text>
+          <rect class="b nb-boot" x="190" y="525" width="220" height="56" rx="6"/>
+          <text x="300" y="549" text-anchor="middle" class="tb">boot_jump</text>
+          <text x="300" y="569" text-anchor="middle" class="ts">换中断表 · 换栈 · 跳到 app</text>
 
-          <!-- 横向箭头 -->
-          <path class="ln" d="M133 90 L151 90" marker-end="url(#ah2)"/>
-          <path class="ln" d="M271 90 L289 90" marker-end="url(#ah2)"/>
-          <text x="281" y="80" text-anchor="middle" class="ts">否</text>
-          <path class="ln" d="M409 90 L427 90" marker-end="url(#ah2)"/>
-          <text x="419" y="80" text-anchor="middle" class="ts">是</text>
-          <path class="ln" d="M547 90 L565 90" marker-end="url(#ah2)"/>
-          <text x="557" y="80" text-anchor="middle" class="ts">是</text>
-          <path class="ln" d="M685 90 L703 90" marker-end="url(#ah2)"/>
-          <text x="695" y="80" text-anchor="middle" class="ts">否</text>
-          <path class="ln" d="M823 90 L841 90" marker-end="url(#ah2)"/>
+          <path class="main" d="M300 581 L300 627" marker-end="url(#ah2)"/>
+          <rect class="b app" x="190" y="630" width="220" height="60" rx="6"/>
+          <text x="300" y="656" text-anchor="middle" class="tb">app 运行</text>
+          <text x="300" y="676" text-anchor="middle" class="ts">电脑上出现 USB 1A81:2071</text>
 
-          <!-- 下排 -->
-          <rect class="b rom" x="153" y="240" width="256" height="80" rx="6"/>
-          <text x="281" y="268" text-anchor="middle" class="tb">ROM 的 ISP 下载模式</text>
-          <text x="281" y="290" text-anchor="middle" class="ts">插着 USB 时，电脑上出现一个 U 盘</text>
-          <text x="281" y="308" text-anchor="middle" class="ts">平时不会走到这里</text>
+          <!-- 右侧分支 -->
+          <rect class="b rom" x="560" y="150" width="240" height="60" rx="6"/>
+          <text x="680" y="175" text-anchor="middle" class="tb">ROM 的 ISP 下载模式</text>
+          <text x="680" y="196" text-anchor="middle" class="ts">电脑上出现 U 盘，平时走不到这里</text>
+          <path class="ln" d="M420 120 L680 120 L680 147" marker-end="url(#ah2)"/>
+          <text x="436" y="112" class="yn">是</text>
+          <path class="ln" d="M420 230 L680 230 L680 213" marker-end="url(#ah2)"/>
+          <text x="436" y="222" class="yn">否</text>
 
-          <rect class="b boot" x="429" y="240" width="256" height="80" rx="6"/>
-          <text x="557" y="268" text-anchor="middle" class="tb">留在 Bootloader 等升级</text>
-          <text x="557" y="290" text-anchor="middle" class="ts">USB 设备 17EF:6155，等工具发 hex</text>
-          <text x="557" y="308" text-anchor="middle" class="ts">标志 ① 不对时，先擦掉 app 区</text>
+          <rect class="b boot" x="560" y="375" width="240" height="60" rx="6"/>
+          <text x="680" y="400" text-anchor="middle" class="tb">留在 Bootloader 等升级</text>
+          <text x="680" y="421" text-anchor="middle" class="ts">USB 17EF:6155，等工具发 hex</text>
+          <path class="ln" d="M420 350 L680 350 L680 372" marker-end="url(#ah2)"/>
+          <text x="436" y="342" class="yn">否</text>
+          <text x="462" y="342" class="ts">（app 不完整：先擦掉 app 区）</text>
+          <path class="ln" d="M430 460 L680 460 L680 438" marker-end="url(#ah2)"/>
+          <text x="446" y="452" class="yn">是</text>
+          <text x="472" y="452" class="ts">（app 要求升级）</text>
 
-          <!-- 纵向箭头 -->
-          <path class="ln" d="M212 130 L212 238" marker-end="url(#ah2)"/>
-          <text x="219" y="190" class="ts">是</text>
-          <path class="ln" d="M350 130 L350 238" marker-end="url(#ah2)"/>
-          <text x="357" y="190" class="ts">否</text>
-          <path class="ln" d="M488 130 L488 238" marker-end="url(#ah2)"/>
-          <text x="495" y="190" class="ts">否</text>
-          <path class="ln" d="M626 130 L626 238" marker-end="url(#ah2)"/>
-          <text x="633" y="190" class="ts">是</text>
-
-          <!-- 两条回到“复位”的线 -->
-          <path class="ln" d="M902 50 L902 26 L74 26 L74 48" marker-end="url(#ah2)"/>
-          <text x="488" y="19" text-anchor="middle" class="ts halo">app 收到升级命令：写 ② = 0xAA，软件复位</text>
-          <path class="ln" d="M557 320 L557 344 L74 344 L74 132" marker-end="url(#ah2)"/>
-          <text x="316" y="338" text-anchor="middle" class="ts halo">升级写完：清 ②，软件复位</text>
+          <!-- 两条回到起点的线 -->
+          <path class="loop" d="M190 660 L60 660 L60 34 L217 34" marker-end="url(#ah2)"/>
+          <text transform="rotate(-90 50 470)" x="50" y="470" text-anchor="middle" class="ts">收到升级命令：写 ② = 0xAA，软件复位</text>
+          <path class="loop" d="M800 405 L860 405 L860 34 L383 34" marker-end="url(#ah2)"/>
+          <text transform="rotate(-90 876 230)" x="876" y="230" text-anchor="middle" class="ts">升级写完：清 ② = 0，软件复位</text>
         </svg>
       </div>
-      <figcaption>平时插上鼠标，走的是上排一路向右：两次 ROM 检查、两次标志检查，然后进入 app，全程约几毫秒，人感觉不到 Bootloader。只有 app 收到升级命令（上方回线），芯片才会在 Bootloader 停下来；升级完成后再复位一次（下方回线），这次两个检查都通过，就进入新 app。</figcaption>
+      <figcaption>从上往下读。色带表示这一步是谁在判断：灰色是芯片自带的 ROM，紫色是公司 Bootloader，青色是 app。中间的粗线是平时插上鼠标走的路：四个判断都“放行”，几毫秒后就进入 app。两条细线回到起点，就是升级时的两次软件复位：左边由 app 发起，右边由 Bootloader 发起。</figcaption>
     </figure>
   </section>
 
@@ -347,89 +361,102 @@ svg { color: var(--fg); font-family: var(--sans); }
   </section>
 
   <section>
-    <h2>图 3　升级时，人、电脑和芯片按什么顺序动作</h2>
+    <h2>图 3　升级时，工具、app 和 Bootloader 按什么顺序动作</h2>
     <figure>
       <div class="scroll">
-        <svg viewBox="0 0 1000 350" role="img" aria-label="升级时间线：人点更新后，app 写标志②并软件复位，USB 设备从 1A81:2071 变为 17EF:6155；Bootloader 擦除旧 app、写入新 app 并写标志①；工具发退出后 Bootloader 清标志②并软件复位，新 app 运行，USB 设备变回 1A81:2071。">
-          <!-- 泳道分隔线 -->
-          <line class="grid" x1="10" y1="50" x2="990" y2="50"/>
-          <line class="grid" x1="10" y1="120" x2="990" y2="120"/>
-          <line class="grid" x1="10" y1="170" x2="990" y2="170"/>
-          <line class="grid" x1="10" y1="220" x2="990" y2="220"/>
-          <line class="grid" x1="10" y1="262" x2="990" y2="262"/>
-          <line class="grid" x1="10" y1="304" x2="990" y2="304"/>
+        <svg class="tall" viewBox="0 0 900 850" role="img" aria-label="升级时序图：工具给 app 发升级命令；app 写标志②后软件复位；Bootloader 检查后留下，以 17EF:6155 连上电脑；工具发送 hex，Bootloader 擦除旧 app、写入新 app、写标志①；工具发退出，Bootloader 清标志②后软件复位；Bootloader 检查后跳到新 app，新 app 以 1A81:2071 连上电脑，工具提示升级成功。">
+          <defs>
+            <marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+            </marker>
+          </defs>
 
-          <!-- 泳道名称 -->
-          <text x="12" y="82" class="t">人 / 升级工具</text>
-          <text x="12" y="141" class="t">电脑上的</text>
-          <text x="12" y="159" class="t">USB 设备</text>
-          <text x="12" y="200" class="t">芯片在运行</text>
-          <text x="12" y="246" class="t">标志 ②</text>
-          <text x="12" y="288" class="t">标志 ①</text>
+          <!-- 三个参与者 -->
+          <rect class="b cell" x="80" y="14" width="180" height="48" rx="6"/>
+          <text x="170" y="35" text-anchor="middle" class="tb">升级工具</text>
+          <text x="170" y="53" text-anchor="middle" class="ts">电脑上的 Fw Update</text>
+          <rect class="b app" x="380" y="14" width="180" height="48" rx="6"/>
+          <text x="470" y="35" text-anchor="middle" class="tb">app</text>
+          <text x="470" y="53" text-anchor="middle" class="ts">鼠标里的程序</text>
+          <rect class="b boot" x="650" y="14" width="180" height="48" rx="6"/>
+          <text x="740" y="35" text-anchor="middle" class="tb">公司 Bootloader</text>
+          <text x="740" y="53" text-anchor="middle" class="ts">鼠标里的程序</text>
 
-          <!-- 步骤编号 -->
-          <circle class="num" cx="183.75" cy="30" r="11"/><text x="183.75" y="34" text-anchor="middle" class="numt">1</text>
-          <circle class="num" cx="291.25" cy="30" r="11"/><text x="291.25" y="34" text-anchor="middle" class="numt">2</text>
-          <circle class="num" cx="398.75" cy="30" r="11"/><text x="398.75" y="34" text-anchor="middle" class="numt">3</text>
-          <circle class="num" cx="506.25" cy="30" r="11"/><text x="506.25" y="34" text-anchor="middle" class="numt">4</text>
-          <circle class="num" cx="613.75" cy="30" r="11"/><text x="613.75" y="34" text-anchor="middle" class="numt">5</text>
-          <circle class="num" cx="721.25" cy="30" r="11"/><text x="721.25" y="34" text-anchor="middle" class="numt">6</text>
-          <circle class="num" cx="828.75" cy="30" r="11"/><text x="828.75" y="34" text-anchor="middle" class="numt">7</text>
-          <circle class="num" cx="936.25" cy="30" r="11"/><text x="936.25" y="34" text-anchor="middle" class="numt">8</text>
+          <!-- 生命线 -->
+          <line class="dash" x1="170" y1="62" x2="170" y2="840"/>
+          <line class="dash" x1="470" y1="62" x2="470" y2="840"/>
+          <line class="dash" x1="740" y1="62" x2="740" y2="840"/>
 
-          <!-- 人 / 工具 -->
-          <text x="183.75" y="80" text-anchor="middle" class="t">点“更新”</text>
-          <text x="183.75" y="98" text-anchor="middle" class="ts">发升级命令</text>
-          <text x="291.25" y="88" text-anchor="middle" class="ts">等待</text>
-          <text x="398.75" y="88" text-anchor="middle" class="ts">等待</text>
-          <text x="506.25" y="80" text-anchor="middle" class="t">找到新设备</text>
-          <text x="506.25" y="98" text-anchor="middle" class="ts">开始发送</text>
-          <text x="613.75" y="80" text-anchor="middle" class="t">发送 hex</text>
-          <text x="613.75" y="98" text-anchor="middle" class="ts">进度条走动</text>
-          <text x="721.25" y="88" text-anchor="middle" class="ts">hex 发完</text>
-          <text x="828.75" y="88" text-anchor="middle" class="t">发“退出”</text>
-          <text x="936.25" y="80" text-anchor="middle" class="t">提示</text>
-          <text x="936.25" y="98" text-anchor="middle" class="ts">升级成功</text>
+          <!-- 正在运行的程序（竖条）-->
+          <rect class="b app" x="464" y="70" width="12" height="106"/>
+          <rect class="b boot" x="734" y="198" width="12" height="380"/>
+          <rect class="b boot" x="734" y="600" width="12" height="100"/>
+          <rect class="b app" x="464" y="700" width="12" height="140"/>
 
-          <!-- USB 设备 -->
-          <rect class="b app" x="132" y="130" width="211" height="30" rx="4"/>
-          <text x="237.5" y="150" text-anchor="middle" class="mono-t">1A81:2071</text>
-          <text x="398.75" y="150" text-anchor="middle" class="ts">（没有设备）</text>
-          <rect class="b boot" x="456" y="130" width="424" height="30" rx="4"/>
-          <text x="668" y="150" text-anchor="middle" class="mono-t">17EF:6155</text>
-          <rect class="b app" x="886" y="130" width="102" height="30" rx="4"/>
-          <text x="937" y="150" text-anchor="middle" class="mono-t">1A81:2071</text>
+          <!-- 1 -->
+          <circle class="num" cx="30" cy="95" r="11"/><text x="30" y="99" text-anchor="middle" class="numt">1</text>
+          <path class="ln" d="M170 95 L461 95" marker-end="url(#ah3)"/>
+          <text x="316" y="87" text-anchor="middle" class="t halo">升级命令（PC_CMD_BOOTLOADER）</text>
 
-          <!-- 芯片在运行 -->
-          <rect class="b app" x="132" y="180" width="211" height="30" rx="4"/>
-          <text x="237.5" y="200" text-anchor="middle" class="t">app（旧）</text>
-          <rect class="b boot" x="348" y="180" width="532" height="30" rx="4"/>
-          <text x="614" y="200" text-anchor="middle" class="t">公司 Bootloader</text>
-          <rect class="b app" x="886" y="180" width="102" height="30" rx="4"/>
-          <text x="937" y="200" text-anchor="middle" class="t">app（新）</text>
+          <!-- 2 -->
+          <circle class="num" cx="30" cy="140" r="11"/><text x="30" y="144" text-anchor="middle" class="numt">2</text>
+          <rect class="b flag" x="360" y="118" width="220" height="46" rx="5"/>
+          <text x="470" y="138" text-anchor="middle" class="t">写 ② = 0xAA</text>
+          <text x="470" y="156" text-anchor="middle" class="ts">然后调用 NVIC_SystemReset()</text>
 
-          <!-- 标志 ② -->
-          <text x="183.75" y="246" text-anchor="middle" class="ad">0</text>
-          <rect class="b flag" x="270" y="229" width="610" height="24" rx="4"/>
-          <text x="575" y="246" text-anchor="middle" class="mono-t">0xAA</text>
-          <text x="936.25" y="246" text-anchor="middle" class="ad">0</text>
+          <rect class="resetband" x="10" y="176" width="880" height="22"/>
+          <text x="450" y="191" text-anchor="middle" class="rt">⟲ 第 1 次软件复位（app 发起）· USB 断开</text>
 
-          <!-- 标志 ① -->
-          <rect class="b flag" x="132" y="271" width="425" height="24" rx="4"/>
-          <text x="344.5" y="288" text-anchor="middle" class="t">0xAA（旧 app 完整）</text>
-          <rect class="b erase" x="562" y="271" width="103" height="24" rx="4"/>
-          <text x="613.75" y="288" text-anchor="middle" class="ts">已擦除</text>
-          <rect class="b flag" x="670" y="271" width="318" height="24" rx="4"/>
-          <text x="829" y="288" text-anchor="middle" class="t">0xAA（新 app 完整）</text>
+          <!-- 3 -->
+          <circle class="num" cx="30" cy="240" r="11"/><text x="30" y="244" text-anchor="middle" class="numt">3</text>
+          <rect class="b nb-boot" x="610" y="218" width="260" height="46" rx="5"/>
+          <text x="740" y="238" text-anchor="middle" class="t">CheckAP：① 是 0xAA</text>
+          <text x="740" y="256" text-anchor="middle" class="t">② 是 0xAA 且软件复位 → 留下</text>
 
-          <!-- 两次软件复位 -->
-          <line class="dash" x1="345.5" y1="44" x2="345.5" y2="310"/>
-          <line class="dash" x1="883" y1="44" x2="883" y2="310"/>
-          <text x="345.5" y="330" text-anchor="middle" class="ts">软件复位（app 发起）</text>
-          <text x="883" y="330" text-anchor="middle" class="ts">软件复位（Bootloader 发起）</text>
+          <!-- 4 -->
+          <circle class="num" cx="30" cy="300" r="11"/><text x="30" y="304" text-anchor="middle" class="numt">4</text>
+          <path class="ln" d="M734 300 L173 300" marker-end="url(#ah3)"/>
+          <text x="453" y="292" text-anchor="middle" class="t halo">USB 连上电脑，身份 17EF:6155</text>
+
+          <!-- 5 -->
+          <circle class="num" cx="30" cy="345" r="11"/><text x="30" y="349" text-anchor="middle" class="numt">5</text>
+          <path class="ln" d="M170 345 L731 345" marker-end="url(#ah3)"/>
+          <text x="453" y="337" text-anchor="middle" class="t halo">发送 hex（一行一行，反复多次）</text>
+          <rect class="b nb-boot" x="610" y="362" width="260" height="46" rx="5"/>
+          <text x="740" y="382" text-anchor="middle" class="t">擦掉扇区 4~15（① 也被擦掉）</text>
+          <text x="740" y="400" text-anchor="middle" class="t">写入新 app</text>
+
+          <!-- 6 -->
+          <circle class="num" cx="30" cy="441" r="11"/><text x="30" y="445" text-anchor="middle" class="numt">6</text>
+          <rect class="b flag" x="610" y="418" width="260" height="46" rx="5"/>
+          <text x="740" y="438" text-anchor="middle" class="t">写 ① = 0xAA</text>
+          <text x="740" y="456" text-anchor="middle" class="ts">Flash 0xFE00，经 IAP 写入</text>
+
+          <!-- 7 -->
+          <circle class="num" cx="30" cy="500" r="11"/><text x="30" y="504" text-anchor="middle" class="numt">7</text>
+          <path class="ln" d="M170 500 L731 500" marker-end="url(#ah3)"/>
+          <text x="453" y="492" text-anchor="middle" class="t halo">退出命令</text>
+          <rect class="b flag" x="610" y="518" width="260" height="46" rx="5"/>
+          <text x="740" y="538" text-anchor="middle" class="t">清 ② = 0</text>
+          <text x="740" y="556" text-anchor="middle" class="ts">然后调用 NVIC_SystemReset()</text>
+
+          <rect class="resetband" x="10" y="578" width="880" height="22"/>
+          <text x="450" y="593" text-anchor="middle" class="rt">⟲ 第 2 次软件复位（Bootloader 发起）· USB 断开</text>
+
+          <!-- 8 -->
+          <circle class="num" cx="30" cy="640" r="11"/><text x="30" y="644" text-anchor="middle" class="numt">8</text>
+          <rect class="b nb-boot" x="610" y="618" width="260" height="46" rx="5"/>
+          <text x="740" y="638" text-anchor="middle" class="t">CheckAP：① 是 0xAA，② 是 0</text>
+          <text x="740" y="656" text-anchor="middle" class="t">→ boot_jump</text>
+          <path class="ln" d="M734 700 L479 700" marker-end="url(#ah3)"/>
+          <text x="606" y="692" text-anchor="middle" class="t halo">跳到新 app</text>
+          <path class="ln" d="M464 760 L173 760" marker-end="url(#ah3)"/>
+          <text x="318" y="752" text-anchor="middle" class="t halo">USB 连上电脑，身份 1A81:2071</text>
+          <rect class="b cell" x="70" y="790" width="200" height="40" rx="5"/>
+          <text x="170" y="815" text-anchor="middle" class="t">提示“升级成功”</text>
         </svg>
       </div>
-      <figcaption>两条虚线是两次软件复位，都是代码自己调用 <code>NVIC_SystemReset()</code>，人不用做任何操作。复位时 USB 断开、重新连上，所以电脑上会看到设备“消失又出现”两次。用设备管理器或 USBTreeView 可以亲眼看到这个过程。</figcaption>
+      <figcaption>时间从上往下走。竖条表示那一段时间里鼠标正在运行哪个程序：先是 app，第 1 次复位后换成 Bootloader，第 2 次复位后 Bootloader 只运行一小会儿就跳回 app。横跨全图的灰带是两次软件复位，都是代码自己调用 <code>NVIC_SystemReset()</code>，人不用操作；复位时 USB 断开，所以电脑上会看到设备“消失又出现”两次。</figcaption>
     </figure>
 
     <ol class="steps">
