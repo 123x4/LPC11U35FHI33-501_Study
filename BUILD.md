@@ -34,6 +34,12 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -KeilPath 'C
 3. 点击 Project → Rebuild all target files（完整重编译），或按 F7 增量编译。
 4. Build Output 中出现 `0 Error(s)` 表示成功。
 
+## VS Code 代码诊断
+
+`.vscode/c_cpp_properties.json` 为 C/C++ 扩展配置 ARMCC5 的头文件路径和版本宏；`.vscode/armcc_intellisense.h` 仅供编辑器强制包含，用于解析 ARMCC 属性、寄存器绑定和内建函数，并以声明替代 CMSIS 中的 ARM 汇编函数。该兼容层只在 `__INTELLISENSE__` 下生效，不参与 Keil 固件编译，也不关闭代码错误检查。
+
+更新配置后若仍显示旧诊断，可执行命令 `C/C++: Reset IntelliSense Database`，然后重新打开源文件。换电脑时需同步修改配置中的 Keil 头文件路径。实际编译结果仍以 `build.ps1` 的输出为准。
+
 ## 产物与验证
 
 - `output\Sample.hex`：本次生成的 Intel HEX 固件。

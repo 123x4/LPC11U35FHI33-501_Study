@@ -9,9 +9,13 @@
             ],
             "defines": [
                 "__CC_ARM=1",
+                "__ARMCC_VERSION=5060960",
                 "__TARGET_CPU_CORTEX_M0=1",
                 "__packed=",
                 "__align(x)=__declspec(align(x))"
+            ],
+            "forcedInclude": [
+                "${workspaceFolder}/.vscode/armcc_intellisense.h"
             ],
             "compilerPath": "",
             "intelliSenseMode": "windows-msvc-arm",
