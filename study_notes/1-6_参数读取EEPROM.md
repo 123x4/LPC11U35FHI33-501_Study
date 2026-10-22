@@ -336,4 +336,89 @@ Param_Init()
 
 ## 补充问答
 
-（上课时的追问会补在这里。）
+### Q1：r0、r1 是什么意思？
+
+**① CPU 里面有一小组“寄存器”**
+
+这里的“寄存器”和前面讲的外设寄存器（PDRUNCFG、TCR 这些，有地址、在 0x4000 0000 附近）**不是一回事**。这里说的是 **CPU 内核自己身上的寄存器**，没有地址，数量很少，是 CPU 做运算时直接用的“手边的草稿格子”。
+
+📖 **UM p434~435，24.3.1.3 Core registers，Figure 75 / Table 413**：
+
+```
+R0  ┐
+R1  │
+R2  │  低寄存器（Low registers）
+R3  │  ← 大部分指令只能用这 8 个
+R4  │
+R5  │                                    通用寄存器
+R6  │                                    R0~R12 都是 32 位
+R7  ┘                                    “R0-R12 are 32-bit general-purpose
+R8  ┐                                     registers for data operations.”
+ …  │  高寄存器（High registers）
+R12 ┘
+R13 = SP  栈指针（0-4 课讲的 __initial_sp 就是装进它）
+R14 = LR  返回地址（函数调用完回到哪里）
+R15 = PC  程序计数器（当前执行到哪条指令）
+```
+
+CPU 要算 `a + b`，必须先把 a、b 从内存读进 R0~R12 里的某两个，在寄存器里相加，再把结果写回内存。r0、r1 就是 R0、R1，反汇编里习惯写小写。
+
+**② 函数调用时，参数放在 r0~r3**
+
+C 语言调用函数时，参数怎么交给被调用的函数？ARM 有一个所有编译器都遵守的约定（叫 AAPCS，ARM 过程调用标准）：
+
+| 用途 | 放在哪 |
+|---|---|
+| 第 1 个参数 | **r0** |
+| 第 2 个参数 | **r1** |
+| 第 3 个参数 | r2 |
+| 第 4 个参数 | r3 |
+| 第 5 个及以后 | 栈上 |
+| 返回值 | **r0** |
+
+📖 UM p411 也提到了这一点：“Up to 4 parameters can be passed in the r0, r1, r2 and r3 registers respectively (see the ARM Thumb Procedure Call Standard…)”。
+
+所以 UM p410 说的 “IAP routine should be called with a word pointer in register r0 pointing to … command code and parameters … result … pointed to by register r1”，翻译成 C 就是：
+
+```c
+iap_entry(command, result);   // 第 1 个参数 command → r0，第 2 个参数 result → r1
+```
+
+写 C 代码时**不用自己管 r0、r1**，编译器会自动按约定把参数放进去。手册之所以提 r0、r1，是因为 IAP 是 ROM 里的程序，它只认这个约定。
+
+**③ 在编译产物里亲眼看一次**
+
+`Chip_EEPROM_Read(srcAdd, ptr, bytesrd)` 的反汇编（`output/Sample.axf`，0x6BE6 起）：
+
+```
+                                    ; 进来时：r0 = srcAdd, r1 = ptr, r2 = bytesrd（3 个参数）
+6be6: push {lr}                     ; 保存返回地址
+6be8: sub  sp, #0x2c                ; 在栈上开出空间放 command[5] 和 result[5]
+6bea: movs r3, #0x3e                ; r3 = 62（EEPROM Read 命令号）
+6bec: str  r3, [sp, #0x18]          ; command[0] = 62
+6bee: str  r0, [sp, #0x1c]          ; command[1] = srcAdd   ← 第 1 个参数从 r0 来
+6bf0: str  r1, [sp, #0x20]          ; command[2] = ptr      ← 第 2 个参数从 r1 来
+6bf2: str  r2, [sp, #0x24]          ; command[3] = bytesrd  ← 第 3 个参数从 r2 来
+6bf4: ldr  r0, [pc, #0x48]          ; r0 = 48000（0x6C40 处的常量 0xBB80）
+6bf6: str  r0, [sp, #0x28]          ; command[4] = 48000
+6bf8: add  r1, sp, #0x4             ; r1 = result 数组的地址      ┐ 准备调用 lpc_iap_entry
+6bfa: add  r0, sp, #0x18            ; r0 = command 数组的地址     ┘ 的两个参数
+6bfc: bl   lpc_iap_entry            ; 调用
+6c00: ldr  r0, [sp, #0x4]           ; r0 = result[0]（状态码）
+6c02: uxtb r0, r0                   ; 截成 uint8_t → 作为返回值放在 r0
+```
+
+`lpc_iap_entry`（0x6C32 起）：
+
+```
+6c34: cpsid i                       ; __disable_irq()，关中断（PRIMASK=1）
+6c36: ldr   r2, [pc, #0xc]          ; r2 = 0x1FFF1FF1（0x6C44 处的常量）
+6c38: blx   r2                      ; 跳到 ROM 里的 IAP；此时 r0 = command，r1 = result
+6c3a: cpsie i                       ; __enable_irq()，开中断
+```
+
+`blx r2` 跳进 IAP 的那一刻，**r0 正好指向 command 数组，r1 正好指向 result 数组**，这就是手册要求的样子。IAP 从 r0 指的地方读命令和参数，把状态码写到 r1 指的地方。
+
+（0x6C40 处的常量 = 0x0000 BB80 = 48000，0x6C44 处的常量 = 0x1FFF 1FF1，都已经从 `output/Sample.hex` 读出来核对过。）
+
+**一句话总结**：r0、r1 是 CPU 内核里的第 0、1 号通用寄存器。按 ARM 的约定，函数的第 1、2 个参数放在 r0、r1 里。所以手册说“r0 指向命令表、r1 指向结果表”，在 C 里就是 `iap_entry(command, result)`，编译器会自动放好。
