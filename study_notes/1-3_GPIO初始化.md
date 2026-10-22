@@ -74,7 +74,7 @@ LPC_SYSCON->SYSAHBCLKCTRL |= ((1<<6)|(1<<19)|(1<<23)|(1<<24)) ;
 
 | 位 | 名字 | 复位值 | 作用 |
 |---|---|---|---|
-| 6 | GPIO | 0 | GPIO 端口寄存器（DIR/PIN/SET/CLR）的时钟 |
+| 6 | GPIO | 0（boot 之后是 1） | GPIO 端口寄存器（DIR/PIN/SET/CLR）的时钟 |
 | 19 | PINT | 0 | GPIO 引脚中断寄存器的时钟 |
 | 23 | GROUP0INT | 0 | GPIO 组中断 0 的时钟 |
 | 24 | GROUP1INT | 0 | GPIO 组中断 1 的时钟 |
@@ -85,10 +85,20 @@ LPC_SYSCON->SYSAHBCLKCTRL |= ((1<<6)|(1<<19)|(1<<23)|(1<<24)) ;
 
 | 位 | 谁打开的 |
 |---|---|
-| 0~5 | 复位值就是 1（SYS、ROM、RAM0、FLASHREG、FLASHARRAY、I2C） |
+| 0~4 | boot 之后就是 1（SYS、ROM、RAM0、FLASHREG、FLASHARRAY） |
+| 6 GPIO、11 SSP0、14 USB、27 USBRAM | boot 之后就是 1（见下面的勘误） |
 | 15 WWDT | 1-1 课 |
 | 16 IOCON | 1-2 课 |
-| 6、19、23、24 | 本课 |
+| 19、23、24 | 本课（bit6 本课再写一次） |
+
+> ⚠️ **勘误（1-5 课时更正）**：📖 UM p21 Table 5 里 SYSAHBCLKCTRL 有两个值：复位值 **0x3F**、boot 之后 **0x0800 485F**。公司 Bootloader 正常路径不碰时钟（见 1-2 讲义第 35 行勘误），所以进入 app 时是 0x0800485F：
+>
+> ```
+> 0x0800 485F = bit 27 | bit 14 | bit 11 | bit 6 | bit 4~0
+>               USBRAM   USB      SSP0     GPIO    SYS/ROM/RAM0/FLASHREG/FLASHARRAY
+> ```
+>
+> 所以 bit6 GPIO 在进入 app 时**已经是 1**，本行对它只是保险写法；而 bit5 **I2C 是 0**（原来写的“0~5 复位值都是 1”不对，I2C 被 ROM 关掉了）。
 
 ### 第 314~321 行：把 4 根 JTAG 脚改成 GPIO
 
