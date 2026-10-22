@@ -344,3 +344,66 @@ D-  ____/‾‾‾‾\________/‾‾‾‾
 芯片可以用 **USB_CONNECT** 引脚（PIO0_6）控制一个开关，决定什么时候把这个上拉电阻接上。这样代码可以先把初始化做完，再“告诉”电脑自己插上了。这部分在 1-10 课讲 USB 初始化时细讲。
 
 **一句话总结**：USB 收发器就是芯片里直接连着 D+/D- 两根线的那块模拟电路，负责把数据变成线上的电压发出去、把线上的电压收回来变成数据。它默认是断电的，第 60 行把它打开。
+
+### Q2：不先上电，能控制这些寄存器吗？
+
+**能。** 关键是分清两种不同的“开关”。
+
+**① 两种开关，管的东西不一样**
+
+| 开关 | 寄存器 | 管什么 | 关掉时会怎样 |
+|---|---|---|---|
+| **电源开关** | PDRUNCFG（📖 p43~44 Table 47） | **模拟电路**本身：晶振、PLL、USB 收发器、ADC… | 电路不工作（不振荡、不输出、不收发），但**它的配置寄存器照样能读写** |
+| **时钟开关** | SYSAHBCLKCTRL（📖 p31~32 Table 24） | 外设**寄存器接口**的时钟 | 这个外设的寄存器**读写无效** |
+
+**② 这一课的寄存器属于哪一种**
+
+USBPLLCLKSEL、USBPLLCTRL、USBCLKSEL、USBCLKDIV、PDRUNCFG 这些，全都在 **SYSCON（系统控制块，0x4004 8000）** 里。
+
+📖 UM p31 3.5.18 节：
+
+> The system clock (bit 0) provides the clock for the AHB, the APB bridge, the ARM Cortex-M0, the **Syscon block**, and the PMU. **This clock cannot be disabled.**
+
+SYSCON 的时钟永远开着，所以它里面的寄存器**任何时候都能读写**，不管 PLL、收发器有没有上电。
+
+PLL 断电时写 USBPLLCTRL，只是把“将来上电后要用的参数”先存起来。所以 📖 UM p54 才会**推荐**“先断电、改参数、再上电”：参数在断电时就能写进去，而且这样最安全。
+
+1-2 课系统 PLL 就是这么做的：第 44 行写 SYSPLLCTRL 时，PLL 还是断电的（第 45 行才上电），写入完全有效。
+
+**③ 什么情况下“不先打开就写不进去”？**
+
+是**时钟开关**没开的时候。1-4 课就遇到过：
+
+```c
+LPC_CT32B0->TCR = 0 ;                        // 第 995 行：CT32B0 时钟还没开 → 写入无效
+LPC_SYSCON->SYSAHBCLKCTRL |= (0x01 << 9);   // 第 997 行：这才打开时钟
+```
+
+CT32B0 的寄存器不在 SYSCON 里，它有自己的时钟开关（bit9）。开关没开，寄存器接口就没有时钟，写进去的值不会生效。
+
+**④ 放到 USB 上**
+
+📖 UM p221，11.2 Basic configuration 把 USB 要开的东西分得很清楚：
+
+```
+• In the SYSAHBCLKCTRL register, enable the clock to the USB controller register
+  interface by setting bit 14 and to the USB RAM by setting bit 27   ← 时钟开关：不开就读写不了 USB 控制器的寄存器
+• Power: Enable the power to the USB PHY and to the USB PLL, if used,
+  in the PDRUNCFG register                                          ← 电源开关：不开 USB 就不能工作
+```
+
+| 想做的事 | 需要先开什么 |
+|---|---|
+| 写 USBPLLCTRL、USBPLLCLKSEL 等（SYSCON 里） | **什么都不用开**，随时能写 |
+| 读写 USB 控制器的寄存器（DEVCMDSTAT 等，0x4008 0000） | SYSAHBCLKCTRL **bit14** |
+| 往 USB RAM（0x2000 4000）放数据 | SYSAHBCLKCTRL **bit27** |
+| 让 USB PLL 输出 48MHz | PDRUNCFG **bit8**（上电）+ 等 LOCK |
+| 让 D+/D- 真正收发信号 | PDRUNCFG **bit10**（收发器上电） |
+
+**⑤ 用一个比方记住**
+
+- **SYSAHBCLKCTRL（时钟开关）** 像一个房间的**门**。门没开，你进不去，没法动里面的开关和旋钮（寄存器）。
+- **PDRUNCFG（电源开关）** 像机器的**电源插头**。插头没插，你照样可以走到机器前把旋钮拧到想要的位置（写参数），只是机器不会转；插上电，它就按你拧好的位置工作。
+- **SYSCON** 这个房间的门**永远开着**（时钟不能关），所以 PLL 这些旋钮随时都能拧。
+
+**一句话总结**：PDRUNCFG 管模拟电路的电，不影响写配置寄存器；SYSAHBCLKCTRL 管寄存器接口的时钟，没开才写不进去。这一课的寄存器都在 SYSCON 里，SYSCON 的时钟永远开着，所以不先上电也能写——手册甚至推荐 PLL 在断电时先写好参数。
