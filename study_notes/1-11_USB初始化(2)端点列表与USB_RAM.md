@@ -1,0 +1,309 @@
+# 1-11 USB 初始化（2）：`NDrv_USB_Reset()` —— 端点列表、USB RAM、中断使能
+
+> 📍 **位置**：`main()` → `Device_Init()` → 第 449 行 `nsAPI_USB_Init()` → **`usbhw.c:325` `NDrv_USB_Reset();`**
+> 📄 **代码**：`src/usbhw.c` 第 354~375 行（`NDrv_USB_Reset`）、第 209~276 行（`NDrv_USB_EPInit`）；地址和尺寸宏在 `inc/usbhw.h` 第 64~73、96~106、131~132 行，`inc/usbcfg.h` 第 50~54、78、111 行
+> 📖 **手册**：UM 第 11 章 —— p226~227 Table 214（DEVCMDSTAT bit7 DEV_EN）、p229 Table 216（EPLISTSTART）、p229 Table 217（DATABUFSTART）、p231~232 Table 222（INTSTAT）、p232 Table 223（INTEN）、p234 **Figure 22**（端点列表）、p235~236 **Table 227**（端点列表每一位的含义）
+> 🔍 **核实**：USB RAM 布局、INTEN 的值、`g_USBHW_Setting` 地址都已用 `Sample.map` / 反汇编 / hex 核实 ✅
+
+---
+
+## 零、先补几个 USB 的基本概念
+
+### 1. 端点（Endpoint）是什么
+
+USB 通信不是“一根管子”，而是**分成多个编号的“信箱”**，叫端点。电脑和鼠标之间的每一次数据交换，都是指定往某个端点送、或者从某个端点取。
+
+| 概念 | 说明 |
+|---|---|
+| 端点号 | LPC11U35 支持 **EP0~EP4**，共 5 个“逻辑端点” |
+| 方向 | 每个端点分 **OUT**（电脑 → 鼠标）和 **IN**（鼠标 → 电脑）两个方向。方向永远是**站在电脑角度**说的 |
+| 物理端点 | 5 个逻辑端点 × 2 个方向 = **10 个物理端点**（`inc/usbcfg.h:50` `#define USB_EP_NUM 10`） |
+| EP0 | **控制端点**，每个 USB 设备都必须有。插上后电脑先通过它“问话”（要描述符、分配地址……），1-13 课详讲 |
+| EP1~EP4 | 普通端点，本项目用作鼠标报文、键盘报文、和 GUI 通信等（1-13 课看描述符） |
+
+📖 UM p222 11.3 Features：“Supports 10 physical (5 logical) endpoints including one control endpoint.”
+
+### 2. 硬件怎么知道每个端点的数据放在哪
+
+1-10 课讲过：USB 控制器内部有 DMA，**自己**去内存里拿要发的数据、把收到的数据写进内存。那它怎么知道“EP1 IN 要发的数据在哪个地址、有几个字节”？
+
+答案是**端点列表（Endpoint Command/Status List）**：软件在内存里摆一张表，每个物理端点（的每个缓冲区）占一个 32 位字，写明“缓冲区地址、字节数、状态”。硬件按照固定的顺序去读这张表。
+
+```
+软件在 USB RAM 里摆好：              硬件（USB 控制器）：
+┌───────────────────────┐
+│ 端点列表（一张表）        │ ◀──── EPLISTSTART 指向这里
+│  EP0 OUT：地址 X，64 字节 │
+│  EP0 IN ：地址 Y，64 字节 │       电脑发来 EP0 OUT 数据
+│  ……                    │  ───▶ 查表 → 写到地址 X
+├───────────────────────┤
+│ 数据缓冲区               │ ◀──── DATABUFSTART 指向所在的“页”
+│  地址 X：……             │
+│  地址 Y：……             │
+└───────────────────────┘
+```
+
+`NDrv_USB_EPInit()` 就是在**摆这张表**。
+
+---
+
+## 一、`NDrv_USB_Reset()` 全貌（`src/usbhw.c:354~375`）
+
+```c
+void NDrv_USB_Reset(void)
+{
+	g_USBHW_Setting.BufferUsed = 0;         // ① 清两个软件变量
+	g_USBHW_Setting.EPActiveFlag = 0;
+
+	NDrv_USB_EPInit();                      // ② 摆端点列表
+
+	LPC_USB->DEVCMDSTAT |= USB_EN;          // ③ 使能 USB 设备
+	LPC_USB->INTSTAT = 0xC00003FF;          // ④ 清所有中断标志
+	LPC_USB->INTEN  = DEV_STAT_INT | 0x3FF | (USB_SOF_EVENT ? FRAME_INT : 0);   // ⑤ 打开中断
+}
+```
+
+注意函数上面的注释 “Called automatically on USB Reset”：它不只在初始化时调用一次，**每当电脑对 USB 总线发出“复位”信号时**，中断函数里也会再调用它（`usbhw.c:1343`，1-13 课）。📖 UM p235 Table 227 D 位说明：“When a bus reset is received, software must set the disable bit of all endpoints to 1.” 所以要把整张表重新摆一遍。
+
+---
+
+## 二、`NDrv_USB_EPInit()` 逐行（`src/usbhw.c:209~276`）
+
+### 第 213~216 行：告诉硬件“表在哪、数据在哪个页”
+
+```c
+addr = (U32 *)USB_EPLIST_ADDR;                 // 0x2000 4000：表的起点
+LPC_USB->EPLISTSTART = USB_EPLIST_ADDR;        // 告诉硬件
+data_ptr = USB_EPDATA_ADDR;                    // 0x2000 4100：第一块数据缓冲区
+LPC_USB->DATABUFSTART = USB_EPDATA_PAGE;       // 0x2000 4100 & 0xFFC0 0000 = 0x2000 0000
+```
+
+宏定义（`inc/usbhw.h:64~66`）：
+
+```c
+#define USB_EPLIST_ADDR 0x20004000
+#define USB_EPDATA_ADDR (USB_EPLIST_ADDR + 0x100)
+#define USB_EPDATA_PAGE (USB_EPDATA_ADDR&0xFFC00000)   /* Bit 22~31 is the page */
+```
+
+| 寄存器 | 📖 | 规定 | 写入 |
+|---|---|---|---|
+| EPLISTSTART（0x4008 0008） | p229 Table 216 | 低 8 位固定为 0 → 表必须 **256 字节对齐** | 0x2000 4000 ✅ 对齐 |
+| DATABUFSTART（0x4008 000C） | p229 Table 217 | 只有 bit 31:22 有效 → 所有缓冲区必须在**同一个 4 MB 的“页”**里 | 0x2000 0000（页的范围是 0x2000 0000 ~ 0x203F FFFF） |
+
+> 💡 这就回答了 1-10 课留下的问题“缓冲区为什么放在 USB RAM”：DATABUFSTART 设成 0x2000 0000 之后，缓冲区只能在 0x2000 0000~0x203F FFFF 之间，**SRAM0（0x1000 0000）不在这个页里**，所以不能用；能用的是 SRAM1（0x2000 0000，本项目没开）和 USB RAM（0x2000 4000）。本项目放在 USB RAM。
+
+### 端点列表每个 32 位字的格式
+
+📖 **UM p234 Figure 22** + **p235~236 Table 227**：
+
+```
+ 31  30  29  28  27     26  25 ……………… 16  15 ……………………………… 0
+┌───┬───┬───┬───┬──────┬───┬──────────────┬────────────────────────┐
+│ A │ D │ S │TR │RF/TV │ T │   NBytes     │   Address Offset       │
+└───┴───┴───┴───┴──────┴───┴──────────────┴────────────────────────┘
+```
+
+| 位 | 名字 | 含义 |
+|---|---|---|
+| 31 | **A** Active | 1 = 这个缓冲区已经准备好，硬件可以用它收/发。**硬件**收发完会把它清 0 |
+| 30 | **D** Disabled | 1 = 端点关闭，电脑发来的令牌直接忽略 |
+| 29 | S Stall | 1 = 回复 STALL（表示“出错了/不支持”） |
+| 28 | TR Toggle Reset | 数据翻转位复位 |
+| 27 | RF/TV | 翻转值 / 中断端点的速率反馈模式 |
+| 26 | T Type | 0 = 普通（批量/中断）端点，1 = 同步端点 |
+| 25:16 | **NBytes** | OUT：最多能收多少字节；IN：要发多少字节 |
+| 15:0 | **Address Offset** | **缓冲区地址的 bit 21:6**（所以缓冲区必须 **64 字节对齐**） |
+
+“Address Offset 是地址的 bit 21:6”怎么理解？缓冲区真实地址 = **DATABUFSTART（bit 31:22）+ Address Offset × 64**。代码里写的 `(U16)(data_ptr >> 6)` 就是在算它：
+
+```
+data_ptr = 0x2000 4100
+>> 6     = 0x0080 0104
+(U16)    = 0x0104        ← 只留低 16 位，正好就是 bit 21:6
+反算：0x2000 0000 + 0x0104 × 64 = 0x2000 0000 + 0x4100 = 0x2000 4100 ✅
+```
+
+### 第 222~245 行：EP0 的 4 个字
+
+📖 UM p234 Figure 22：EP0 的 4 个字顺序是固定的。
+
+```c
+*addr++ = (USB_MAX_PACKET0 << 16)|((U16)(data_ptr >> 6));   // 0x00：EP0 OUT，64 字节
+data_ptr += USB_MAX_PACKET0;
+*addr++ = ((U16)(data_ptr >> 6));                            // 0x04：SETUP 包缓冲区（没有长度字段，固定 8 字节）
+data_ptr += USB_MAX_PACKET0;                                 //       “为了对齐”也占 64 字节
+*addr++ = (USB_MAX_PACKET0 << 16)|((U16)(data_ptr >> 6));   // 0x08：EP0 IN，64 字节
+data_ptr += USB_MAX_PACKET0;
+addr++;                                                      // 0x0C：保留，不写（#if 0 里那行没编译）
+data_ptr += USB_MAX_PACKET0;                                 //       但数据区仍然空出 64 字节
+```
+
+`USB_MAX_PACKET0 = 64`（`inc/usbcfg.h:52`），全速 USB 控制端点最大包长就是 64。
+
+注意 **EP0 的这几个字 A 位都是 0**（还没准备好收发），也**没有 D 位**（EP0 不能关）。什么时候置 A 位，1-13 课讲控制传输时再看。
+
+**SETUP 是什么？** 电脑对 EP0 说话时，第一个包总是 8 字节的 **SETUP 包**（“我要你的设备描述符”“我给你分配地址 5”之类的命令）。📖 UM p236：“When receiving a SETUP token for endpoint zero, the HW will only read the SETUP bytes Buffer Address offset… it will only write the first 8 bytes to memory.” 所以 SETUP 单独有一个缓冲区。
+
+### 第 247~275 行：EP1~EP4，每个方向 2 个缓冲区
+
+```c
+for(i = 2; i < USB_EP_NUM; i++)      // i = 2~9，共 8 个物理端点：EP1 OUT、EP1 IN、EP2 OUT …… EP4 IN
+{
+	*addr++ = EP_DISABLED|(USB_MAX_NON_ISO_SIZE << 16)|((U16)(data_ptr >> 6));   // Buffer 0
+	data_ptr += USB_MAX_NON_ISO_SIZE;
+	*addr++ = EP_DISABLED|(USB_MAX_NON_ISO_SIZE << 16)|((U16)(data_ptr >> 6));   // Buffer 1
+	data_ptr += USB_MAX_NON_ISO_SIZE;
+}
+```
+
+- `USB_ISO_COMMUNICATION = 0`（`inc/usbcfg.h:78`），走 `#else` 分支，非同步端点，每个缓冲区 64 字节。
+- 每个都带 **`EP_DISABLED`（bit30）**：先全部关掉。等电脑发来 SET_CONFIGURATION（“我要用这套配置了”），软件才把用到的端点打开（1-13 课）。
+- 每个方向有 **Buffer 0 和 Buffer 1** 两个缓冲区：这是给**双缓冲**准备的（一个在收发、另一个给软件处理）。但 1-10 课讲过 `USE_DOUBLE_BUFFER = 0`，EPBUFCFG 没设置，所以实际**只用 Buffer 0**，Buffer 1 摆在那里不用。
+
+### 结果：USB RAM 的实际布局 ✅
+
+USB RAM 0x2000 4000 ~ 0x2000 47FF（2 KB）：
+
+```
+0x2000 4000 ┌──────────────────────────────┐
+            │ 端点列表 20 个字 = 80 字节      │  EPLISTSTART
+            │  +0x00 EP0 OUT    0x0040 0104 │  NBytes=64，地址→0x2000 4100
+            │  +0x04 SETUP      0x0000 0105 │  地址→0x2000 4140
+            │  +0x08 EP0 IN     0x0040 0106 │  地址→0x2000 4180
+            │  +0x0C 保留        （没写）     │
+            │  +0x10 EP1 OUT B0 0x4040 0108 │  D=1，NBytes=64，地址→0x2000 4200
+            │  +0x14 EP1 OUT B1 0x4040 0109 │
+            │  …… 每个物理端点 2 个字 ……       │
+            │  +0x4C EP4 IN  B1 0x4040 0117 │  地址→0x2000 45C0
+0x2000 4050 ├──────────────────────────────┤
+            │ 空着 176 字节                  │
+0x2000 4100 ├──────────────────────────────┤ ◀ 数据区
+            │ EP0 OUT    64 B   (…4100)     │
+            │ SETUP      64 B   (…4140) 只用 8 B │
+            │ EP0 IN     64 B   (…4180)     │
+            │ （保留）    64 B   (…41C0)     │
+            │ EP1 OUT B0/B1  128 B (…4200)  │
+            │ EP1 IN  B0/B1  128 B (…4280)  │
+            │ EP2 ……                        │
+            │ EP4 IN  B0/B1  128 B (…4580)  │
+0x2000 4600 ├──────────────────────────────┤
+            │ 空着 512 字节                  │
+0x2000 47FF └──────────────────────────────┘
+```
+
+数据区 = 4 × 64 + 16 × 64 = 1280 字节，从 0x2000 4100 到 0x2000 45FF。表里每个字的值是我按代码算出来的（例如 EP1 OUT B0 = `(1<<30) | (64<<16) | 0x108` = 0x4040 0108）。
+
+同时，`g_USBHW_Setting.EPList[]`（在 SRAM0 的 `.bss` 里，`Sample.map` 第 1442 行 `g_USBHW_Setting 0x10001714`，168 字节）记了一份同样的“缓冲区地址 + 长度”，给软件自己查用。
+
+> ⚠️ 两个小细节：① 保留字 +0x0C 没有写，USB RAM 复位后内容不确定，好在硬件不读它；② EP0 的 4 个字不带 D 位，EP1~EP4 的字带 D 位，这符合 📖 Table 227 的要求。
+
+---
+
+## 三、回到 `NDrv_USB_Reset()`：③④⑤
+
+### ③ DEVCMDSTAT |= USB_EN（bit7）
+
+📖 **UM p226~227 Table 214** bit7 **DEV_EN**：
+
+> USB device enable. If this bit is set, the HW will start responding on packets for function address DEV_ADDR.
+
+`USB_EN = BIT7`（`inc/usbhw.h:103`）。设备地址 DEV_ADDR 复位值是 0（刚插上时每个设备都是地址 0，电脑之后会分配一个新地址），所以打开后硬件就会回应发给地址 0 的包。
+
+注意：**这时 D+ 上拉还没接**（DCON 还是 0），电脑根本看不到设备，所以不会有任何包发过来。
+
+### ④ INTSTAT = 0xC00003FF：清所有中断标志
+
+📖 **UM p231~232 Table 222**（INTSTAT，0x4008 0020）：每一位都是 **R/WC**（读 / **写 1 清零**）。
+
+| 位 | 名字 |
+|---|---|
+| 0~9 | EP0OUT、EP0IN、EP1OUT、EP1IN …… EP4IN（10 个物理端点） |
+| 30 | FRAME_INT（帧中断） |
+| 31 | DEV_INT（设备状态中断：总线复位、连接变化、挂起/恢复） |
+
+0xC000 03FF = bit31 + bit30 + bit 9:0，正好**每个有意义的位都写 1** → 全部清零。
+
+### ⑤ INTEN：打开中断
+
+```c
+LPC_USB->INTEN = DEV_STAT_INT | 0x3FF | (USB_SOF_EVENT ? FRAME_INT : 0);
+```
+
+| 部分 | 值 | 含义 |
+|---|---|---|
+| `DEV_STAT_INT` | 0x8000 0000（bit31，`inc/usbhw.h:132`） | 总线复位、连接变化、挂起/恢复时中断 |
+| `0x3FF` | bit 9:0 | 10 个物理端点收发完成时中断 |
+| `FRAME_INT` | 0x4000 0000（bit30，`inc/usbhw.h:131`） | `USB_SOF_EVENT = 1`（`inc/usbcfg.h:111`）→ 打开 |
+| 合计 | **0xC000 03FF** | |
+
+📖 **UM p232 Table 222 bit30 FRAME_INT**：
+
+> This bit is set to one **every millisecond** when the VbusDebounced bit and the DCON bit are set.
+
+也就是说：**一旦连上电脑，USB 中断每 1 ms 至少来一次**（电脑每 1 ms 发一个 SOF“帧开始”包）。中断里对 FRAME_INT 只做了一件事：`de_determineUsbAct` 计数（`usbhw.c:1378~1386`），用来判断 USB 是否活跃。
+
+**反汇编核实 ✅**（`NDrv_USB_Reset` @ 0x8CFE）：
+
+```
+8d0c: ldr  r0, =0x40080000      ; LPC_USB 基地址（DEVCMDSTAT 在 +0x00）
+8d0e: ldr  r1, [r0]
+8d10: movs r2, #0x80            ; bit7 USB_EN
+8d12: orrs r1, r2
+8d14: str  r1, [r0]             ; ③
+8d16: ldr  r1, =0xC00003FF
+8d18: str  r1, [r0, #0x20]      ; ④ INTSTAT（+0x20）
+8d1a: str  r1, [r0, #0x24]      ; ⑤ INTEN（+0x24）
+```
+
+④ 和 ⑤ 写的值恰好相同，编译器只装了一次常量 0xC00003FF，连着写了两个寄存器。
+
+### 三道门（1-1 课）现在的状态
+
+```
+外设 INTEN    = 0xC00003FF  ✓（本课）
+NVIC bit22    = 1           ✓（1-10 课）
+PRIMASK       = 允许         ✓
+```
+
+三道门都开了，**但中断还不会来**：DCON = 0，D+ 没上拉，电脑看不到设备，总线上没有任何活动。下一课 `NDrv_USB_Connect(TRUE)` 设置 DCON 之后，第一个中断（电脑发来的总线复位）才会到来。
+
+---
+
+## 四、小结
+
+```
+NDrv_USB_Reset()
+ ├─ 清 BufferUsed、EPActiveFlag
+ ├─ NDrv_USB_EPInit()
+ │    ├─ EPLISTSTART  = 0x2000 4000（256 字节对齐）
+ │    ├─ DATABUFSTART = 0x2000 0000（4 MB 页）
+ │    ├─ EP0：OUT / SETUP / IN / 保留，各 64 字节，A=0
+ │    └─ EP1~EP4：每方向 2 个 64 字节缓冲区，全部 D=1（关闭）
+ ├─ DEVCMDSTAT.DEV_EN = 1（开始响应地址 0）
+ ├─ INTSTAT = 0xC00003FF（写 1 清所有标志）
+ └─ INTEN   = 0xC00003FF（设备状态 + 10 个端点 + 1 ms 帧中断）
+总线复位时，中断里会再调用一次
+```
+
+---
+
+## 🧪 验证（零风险）
+
+- 打开 `List/Sample.map`，找到 `NDrv_USB_EPInit`（0x8C4B）和 `NDrv_USB_Reset`（0x8CFF），用 `llvm-objdump` 反汇编，对照第三节。
+- 自己按代码算一遍端点列表 +0x18（EP1 IN B0）这个字的值，和第二节的布局图对一下（答案：0x4040 010A）。
+
+---
+
+## ❓ 练习
+
+1. EP2 OUT Buffer 0 在端点列表的哪个偏移？它的数据缓冲区地址是多少？这个字的值是多少？
+2. 如果把 `USB_EPDATA_ADDR` 改成 `USB_EPLIST_ADDR + 0x60`（0x2000 4060），会出什么问题？（提示：Address Offset 是地址的 bit 21:6）
+3. 本项目 USB RAM 还空着多少字节？如果打开双缓冲（`USE_DOUBLE_BUFFER = 1`），需要多占内存吗？为什么？
+4. INTEN 去掉 FRAME_INT 会影响什么功能？（提示：`de_determineUsbAct` 在哪里被用到，可以 `grep` 一下）
+
+---
+
+## 补充问答
+
+（上课时的追问会补在这里。）
