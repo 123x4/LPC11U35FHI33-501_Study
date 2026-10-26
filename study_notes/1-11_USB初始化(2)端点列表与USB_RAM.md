@@ -676,3 +676,26 @@ addr++;           // 笔往下挪一行
 
 **一句话总结**：`*addr++ = …` 是“写一行、笔往下挪”；`data_ptr += 64` 是“换下一个柜子”；`<< 16` 把容量放进“件数栏”；`(U16)(… >> 6)` 把柜子地址变成 16 位的“柜子编号”；`|` 把两栏拼成一整行。
 
+### Q4：手册里的 “HW” 是什么？（附 Table 222 EP1IN 这一行的翻译）
+
+**HW = Hardware，硬件**；对应的 **SW = Software，软件**。NXP 手册里大量用这两个缩写：
+
+| 缩写 | 指谁 | 在本项目里 |
+|---|---|---|
+| **HW** | 芯片里的硬件电路自己动作，不需要执行任何代码 | 这里指 **USB 控制器**（1-11 课比喻里的“快递员”） |
+| **SW** | 我们写的程序 | `usbhw.c` 等代码（比喻里的“物业”） |
+
+📖 **UM p231 Table 222 bit3 EP1IN** 逐句翻译（用快递柜比喻）：
+
+| 原文 | 翻译 | 快递柜比喻 |
+|---|---|---|
+| Interrupt status register bit for the EP1 IN direction. | EP1 IN 方向的中断状态位。 | EP1 IN 这一格的“通知灯” |
+| This bit will be set if the corresponding Active bit is cleared by HW. | 当**硬件**把对应的 Active 位清 0 时，这一位被置 1。 | 快递员把登记表上的 ☑ 改回 ☐ 时，通知灯亮 |
+| This is done in case the programmed NBytes transitions to zero or the skip bit is set by software. | 硬件清 Active 的情况有两种：设定的字节数发完了（NBytes 减到 0），或者**软件**设置了 skip 位（主动取消）。 | 东西全部取走了；或者物业主动说“这件不寄了” |
+| If the IntOnNAK_AI is set, this bit will also be set when a NAK is transmitted for the EP1 IN direction. | 如果打开了 IntOnNAK_AI，那么 EP1 IN 回复 NAK 时这一位也会置 1。 | （可选功能）电脑来取但柜子是空的，快递员回答“没东西”时也亮灯。本项目没开 |
+| Software can clear this bit by writing a one to it. | **软件**往这一位写 1 可以把它清掉（R/WC）。 | 物业看到灯亮、处理完后，按一下把灯灭掉 |
+
+结合 1-11 课 Q2 第 ⑤ 步：软件往 EP1 IN 的柜子里放好鼠标报文、打 ☑（Active = 1）→ 电脑来取 → **HW** 发完后把 ☑ 改回 ☐（Active = 0）→ INTSTAT bit3 置 1 → 进 `USB_IRQHandler` → 软件知道“上一包已经发走了，可以放下一包”。
+
+所以读手册时看到 “set by HW / cleared by HW”，意思就是“**这一位由芯片自己改，你的代码不用管**”；看到 “by SW / Software can …” 就是“**要你的代码去做**”。
+
