@@ -117,6 +117,31 @@ pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);borde
 .man .src{font-size:.8rem;color:var(--muted)}
 .man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
 .man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
 </style>
 <div class="wrap">
 <div class="eyebrow">轻松版 · 第 3 课 · 打地基</div>
@@ -374,7 +399,7 @@ adc:{name:'ADC',sum:'<b class="t">ADC 一句话来龙去脉</b><br>开机时 <co
  [1,0,'','转换约 3.67 µs','11 个时钟 × 1/3 MHz','芯片自己完成：采样电压，一位一位比较出 10 位结果，放进 <code>DR[ch]</code> 的 bit15:6，并把 bit31（DONE）置 1。'],
  [1,2,'⑦','每 2 µs 看一次 DONE','my_adc.c:103~114',P('while(1){\n  MyADC_DelayUs(2);\n  if (LPC_ADC->DR[ch] &amp; (1u&lt;&lt;31)) { 停止转换; break; }\n  if (++cnt &gt;= 10) return -2;   // 20 µs 还没好：超时\n}')+'这就是“轮询”。'],
  [1,0,'','读结果时 DONE 自动清','UM Table 355','芯片规定：读 <code>DR</code> 寄存器时，DONE 位自动变回 0。所以读完结果不需要再写代码清。'],
- [1,2,'⑦','取 10 位结果，交给算法','my_adc.c:116~117',P('*pVal = (LPC_ADC->DR[ch] &gt;&gt; 6) &amp; 0x3FF;  // bit15:6\nLPC_ADC->CR &amp;= ~(1u &lt;&lt; ch);            // 取消选通道')+'结果回到 <code>LR_GetState()</code>，拆成两个字节交给 <code>ProcessRecvSampleRawData()</code>（第 12 课）。'],
+ [1,2,'⑦','取 10 位结果，交给算法','my_adc.c:116~117',P('*pVal = (LPC_ADC->DR[ch] &gt;&gt; 6) &amp; 0x3FF;  // bit15:6\nLPC_ADC->CR &amp;= ~(1u &lt;&lt; ch);            // 取消选通道')+'结果回到 <code>LR_GetState()</code>，拆成两个字节交给 <code>ProcessRecvSampleRawData()</code>（第 14 课）。'],
  [2,1,'','不用中断','',`ADC 转换只要 4 µs，程序等一下就好，所以没开 ADC 中断，⑥ 这一步不需要。`],
  [3,2,'','超时 → 本次按“没按”处理','button.c:322~325','如果 20 µs 还没转换完，<code>MyADC_GetValue()</code> 返回 -2，<code>LR_GetState()</code> 直接返回 0，这一毫秒左右键都算松开。正常不会发生。⚠️'],
  [3,2,'','关 ADC 的函数没被调用','my_adc.c:60','<code>MyADC_HwDeinit()</code>（停止、关时钟、断电）写好了，但没有任何地方调用。所以电脑休眠时 ADC 也一直通着电。如果以后要省电，可以在挂起流程里调用它。'],
@@ -398,7 +423,7 @@ spi:{name:'SPI（SSP1）',sum:'<b class="t">SPI 一句话来龙去脉</b><br>开
  [0,2,'③','解锁','PAW3950.c:284',P('LPC_SYSCON->PRESETCTRL |= (0x1&lt;&lt;2);')+'SPI 开机处于复位锁定状态，不解锁的话后面写的设置都不生效。<b>最容易忘的一步。</b>'],
  [0,2,'②','开时钟 + 分频','PAW3950.c:285~286',P('LPC_SYSCON->SYSAHBCLKCTRL |= (1&lt;&lt;18);\nLPC_SYSCON->SSP1CLKDIV = 0x01;   // 48MHz / 1')],
  [0,2,'④','3 根线改成 SPI 功能','PAW3950.c:288~295',P('LPC_IOCON->PIO0_21 |= 0x02;  // MOSI1\nLPC_IOCON->PIO0_22 |= 0x03;  // MISO1\nLPC_IOCON->PIO1_15 |= 0x03;  // SCK1')],
- [0,2,'⑤','8 位、模式 3、1 MHz、启动','PAW3950.c:298~309',P('LPC_SSP1->CR0  = 0x01C7;   // 8 位，CPOL=1 CPHA=1\nLPC_SSP1->CPSR = 0x18;     // 48MHz/(24×2) = 1MHz\nLPC_SSP1->CR1 |= SSPCR1_SSE;  // 启动')+'接着会通过 SPI 给传感器写一串初始化设置（第 9、14 课）。'],
+ [0,2,'⑤','8 位、模式 3、1 MHz、启动','PAW3950.c:298~309',P('LPC_SSP1->CR0  = 0x01C7;   // 8 位，CPOL=1 CPHA=1\nLPC_SSP1->CPSR = 0x18;     // 48MHz/(24×2) = 1MHz\nLPC_SSP1->CR1 |= SSPCR1_SSE;  // 启动')+'接着会通过 SPI 给传感器写一串初始化设置（第 9、16 课）。'],
  [1,2,'⑦','拉低片选','PAW3950.c:437','谁调用：主循环 <code>Device_Scan()</code> → <code>Device_Optical_Scan()</code>（device.c:781），每次 <code>optical_scan_cycle</code> 倒数到 0（定时器中断里减）→ <code>PAW3950_GetMotionData()</code> → <code>PAW3950_Read()</code>。<br>拉低 NCS = “传感器，我在跟你说话”。'],
  [1,1,'⑦','写 1 字节、读 1 字节','SPI.c:375、403',P('while (忙 或 发送缓冲满) {}\nLPC_SSP1->DR = 数据;           // 放进去\nwhile (还没收完) {}\nDummy = LPC_SSP1->DR;          // 把同时收回来的字节读掉')+'<code>SSP_Send()</code>、<code>SSP_Receive()</code> 是例程。'],
  [1,0,'','一位一位送出、同时收回','1 MHz，8 µs/字节','芯片自己在 SCK 上打 8 个时钟，MOSI 送出 8 位，同时从 MISO 收回 8 位。'],
@@ -421,7 +446,7 @@ usb:{name:'USB',sum:'<b class="t">USB 一句话来龙去脉</b><br>开机时先�
  [2,1,'⑦','先清标志','usbhw.c:1335~1336',P('disr = LPC_USB->INTSTAT;   // 读：谁在举手\nLPC_USB->INTSTAT = disr;   // 写回：全部清掉')+'<b>例程已经帮你清了。</b>DEVCMDSTAT 里的 SETUP 收到（usbhw.c:1403）、总线复位等标志也是例程清的。你不需要写任何清标志的代码。'],
  [2,1,'⑦','枚举问答、分发到各端点','usbcore.c','例程按描述符回答电脑的问题（L1、1-13 课），再按端点号调用 <code>nsAPI_USB_EndPoint1()</code>~<code>4()</code>。'],
  [2,2,'⑦','EP4 收到 GUI 数据：只做标记','usbuser.c:248~249',P('case USB_EVT_OUT:\n  g_Main_Setting.EPInOutReq |= EP4_OUT;   // 记一笔')+'中断里不处理命令，只做标记。'],
- [1,2,'⑦','主循环处理 GUI 命令','pc_communicate.c:882','<code>PC_Communicate()</code> 看到标记，读出 64 字节命令、处理、回复（第 15 课）。'],
+ [1,2,'⑦','主循环处理 GUI 命令','pc_communicate.c:882','<code>PC_Communicate()</code> 看到标记，读出 64 字节命令、处理、回复（第 18 课）。'],
  [1,2,'⑦','把报文放进 EP1','device.c:701',P('USB_LoadInEP_Data(EP_1_MOUSE, report_data.mouse_report, 8);')+'<code>Device_Report()</code> 调用。放进去之后就交给芯片，电脑下次来问时发出去。'],
  [3,2,'','电脑休眠：挂起','suspend.c:35','<code>Suspend_Check()</code> → <code>wnApi_Events_Suspend_Handler()</code>（usbhw.c:650），挂起期间循环进入深度睡眠，被唤醒后恢复设置（L6）。'],
  ]},
@@ -485,4 +510,5 @@ const Q=[
 t.querySelectorAll('tr.pick').forEach(r=>r.addEventListener('click',()=>{t.querySelectorAll('tr').forEach(o=>o.classList.remove('ok','bad'));
  if(r.dataset.b==='18'){r.classList.add('ok');fb.innerHTML='✓ 对，18 号 SSP1。代码就是 <code>SYSAHBCLKCTRL |= (1&lt;&lt;18)</code>（PAW3950.c:285）。查表的方法就是：找到寄存器的位描述表，在 Symbol 列找外设名字，左边的 Bit 就是几号开关。';fb.style.color=V('good')}
  else{r.classList.add('bad');fb.textContent=r.dataset.b==='11'?'这是 SSP0。IRPT_V4 的传感器接在 SSP1 上，再找找。':'不是这个，看 Symbol 那一列找 SSP1。';fb.style.color=V('muted')}}))})();
+
 </script>

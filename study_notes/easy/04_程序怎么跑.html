@@ -130,6 +130,18 @@ pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);borde
 .ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
 .tl li,.man .en,.card,.def{overflow-wrap:anywhere}
 .wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
 </style>
 <div class="wrap">
 <div class="eyebrow">轻松版 · 第 4 课 · 打地基</div>
@@ -349,4 +361,5 @@ const Q=[
  ['5. 为什么按键扫描放在主循环里，而不直接放在定时器中断里？',['中断里只做很快的小事，耗时的工作留给主循环','中断里不能调用函数','放哪都一样'],0,'对。中断太长会耽误别的中断（比如 USB），也会让主循环卡顿。','中断里做久了，会发生什么？'],
 ];
 (function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0]}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+
 </script>

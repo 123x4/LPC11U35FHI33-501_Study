@@ -105,6 +105,43 @@ svg .m{font-family:var(--font-m)}
 .who span{display:inline-flex;align-items:center;gap:6px}
 .who i{width:14px;height:14px;border-radius:3px;display:inline-block}
 pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
 </style>
 <div class="wrap">
 <div class="eyebrow">轻松版 · 第 0 课 · 先看全局</div>
@@ -162,24 +199,30 @@ const ROUTE=[
  ['0','这只鼠标的地图','零件、程序、数据怎么走'],
  ['1','电怎么传信息','电压、电流、高电平和低电平'],
  ['2','0 和 1','一排开关：二进制、十六进制、字节、寄存器'],
- ['3','单片机是什么','一块芯片里装了哪些东西'],
- ['4','程序怎么跑','开机、准备、转圈、门铃（中断）'],
- ['5','代码仓库怎么读','文件怎么分工、#define、板子开关 #if'],
- ['阶段二 · 芯片里的工具（每课都能动手玩）'],
- ['6','GPIO','读一个按键，控制一个开关'],
- ['7','ADC','把电压变成数字'],
- ['8','定时器','每 1 ms 响一次的闹钟'],
- ['9','SPI','和光学传感器对话'],
- ['10','USB','和电脑对话'],
- ['11','EEPROM','断电不丢的小本子'],
- ['阶段三 · 沿着路线走'],
- ['12','一次点击','从手指到电脑'],
- ['13','一次“咔哒”','线圈怎么振'],
- ['14','光标移动','传感器的位移怎么上报'],
- ['15','GUI 调参','命令怎么收、参数怎么存'],
- ['阶段四 · 自己动手'],
- ['16','编译和烧录','怎么安全地改代码、验证'],
- ['17','T1A 新板','把学到的用到新板子上'],
+ ['3','单片机是什么','外设七步法、生命周期图、怎么查手册'],
+ ['4','程序怎么跑','开机到 main、主循环、中断'],
+ ['5','代码仓库怎么读','文件分工、#define、板子开关 #if、map 文件'],
+ ['阶段二 · 芯片外设（每课：生命周期 + 七步 + 手册整章导读）'],
+ ['6','GPIO 与引脚配置','手册第 7、8、9 章'],
+ ['7','ADC','手册第 19 章'],
+ ['8','定时器','手册第 15、16 章'],
+ ['9','SPI 与 PAW3950','手册第 13 章 + 传感器手册'],
+ ['10','USB','手册第 10、11 章'],
+ ['11','EEPROM 与 IAP','手册第 20 章'],
+ ['12','看门狗、复位、掉电检测','手册第 17 章、第 3 章'],
+ ['13','时钟、电源与低功耗','手册第 3、4、5 章'],
+ ['阶段三 · 功能线（把整个项目代码走一遍）'],
+ ['14','一次点击','button.c、my_misc.c、组包上报'],
+ ['15','一次“咔哒”','my_electromagnet.c'],
+ ['16','光标移动','PAW3950.c、位移上报'],
+ ['17','滚轮与普通按键','scroll.c、消抖'],
+ ['18','GUI 调参：新协议','my_protocol*.c、参数保存'],
+ ['19','老框架：按键映射、宏、老协议','custom.c、macro.c、pc_communicate.c'],
+ ['20','挂起、唤醒、启动与升级','suspend.c、Bootloader'],
+ ['阶段四 · 独立接管'],
+ ['21','编译、烧录、安全修改与调试','怎么改代码不变砖'],
+ ['22','T1A 新板适配','Hall、编码器、充电、新协议'],
+ ['23','毕业考','独立读懂一个新模块和一章手册'],
 ];
 function buildRoute(cur){
   const ul=document.getElementById('route');if(!ul)return;
@@ -224,28 +267,28 @@ const N={
  c2:[3,5.5,'GUI 调参软件','MouseTest / 新 GUI'],
 };
 const INFO={
- h1:['左右键红外对管','每个按键下面有一个红外小灯和一个光敏元件。按得越深，照到的光越多或越少，电压就跟着变。这块板子的左右键靠它，不是机械开关。','接到 PIO0_13、PIO0_14（ADC 引脚）；红外灯电源由 PIO0_19 打开','第 1、7、12 课'],
- h2:['中键、侧键、DPI 键','普通的机械按钮：按下接通，松开断开。','PIO0_12 中键、PIO0_11 DPI、PIO0_1 和 PIO0_23 侧键（GPIO）','第 6 课'],
- h3:['滚轮编码器','滚轮转动时，两根线 A、B 轮流变高变低，看谁先变就知道往哪转。','PIO0_17、PIO0_18（GPIO）；app/scroll.c','第 6 课'],
- h4:['PAW3950 光学传感器','鼠标底部的“摄像头”，每秒拍几千张地面照片，比较前后两张算出移动了多少。需要装上透镜才能工作。','SPI 接口；src/PAW3950.c','第 9、14 课'],
- h5:['线圈','按键下面的小电磁铁。通电一瞬间会吸一下，手指就感到“咔哒”。','PIO0_4、PIO0_5 控制通电，PIO0_16 打开升压电源；src/my_electromagnet.c','第 13 课'],
+ h1:['左右键红外对管','每个按键下面有一个红外小灯和一个光敏元件。按得越深，照到的光越多或越少，电压就跟着变。这块板子的左右键靠它，不是机械开关。','接到 PIO0_13、PIO0_14（ADC 引脚）；红外灯电源由 PIO0_19 打开','第 1、7、14 课'],
+ h2:['中键、侧键、DPI 键','普通的机械按钮：按下接通，松开断开。','PIO0_12 中键、PIO0_11 DPI、PIO0_1 和 PIO0_23 侧键（GPIO）','第 6、17 课'],
+ h3:['滚轮编码器','滚轮转动时，两根线 A、B 轮流变高变低，看谁先变就知道往哪转。','PIO0_17、PIO0_18（GPIO）；app/scroll.c','第 6、17 课'],
+ h4:['PAW3950 光学传感器','鼠标底部的“摄像头”，每秒拍几千张地面照片，比较前后两张算出移动了多少。需要装上透镜才能工作。','SPI 接口；src/PAW3950.c','第 9、16 课'],
+ h5:['线圈','按键下面的小电磁铁。通电一瞬间会吸一下，手指就感到“咔哒”。','PIO0_4、PIO0_5 控制通电，PIO0_16 打开升压电源；src/my_electromagnet.c','第 15 课'],
  h6:['USB 口','供电，也是和电脑说话的唯一通道。','src/usbhw.c、usbcore.c','第 10 课'],
  p1:['GPIO（通用输入输出）','最基本的工具：输入时读一根线是高电平还是低电平；输出时让一根线变高或变低。','src/GPIO.c','第 6 课'],
  p2:['ADC（模数转换器）','把 0~3.3 V 的电压量成 0~1023 的数字。GPIO 只能分高和低，ADC 能分出 1024 档。','src/my_adc.c','第 7 课'],
  p3:['SPI','一种用 4 根线一问一答的通信方式，单片机靠它向 PAW3950 要位移数据。','src/SPI.c、src/PAW3950.c','第 9 课'],
  p4:['定时器 CT16B0','芯片里的闹钟，每 1 ms 响一次。程序用它计时，也用它决定什么时候扫描按键。','src/Timer.c','第 8 课'],
- p5:['GPIO 输出 + 延时','让线圈的控制脚变高，等几百微秒，再变低，线圈就“吸”一下。','src/my_electromagnet.c','第 13 课'],
+ p5:['GPIO 输出 + 延时','让线圈的控制脚变高，等几百微秒，再变低，线圈就“吸”一下。','src/my_electromagnet.c','第 15 课'],
  p6:['USB 控制器','芯片里专门收发 USB 数据的硬件。程序把报文放进它的“柜子”（端点），电脑来取。','src/usbhw.c','第 10 课'],
- p7:['EEPROM','芯片里 4 KB 的小本子，断电不丢。GUI 调好的参数存在这里。','src/IAP_CMD.c','第 11 课'],
- s1:['按键扫描','每 1 ms 把所有按键读一遍，看有没有变化。','app/button.c：Button_Scan()','第 12 课'],
- s2:['按键算法 AP/RT','左右键是“按多深”的连续数值，这段程序决定按到哪里算按下、抬到哪里算松开。','src/my_misc.c','第 12 课'],
- s3:['读位移','通过 SPI 问传感器“你动了多少”，得到 X、Y 两个数。','src/device.c：Device_Optical_Scan()','第 14 课'],
- s4:['滚轮','根据编码器 A、B 两根线的变化判断转了几格。','app/scroll.c','第 6 课'],
- s5:['线圈状态机','收到“按下”或“松开”事件后，按设定的时长给线圈通电，并处理制动、保护。','src/my_electromagnet.c','第 13 课'],
- s6:['组包 + 上报','把按键、位移、滚轮拼成 8 个字节，放进 USB 的 EP1 柜子。','src/device.c：Device_Pack()、Device_Report()','第 12、14 课'],
- s7:['GUI 协议 + 参数','收到 GUI 发来的命令，解析出要改的参数，让它立即生效，再存进 EEPROM。','src/pc_communicate.c、src/my_protocol*.c','第 15 课'],
+ p7:['EEPROM','芯片里 4 KB 的小本子，断电不丢。GUI 调好的参数存在这里。','src/IAP_CMD.c','第 11、18 课'],
+ s1:['按键扫描','每 1 ms 把所有按键读一遍，看有没有变化。','app/button.c：Button_Scan()','第 14 课'],
+ s2:['按键算法 AP/RT','左右键是“按多深”的连续数值，这段程序决定按到哪里算按下、抬到哪里算松开。','src/my_misc.c','第 14 课'],
+ s3:['读位移','通过 SPI 问传感器“你动了多少”，得到 X、Y 两个数。','src/device.c：Device_Optical_Scan()','第 16 课'],
+ s4:['滚轮','根据编码器 A、B 两根线的变化判断转了几格。','app/scroll.c','第 17 课'],
+ s5:['线圈状态机','收到“按下”或“松开”事件后，按设定的时长给线圈通电，并处理制动、保护。','src/my_electromagnet.c','第 15 课'],
+ s6:['组包 + 上报','把按键、位移、滚轮拼成 8 个字节，放进 USB 的 EP1 柜子。','src/device.c：Device_Pack()、Device_Report()','第 14、16 课'],
+ s7:['GUI 协议 + 参数','收到 GUI 发来的命令，解析出要改的参数，让它立即生效，再存进 EEPROM。','src/pc_communicate.c、src/my_protocol*.c','第 18 课'],
  c1:['电脑的鼠标驱动','Windows 自带，每 1 ms 来取一次 8 字节报文，变成光标移动和点击。','不在本仓库','第 10 课'],
- c2:['GUI 调参软件','改触发点、振感等参数的电脑软件，通过 USB 的第 3 个接口和鼠标对话。','study_notes/tools/hid_tool.py 是一个简化版','第 15 课'],
+ c2:['GUI 调参软件','改触发点、振感等参数的电脑软件，通过 USB 的第 3 个接口和鼠标对话。','study_notes/tools/hid_tool.py 是一个简化版','第 18 课'],
 };
 function pos(k){const [c,r]=N[k];return {x:COLS[c][0],y:44+r*66,c}}
 function drawBase(s,onClick){

@@ -240,7 +240,7 @@ typedef struct {
 <tbody>
 <tr><td><code>ENABLE_WHEEL_SCAN</code></td><td>1</td><td><code>inc/my_board.h:37</code></td><td>扫不扫滚轮</td></tr>
 <tr><td><code>BRAKE_FUNC_ENABLE</code></td><td>1</td><td><code>src/my_electromagnet.c:28</code></td><td>线圈制动功能，也决定线圈用延时还是定时器（1-4 课）</td></tr>
-<tr><td><code>USE_HALL_VALUE_DURING_VIBRATION</code></td><td>0</td><td><code>inc/my_electromagnet.h:31</code></td><td>振动时冻结按键（第 12 课）</td></tr>
+<tr><td><code>USE_HALL_VALUE_DURING_VIBRATION</code></td><td>0</td><td><code>inc/my_electromagnet.h:31</code></td><td>振动时冻结按键（第 14 课）</td></tr>
 <tr><td><code>USE_INSIDE_EEPROM</code></td><td>1</td><td><code>inc/IAP_CMD.h:10</code></td><td>参数存芯片内部 EEPROM</td></tr>
 <tr><td><code>MYDEBUG_ENABLE</code></td><td>0</td><td><code>inc/my_debug.h:19</code></td><td>调试打印</td></tr>
 <tr><td><code>#if 0</code> / <code>#if 1</code></td><td>—</td><td><code>src/</code> 里有 32 处 <code>#if 0</code></td><td>临时关掉 / 打开一整段代码。<code>#if 0</code> 里的东西等于注释</td></tr>
@@ -349,4 +349,5 @@ const Q=[
  ['5. 现在 Flash 还剩多少空间？',['十几 KB','大约 3 KB','用满了'],1,'对。约 2.9 KB，T1A 加功能时要注意。','看第 2 步最后的 Flash 条。'],
 ];
 (function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0].replace(/</g,'&lt;')}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+
 </script>

@@ -1,0 +1,242 @@
+<title>学习目标与覆盖</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
+.mx{border-collapse:separate;border-spacing:4px;min-width:720px}
+.mx th{text-align:center;font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.mx th.s{text-align:left;font-size:.85rem;color:var(--muted);font-family:var(--font-b);width:150px}
+.mx td{padding:0;border:0}
+.mx button{width:100%;font:inherit;font-size:.8rem;line-height:1.35;padding:6px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-align:left;min-height:46px}
+.mx button.w-sw{border-left:5px solid var(--sw)}
+.mx button.w-ex{border-left:5px solid var(--muted)}
+.mx button.w-hw{border-left:5px solid var(--per)}
+.mx button.na{color:var(--muted);background:var(--soft);border-style:dashed}
+.mx button[aria-pressed="true"]{outline:3px solid var(--pc);outline-offset:1px}
+.who{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.85rem;margin:.4rem 0}
+.who span{display:inline-flex;align-items:center;gap:6px}
+.who i{width:14px;height:14px;border-radius:3px;display:inline-block}
+pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
+</style>
+<div class="wrap">
+<div class="eyebrow">轻松版 · 课程总目标</div>
+<h1>学完要达到什么样</h1>
+<p class="lede">你的目标是：学完整个课程，<b>对项目代码非常熟悉，对芯片手册也非常熟悉</b>，能独立接管这个项目。这一页把这个目标拆成看得见的标准，并列出每个代码文件、每一章手册在哪一课讲。学完一项就勾一下（只存在你自己的浏览器里）。</p>
+
+<h2>“熟悉”的标准</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
+<div class="box" style="margin:0"><h3 style="margin-top:0;color:var(--sw)">对项目代码</h3>
+<ol style="padding-left:1.2em;margin:.4rem 0;display:grid;gap:4px">
+<li>能说出每个被编译的文件是干什么的、谁写的、IRPT_V4 用不用它</li>
+<li>任意一个功能（点击、移动、振动、调参、休眠），能画出从硬件到电脑的完整调用链</li>
+<li>5 分钟内找到任何函数、变量、宏、寄存器的定义和用处</li>
+<li>改一处代码之前，能说出它会影响哪些地方</li>
+<li>能分清芯片自动做的、例程做的、项目代码做的</li>
+</ol></div>
+<div class="box" style="margin:0"><h3 style="margin-top:0;color:var(--per)">对芯片手册</h3>
+<ol style="padding-left:1.2em;margin:.4rem 0;display:grid;gap:4px">
+<li>知道每一章讲什么，需要时直接翻到那一章</li>
+<li>拿到一个寄存器名，2 分钟内找到它的位描述表</li>
+<li>能读懂表里的每一列，特别是复位值和访问方式（R/WC 写 1 清零）</li>
+<li>能反过来：<b>只看手册，自己写出初始化代码</b>，再和项目代码对比</li>
+<li>知道数据手册（电气参数、引脚表）和用户手册分别查什么</li>
+</ol></div>
+</div>
+
+<h2>手册能力怎么一步步练出来</h2>
+<p>每一课的手册部分会慢慢放手，最后你完全自己查：</p>
+<div class="box scroll"><svg id="ladSvg" viewBox="0 0 800 150" width="800" height="150" role="img" aria-label="手册练习阶梯"></svg></div>
+
+<h2>代码覆盖：每个文件在哪一课</h2>
+<div class="row" id="codeStat"></div>
+<div class="scroll"><table id="codeTab"></table></div>
+
+<h2>手册覆盖：每一章在哪一课</h2>
+<p class="note">用户手册 UM10462《LPC11U3x/2x/1x User Manual》，在 <code>materials/mcu_reference/</code>。“精读”= 寄存器逐个看懂；“通读”= 知道讲了什么、关键表在哪；“了解”= 这个项目没用到，知道有这章就行。</p>
+<div class="row" id="manStat"></div>
+<div class="scroll"><table id="manTab"></table></div>
+
+<h2>其它资料</h2>
+<div class="scroll"><table id="docTab"></table></div>
+
+<div class="sum"><b>怎么用这一页：</b>每学完一课，回来把这一课覆盖的文件和章节勾上。全部勾完、并通过第 23 课毕业考，就达到目标了。</div>
+</div>
+<script>
+const NS="http://www.w3.org/2000/svg";
+function el(p,t,a,x){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e}
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
+let ST={};try{ST=JSON.parse(localStorage.getItem('lpc-cov')||'{}')}catch(e){}
+const save=()=>{try{localStorage.setItem('lpc-cov',JSON.stringify(ST))}catch(e){}};
+/* ladder */
+(function(){const s=$('ladSvg');const L=[['第 3~5 课','我给原文','手册原文和页码都贴在页面上','muted'],['第 6~9 课','我给页码，你去翻','页面只给章、表、页，你打开 PDF 自己看','per'],['第 10~13 课','我给寄存器名，你自己找','先自己找到表，再看我的答案','gold'],['第 14 课起','你先查，再看代码','先看手册猜代码怎么写，再对照项目','sw']];
+ L.forEach(([a,b,c,col],i)=>{const x=10+i*196,y=14;el(s,'rect',{x,y,width:180,height:120,rx:6,fill:V(col),opacity:.18,stroke:V(col)});el(s,'text',{x:x+10,y:y+22,'font-size':12,class:'m',fill:V('muted')},a);el(s,'text',{x:x+10,y:y+46,'font-size':14,'font-weight':700,fill:V('fg')},b);
+  [c.slice(0,13),c.slice(13,26),c.slice(26)].forEach((t,k)=>t&&el(s,'text',{x:x+10,y:y+72+k*17,'font-size':11.5,fill:V('muted')},t));if(i<3)el(s,'path',{d:`M${x+182} 74 h12`,stroke:V('muted'),'stroke-width':2})});
+})();
+/* code: [file, who(p/o/n/x), lessons, note] x = IRPT 不用 */
+const CODE=[
+ ['src/Main.c','o','4','main() 两行'],['src/startup_LPC11Uxx.s','n','4（字典 0-4）','向量表、Reset_Handler'],['src/core_cm0.c','n','4','Cortex-M0 内核函数'],
+ ['inc/my_board.h','p','5、6、22','选板子、引脚定义'],['inc/LPC11Uxx.h','n','5 起每课','寄存器定义（手册的 C 版）'],
+ ['src/device.c','o','4、14、16','初始化、主循环、扫描、组包、上报'],
+ ['src/GPIO.c','n','6（字典 1-3）','引脚初始化'],['src/my_adc.c','p','7','ADC'],['src/ADC.c','x','7','老 ADC 驱动，IRPT 没用'],
+ ['src/Timer.c','n','8（字典 1-7、1-8）','定时器、1 ms 中断、微秒延时'],['src/my_tick.c','p','8','毫秒计数'],
+ ['src/SPI.c','n','9','SPI 收发'],['src/PAW3950.c','p','9、16','光学传感器'],
+ ['src/usbhw.c','n','10（字典 1-10~1-13）','USB 硬件层、中断'],['src/usbcore.c','n','10','枚举'],['src/usbuser.c','n','10','端点回调'],['src/hiduser.c','n','10','HID 请求'],['src/usb.c','n','10','发送封装'],['src/usbdesc.c','p','10（字典 1-13）','描述符'],
+ ['src/IAP_CMD.c','n','11（字典 1-6）','EEPROM 读写（IAP）'],['src/eeprom.c','x','11','编译了但没有代码进芯片'],['src/gtech_flash.c','o','11、19','Flash/EEPROM 封装'],
+ ['src/WWDT.c','n','12（字典 1-1）','看门狗'],['src/OSC.c','n','13（字典 1-2、1-5）','时钟'],['src/wnDrv_Pmu.c','n','13、20','低功耗'],
+ ['app/button.c','o','14、17','按键扫描'],['src/my_misc.c','p','14','按键算法 AP/RT'],['src/my_electromagnet.c','p','15（字典 1-4）','线圈'],['src/TI_DRV8833.c','x','15','电机驱动芯片，IRPT 没用'],
+ ['app/scroll.c','o','17','滚轮'],['src/my_protocol.c','p','18','新协议帧'],['src/my_protocol_mouse.c','p','18（字典 1-6）','参数、GUI 调参'],['src/my_queue.c','x','21','队列，只给调试打印用'],
+ ['app/custom.c','o','19（字典 1-14）','按键映射'],['src/macro.c','o','19','宏'],['src/keydef.c','o','19','键值表'],['src/pc_communicate.c','o','19','老 GUI 协议'],['src/operation_flash.c','o','19（字典 1-14）','老配置系统'],['src/ram_malloc.c 等灯效组','x','19','灯效，IRPT 没用'],['app/optical_3325.c','x','19','老传感器，IRPT 没用'],['src/I2C.c、src/UART.c','x','19','IRPT 没用'],
+ ['src/suspend.c','o','20','挂起与唤醒'],['M300S/ 公司 Bootloader','o','20（字典 0-3）','启动与升级'],['src/my_debug.c','p','21','调试打印'],
+];
+const WHO={p:['🟩 本项目','sw'],o:['⬜ 老框架','gold'],n:['⬜ 芯片/NXP','muted'],x:['· 不用','line']};
+/* manual: [ch, title, depth, lessons] */
+const MAN=[
+ [1,'Introductory information','了解','3'],[2,'Memory mapping 存储器地址分布','通读','4、5'],[3,'System control block 系统控制（电源、时钟、复位）','精读','3、6、12、13'],[4,'PMU 电源管理','通读','13、20'],[5,'Power profiles','了解','13'],
+ [6,'NVIC 中断控制器','精读','4、8、10'],[7,'I/O configuration 引脚配置 IOCON','精读','6'],[8,'Pin configuration 引脚功能总表','通读','6、22'],[9,'GPIO','精读','6'],
+ [10,'USB on-chip drivers（ROM 里的 USB 驱动）','了解','10'],[11,'USB2.0 device controller','精读','10'],[12,'USART 串口','了解','—'],[13,'SSP/SPI','精读','9'],[14,'I²C','了解','—'],
+ [15,'16-bit counter/timers CT16B0/1','精读','8'],[16,'32-bit counter/timers CT32B0/1','通读','8、15'],[17,'Windowed Watchdog Timer','精读','12'],[18,'System tick timer','了解','8'],[19,'ADC','精读','7'],
+ [20,'Flash programming firmware（IAP、EEPROM、ISP）','精读','11、20'],[21,'Serial Wire Debugger','了解','21'],[22,'Integer division routines','了解','—'],[23,'I/O Handler','了解','—'],[24,'Appendix ARM Cortex-M0（异常、栈、指令）','通读','4'],
+];
+const DOC=[
+ ['数据手册 LPC11U3X.pdf','引脚表、电气参数（电平阈值、电流）、封装','1、6、22'],
+ ['PAW3950 数据手册','传感器寄存器、SPI 时序、上电顺序','9、16'],
+ ['T1A 原理图 GT_Lina T1A Hall Haptic POC_SCH_V0.1.pdf','新板接线','22'],
+ ['协议表 协议2026-09-17.xlsx','新 GUI 协议命令','18'],
+ ['USB HID 规范（报告格式）','报文和描述符的含义','10'],
+];
+function chk(id){return `<input type="checkbox" data-k="${id}" ${ST[id]?'checked':''} aria-label="已掌握">`}
+function stat(box,items,prefix,label){const n=items.length,d=items.filter((_,i)=>ST[prefix+i]).length;box.innerHTML=`<div class="stat"><span>${label}</span><b>${d} / ${n}</b></div><div class="stat"><span>完成度</span><b>${Math.round(d/n*100)}%</b></div>`}
+function render(){
+ $('codeTab').innerHTML='<thead><tr><th>✓</th><th>文件</th><th>谁写的</th><th>哪一课</th><th>干什么</th></tr></thead><tbody>'+CODE.map((c,i)=>`<tr><td>${chk('c'+i)}</td><td class="mono" style="white-space:nowrap">${c[0]}</td><td style="white-space:nowrap;color:${V(WHO[c[1]][1])}">${WHO[c[1]][0]}</td><td>第 ${c[2]} 课</td><td>${c[3]}</td></tr>`).join('')+'</tbody>';
+ $('manTab').innerHTML='<thead><tr><th>✓</th><th>章</th><th>内容</th><th>深度</th><th>哪一课</th></tr></thead><tbody>'+MAN.map((m,i)=>`<tr><td>${chk('m'+i)}</td><td class="mono">第 ${m[0]} 章</td><td>${m[1]}</td><td style="color:${V(m[2]==='精读'?'pc':m[2]==='通读'?'per':'muted')};font-weight:600">${m[2]}</td><td>${m[3]==='—'?'—':'第 '+m[3]+' 课'}</td></tr>`).join('')+'</tbody>';
+ $('docTab').innerHTML='<thead><tr><th>✓</th><th>资料</th><th>查什么</th><th>哪一课</th></tr></thead><tbody>'+DOC.map((d,i)=>`<tr><td>${chk('d'+i)}</td><td>${d[0]}</td><td>${d[1]}</td><td>第 ${d[2]} 课</td></tr>`).join('')+'</tbody>';
+ stat($('codeStat'),CODE,'c','已掌握的文件');stat($('manStat'),MAN,'m','已掌握的章');
+ document.querySelectorAll('input[data-k]').forEach(x=>x.onchange=()=>{ST[x.dataset.k]=x.checked;save();stat($('codeStat'),CODE,'c','已掌握的文件');stat($('manStat'),MAN,'m','已掌握的章')});
+}
+render();
+</script>
