@@ -21,6 +21,8 @@ USB 是**主从结构**：
 
 ---
 
+> 🔬 **图解版（每一包的真实字节、CRC、D+/D- 波形）**：`study_notes/L1_USB报文解剖.html`，在线版 https://claude.ai/artifact/Qvima6yiNCJCzXs62oqyEC
+
 ## 二、一次“问答”在线上长什么样
 
 电脑每 1 ms 来问鼠标一次，线上实际发生的是三个小包（USB 规范叫“一次事务”）：

@@ -1,0 +1,417 @@
+<title>USB 全速报文解剖</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one reading column (~880px) on "logic-analyzer paper"; wide diagrams scroll inside their own frames. */
+:root{
+  --bg:#f4f6f3; --panel:#ffffff; --fg:#1b2420; --muted:#5a6660; --grid:#dbe1dc; --line:#c4ccc6;
+  --dp:#1d6f8a; --dm:#b0522c; --se0:#7a6a9a;
+  --f-sync:#9aa39d; --f-pid:#7b5ea7; --f-addr:#1d7f6e; --f-endp:#4f8f2f; --f-crc:#c08a14; --f-data:#2f66b3; --f-eop:#6d7570; --f-stuff:#d23f3f;
+  --hl:#e9efe9; --code:#eef2ee;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111614; --panel:#171e1b; --fg:#e3eae6; --muted:#9aa7a0; --grid:#26302c; --line:#33403a;
+  --dp:#57b4d4; --dm:#e08a62; --se0:#b3a3d6;
+  --f-sync:#78837d; --f-pid:#a98bd6; --f-addr:#3fb7a2; --f-endp:#86c463; --f-crc:#e2b443; --f-data:#6f9ee6; --f-eop:#8b948f; --f-stuff:#ff6b6b;
+  --hl:#1e2824; --code:#1b2420; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#111614; --panel:#171e1b; --fg:#e3eae6; --muted:#9aa7a0; --grid:#26302c; --line:#33403a;
+  --dp:#57b4d4; --dm:#e08a62; --se0:#b3a3d6;
+  --f-sync:#78837d; --f-pid:#a98bd6; --f-addr:#3fb7a2; --f-endp:#86c463; --f-crc:#e2b443; --f-data:#6f9ee6; --f-eop:#8b948f; --f-stuff:#ff6b6b;
+  --hl:#1e2824; --code:#1b2420; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:15px;line-height:1.65}
+.wrap{max-width:900px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.25;margin:0}
+h1{font-size:2.1rem;font-weight:700;letter-spacing:.01em}
+h2{font-size:1.45rem;font-weight:600;margin-top:2.6rem;padding-top:1rem;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.6rem}
+p{margin:.6rem 0;max-width:68ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{color:var(--muted);font-size:1.02rem}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--code);padding:.05em .35em;border-radius:3px}
+.nav{display:flex;flex-wrap:wrap;gap:6px 14px;margin:1rem 0 0;font-size:.88rem}
+.nav a{color:var(--dp);text-decoration:none;border-bottom:1px solid transparent}
+.nav a:hover,.nav a:focus-visible{border-bottom-color:var(--dp);outline:none}
+.frame{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;margin:1rem 0;overflow-x:auto}
+.frame svg{display:block}
+.note{font-size:.88rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.88rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:.8rem;letter-spacing:.03em}
+.tw{overflow-x:auto;margin:.8rem 0}
+.bytes{font-family:var(--font-m);font-size:.86rem;letter-spacing:.02em;word-break:break-word}
+.chip{display:inline-block;font-family:var(--font-m);font-size:.78rem;padding:1px 6px;border-radius:3px;color:#fff;margin-right:4px;white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:.8rem;margin:.4rem 0 .2rem;align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{width:12px;height:12px;border-radius:2px;display:inline-block}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin:.6rem 0}
+.btns button{font:inherit;font-size:.85rem;padding:5px 10px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:4px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.btns button:focus-visible{outline:2px solid var(--dp);outline-offset:2px}
+.seq{display:grid;gap:10px;margin:1rem 0}
+.stage{border:1px solid var(--line);border-radius:6px;background:var(--panel);overflow:hidden}
+.stage>header{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;padding:8px 12px;background:var(--hl);border-bottom:1px solid var(--line)}
+.stage>header b{font-family:var(--font-d);font-size:1rem}
+.stage>header .note{margin:0}
+.pk{display:grid;grid-template-columns:96px 22px minmax(0,1fr);gap:8px;padding:8px 12px;border-bottom:1px dashed var(--grid);align-items:start}
+.pk:last-child{border-bottom:0}
+.who{font-size:.8rem;color:var(--muted);padding-top:2px}
+.dir{font-family:var(--font-m);color:var(--muted);padding-top:1px}
+.pk .bytes{display:flex;flex-wrap:wrap;gap:3px 4px}
+.pk .bytes i{font-style:normal;padding:0 3px;border-radius:2px}
+.pk .exp{grid-column:3;font-size:.82rem;color:var(--muted);margin-top:-2px}
+.fx-sync{background:color-mix(in srgb,var(--f-sync) 22%,transparent)}
+.fx-pid{background:color-mix(in srgb,var(--f-pid) 22%,transparent)}
+.fx-tok{background:color-mix(in srgb,var(--f-addr) 22%,transparent)}
+.fx-crc{background:color-mix(in srgb,var(--f-crc) 26%,transparent)}
+.fx-data{background:color-mix(in srgb,var(--f-data) 18%,transparent)}
+.fx-eop{background:color-mix(in srgb,var(--f-eop) 22%,transparent)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.cols>div{min-width:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:.86rem}
+.kv dt{font-family:var(--font-m);color:var(--muted)}
+.kv dd{margin:0}
+@media (max-width:520px){.pk{grid-template-columns:70px 18px minmax(0,1fr)} h1{font-size:1.7rem}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">L1 补充 · USB 2.0 Full Speed · 12 Mbit/s</div>
+  <h1>USB 全速报文解剖</h1>
+  <p class="lede">从一根线上的电平，到包、事务、传输：鼠标插上电脑后在 D+/D- 上真正发生的每一包。页面里所有字节都按这个项目的真实数据生成（描述符取自 <code>output/Sample.hex</code>），CRC 由页面现场计算。</p>
+  <nav class="nav" aria-label="目录">
+    <a href="#layers">0 四层结构</a><a href="#frame">1 一帧 1 ms</a><a href="#formats">2 四种包的格式</a><a href="#wire">3 线上波形</a><a href="#intr">4 鼠标报文事务</a><a href="#ctrl">5 控制传输</a><a href="#enum">6 完整枚举</a><a href="#hwsw">7 硬件做什么、软件做什么</a>
+  </nav>
+
+  <h2 id="layers">0 四层结构：先分清“位、包、事务、传输”</h2>
+  <p>USB 的数据从下往上一层套一层。后面每一节都对应其中一层。</p>
+  <div class="frame"><svg id="svgLayers" width="840" height="250" role="img" aria-label="USB 四层结构图"></svg></div>
+  <div class="tw"><table>
+    <tr><th>层</th><th>是什么</th><th>本项目的例子</th><th>谁处理</th></tr>
+    <tr><td>位（bit）</td><td>D+/D- 上的电平，NRZI 编码，每位 83.3 ns</td><td>J、K、SE0</td><td>芯片 USB 收发器（硬件）</td></tr>
+    <tr><td>包（packet）</td><td>SYNC + PID + 内容 + 校验 + EOP</td><td>IN 令牌包、DATA1 数据包、ACK 握手包</td><td>芯片 SIE（硬件）</td></tr>
+    <tr><td>事务（transaction）</td><td>令牌 → 数据 → 握手，最多 3 个包</td><td>电脑从 EP1 取一次鼠标报文</td><td>芯片 SIE（硬件）</td></tr>
+    <tr><td>传输（transfer）</td><td>1 个或多个事务完成一件事</td><td>GET_DESCRIPTOR：建立 + 数据 + 状态 3 个阶段</td><td><b>软件</b>（usbcore.c）+ 硬件</td></tr>
+  </table></div>
+
+  <h2 id="frame">1 时间：电脑把时间切成 1 ms 一帧</h2>
+  <p>全速 USB 上，电脑每 1 ms 发一个 <b>SOF 包</b>（帧开始），里面带一个 11 位的帧号（0~2047 循环）。每一帧里，电脑按计划去问各个端点。鼠标的 EP1 在描述符里写了 <code>bInterval = 1</code>，所以电脑<b>每一帧</b>都来问一次。</p>
+  <div class="frame"><svg id="svgFrame" width="840" height="300" role="img" aria-label="一个 1 ms 帧的时间轴"></svg></div>
+  <p class="note">一个 1 ms 帧里，SOF 加上鼠标的一次事务也不到 20 µs（约 2%）。剩下的时间总线空闲，或者给其他设备用。时间按位数计算：1 位 = 1/12 MHz ≈ 83.3 ns；包与包之间的总线翻转间隔取约 0.5 µs 的典型值。</p>
+
+  <h2 id="formats">2 四种包的格式（按位画，宽度和位数成比例）</h2>
+  <p>所有包都以 <b>SYNC</b>（8 位，同步）开头，以 <b>EOP</b>（包结束，约 3 位时间）结尾。第二个字段永远是 <b>PID</b>（8 位，包类型）：低 4 位是类型码，高 4 位是它的<b>按位取反</b>，用来自检。</p>
+  <div class="frame"><svg id="svgFormats" width="880" height="350" role="img" aria-label="令牌包、SOF 包、数据包、握手包的位格式"></svg></div>
+  <h3>PID 一览（本页出现的全部）</h3>
+  <div class="tw"><table id="pidTable"></table></div>
+  <p class="note">规则：所有字段<b>从最低位开始</b>发送；多字节数据<b>低字节先发</b>。令牌包里 ADDR(7)+ENDP(4)+CRC5(5) 正好 16 位，抓包工具通常把它显示成 2 个字节，例如“地址 0、端点 0”的令牌显示为 <code>00 10</code>。</p>
+
+  <h2 id="wire">3 线上波形：一个包在 D+ / D- 上长什么样</h2>
+  <p>选一个包，看它从字节变成线上电平的全过程：<b>① 按低位在前排成位流 → ② 位填充 → ③ NRZI 编码 → ④ D+/D- 电平</b>。</p>
+  <div class="btns" id="pkBtns" role="group" aria-label="选择包"></div>
+  <div class="legend" id="fieldLegend"></div>
+  <div class="frame"><svg id="svgWire" height="300" role="img" aria-label="所选包的位流和 D+ D- 波形"></svg></div>
+  <div class="cols">
+    <div>
+      <h3>NRZI 编码</h3>
+      <p>全速时，<b>J</b> = D+ 高、D- 低（空闲状态），<b>K</b> = D+ 低、D- 高。规则：<b>位是 0 → 电平翻转；位是 1 → 电平保持</b>。所以 SYNC 的 <code>0000 0001</code> 在线上是 KJKJKJKK，接收方靠这串交替的跳变对齐时钟。</p>
+    </div>
+    <div>
+      <h3>位填充</h3>
+      <p>连续 6 个 1 时电平一直不变，接收方会失去同步。所以发送方<b>每遇到连续 6 个 1，就强行插入一个 0</b>（图中红色），接收方再把它去掉。鼠标报文里 <code>FE FF</code>（Y = -2）就会触发位填充。</p>
+    </div>
+    <div>
+      <h3>EOP（包结束）</h3>
+      <p>D+、D- 同时拉低 2 个位时间（叫 <b>SE0</b>），再回到 J 1 个位时间。接收方看到 SE0 就知道这个包结束了。</p>
+    </div>
+  </div>
+
+  <h2 id="intr">4 鼠标报文：EP1 IN 中断事务（每 1 ms 一次）</h2>
+  <p>你按下左键后，下一次电脑来问 EP1 时，线上是这样三个包。假设枚举时电脑给鼠标分配的地址是 <b>5</b>（实际值由电脑决定）。</p>
+  <div class="seq" id="seqIntr"></div>
+  <h3>DATA0 和 DATA1 为什么交替？</h3>
+  <p>如果鼠标发了数据，但电脑的 ACK 在线上丢了，鼠标会以为没发成功，下一次再发同一包。电脑怎么知道这是“重发的旧包”而不是“一包新数据”？靠 <b>数据翻转位</b>：每成功一次，下一包就在 DATA0 和 DATA1 之间换一次。电脑如果收到和上一包相同的 DATA0/DATA1，就知道是重发，丢掉不处理。这个翻转由芯片硬件自动维护。</p>
+
+  <h2 id="ctrl">5 控制传输：一次 GET_DESCRIPTOR（设备描述符）的全部包</h2>
+  <p>控制传输走 EP0，分三个阶段，每个阶段是一个或多个事务。下面是鼠标刚插上、地址还是 0 时，电脑第一次要“名片”的完整过程。</p>
+  <div class="seq" id="seqCtrl"></div>
+
+  <h3>名片（设备描述符）18 字节逐字段解读</h3>
+  <div class="tw"><table id="devTable"></table></div>
+
+  <h2 id="enum">6 完整枚举：每一次控制传输的建立包</h2>
+  <p>枚举就是一串控制传输。每一次都和上一节一样分三个阶段，这里只列出最关键的<b>建立阶段的 8 字节</b>（DATA0 包内容）和数据阶段的长度。请求顺序和 wLength 是 Windows 的典型行为，不同系统略有差别；鼠标的回答字节是本项目的真实数据。</p>
+  <div class="tw"><table id="enumTable"></table></div>
+  <p class="note">数据阶段超过 64 字节时（例如 91 字节的配置描述符），要分成多个 IN 事务：64 + 27 字节，分别用 DATA1、DATA0。SET_ADDRESS 的新地址在<b>状态阶段结束之后</b>才生效，所以之后的令牌包地址字段从 0 变成 5（令牌字节从 <code>00 10</code> 变成 <code>05 D0</code>）。</p>
+
+  <h3>简历（配置描述符）91 字节逐段解读</h3>
+  <div class="tw"><table id="cfgTable"></table></div>
+
+  <h2 id="hwsw">7 回到芯片：哪些是硬件自动做的，哪些要软件做</h2>
+  <p>LPC11U35 用户手册 p222 说 SIE（串行接口引擎）“完全由硬件实现，不需要软件干预”，负责：同步、并串转换、位填充/去填充、CRC 校验/生成、PID 校验/生成、地址识别、握手。对照上面的内容：</p>
+  <div class="tw"><table>
+    <tr><th>上面讲到的东西</th><th>谁做</th><th>本项目代码</th></tr>
+    <tr><td>NRZI、SYNC、EOP、位填充</td><td>硬件</td><td>无</td></tr>
+    <tr><td>PID、CRC5、CRC16 的生成和检查</td><td>硬件</td><td>无</td></tr>
+    <tr><td>识别令牌里的地址、端点号</td><td>硬件</td><td>软件只在 SET_ADDRESS 后写一次地址（<code>nsAPI_USB_SetAddress</code>）</td></tr>
+    <tr><td>回 ACK / NAK、DATA0/DATA1 翻转</td><td>硬件</td><td>无（没准备好数据时自动 NAK）</td></tr>
+    <tr><td>数据包里的<b>内容</b>（8 字节报文、描述符字节）</td><td><b>软件</b></td><td>放进 USB RAM 的缓冲区，并打 Active（<code>USB_LoadInEP_Data</code> / <code>nsAPI_USB_WriteEP</code>）</td></tr>
+    <tr><td>看懂建立包的 8 字节、决定回答什么</td><td><b>软件</b></td><td><code>usbcore.c</code>：<code>nsAPI_USB_EndPoint0</code></td></tr>
+  </table></div>
+  <p>所以软件看到的世界里<b>没有</b> SYNC、PID、CRC、EOP：只有“EP0 收到 8 字节建立包”“EP1 的数据被取走了”这样的事件，和每个缓冲区里的有效内容。</p>
+</div>
+
+<script>
+(function(){
+"use strict";
+const NS="http://www.w3.org/2000/svg";
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function el(tag,attrs,parent,text){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(text!==undefined)e.textContent=text;if(parent)parent.appendChild(e);return e;}
+const hex=(b)=>b.toString(16).toUpperCase().padStart(2,"0");
+const hexs=(arr)=>arr.map(hex).join(" ");
+
+/* ---------- CRC (USB 2.0 spec, LSB-first) ---------- */
+function bitsLSB(bytes){const o=[];for(const b of bytes)for(let i=0;i<8;i++)o.push((b>>i)&1);return o;}
+function crc5(bits){let c=0x1F;for(const b of bits){if((c^b)&1)c=(c>>1)^0x14;else c>>=1;}return c^0x1F;}
+function crc16(bytes){let c=0xFFFF;for(const b of bitsLSB(bytes)){if((c^b)&1)c=(c>>1)^0xA001;else c>>=1;}return c^0xFFFF;}
+function tokenField(addr,ep){const v=addr|(ep<<7);const bits=[];for(let i=0;i<11;i++)bits.push((v>>i)&1);const c=crc5(bits);const f=v|(c<<11);return {crc:c,bytes:[f&0xFF,f>>8]};}
+function sofField(fn){const bits=[];for(let i=0;i<11;i++)bits.push((fn>>i)&1);const c=crc5(bits);const f=fn|(c<<11);return {crc:c,bytes:[f&0xFF,f>>8]};}
+function crcBytes(data){const c=crc16(data);return [c&0xFF,c>>8];}
+
+const PID={OUT:0xE1,IN:0x69,SOF:0xA5,SETUP:0x2D,DATA0:0xC3,DATA1:0x4B,ACK:0xD2,NAK:0x5A,STALL:0x1E};
+const PIDINFO=[["OUT","令牌","0001","电脑 → 设备：接下来我要发数据给你"],["IN","令牌","1001","电脑问设备：有数据给我吗"],["SOF","特殊令牌","0101","帧开始，带帧号，每 1 ms 一个"],["SETUP","令牌","1101","控制传输的第一个包：接下来是 8 字节建立包"],["DATA0","数据","0011","数据包（翻转位 = 0）"],["DATA1","数据","1011","数据包（翻转位 = 1）"],["ACK","握手","0010","收到了，没问题"],["NAK","握手","1010","现在没数据 / 没准备好，等会儿再来"],["STALL","握手","1110","不支持 / 出错了"]];
+
+/* ---------- real data (from output/Sample.hex) ---------- */
+const DEV=[0x12,0x01,0x00,0x02,0x00,0x00,0x00,0x40,0x81,0x1A,0x71,0x20,0x11,0x00,0x01,0x02,0x00,0x01];
+const CFG=[0x09,0x02,0x5b,0x00,0x03,0x01,0x00,0xa0,0xc8,0x09,0x04,0x00,0x00,0x01,0x03,0x01,0x02,0x00,0x09,0x21,0x11,0x01,0x00,0x01,0x22,0x72,0x00,0x07,0x05,0x81,0x03,0x10,0x00,0x01,0x09,0x04,0x01,0x00,0x01,0x03,0x00,0x01,0x00,0x09,0x21,0x11,0x01,0x00,0x01,0x22,0x3e,0x00,0x07,0x05,0x82,0x03,0x08,0x00,0x01,0x09,0x04,0x02,0x00,0x02,0x03,0x00,0x00,0x00,0x09,0x21,0x11,0x01,0x00,0x01,0x22,0x22,0x00,0x07,0x05,0x83,0x03,0x40,0x00,0x01,0x07,0x05,0x04,0x03,0x40,0x00,0x01];
+const REPORT=[0x01,0x01,0x03,0x00,0xFE,0xFF,0x00,0x00];
+const SETUP_GETDEV=[0x80,0x06,0x00,0x01,0x00,0x00,0x40,0x00];
+
+/* ---------- packet builders (segments of bits) ---------- */
+function seg(name,cls,bits,label){return {name,cls,bits,label};}
+function byteBits(b){const o=[];for(let i=0;i<8;i++)o.push((b>>i)&1);return o;}
+const SYNC=seg("SYNC","f-sync",[0,0,0,0,0,0,0,1],"SYNC 0x80");
+function pidSeg(n){return seg("PID","f-pid",byteBits(PID[n]),n+" 0x"+hex(PID[n]));}
+function tokenPkt(n,addr,ep){const f=tokenField(addr,ep);const v=f.bytes[0]|(f.bytes[1]<<8);const all=[];for(let i=0;i<16;i++)all.push((v>>i)&1);
+  return {title:n+" 令牌（地址 "+addr+"，端点 "+ep+"）",bytes:[PID[n]].concat(f.bytes),segs:[SYNC,pidSeg(n),seg("ADDR","f-addr",all.slice(0,7),"ADDR="+addr),seg("ENDP","f-endp",all.slice(7,11),"ENDP="+ep),seg("CRC5","f-crc",all.slice(11),"CRC5=0x"+hex(f.crc))]};}
+function sofPkt(fn){const f=sofField(fn);const v=f.bytes[0]|(f.bytes[1]<<8);const all=[];for(let i=0;i<16;i++)all.push((v>>i)&1);
+  return {title:"SOF（帧号 "+fn+"）",bytes:[PID.SOF].concat(f.bytes),segs:[SYNC,pidSeg("SOF"),seg("FRAME","f-addr",all.slice(0,11),"帧号="+fn),seg("CRC5","f-crc",all.slice(11),"CRC5=0x"+hex(f.crc))]};}
+function dataPkt(n,data){const c=crcBytes(data);const dbits=bitsLSB(data);const cbits=bitsLSB(c);
+  return {title:n+" 数据包（"+data.length+" 字节）",bytes:[PID[n]].concat(data,c),segs:[SYNC,pidSeg(n),seg("DATA","f-data",dbits,data.length?("DATA "+data.length+" B"):"（0 字节）"),seg("CRC16","f-crc",cbits,"CRC16=0x"+hex(c[1])+hex(c[0]))]};}
+function hsPkt(n){return {title:n+" 握手包",bytes:[PID[n]],segs:[SYNC,pidSeg(n)]};}
+
+/* ---------- wire encoding ---------- */
+function encode(pkt){
+  // flatten with owner, apply bit stuffing, NRZI
+  const flat=[];for(const s of pkt.segs)for(const b of s.bits)flat.push({b,seg:s,stuff:false});
+  const st=[];let ones=0;
+  for(const x of flat){st.push(x);if(x.b===1){ones++;if(ones===6){st.push({b:0,seg:x.seg,stuff:true});ones=0;}}else ones=0;}
+  let lvl="J";const out=[];
+  for(const x of st){if(x.b===0)lvl=(lvl==="J"?"K":"J");out.push(Object.assign({},x,{lvl}));}
+  out.push({eop:true,lvl:"SE0"},{eop:true,lvl:"SE0"},{eop:true,lvl:"J"});
+  return out;
+}
+
+/* ---------- section 0: layers ---------- */
+function drawLayers(){
+  const s=document.getElementById("svgLayers");s.innerHTML="";
+  const fg=css("--fg"),mu=css("--muted"),ln=css("--line");
+  const rows=[["传输 transfer","GET_DESCRIPTOR = 建立阶段 + 数据阶段 + 状态阶段",css("--dp")],["事务 transaction","令牌包 → 数据包 → 握手包",css("--f-endp")],["包 packet","SYNC | PID | 内容 | CRC | EOP",css("--f-pid")],["位 bit","D+/D- 电平：J / K / SE0，NRZI 编码，83.3 ns 一位",css("--dm")]];
+  rows.forEach((r,i)=>{const y=12+i*58;const w=820-i*70,x=10+i*35;
+    el("rect",{x,y,width:w,height:46,rx:4,fill:"none",stroke:r[2],"stroke-width":1.6},s);
+    el("rect",{x,y,width:6,height:46,fill:r[2]},s);
+    el("text",{x:x+18,y:y+20,fill:fg,"font-size":14,"font-weight":600,"font-family":css("--font-d")},s,r[0]);
+    el("text",{x:x+18,y:y+38,fill:mu,"font-size":12.5,"font-family":css("--font-b")},s,r[1]);
+  });
+}
+
+/* ---------- section 1: frame timeline ---------- */
+function drawFrame(){
+  const s=document.getElementById("svgFrame");s.innerHTML="";
+  const fg=css("--fg"),mu=css("--muted"),ln=css("--line"),gr=css("--grid");
+  const bitUs=1/12;
+  const sofBits=8+8+16+3, tokBits=35, dataBits=8+8+64+16+2+3, ackBits=8+8+3, gap=0.5;
+  const ev=[["SOF",0,sofBits*bitUs,css("--f-sync")]];let t=sofBits*bitUs+gap+1.0;
+  ev.push(["IN",t,tokBits*bitUs,css("--f-pid")]);t+=tokBits*bitUs+gap;
+  ev.push(["DATA1",t,dataBits*bitUs,css("--f-data")]);t+=dataBits*bitUs+gap;
+  ev.push(["ACK",t,ackBits*bitUs,css("--f-endp")]);const tEnd=t+ackBits*bitUs;
+  // whole frame bar
+  const X0=30,W=780;
+  el("text",{x:X0,y:20,fill:mu,"font-size":12,"font-family":css("--font-b")},s,"整个 1 ms 帧（按比例）");
+  el("rect",{x:X0,y:28,width:W,height:22,fill:"none",stroke:ln},s);
+  el("rect",{x:X0,y:28,width:Math.max(2,W*tEnd/1000),height:22,fill:css("--dp")},s);
+  for(let i=0;i<=10;i++){const x=X0+W*i/10;el("line",{x1:x,y1:50,x2:x,y2:56,stroke:mu},s);el("text",{x,y:70,fill:mu,"font-size":11,"text-anchor":"middle","font-family":css("--font-m")},s,(i*100)+" µs");}
+  el("text",{x:X0+W*tEnd/1000+6,y:44,fill:fg,"font-size":12,"font-family":css("--font-b")},s,"← 鼠标的事务都挤在这里（约 "+tEnd.toFixed(1)+" µs）");
+  // zoom
+  const ZX=X0,ZW=780,ZT=22;
+  el("text",{x:X0,y:104,fill:mu,"font-size":12,"font-family":css("--font-b")},s,"放大：帧开头 0 ~ "+ZT+" µs");
+  el("line",{x1:X0,y1:28+22,x2:ZX,y2:116,stroke:gr,"stroke-dasharray":"3 3"},s);
+  el("line",{x1:X0+W*ZT/1000,y1:50,x2:ZX+ZW,y2:116,stroke:gr,"stroke-dasharray":"3 3"},s);
+  el("rect",{x:ZX,y:116,width:ZW,height:110,fill:"none",stroke:ln},s);
+  for(let u=0;u<=ZT;u+=2){const x=ZX+ZW*u/ZT;el("line",{x1:x,y1:116,x2:x,y2:226,stroke:gr},s);el("text",{x,y:244,fill:mu,"font-size":11,"text-anchor":"middle","font-family":css("--font-m")},s,u+"");}
+  el("text",{x:ZX+ZW,y:262,fill:mu,"font-size":11,"text-anchor":"end","font-family":css("--font-b")},s,"时间（µs）");
+  const who={SOF:"电脑",IN:"电脑",DATA1:"鼠标",ACK:"电脑"};
+  ev.forEach((e,i)=>{const x=ZX+ZW*e[1]/ZT,w=ZW*e[2]/ZT,y=(who[e[0]]==="鼠标")?176:132;
+    el("rect",{x,y,width:w,height:34,rx:3,fill:e[3]},s);
+    el("text",{x:x+w/2,y:y+21,fill:"#fff","font-size":12,"font-weight":600,"text-anchor":"middle","font-family":css("--font-m")},s,e[0]);
+    el("text",{x:x+w/2,y:(y===132?128:222),fill:mu,"font-size":11,"text-anchor":"middle","font-family":css("--font-b")},s,who[e[0]]+" "+e[2].toFixed(1)+"µs");
+  });
+  el("text",{x:ZX+6,y:288,fill:mu,"font-size":11.5,"font-family":css("--font-b")},s,"上排：电脑发的包；下排：鼠标发的包。IN + DATA1 + ACK 合起来是一次事务。");
+}
+
+/* ---------- section 2: formats ---------- */
+function drawFormats(){
+  const s=document.getElementById("svgFormats");s.innerHTML="";
+  const fg=css("--fg"),mu=css("--muted");
+  const scale=10.5,X0=150;
+  const rows=[["令牌包","IN / OUT / SETUP",[["SYNC",8,"--f-sync"],["PID",8,"--f-pid"],["ADDR",7,"--f-addr"],["ENDP",4,"--f-endp"],["CRC5",5,"--f-crc"],["EOP",3,"--f-eop"]]],
+    ["SOF 包","每 1 ms 一个",[["SYNC",8,"--f-sync"],["PID",8,"--f-pid"],["帧号",11,"--f-addr"],["CRC5",5,"--f-crc"],["EOP",3,"--f-eop"]]],
+    ["数据包","DATA0 / DATA1",[["SYNC",8,"--f-sync"],["PID",8,"--f-pid"],["DATA 0~64 字节",30,"--f-data"],["CRC16",16,"--f-crc"],["EOP",3,"--f-eop"]]],
+    ["握手包","ACK / NAK / STALL",[["SYNC",8,"--f-sync"],["PID",8,"--f-pid"],["EOP",3,"--f-eop"]]]];
+  rows.forEach((r,i)=>{const y=14+i*84;
+    el("text",{x:0,y:y+20,fill:fg,"font-size":14,"font-weight":600,"font-family":css("--font-d")},s,r[0]);
+    el("text",{x:0,y:y+38,fill:mu,"font-size":11.5,"font-family":css("--font-b")},s,r[1]);
+    let x=X0;r[2].forEach(f=>{const w=f[1]*scale;const c=css(f[2]);
+      el("rect",{x,y,width:w-2,height:34,rx:2,fill:c,"fill-opacity":0.88},s);
+      el("text",{x:x+(w-2)/2,y:y+21,fill:"#fff","font-size":(w<50?10:12),"font-weight":600,"text-anchor":"middle","font-family":css("--font-m")},s,f[0]);
+      el("text",{x:x+(w-2)/2,y:y+50,fill:mu,"font-size":10.5,"text-anchor":"middle","font-family":css("--font-m")},s,f[0].startsWith("DATA")?"0~512":f[1]+(f[0]==="EOP"?"≈":""));
+      x+=w;});
+  });
+  el("text",{x:X0,y:346,fill:mu,"font-size":11,"font-family":css("--font-b")},s,"下方数字 = 位数。数据包的 DATA 段为了画得下被缩短了，实际最多 64 字节（全速）。");
+}
+function fillPidTable(){
+  const t=document.getElementById("pidTable");
+  t.innerHTML="<tr><th>名字</th><th>类别</th><th>类型码（4 位）</th><th>线上字节</th><th>意思</th></tr>"+PIDINFO.map(p=>"<tr><td class='mono'>"+p[0]+"</td><td>"+p[1]+"</td><td class='mono'>"+p[2]+"</td><td class='mono'>0x"+hex(PID[p[0]])+"</td><td>"+p[3]+"</td></tr>").join("");
+}
+
+/* ---------- section 3: wire explorer ---------- */
+const WIRE=[
+  {k:"ack",p:hsPkt("ACK")},
+  {k:"nak",p:hsPkt("NAK")},
+  {k:"in",p:tokenPkt("IN",5,1)},
+  {k:"setup",p:tokenPkt("SETUP",0,0)},
+  {k:"sof",p:sofPkt(0x123)},
+  {k:"data",p:dataPkt("DATA1",REPORT)}
+];
+let wireSel="in";
+function drawWire(){
+  const item=WIRE.find(w=>w.k===wireSel);const pkt=item.p;const enc=encode(pkt);
+  const s=document.getElementById("svgWire");s.innerHTML="";
+  const fg=css("--fg"),mu=css("--muted"),gr=css("--grid");
+  const BW=16,X0=78,n=enc.length+2;const W=X0+n*BW+20;s.setAttribute("width",W);
+  // labels
+  const rowY={seg:18,bits:58,stuff:78,lvl:102,dp:140,dm:200};
+  [["字段",rowY.seg+14],["位（低位先）",rowY.bits+4],["NRZI",rowY.lvl+4],["D+",rowY.dp+24],["D-",rowY.dm+24]].forEach(l=>el("text",{x:4,y:l[1],fill:mu,"font-size":11.5,"font-family":css("--font-b")},s,l[0]));
+  // field bands
+  let i=0;let curSeg=null,start=0;
+  const segCol=c=>css("--"+c);
+  function flush(endIdx){if(curSeg===null)return;const x=X0+(start+1)*BW,w=(endIdx-start)*BW;
+    el("rect",{x,y:rowY.seg,width:w-1,height:22,rx:2,fill:segCol(curSeg.cls),"fill-opacity":0.9},s);
+    el("text",{x:x+w/2,y:rowY.seg+15,fill:"#fff","font-size":11,"font-weight":600,"text-anchor":"middle","font-family":css("--font-m")},s,w>70?curSeg.label:curSeg.name);}
+  enc.forEach((e,idx)=>{const sg=e.eop?{name:"EOP",cls:"f-eop",label:"EOP"}:e.seg;if(curSeg===null||sg.name!==curSeg.name){flush(idx);curSeg=sg;start=idx;}});flush(enc.length);
+  // grid & bits
+  enc.forEach((e,idx)=>{const x=X0+(idx+1)*BW;
+    el("line",{x1:x,y1:rowY.bits-12,x2:x,y2:rowY.dm+40,stroke:gr,"stroke-width":0.6},s);
+    if(!e.eop){el("text",{x:x+BW/2,y:rowY.bits+4,fill:e.stuff?css("--f-stuff"):fg,"font-size":12,"font-weight":e.stuff?700:400,"text-anchor":"middle","font-family":css("--font-m")},s,String(e.b));
+      if(e.stuff)el("text",{x:x+BW/2,y:rowY.stuff+4,fill:css("--f-stuff"),"font-size":9.5,"text-anchor":"middle","font-family":css("--font-b")},s,"填");}
+    el("text",{x:x+BW/2,y:rowY.lvl+4,fill:e.lvl==="SE0"?css("--se0"):mu,"font-size":e.lvl==="SE0"?8.5:11.5,"text-anchor":"middle","font-family":css("--font-m")},s,e.lvl==="SE0"?"SE0":e.lvl);
+  });
+  // waveforms (idle J before and after)
+  const lv=["J"].concat(enc.map(e=>e.lvl),["J"]);
+  function wave(y,hiFn,color){let d="";lv.forEach((L,idx)=>{const x=X0+idx*BW;const yy=hiFn(L)?y:y+36;d+=(idx===0?"M":"L")+x+" "+yy+" L"+(x+BW)+" "+yy+" ";});el("path",{d,fill:"none",stroke:color,"stroke-width":2,"stroke-linejoin":"round"},s);
+    el("line",{x1:X0,y1:y+36,x2:X0+lv.length*BW,y2:y+36,stroke:gr,"stroke-dasharray":"2 3"},s);}
+  wave(rowY.dp,L=>L==="J",css("--dp"));wave(rowY.dm,L=>L==="K",css("--dm"));
+  el("text",{x:X0,y:rowY.dm+58,fill:mu,"font-size":11,"font-family":css("--font-b")},s,"空闲 = J（D+ 高、D- 低）。线上字节："+hexs(pkt.bytes)+"　共 "+enc.length+" 个位时间 ≈ "+(enc.length/12).toFixed(2)+" µs"+(enc.some(e=>e.stuff)?"（含位填充）":""));
+  s.setAttribute("height",rowY.dm+70);
+}
+function buildWireBtns(){
+  const b=document.getElementById("pkBtns");b.innerHTML="";
+  const names={ack:"ACK 握手",nak:"NAK 握手",in:"IN 令牌（地址5 端点1）",setup:"SETUP 令牌（地址0 端点0）",sof:"SOF（帧号 291）",data:"DATA1 鼠标报文"};
+  WIRE.forEach(w=>{const bt=document.createElement("button");bt.type="button";bt.id="pk-"+w.k;bt.textContent=names[w.k];bt.setAttribute("aria-pressed",String(w.k===wireSel));
+    bt.addEventListener("click",()=>{wireSel=w.k;[...b.children].forEach(c=>c.setAttribute("aria-pressed",String(c===bt)));drawWire();});b.appendChild(bt);});
+  const lg=document.getElementById("fieldLegend");
+  lg.innerHTML=[["SYNC","--f-sync"],["PID","--f-pid"],["地址/帧号","--f-addr"],["端点","--f-endp"],["CRC","--f-crc"],["数据","--f-data"],["EOP","--f-eop"],["位填充","--f-stuff"],["D+","--dp"],["D-","--dm"]].map(x=>"<span><i class='sw' style='background:var("+x[1]+")'></i>"+x[0]+"</span>").join("");
+}
+
+/* ---------- section 4/5: sequences ---------- */
+function bytesHTML(pkt){
+  // colour classes per field
+  const b=pkt.bytes,out=["<i class='fx-sync'>SYNC</i>","<i class='fx-pid'>"+hex(b[0])+"</i>"];
+  const t=pkt.segs.length>2?pkt.segs[2].name:null;
+  if(t==="ADDR"||t==="FRAME"){out.push("<i class='fx-tok'>"+hex(b[1])+" "+hex(b[2])+"</i>");}
+  else if(t==="DATA"){const d=b.slice(1,-2);if(d.length)out.push("<i class='fx-data'>"+hexs(d)+"</i>");out.push("<i class='fx-crc'>"+hexs(b.slice(-2))+"</i>");}
+  out.push("<i class='fx-eop'>EOP</i>");return out.join("");
+}
+function pkRow(who,arrow,pkt,exp){return "<div class='pk'><div class='who'>"+who+"</div><div class='dir'>"+arrow+"</div><div class='bytes'>"+bytesHTML(pkt)+"</div><div class='exp'>"+pkt.title+"。"+exp+"</div></div>";}
+function stage(title,sub,rows){return "<section class='stage'><header><b>"+title+"</b><span class='note'>"+sub+"</span></header>"+rows.join("")+"</section>";}
+function buildIntr(){
+  const tk=tokenPkt("IN",5,1),dp=dataPkt("DATA1",REPORT),ack=hsPkt("ACK"),nak=hsPkt("NAK");const tf=tokenField(5,1);
+  const box=document.getElementById("seqIntr");
+  box.innerHTML=
+    stage("有新数据时","按下左键后的那一帧",[
+      pkRow("电脑","→",tk,"字段：ADDR = 5，ENDP = 1，CRC5 = 0x"+hex(tf.crc)+"。地址 5 端点 1 打包成 16 位后低字节先发，所以是 "+hexs(tf.bytes)+"。"),
+      pkRow("鼠标","←",dp,"8 字节报文 01 01 03 00 FE FF 00 00：ID=1、左键按下、X=+3、Y=-2、滚轮 0、横滚 0。最后 2 字节是 CRC16 = 0x"+hex(dp.bytes[dp.bytes.length-1])+hex(dp.bytes[dp.bytes.length-2])+"（低字节先发）。"),
+      pkRow("电脑","→",ack,"电脑确认收到。芯片随后置 INTSTAT 的 EP1IN 位，产生 USB 中断。")])+
+    stage("没有新数据时","鼠标不动、不按键的大部分帧",[
+      pkRow("电脑","→",tk,"和上面完全一样的 IN 令牌。"),
+      pkRow("鼠标","←",nak,"EP1 缓冲区没有打 Active，芯片硬件自动回 NAK，CPU 不参与。")]);
+}
+function buildCtrl(){
+  const st=tokenPkt("SETUP",0,0),inn=tokenPkt("IN",0,0),out=tokenPkt("OUT",0,0);
+  const d0=dataPkt("DATA0",SETUP_GETDEV),d1=dataPkt("DATA1",DEV),z=dataPkt("DATA1",[]),ack=hsPkt("ACK"),nak=hsPkt("NAK");
+  document.getElementById("seqCtrl").innerHTML=
+    stage("① 建立阶段","电脑说出问题（SETUP 事务）",[
+      pkRow("电脑","→",st,"地址 0、端点 0（刚插上还没有地址）。"),
+      pkRow("电脑","→",d0,"8 字节建立包：80 = 设备→电脑/标准/对设备；06 = GET_DESCRIPTOR；00 01 = 要设备描述符；00 00；40 00 = 最多 64 字节。建立包永远用 DATA0。"),
+      pkRow("鼠标","←",ack,"芯片硬件自动回 ACK（SETUP 不允许 NAK），同时置 SETUP 位，产生 EP0 中断 → 软件读出这 8 字节。")])+
+    stage("② 数据阶段","鼠标交出名片（IN 事务）",[
+      pkRow("电脑","→",inn,"电脑来取回答。"),
+      pkRow("鼠标","←",nak,"软件还在中断里准备数据，EP0 IN 缓冲区还没打 Active，芯片先回 NAK（电脑会马上再问）。"),
+      pkRow("电脑","→",inn,"电脑再问一次。"),
+      pkRow("鼠标","←",d1,"18 字节设备描述符（逐字段见下表）。数据阶段的第一个包用 DATA1。"),
+      pkRow("电脑","→",ack,"收到。")])+
+    stage("③ 状态阶段","电脑确认整件事完成（OUT 事务，方向和数据阶段相反）",[
+      pkRow("电脑","→",out,"OUT 令牌。"),
+      pkRow("电脑","→",z,"0 字节数据包，CRC16 = 00 00。状态阶段永远用 DATA1。"),
+      pkRow("鼠标","←",ack,"收到，这次 GET_DESCRIPTOR 结束。")]);
+}
+function fillDev(){
+  const f=[["bLength",1,"本描述符 18 字节"],["bDescriptorType",1,"1 = 设备描述符"],["bcdUSB",2,"USB 2.00"],["bDeviceClass",1,"0 = 类别看接口"],["bDeviceSubClass",1,""],["bDeviceProtocol",1,""],["bMaxPacketSize0",1,"EP0 一包最多 64 字节"],["idVendor",2,"厂商号 0x1A81"],["idProduct",2,"产品号 0x2071"],["bcdDevice",2,"固件版本 0x0011（MY_MAIN_VERSION）"],["iManufacturer",1,"厂商名在字符串 1：“Gtech”"],["iProduct",1,"产品名在字符串 2：“Gtech Magnetic Mouse”"],["iSerialNumber",1,"0 = 没有序列号"],["bNumConfigurations",1,"1 种配置"]];
+  let o=0;const rows=f.map(x=>{const b=DEV.slice(o,o+x[1]);const r="<tr><td class='mono'>"+o+"</td><td class='mono'>"+x[0]+"</td><td class='bytes'>"+hexs(b)+"</td><td>"+x[2]+"</td></tr>";o+=x[1];return r;});
+  document.getElementById("devTable").innerHTML="<tr><th>偏移</th><th>字段</th><th>字节</th><th>含义</th></tr>"+rows.join("");
+}
+function fillCfg(){
+  const parts=[[0,9,"配置描述符","总长 0x005B = 91 字节；3 个接口；配置值 1；属性 0xA0 = 总线供电 + 远程唤醒；最大电流 0xC8 × 2 mA = 400 mA"],
+   [9,9,"接口 0","HID 类（03），Boot 子类（01），协议 2 = 鼠标，1 个端点"],[18,9,"HID 描述符","HID 1.11，报告描述符长 0x72 = 114 字节"],[27,7,"端点 0x81","EP1 IN，中断传输（03），最大 16 字节，间隔 1 ms"],
+   [34,9,"接口 1","HID，协议 1 = 键盘，1 个端点"],[43,9,"HID 描述符","报告描述符长 0x3E = 62 字节"],[52,7,"端点 0x82","EP2 IN，中断，8 字节，1 ms"],
+   [59,9,"接口 2","HID，无协议（厂商自定义），2 个端点 ← GUI / hid_tool 用这个"],[68,9,"HID 描述符","报告描述符长 0x22 = 34 字节"],[77,7,"端点 0x83","EP3 IN，中断，64 字节，1 ms"],[84,7,"端点 0x04","EP4 OUT，中断，64 字节，1 ms"]];
+  document.getElementById("cfgTable").innerHTML="<tr><th>偏移</th><th>段</th><th>字节</th><th>含义</th></tr>"+parts.map(p=>"<tr><td class='mono'>"+p[0]+"</td><td>"+p[2]+"</td><td class='bytes'>"+hexs(CFG.slice(p[0],p[0]+p[1]))+"</td><td>"+p[3]+"</td></tr>").join("");
+}
+function fillEnum(){
+  const req=[
+    ["GET_DESCRIPTOR 设备（试探）",0,[0x80,0x06,0x00,0x01,0x00,0x00,0x40,0x00],"18 字节（DATA1）","第一次问名片，之后电脑再发一次总线复位"],
+    ["SET_ADDRESS 5",0,[0x00,0x05,0x05,0x00,0x00,0x00,0x00,0x00],"无数据阶段","状态阶段：IN → DATA1 0 字节 → ACK；之后地址变成 5"],
+    ["GET_DESCRIPTOR 设备",5,[0x80,0x06,0x00,0x01,0x00,0x00,0x12,0x00],"18 字节（DATA1）","用新地址再要一次完整名片"],
+    ["GET_DESCRIPTOR 配置（前 9 字节）",5,[0x80,0x06,0x00,0x02,0x00,0x00,0x09,0x00],"9 字节（DATA1）","先看总长度 0x5B"],
+    ["GET_DESCRIPTOR 配置（全部）",5,[0x80,0x06,0x00,0x02,0x00,0x00,0xFF,0x00],"91 字节 = 64（DATA1）+ 27（DATA0）","超过 64 字节，分两个 IN 事务"],
+    ["GET_DESCRIPTOR 字符串 0（语言）",5,[0x80,0x06,0x00,0x03,0x00,0x00,0xFF,0x00],"4 字节：04 03 09 04","0x0409 = 美国英语"],
+    ["GET_DESCRIPTOR 字符串 2（产品名）",5,[0x80,0x06,0x02,0x03,0x09,0x04,0xFF,0x00],"42 字节","“Gtech Magnetic Mouse”，UTF-16"],
+    ["SET_CONFIGURATION 1",5,[0x00,0x09,0x01,0x00,0x00,0x00,0x00,0x00],"无数据阶段","鼠标此时打开 EP1~EP4"],
+    ["SET_IDLE（接口 0）",5,[0x21,0x0A,0x00,0x00,0x00,0x00,0x00,0x00],"无数据阶段","HID 类请求：没有变化时不必重复发报文"],
+    ["GET_DESCRIPTOR HID 报告（接口 0）",5,[0x81,0x06,0x00,0x22,0x00,0x00,0x72,0x00],"114 字节 = 64 + 50","鼠标数据格式说明书；接口 1、2 各再要一次"]];
+  const rows=req.map(r=>{const c=crcBytes(r[2]);const t=tokenField(r[1],0);return "<tr><td>"+r[0]+"</td><td class='bytes'>SETUP "+hex(PID.SETUP)+" "+hexs(t.bytes)+"</td><td class='bytes'>DATA0 "+hex(PID.DATA0)+" <b>"+hexs(r[2])+"</b> "+hexs(c)+"</td><td>"+r[3]+"</td><td class='note'>"+r[4]+"</td></tr>";});
+  document.getElementById("enumTable").innerHTML="<tr><th>请求</th><th>令牌包</th><th>建立阶段数据包（PID · 8 字节 · CRC16）</th><th>数据阶段</th><th>说明</th></tr>"+rows.join("");
+}
+
+function render(){drawLayers();drawFrame();drawFormats();drawWire();}
+fillPidTable();buildWireBtns();buildIntr();buildCtrl();fillDev();fillCfg();fillEnum();render();
+try{window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",render);}catch(e){}
+new MutationObserver(render).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+})();
+</script>
