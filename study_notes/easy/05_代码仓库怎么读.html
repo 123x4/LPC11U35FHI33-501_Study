@@ -1,0 +1,352 @@
+<title>代码仓库怎么读</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
+.mx{border-collapse:separate;border-spacing:4px;min-width:720px}
+.mx th{text-align:center;font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.mx th.s{text-align:left;font-size:.85rem;color:var(--muted);font-family:var(--font-b);width:150px}
+.mx td{padding:0;border:0}
+.mx button{width:100%;font:inherit;font-size:.8rem;line-height:1.35;padding:6px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-align:left;min-height:46px}
+.mx button.w-sw{border-left:5px solid var(--sw)}
+.mx button.w-ex{border-left:5px solid var(--muted)}
+.mx button.w-hw{border-left:5px solid var(--per)}
+.mx button.na{color:var(--muted);background:var(--soft);border-style:dashed}
+.mx button[aria-pressed="true"]{outline:3px solid var(--pc);outline-offset:1px}
+.who{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.85rem;margin:.4rem 0}
+.who span{display:inline-flex;align-items:center;gap:6px}
+.who i{width:14px;height:14px;border-radius:3px;display:inline-block}
+pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
+</style>
+<div class="wrap">
+<div class="eyebrow">轻松版 · 第 5 课 · 打地基（最后一课）</div>
+<h1>代码仓库怎么读</h1>
+<p class="lede">仓库里有 120 多个文件，但真正在这块板子上跑的只是一部分，而且同一个文件里还有很多行“不算数”。这一课教你分清<b>哪些代码真的在跑、谁写的、在哪里找</b>。学完这一课，你就能自己在仓库里找到任何东西。</p>
+<div class="where"><span>📍</span><div>在地图上：第 ③ 列<b>我们的程序</b>，以及第 ② 列背后那些现成代码，都在这个仓库里。</div></div>
+
+<h2><span class="step">1/6</span>仓库里有什么</h2>
+<p>点左边的文件夹或文件，看它是干什么的：</p>
+<div class="box" style="display:grid;grid-template-columns:minmax(0,240px) minmax(0,1fr);gap:14px" id="treeBox">
+<div class="tree" id="tree"></div>
+<div class="card" id="treeInfo" style="margin:0" aria-live="polite"></div>
+</div>
+
+<h2><span class="step">2/6</span>哪些代码真的在跑：四层筛子</h2>
+<p>一行代码要真正跑在芯片上，得连过四关：</p>
+<div class="box scroll"><svg id="sieveSvg" viewBox="0 0 800 260" width="800" height="260" role="img" aria-label="四层筛子"></svg></div>
+<table>
+<thead><tr><th>关卡</th><th>谁决定</th><th>怎么确认</th></tr></thead>
+<tbody>
+<tr><td>① 在 Keil 工程里登记了吗</td><td><code>Sample.uvproj</code>（Keil 左边的工程树）</td><td>Keil 左边能看到这个文件。比如 <code>app/optical_3389.c</code>、<code>app/led.c</code> 在文件夹里，但工程里没有，等于不存在。</td></tr>
+<tr><td>② 被 <code>#if</code> 留下了吗</td><td>板子开关、功能开关（第 5 步）</td><td>Keil 里被排除的行会显示成灰色</td></tr>
+<tr><td>③ 有人调用吗</td><td>链接器：没人调用的函数可能被丢掉</td><td>打开 <code>List/Sample.map</code> 搜函数名，有地址就是真的进了芯片</td></tr>
+<tr><td>④ 运行时走到了吗</td><td>程序逻辑（if、开关变量）</td><td>看调用链，或者调试</td></tr>
+</tbody></table>
+<div class="card"><b class="t">例子：同名函数写了两遍</b><br><code>src/device.c</code> 里 <code>Device_Optical_Scan()</code> 出现了两次（第 781 行和第 826 行），一次在 <code>#if (defined(IRPT_V4) || defined(V4_HALL_HPTIC_V4))</code> 里，一次在 <code>#else</code> 里。到底哪个在跑？查 <code>List/Sample.map</code> 第 1152 行：<code>Device_Optical_Scan 0x0000a00d … 80 字节</code>。只有一份，就是第 781 行那个（IRPT_V4 的版本）。</div>
+
+<h3>这块板子的程序，各个文件占了多少</h3>
+<p>从 <code>List/Sample.map</code> 的 “Image component sizes” 一节读出来，每个文件编译后的代码大小（字节）。颜色表示谁写的：</p>
+<div class="btns" role="group" aria-label="筛选" id="fFilter"></div>
+<div class="scroll"><table class="ftab" id="fTable"></table></div>
+
+<h3>Flash 还剩多少空间</h3>
+<div class="bar" id="flashBar"></div>
+<p class="note" id="flashNote"></p>
+
+<h2><span class="step">3/6</span>.c 和 .h：厨房和菜单</h2>
+<p>每个模块一般有一对文件：</p>
+<table>
+<thead><tr><th></th><th>.c 文件</th><th>.h 文件</th></tr></thead>
+<tbody>
+<tr><td>比方</td><td><b>厨房</b>：真正做菜的地方</td><td><b>菜单</b>：告诉别人这里能做哪些菜、怎么点</td></tr>
+<tr><td>里面放</td><td>函数的完整代码、变量</td><td>函数的“声明”（名字和参数）、<code>#define</code>、结构体</td></tr>
+<tr><td>例子</td><td><code>src/my_adc.c</code></td><td><code>inc/my_adc.h</code></td></tr>
+</tbody></table>
+<div class="box scroll"><svg id="incSvg" viewBox="0 0 800 230" width="800" height="230" role="img" aria-label="include 关系"></svg></div>
+<p><code>#include "my_adc.h"</code> 的意思就是“把菜单原样抄进来”。抄进来之后，<code>device.c</code> 就知道有 <code>MyADC_Init()</code> 这道菜可以点。真正的做法写在 <code>my_adc.c</code> 里，编译器最后会把它们连起来（链接）。</p>
+
+<h2><span class="step">4/6</span>#define：给数字起名字</h2>
+<p><code>#define</code> 不产生任何代码，它只是告诉编译器：<b>后面看到这个名字，就换成这段文字</b>。有三种常见用法：</p>
+<table>
+<thead><tr><th>用法</th><th>例子</th><th>编译器换成</th></tr></thead>
+<tbody>
+<tr><td>给数字起名字</td><td><code>#define TIME_CT16B0_PR 47</code>（<code>inc/Timer.h:18</code>）</td><td>后面所有 <code>TIME_CT16B0_PR</code> 都变成 <code>47</code></td></tr>
+<tr><td>像函数一样用</td><td><code>#define MyADC_DelayUs(x) CT16B1_DelayUs(x)</code>（<code>src/my_adc.c:17</code>）</td><td><code>MyADC_DelayUs(2)</code> 变成 <code>CT16B1_DelayUs(2)</code></td></tr>
+<tr><td>当开关</td><td><code>#define IRPT_V4</code>（<code>inc/my_board.h:21</code>）</td><td>不换成什么，只是“立个牌子”，给 <code>#if</code> 看（第 5 步）</td></tr>
+</tbody></table>
+<h3>LPC_ADC-&gt;CR 是怎么来的：手册变成了代码</h3>
+<p>第 3 课说过，<code>LPC_ADC-&gt;CR</code> 就是地址 0x4001C000。这个名字定义在 <code>inc/LPC11Uxx.h</code>，<b>它就是把手册里的寄存器总览表照抄成了 C 代码</b>。对比一下：</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px">
+<div class="um"><div class="cap">📖 手册 Table 351 · 第 384 页 · ADC 寄存器总览（基地址 0x4001 C000）</div><div class="scroll"><table><thead><tr><th>Name</th><th>Access</th><th>Offset</th></tr></thead><tbody>
+<tr><td>CR</td><td>R/W</td><td>0x000</td></tr><tr><td>GDR</td><td>R/W</td><td>0x004</td></tr><tr><td>-</td><td>-</td><td>0x008 Reserved</td></tr><tr><td>INTEN</td><td>R/W</td><td>0x00C</td></tr><tr><td>DR0~DR7</td><td>R/W</td><td>0x010~0x02C</td></tr><tr><td>STAT</td><td>RO</td><td>0x030</td></tr></tbody></table></div></div>
+<pre class="code" style="margin:.6rem 0">/* inc/LPC11Uxx.h:259 */
+typedef struct {
+  __IO uint32_t CR;          // 0x4001C000
+  __IO uint32_t GDR;         // 0x4001C004
+  __I  uint32_t RESERVED0[1];// 0x008 空着
+  __IO uint32_t INTEN;       // 0x4001C00C
+  __I  uint32_t DR[8];       // 0x4001C010 起
+  __I  uint32_t STAT;        // 0x4001C030
+} LPC_ADC_Type;
+
+/* inc/LPC11Uxx.h:620、687 */
+#define LPC_ADC_BASE (0x4001C000)
+#define LPC_ADC ((LPC_ADC_Type *) LPC_ADC_BASE)</pre>
+</div>
+<p>结构体里每个成员 4 字节，按顺序排，正好和手册的偏移地址一一对应，连那个 “Reserved” 空位都留了。所以写 <code>LPC_ADC-&gt;CR</code>，编译器就去读写 0x4001C000。<b>以后看到任何 <code>LPC_XXX-&gt;YYY</code>，都可以去手册对应章节的寄存器总览表里找 YYY。</b></p>
+<p class="note">这个头文件是芯片厂商提供的（⬜ 现成），不用改。<code>__IO</code> 表示能读能写，<code>__I</code> 表示只读，对应手册的 Access 列。</p>
+
+<h2><span class="step">5/6</span>板子开关：#if 决定哪些行算数</h2>
+<p>同一份代码要给好几块板子用。<code>inc/my_board.h</code> 开头有一排板子名字，<b>只有一个没被注释掉</b>：</p>
+<pre class="code">//#define HAPTIC_V4
+//#define P723_POC
+#define IRPT_V4              ← 现在编译的是这块板（第 21 行）
+//#define V4_HALL_HPTIC_V4</pre>
+<p>然后代码里到处是 <code>#if (defined(IRPT_V4))</code>：“如果立了 IRPT_V4 这个牌子，就编译下面这几行”。<b>选一块板子</b>，看 <code>Device_Init()</code> 里这几段哪些行会被编译：</p>
+<div class="box try"><div class="tag">动手 · 切换板子</div>
+<div class="btns" role="group" aria-label="选择板子" id="boardBtns"></div>
+<div class="snip" id="snip"></div>
+<p class="note" style="margin:0" id="snipNote"></p>
+</div>
+<p>注意：<code>#if</code> 是在<b>电脑上编译的时候</b>决定的，不是芯片运行时判断。被排除的行根本不会进入芯片。这和 C 语言里普通的 <code>if</code> 完全不同。</p>
+<h3>其它常见的开关</h3>
+<table>
+<thead><tr><th>开关</th><th>现在的值</th><th>在哪</th><th>管什么</th></tr></thead>
+<tbody>
+<tr><td><code>ENABLE_WHEEL_SCAN</code></td><td>1</td><td><code>inc/my_board.h:37</code></td><td>扫不扫滚轮</td></tr>
+<tr><td><code>BRAKE_FUNC_ENABLE</code></td><td>1</td><td><code>src/my_electromagnet.c:28</code></td><td>线圈制动功能，也决定线圈用延时还是定时器（1-4 课）</td></tr>
+<tr><td><code>USE_HALL_VALUE_DURING_VIBRATION</code></td><td>0</td><td><code>inc/my_electromagnet.h:31</code></td><td>振动时冻结按键（第 12 课）</td></tr>
+<tr><td><code>USE_INSIDE_EEPROM</code></td><td>1</td><td><code>inc/IAP_CMD.h:10</code></td><td>参数存芯片内部 EEPROM</td></tr>
+<tr><td><code>MYDEBUG_ENABLE</code></td><td>0</td><td><code>inc/my_debug.h:19</code></td><td>调试打印</td></tr>
+<tr><td><code>#if 0</code> / <code>#if 1</code></td><td>—</td><td><code>src/</code> 里有 32 处 <code>#if 0</code></td><td>临时关掉 / 打开一整段代码。<code>#if 0</code> 里的东西等于注释</td></tr>
+</tbody></table>
+<div class="card" style="border-left-color:var(--gold)"><b class="t">读代码的第一条规矩</b><br>看到一段代码，先往上找有没有包着它的 <code>#if</code>，确认它对 IRPT_V4 算不算数，再去读。很多“看不懂为什么这样写”的代码，其实根本没被编译。在 Keil 里，没被编译的行会显示成灰色。</div>
+
+<h2><span class="step">6/6</span>怎么找东西，编译出来的是什么</h2>
+<table>
+<thead><tr><th>想做的事</th><th>怎么做</th></tr></thead>
+<tbody>
+<tr><td>找一个函数在哪定义</td><td>Keil 里在函数名上右键 → <b>Go To Definition</b>；或者 <b>Edit → Find in Files</b> 搜名字</td></tr>
+<tr><td>找谁调用了它</td><td><b>Find in Files</b> 搜 <code>函数名(</code></td></tr>
+<tr><td>确认它真的进了芯片</td><td>打开 <code>List/Sample.map</code> 搜函数名，有地址和大小就是</td></tr>
+<tr><td>找一个寄存器的意思</td><td><code>LPC_XXX-&gt;YYY</code>：手册里 XXX 那一章的寄存器总览表找 YYY，再看位描述表（第 3 课）</td></tr>
+<tr><td>找一个 <code>#define</code> 的值</td><td>右键 Go To Definition；注意可能被 <code>#if</code> 分成好几个版本</td></tr>
+</tbody></table>
+<h3>从源代码到芯片</h3>
+<div class="box scroll"><svg id="buildSvg" viewBox="0 0 800 170" width="800" height="170" role="img" aria-label="编译流程"></svg></div>
+
+<h2>小测验</h2>
+<div class="box quiz" id="quiz"></div>
+
+<div class="sum"><b>这一课你只需要记住：</b>文件夹里有的不一定被编译，要看 Keil 工程；编译的文件里，<code>#if</code> 还会筛掉很多行，现在只有 <code>IRPT_V4</code> 那些算数；最终有没有进芯片，查 <code>List/Sample.map</code>。<code>.h</code> 是菜单，<code>.c</code> 是厨房；<code>LPC_XXX-&gt;YYY</code> 就是手册寄存器表的 C 语言版。</div>
+<h3>本课新词</h3>
+<table><tbody>
+<tr><td><b>工程（.uvproj）</b></td><td>Keil 的清单：编译哪些文件、用什么设置</td></tr>
+<tr><td><b>#include</b></td><td>把另一个文件（通常是 .h）原样抄进来</td></tr>
+<tr><td><b>#define</b></td><td>给一段文字起名字，编译时替换</td></tr>
+<tr><td><b>#if / #elif / #else / #endif</b></td><td>编译时的开关：决定哪些行算数</td></tr>
+<tr><td><b>链接</b></td><td>把各个 .c 编译出的 .o 拼成一个完整程序</td></tr>
+<tr><td><b>.map 文件</b></td><td>链接器的报告：每个函数、变量放在哪个地址、多大</td></tr>
+</tbody></table>
+<p class="note">打地基阶段到这里结束。下一课进入第二阶段：第 6 课 <b>GPIO</b>，按“生命周期图 + 七步 + 手册”的方式完整讲第一个外设。</p>
+</div>
+<script>
+const NS="http://www.w3.org/2000/svg";
+function el(p,t,a,x){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e}
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
+/* tree */
+const TREE=[
+ ['Sample.uvproj',0,'<b class="t">Keil 工程文件</b><br>双击用 Keil 打开。它是一张清单：编译哪些文件、用什么芯片、什么设置。<b>只有登记在这里的文件才会被编译。</b>'],
+ ['src/',1,'<b class="t">src/ 主要源代码（40 个 .c）</b><br>驱动（GPIO.c、Timer.c…）、USB 协议栈（usb*.c）、项目新代码（my_*.c、PAW3950.c）、主流程（device.c、Main.c）都在这里。其中 4 个没登记在工程里，不编译。'],
+ ['inc/',1,'<b class="t">inc/ 头文件（.h）</b><br>“菜单”：函数声明、<code>#define</code>、结构体。最重要的三个：<br>· <code>my_board.h</code>：选哪块板子、每个引脚接什么<br>· <code>LPC11Uxx.h</code>：芯片厂商给的寄存器定义（手册的 C 语言版）<br>· <code>usbcfg.h</code>、<code>usbdesc.h</code>：USB 设置'],
+ ['app/',1,'<b class="t">app/ 老鼠标框架的应用代码</b><br>按键扫描 <code>button.c</code>、滚轮 <code>scroll.c</code>、按键映射 <code>custom.c</code>。13 个文件里只有 4 个被编译，其余（led.c、optical_3389.c、几个 SROM 文件等）是别的老产品留下的。'],
+ ['Led_Effect_Gruop_Code/',1,'<b class="t">灯效代码</b><br>老产品的 RGB 灯效。工程里登记了，所以会编译，但这块板子没有灯，基本用不上。'],
+ ['output/',1,'<b class="t">output/ 编译结果</b><br><code>Sample.hex</code>：烧进芯片的文件；<code>Sample.axf</code>：带调试信息的完整程序（反汇编用它）；<code>Sample.sct</code>：告诉链接器程序放在 Flash 的哪一段（0x4000 起，最多 0xC000 字节）。'],
+ ['List/',1,'<b class="t">List/ 编译报告</b><br><code>Sample.map</code> 最有用：每个函数、变量的地址和大小，各文件占多少空间，总共用了多少 Flash 和 RAM。'],
+ ['materials/',1,'<b class="t">materials/ 资料</b><br>芯片手册（<code>mcu_reference/</code>）、传感器手册、T1A 原理图、协议表、测试软件 MouseTest。'],
+ ['M300S/',1,'<b class="t">M300S/ 公司 Bootloader 的源代码</b><br>0-3 课读的就是它。它是另一个独立的 Keil 工程，烧在 Flash 0x0000~0x3FFF。'],
+ ['study_notes/',1,'<b class="t">study_notes/ 你的学习笔记</b><br>我们写的讲义、图解页、仿真程序、hid_tool。'],
+];
+(function(){const t=$('tree');let sel=null;TREE.forEach(([n,isD,info],i)=>{const b=document.createElement('button');b.type='button';b.innerHTML=`<span class="${isD?'d':''}">${isD?'📁 ':'📄 '}${n}</span>`;
+  b.onclick=()=>{if(sel)sel.setAttribute('aria-pressed','false');sel=b;b.setAttribute('aria-pressed','true');$('treeInfo').innerHTML=info};t.appendChild(b);if(i===0)b.click()})})();
+if(window.matchMedia('(max-width:560px)').matches)$('treeBox').style.gridTemplateColumns='minmax(0,1fr)';
+/* sieve */
+(function(){const s=$('sieveSvg');
+  const L=[['文件夹里所有 .c','src 40 + app 13 + 灯效 18 = 71 个','muted',760],['① Keil 工程登记的','工程里 48 个文件','per',620],['② #if 留下的行','只留 IRPT_V4 和打开的开关','gold',480],['③ 链接进芯片的','44.6 KB，查 Sample.map','sw',340]];
+  L.forEach(([t,s2,c,w],i)=>{const x=(800-w)/2,y=10+i*60;el(s,'path',{d:`M${x} ${y} H${x+w} L${x+w-70} ${y+50} H${x+70} Z`,fill:V(c),opacity:.22,stroke:V(c)});
+    el(s,'text',{x:400,y:y+22,'text-anchor':'middle','font-size':14,'font-weight':700,fill:V('fg')},t);el(s,'text',{x:400,y:y+40,'text-anchor':'middle','font-size':12,fill:V('muted')},s2)});
+  el(s,'text',{x:400,y:254,'text-anchor':'middle','font-size':12,fill:V('muted')},'④ 运行时走没走到，看调用链');})();
+/* file sizes: [obj, code bytes, who, what] who: n=NXP/芯片例程, o=老项目框架, p=本项目新代码 */
+const F=[
+ ['my_protocol_mouse.c',3486,'p','新协议的参数管理、GUI 调参'],['macro.c',2852,'o','宏功能（老框架）'],['usbhw.c',2292,'n','USB 硬件层'],['custom.c',2060,'o','按键映射'],['usbcore.c',2024,'n','USB 协议层（枚举）'],['my_electromagnet.c',2020,'p','线圈'],['device.c',1804,'o','主流程（老框架，IRPT 部分是新加的）'],['pc_communicate.c',1776,'o','老 GUI 协议'],['GPIO.c',1438,'n','引脚驱动'],['button.c',1188,'o','按键扫描'],['my_misc.c',1116,'p','按键算法 AP/RT'],['PAW3950.c',912,'p','光学传感器'],['Timer.c',860,'n','定时器驱动'],['gtech_flash.c',796,'o','Flash/EEPROM 读写封装'],['SPI.c',760,'n','SPI 驱动'],['optical_3325.c',720,'o','老传感器 3325（IRPT 不用，但被链接进来了）'],['i2c.c',700,'n','I²C（IRPT 不用）'],['UART.c',644,'n','串口（IRPT 不用）'],['test.c',490,'o','灯效测试'],['operation_flash.c',448,'o','老配置系统地址'],['usb.c',368,'n','USB 发送封装'],['scroll.c',256,'o','滚轮'],['my_adc.c',248,'p','ADC'],['usbuser.c',236,'n','USB 端点回调'],['Osc.c',228,'n','时钟'],['WWDT.c',212,'n','看门狗'],['ram_malloc.c',208,'o','内存分配'],['suspend.c',144,'o','挂起'],['wnDrv_Pmu.c',140,'n','低功耗'],['IAP_CMD.c',132,'n','EEPROM（IAP）'],['hiduser.c',104,'n','HID 类请求'],['my_protocol.c',102,'p','新协议的帧解析'],['my_tick.c',48,'p','毫秒计数'],['startup_LPC11Uxx.s',28,'n','启动文件（另有 192 字节向量表）'],['Main.c',14,'o','main()'],['usbdesc.c',0,'n','USB 描述符（全是常量数据 383 字节，不是代码）'],
+];
+const WHO={n:['⬜ 芯片 / NXP 例程','muted'],o:['⬜ 老项目框架','gold'],p:['🟩 本项目新代码','sw']};
+(function(){const tb=$('fTable'),fb=$('fFilter');let cur='all';const mx=Math.max(...F.map(x=>x[1]));
+  function draw(){tb.innerHTML='<thead><tr><th>文件</th><th>代码字节</th><th style="width:40%"></th><th>谁写的</th><th>干什么</th></tr></thead><tbody>'+F.filter(x=>cur==='all'||x[2]===cur).map(x=>`<tr><td>${x[0]}</td><td class="mono">${x[1]}</td><td><div style="height:10px;width:${Math.max(1,x[1]/mx*100)}%;background:${V(WHO[x[2]][1])};border-radius:2px"></div></td><td style="white-space:nowrap">${WHO[x[2]][0]}</td><td>${x[3]}</td></tr>`).join('')+'</tbody>'}
+  [['all','全部'],['p','🟩 本项目新代码'],['o','⬜ 老项目框架'],['n','⬜ 芯片 / NXP 例程']].forEach(([k,t])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.setAttribute('aria-pressed',k===cur?'true':'false');b.onclick=()=>{cur=k;fb.querySelectorAll('button').forEach(o=>o.setAttribute('aria-pressed',o===b?'true':'false'));draw()};fb.appendChild(b)});
+  draw();
+  const sum=k=>F.filter(x=>x[2]===k).reduce((a,x)=>a+x[1],0);
+  const used=45716,lim=0xFE00-0x4000,tot=0xC000;
+  const bar=$('flashBar');bar.innerHTML=`<div style="width:${used/tot*100}%;background:${V('sw')}">已用 44.6 KB</div><div style="width:${(lim-used)/tot*100}%;background:${V('gold')}">剩</div><div style="width:${(tot-lim)/tot*100}%;background:${V('muted')}" title="Bootloader 标志页">标志</div>`;
+  $('flashNote').innerHTML=`程序放在 Flash 0x4000 起（<code>output/Sample.sct</code>：最多 0xC000 = 48 KB）。<code>List/Sample.map</code> 最后一行：Total ROM Size = <b>45716 字节</b>（44.64 KB）。但 0xFE00 起的一页是公司 Bootloader 放“程序有效”标志（0xAA）的地方（0-3 课），程序不能占用。所以实际只剩约 <b>${lim-used} 字节（约 2.9 KB）</b>。⚠️ T1A 要加新功能时，空间会很紧，这件事要和杰哥确认。<br>按谁写的统计（只算代码）：🟩 本项目新代码约 ${sum('p')} 字节，⬜ 老项目框架约 ${sum('o')} 字节，⬜ 芯片 / NXP 例程约 ${sum('n')} 字节。`;
+})();
+/* include */
+(function(){const s=$('incSvg');
+  const box=(x,y,w,h,c,t,lines)=>{el(s,'rect',{x,y,width:w,height:h,rx:8,fill:V('panel'),stroke:V(c),'stroke-width':2});el(s,'text',{x:x+10,y:y+20,'font-size':13,'font-weight':700,fill:V(c)},t);lines.forEach((l,i)=>el(s,'text',{x:x+10,y:y+42+i*17,'font-size':11.5,class:'m',fill:V('fg')},l))};
+  box(280,10,240,90,'gold','inc/my_adc.h（菜单）',['int32_t MyADC_Init(MyADC_ts *p);','int32_t MyADC_GetValue(...);','extern MyADC_ts *pLeftAdcHandle;']);
+  box(10,130,240,90,'sw','src/device.c（点菜的人）',['#include "my_adc.h"','...','MyADC_Init(pLeftAdcHandle);']);
+  box(550,130,240,90,'sw','src/my_adc.c（厨房）',['#include "my_adc.h"','int32_t MyADC_Init(...)','{ ...真正的代码... }']);
+  el(s,'path',{d:'M300 100 C260 115 200 115 150 130',stroke:V('gold'),'stroke-width':2,fill:'none'});
+  el(s,'path',{d:'M500 100 C540 115 600 115 650 130',stroke:V('gold'),'stroke-width':2,fill:'none'});
+  el(s,'path',{d:'M250 200 H550',stroke:V('muted'),'stroke-width':2,'stroke-dasharray':'6 4',fill:'none'});
+  el(s,'text',{x:400,y:194,'text-anchor':'middle','font-size':11.5,fill:V('muted')},'链接时连起来：调用 → 真正的代码');})();
+/* board switch */
+const SN=[
+ ['#if (defined(IRPT_V4))','pp',null],['  //null','c','IRPT_V4'],['#elif (defined(V4_HALL_HPTIC_V4))','pp',null],['  InitSPI0Master(); //hall use','c','V4_HALL'],['#else','pp',null],['  InitSPI0Master();','c','ELSE'],['  InitSPI1Master();','c','ELSE'],['#endif','pp',null],
+ ['',null,null],['#if (defined(IRPT_V4))','pp',null],['#else','pp',null],['  HallSensor_INIT();','c','!IRPT_V4'],['#endif','pp',null],
+ ['',null,null],['#if (defined(IRPT_V4))','pp',null],['  PAW3950_Init();','c','IRPT_V4'],['  MyADC_Init(pLeftAdcHandle);','c','IRPT_V4'],['  MyADC_Init(pRightAdcHandle);','c','IRPT_V4'],['#elif (defined(V4_HALL_HPTIC_V4))','pp',null],['  PAW3950_Init();','c','V4_HALL'],['#endif','pp',null],
+];
+const BOARDS={IRPT_V4:['IRPT_V4（你手上的）','红外光电 + ADC 读左右键，SPI 只给传感器用，在 PAW3950_Init() 里初始化。'],V4_HALL:['V4_HALL_HPTIC_V4','霍尔芯片读左右键：先初始化 SPI0 给霍尔芯片用，再初始化霍尔芯片和传感器。T1A 和它最像。'],HAPTIC_V4:['HAPTIC_V4（更老的板子）','老版本：两个 SPI 都初始化，用霍尔芯片，没有 PAW3950。']};
+(function(){const bb=$('boardBtns');let cur='IRPT_V4';
+  function on(tag){if(tag==='IRPT_V4')return cur==='IRPT_V4';if(tag==='V4_HALL')return cur==='V4_HALL';if(tag==='ELSE')return cur==='HAPTIC_V4';if(tag==='!IRPT_V4')return cur!=='IRPT_V4';return false}
+  function draw(){$('snip').innerHTML=SN.map(([t,k,tag])=>`<div class="${k==='pp'?'pp':k==='c'?(on(tag)?'on':'off'):''}">${t.replace(/</g,'&lt;')||' '}</div>`).join('');$('snipNote').innerHTML=`<b>${BOARDS[cur][0]}</b>：${BOARDS[cur][1]} 绿底 = 会被编译；划掉 = 被排除，不会进芯片。`}
+  Object.keys(BOARDS).forEach(k=>{const b=document.createElement('button');b.type='button';b.textContent='#define '+(k==='V4_HALL'?'V4_HALL_HPTIC_V4':k);b.setAttribute('aria-pressed',k===cur?'true':'false');b.onclick=()=>{cur=k;bb.querySelectorAll('button').forEach(o=>o.setAttribute('aria-pressed',o===b?'true':'false'));draw()};bb.appendChild(b)});draw();})();
+/* build */
+(function(){const s=$('buildSvg');const st=[['.c / .h','源代码','sw'],['编译','每个 .c → .o','per'],['链接','拼成一个程序\n按 .sct 排地址','per'],['.axf','完整程序\n+ 调试信息','gold'],['.hex','烧录文件','gold'],['芯片 Flash','0x4000 起','pc']];
+  st.forEach(([t,s2,c],i)=>{const x=6+i*132;el(s,'rect',{x,y:30,width:116,height:90,rx:8,fill:V('panel'),stroke:V(c),'stroke-width':2});el(s,'text',{x:x+58,y:62,'text-anchor':'middle','font-size':14,'font-weight':700,fill:V(c)},t);s2.split('\n').forEach((l,j)=>el(s,'text',{x:x+58,y:84+j*16,'text-anchor':'middle','font-size':11.5,fill:V('muted')},l));if(i<5)el(s,'path',{d:`M${x+116} 75 h16`,stroke:V('muted'),'stroke-width':2})});
+  el(s,'text',{x:6,y:150,'font-size':12,fill:V('muted')},'链接时还会生成 List/Sample.map；用 Fw Update 工具通过 USB 把 .hex 烧进去时，公司 Bootloader 负责接收（0-3 课）。');})();
+/* quiz */
+const Q=[
+ ['1. app/optical_3389.c 在文件夹里，它会被编译吗？',['会','不会，Keil 工程里没登记它'],1,'对。文件夹里有不代表会编译，要看 Keil 工程。','看第 2 步的第 ① 关。'],
+ ['2. #if (defined(IRPT_V4)) 是什么时候判断的？',['芯片运行时','电脑上编译时'],1,'对。被排除的行根本不会进芯片。','#if 和普通的 if 不一样。'],
+ ['3. 想确认 MyADC_GetValue 真的被编译进芯片，最直接的办法是？',['在 List/Sample.map 里搜它','看它在不在 src 文件夹里','看 .h 里有没有声明'],0,'对。map 里有地址就是进去了（第 1051 行：0x00008AC5，112 字节）。','文件在、有声明，都不能保证它进了芯片。'],
+ ['4. LPC_ADC->INTEN 在哪个地址？',['0x4001C000','0x4001C00C','0x4001C010'],1,'对。基地址 0x4001C000 + 偏移 0x00C（手册 Table 351）。','对照手册 Table 351 的 Offset 列。'],
+ ['5. 现在 Flash 还剩多少空间？',['十几 KB','大约 3 KB','用满了'],1,'对。约 2.9 KB，T1A 加功能时要注意。','看第 2 步最后的 Flash 条。'],
+];
+(function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0].replace(/</g,'&lt;')}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+</script>

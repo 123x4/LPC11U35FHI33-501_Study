@@ -10,6 +10,7 @@
 | 第 2 课 0 和 1：一排开关 | `02_0和1.html` | https://claude.ai/artifact/HwMr9Ng8ocHS9MBvvJD1bX |
 | 第 3 课 单片机是什么（外设七步法） | `03_单片机是什么.html` | https://claude.ai/artifact/Df8iYXGpcqsQs45cVTXCQf |
 | 第 4 课 程序怎么跑 | `04_程序怎么跑.html` | https://claude.ai/artifact/8avBhNLVJRzRPehvi6xtsN |
+| 第 5 课 代码仓库怎么读 | `05_代码仓库怎么读.html` | https://claude.ai/artifact/DMHaAKpxifpv3aa1bAJoeM |
 
 完整路线见第 0 课第 5 节。
 
