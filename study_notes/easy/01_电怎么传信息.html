@@ -1,0 +1,259 @@
+<title>电怎么传信息</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<div class="wrap">
+<div class="eyebrow">轻松版 · 第 1 课 · 打地基</div>
+<h1>电怎么传信息</h1>
+<p class="lede">单片机和按键之间只连着几根细细的导线。它怎么知道按键有没有按下？这一课只讲一件事：<b>信息靠“电压的高低”传过去。</b>不需要任何基础，跟着图和滑块走就行。</p>
+
+<h2><span class="step">1/5</span>电压、电流、电阻：想成水管</h2>
+<p>把电路想成一套水管：</p>
+<div class="box scroll"><svg id="waterSvg" viewBox="0 0 780 250" width="780" height="250" role="img" aria-label="水管类比"></svg></div>
+<table>
+<thead><tr><th>电的词</th><th>水管里对应</th><th>单位</th><th>这个项目里的例子</th></tr></thead>
+<tbody>
+<tr><td><b>电压</b></td><td>水位差：水塔有多高，水就有多大的“推力”</td><td>伏特 V</td><td>单片机的电源是 3.3 V</td></tr>
+<tr><td><b>电流</b></td><td>每秒流过多少水</td><td>安培 A，毫安 mA</td><td>整个鼠标向电脑申请 400 mA</td></tr>
+<tr><td><b>电阻</b></td><td>水管有多细：越细越难流</td><td>欧姆 Ω</td><td>板上标着 R1、R2 … 的小方块</td></tr>
+</tbody></table>
+<div class="box try"><div class="tag">动手 · 拖动两个滑块</div>
+<div class="row">
+<label class="stat" for="u">电压（水塔高度）<input id="u" type="range" min="0" max="5" step="0.1" value="3.3"><b id="uo">3.3 V</b></label>
+<label class="stat" for="r">电阻（水管粗细）<input id="r" type="range" min="100" max="10000" step="100" value="1000"><b id="ro">1000 Ω</b></label>
+<div class="stat"><span>电流 = 电压 ÷ 电阻</span><b id="io">3.3 mA</b></div>
+</div>
+<p class="note" style="margin:0">这就是<b>欧姆定律</b>：电流 = 电压 ÷ 电阻。电压越高推得越猛，电阻越大越难流。整个项目里你只需要用到这一个公式。</p>
+</div>
+
+<h2><span class="step">2/5</span>电压总是“和地比”</h2>
+<p>说“这根线是 3.3 V”，意思是它比<b>地（GND）</b>高 3.3 V。地就是大家约定的 0 V，像海拔的“海平面”。板上所有元件都接到同一个地，所以大家说的电压是同一个标准。</p>
+<div class="card"><b class="t">这块板子上的几个电压</b><br>USB 线送来 <b>5 V</b> → 板上的稳压芯片把它降到 <b>3.3 V</b> → 单片机、传感器都吃 3.3 V。<br>所以对单片机来说，一根线的电压只会在 <b>0 V 到 3.3 V</b> 之间。</div>
+
+<h2><span class="step">3/5</span>高电平、低电平 = 1 和 0</h2>
+<p>单片机的普通引脚只回答一个问题：<b>这根线是“高”还是“低”？</b> 高记作 1，低记作 0。中间那一段它不保证能分清，所以电路设计时会让信号尽量贴近 0 V 或 3.3 V。</p>
+<div class="box try"><div class="tag">动手 · 拖动引脚上的电压，看单片机怎么读</div>
+<div class="scroll"><svg id="levelSvg" viewBox="0 0 760 170" width="760" height="170" role="img" aria-label="高低电平阈值"></svg></div>
+<input id="v" type="range" min="0" max="3.3" step="0.01" value="3.0" aria-label="引脚电压">
+<div class="row">
+<div class="stat"><span>引脚电压</span><b id="vo">3.00 V</b></div>
+<div class="stat"><span>单片机读到</span><b id="lo">1（高）</b></div>
+</div>
+<p class="note" style="margin:0">数字来自 LPC11U35 数据手册 Table 5：电源 3.3 V 时，≥ 0.7 × 3.3 = <b>2.31 V</b> 一定读成 1，≤ 0.3 × 3.3 = <b>0.99 V</b> 一定读成 0。</p>
+</div>
+
+<h2><span class="step">4/5</span>一个按键怎么变成 0 和 1</h2>
+<p>中键、侧键就是这样接的：引脚通过一个<b>上拉电阻</b>连到 3.3 V，按键的另一头接地。点下面图里的按键试试。</p>
+<div class="box try"><div class="tag">动手 · 点图里的按键</div>
+<div class="scroll"><svg id="btnSvg" viewBox="0 0 700 300" width="700" height="300" role="img" aria-label="上拉电阻按键电路" style="cursor:pointer"></svg></div>
+<div class="card" id="btnInfo" aria-live="polite"></div>
+</div>
+<p>注意：<b>按下反而是 0</b>。所以代码里读按键时会先“取反”，把它变成“按下 = 1”。你在 <code>inc/button.h</code> 里能看到这个波浪号：</p>
+<pre class="box mono" style="overflow-x:auto;margin:.6rem 0">#define BUTTON_PORT0  ((~LPC_GPIO->PIN[0]) &amp; (MIDDLE_BUTTON_MASK | ...))
+                     ↑
+                     ~ 就是“取反”：0 变 1，1 变 0</pre>
+<p class="note">现在看不懂这一行没关系，第 5 课 GPIO 会细讲。你只要知道：<b>那个 ~ 是因为“按下 = 低电平”</b>。</p>
+
+<h2><span class="step">5/5</span>两种信号：数字和模拟</h2>
+<div class="box scroll"><svg id="adSvg" viewBox="0 0 760 220" width="760" height="220" role="img" aria-label="数字信号与模拟信号"></svg></div>
+<table>
+<thead><tr><th></th><th>数字信号</th><th>模拟信号</th></tr></thead>
+<tbody>
+<tr><td>长什么样</td><td>只有高、低两种</td><td>可以是 0~3.3 V 之间任何值</td></tr>
+<tr><td>这只鼠标里</td><td>中键、侧键、DPI、滚轮</td><td><b>左右键</b>（按得越深，电压越低）</td></tr>
+<tr><td>单片机用什么读</td><td>GPIO（第 5 课）</td><td>ADC（第 6 课）</td></tr>
+</tbody></table>
+<p class="note">左键曲线上的 2.6 V、1.0 V 是估计值，这块板子没有原理图，真实值以后用工具读出来。</p>
+<p>这就是为什么左右键的代码比中键复杂得多：它不是“按了 / 没按”，而是“按了多深”，要先用 ADC 量出来，再由程序决定多深算按下。</p>
+
+<h2>小测验</h2>
+<div class="box quiz" id="quiz"></div>
+
+<div class="sum"><b>这一课你只需要记住：</b>导线上的信息就是电压。单片机的普通引脚把电压分成“高 = 1”和“低 = 0”；中键这类按键按下时是 0；左右键是连续变化的电压，要用 ADC 量。</div>
+<p class="note">下一课：第 2 课 “0 和 1”。单片机里的一切都是一串 0 和 1，我们会学怎么读 <code>0x3FF</code> 这种写法。</p>
+</div>
+<script>
+const NS="http://www.w3.org/2000/svg";
+function el(p,t,a,x){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e}
+const V=n=>`var(--${n})`;
+const $=id=>document.getElementById(id);
+/* water */
+function water(){
+  const s=$('waterSvg');s.textContent='';
+  const u=+$('u').value,r=+$('r').value,i=u/r*1000;
+  const h=20+u/5*150;
+  el(s,'rect',{x:40,y:200-h,width:90,height:h,fill:V('per'),opacity:.35});
+  el(s,'rect',{x:40,y:30,width:90,height:170,fill:'none',stroke:V('line'),'stroke-width':2});
+  el(s,'text',{x:85,y:224,'text-anchor':'middle','font-size':13,fill:V('fg')},'水塔 = 电源');
+  el(s,'text',{x:85,y:195-h+14,'text-anchor':'middle','font-size':13,'font-weight':600,fill:V('per')},u.toFixed(1)+' V');
+  const pw=Math.max(3,26-r/10000*22);
+  el(s,'rect',{x:130,y:185-pw/2,width:520,height:pw,fill:V('per'),opacity:.25,stroke:V('line')});
+  el(s,'text',{x:390,y:170-pw/2,'text-anchor':'middle','font-size':13,fill:V('fg')},'水管 = 导线和电阻：越细越难流（'+r+' Ω）');
+  const n=Math.min(14,Math.round(i*2));
+  for(let k=0;k<n;k++){el(s,'circle',{cx:150+k*(480/Math.max(1,n)),cy:185,r:Math.min(5,pw/2),fill:V('per')})}
+  el(s,'text',{x:390,y:226,'text-anchor':'middle','font-size':13,fill:V('fg')},'水流 = 电流：'+i.toFixed(2)+' mA');
+  el(s,'rect',{x:660,y:160,width:90,height:50,fill:'none',stroke:V('line'),'stroke-width':2});
+  el(s,'text',{x:705,y:224+0,'text-anchor':'middle','font-size':13,fill:V('fg')},'地 GND = 0 V');
+  $('uo').textContent=u.toFixed(1)+' V';$('ro').textContent=r+' Ω';$('io').textContent=i.toFixed(2)+' mA';
+}
+['u','r'].forEach(id=>$(id).addEventListener('input',water));water();
+/* level */
+function level(){
+  const s=$('levelSvg');s.textContent='';const v=+$('v').value;
+  const X=x=>40+x/3.3*680;
+  el(s,'rect',{x:X(0),y:50,width:X(0.99)-X(0),height:50,fill:V('per'),opacity:.18});
+  el(s,'rect',{x:X(0.99),y:50,width:X(2.31)-X(0.99),height:50,fill:V('gold'),opacity:.18});
+  el(s,'rect',{x:X(2.31),y:50,width:X(3.3)-X(2.31),height:50,fill:V('sw'),opacity:.18});
+  el(s,'text',{x:(X(0)+X(.99))/2,y:80,'text-anchor':'middle','font-size':14,'font-weight':600,fill:V('per')},'读成 0（低）');
+  el(s,'text',{x:(X(.99)+X(2.31))/2,y:80,'text-anchor':'middle','font-size':14,'font-weight':600,fill:V('gold')},'不保证（避开）');
+  el(s,'text',{x:(X(2.31)+X(3.3))/2,y:80,'text-anchor':'middle','font-size':14,'font-weight':600,fill:V('sw')},'读成 1（高）');
+  [0,0.99,2.31,3.3].forEach(x=>{el(s,'line',{x1:X(x),x2:X(x),y1:46,y2:110,stroke:V('muted')});el(s,'text',{x:X(x),y:128,'text-anchor':'middle','font-size':12,class:'m',fill:V('muted')},x+' V')});
+  el(s,'path',{d:`M${X(v)} 30 l-8 -14 h16 z`,fill:V('fg')});
+  el(s,'line',{x1:X(v),x2:X(v),y1:30,y2:104,stroke:V('fg'),'stroke-width':2});
+  el(s,'text',{x:40,y:156,'font-size':12,fill:V('muted')},'0 V（地）');
+  el(s,'text',{x:720,y:156,'text-anchor':'end','font-size':12,fill:V('muted')},'3.3 V（电源）');
+  $('vo').textContent=v.toFixed(2)+' V';
+  $('lo').textContent=v>=2.31?'1（高）':v<=0.99?'0（低）':'不确定';
+  $('lo').style.color=v>=2.31?V('sw'):v<=0.99?V('per'):V('gold');
+}
+$('v').addEventListener('input',level);level();
+/* button circuit */
+let pressed=false;
+function btn(){
+  const s=$('btnSvg');s.textContent='';
+  const c=pressed?V('pc'):V('line');
+  el(s,'text',{x:60,y:30,'font-size':14,'font-weight':600,fill:V('fg')},'3.3 V');
+  el(s,'line',{x1:80,x2:80,y1:38,y2:70,stroke:V('fg'),'stroke-width':2});
+  el(s,'rect',{x:66,y:70,width:28,height:70,rx:3,fill:V('panel'),stroke:V('fg'),'stroke-width':2});
+  el(s,'text',{x:104,y:100,'font-size':13,fill:V('fg')},'上拉电阻');
+  el(s,'text',{x:104,y:118,'font-size':12,fill:V('muted')},'（把线“拉”向 3.3 V）');
+  el(s,'line',{x1:80,x2:80,y1:140,y2:180,stroke:V('fg'),'stroke-width':2});
+  el(s,'circle',{cx:80,cy:180,r:4,fill:V('fg')});
+  el(s,'line',{x1:80,x2:420,y1:180,y2:180,stroke:V('fg'),'stroke-width':2});
+  el(s,'rect',{x:420,y:150,width:140,height:60,rx:6,fill:V('panel'),stroke:V('per'),'stroke-width':2});
+  el(s,'text',{x:490,y:176,'text-anchor':'middle','font-size':14,'font-weight':600,fill:V('per')},'单片机引脚');
+  el(s,'text',{x:490,y:198,'text-anchor':'middle','font-size':13,class:'m',fill:V('fg')},pressed?'0 V → 读到 0':'3.3 V → 读到 1');
+  el(s,'line',{x1:80,x2:80,y1:180,y2:210,stroke:V('fg'),'stroke-width':2});
+  // switch
+  if(pressed)el(s,'line',{x1:80,x2:80,y1:210,y2:250,stroke:V('pc'),'stroke-width':4});
+  else el(s,'line',{x1:80,x2:110,y1:210,y2:242,stroke:V('fg'),'stroke-width':3});
+  el(s,'circle',{cx:80,cy:250,r:4,fill:V('fg')});
+  el(s,'text',{x:120,y:236,'font-size':14,'font-weight':600,fill:pressed?V('pc'):V('fg')},pressed?'按键：按下（接通）':'按键：松开（断开）');
+  el(s,'text',{x:120,y:254,'font-size':12,fill:V('muted')},'点我切换');
+  el(s,'line',{x1:80,x2:80,y1:250,y2:272,stroke:V('fg'),'stroke-width':2});
+  el(s,'line',{x1:62,x2:98,y1:272,y2:272,stroke:V('fg'),'stroke-width':2});
+  el(s,'line',{x1:68,x2:92,y1:279,y2:279,stroke:V('fg'),'stroke-width':2});
+  el(s,'line',{x1:74,x2:86,y1:286,y2:286,stroke:V('fg'),'stroke-width':2});
+  el(s,'text',{x:104,y:290,'font-size':13,fill:V('fg')},'地 0 V');
+  if(pressed){el(s,'path',{d:'M50 60 V265',stroke:V('pc'),'stroke-width':2,'stroke-dasharray':'5 4',fill:'none'});el(s,'text',{x:44,y:160,'text-anchor':'end','font-size':12,fill:V('pc')},'电流');}
+  $('btnInfo').innerHTML=pressed
+   ?'<b class="t">按下：引脚被直接接到地</b><br>电流从 3.3 V 经过上拉电阻流到地。引脚和地连在一起，所以是 <b>0 V</b>，单片机读到 <b>0</b>。上拉电阻的作用就是挡住电流，不让 3.3 V 和地直接短路。'
+   :'<b class="t">松开：引脚只通过电阻连到 3.3 V</b><br>没有电流流动，电阻两端没有压差，所以引脚就是 <b>3.3 V</b>，单片机读到 <b>1</b>。';
+}
+$('btnSvg').addEventListener('click',()=>{pressed=!pressed;btn()});btn();
+/* analog vs digital */
+(function(){
+  const s=$('adSvg');
+  const L=60,R=740;
+  el(s,'text',{x:L,y:18,'font-size':13,'font-weight':600,fill:V('fg')},'中键（数字）：只有高、低');
+  let d=`M${L} 40`;[[0,1],[150,0],[300,1],[420,0],[520,1]].forEach(([x,b],i,a)=>{const y=b?40:90;d+=` L${L+x} ${y}`;const nx=i+1<a.length?a[i+1][0]:680;d+=` L${L+nx} ${y}`});
+  el(s,'path',{d,stroke:V('sw'),fill:'none','stroke-width':2.5});
+  el(s,'text',{x:L-8,y:44,'text-anchor':'end','font-size':11,class:'m',fill:V('muted')},'3.3V');
+  el(s,'text',{x:L-8,y:94,'text-anchor':'end','font-size':11,class:'m',fill:V('muted')},'0V');
+  el(s,'text',{x:L,y:124,'font-size':13,'font-weight':600,fill:V('fg')},'左键（模拟）：按得越深电压越低，中间每个值都有意义');
+  let a='';for(let x=0;x<=680;x+=4){const t=x/680;let dep=t<.15?0:t<.3?(t-.15)/.15:t<.55?1:t<.7?1-(t-.55)/.15*.6:t<.85?.4:0;const y=145+dep*55;a+=(a?'L':'M')+(L+x)+' '+y}
+  el(s,'path',{d:a,stroke:V('pc'),fill:'none','stroke-width':2.5});
+  el(s,'text',{x:L-8,y:149,'text-anchor':'end','font-size':11,class:'m',fill:V('muted')},'≈2.6V');
+  el(s,'text',{x:L-8,y:204,'text-anchor':'end','font-size':11,class:'m',fill:V('muted')},'≈1.0V');
+})();
+/* quiz */
+const Q=[
+ ['1. 单片机的电源是多少伏？',['5 V','3.3 V','12 V'],1,'对。USB 送来 5 V，板上把它降到 3.3 V 给单片机用。','USB 线上是 5 V，但单片机吃的是降压后的 3.3 V。'],
+ ['2. 中键按下时，单片机引脚读到的是？',['1（高）','0（低）'],1,'对。按下把引脚接到地，所以是 0。代码里用 ~ 取反变成“按下 = 1”。','再看一下第 4 步的图：按下时引脚直接连到了地。'],
+ ['3. 左右键为什么不能只用“读高低”的普通引脚？',['因为它的电压是连续变化的，要知道“按了多深”','因为它比中键大','因为它接在 USB 上'],0,'对。所以左右键要用 ADC 把电压量成数字，这是第 6 课的内容。','提示：看第 5 步的两条曲线。'],
+ ['4. 电压 3.3 V、电阻 1000 Ω，电流是多少？',['3.3 mA','3300 mA','0.33 mA'],0,'对。3.3 ÷ 1000 = 0.0033 A = 3.3 mA。','用电流 = 电压 ÷ 电阻，再把 A 换成 mA（×1000）。'],
+];
+(function(){
+  const box=$('quiz');
+  Q.forEach((q,qi)=>{
+    const d=document.createElement('div');d.className='q';
+    d.innerHTML=`<p>${q[0]}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;
+    const o=d.querySelector('.opts'),fb=d.querySelector('.fb');
+    q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;
+      b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});
+    box.appendChild(d);
+  });
+})();
+
+</script>
