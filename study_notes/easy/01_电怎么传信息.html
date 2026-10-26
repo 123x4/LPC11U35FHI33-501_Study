@@ -72,6 +72,25 @@ input[type=range]{width:100%;accent-color:var(--per)}
 svg text{font-family:var(--font-b)}
 svg .m{font-family:var(--font-m)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
 </style>
 <div class="wrap">
 <div class="eyebrow">轻松版 · 第 1 课 · 打地基</div>
@@ -123,7 +142,7 @@ svg .m{font-family:var(--font-m)}
 <pre class="box mono" style="overflow-x:auto;margin:.6rem 0">#define BUTTON_PORT0  ((~LPC_GPIO->PIN[0]) &amp; (MIDDLE_BUTTON_MASK | ...))
                      ↑
                      ~ 就是“取反”：0 变 1，1 变 0</pre>
-<p class="note">现在看不懂这一行没关系，第 5 课 GPIO 会细讲。你只要知道：<b>那个 ~ 是因为“按下 = 低电平”</b>。</p>
+<p class="note">现在看不懂这一行没关系，第 6 课 GPIO 会细讲。你只要知道：<b>那个 ~ 是因为“按下 = 低电平”</b>。</p>
 
 <h2><span class="step">5/5</span>两种信号：数字和模拟</h2>
 <div class="box scroll"><svg id="adSvg" viewBox="0 0 760 220" width="760" height="220" role="img" aria-label="数字信号与模拟信号"></svg></div>
@@ -132,7 +151,7 @@ svg .m{font-family:var(--font-m)}
 <tbody>
 <tr><td>长什么样</td><td>只有高、低两种</td><td>可以是 0~3.3 V 之间任何值</td></tr>
 <tr><td>这只鼠标里</td><td>中键、侧键、DPI、滚轮</td><td><b>左右键</b>（按得越深，电压越低）</td></tr>
-<tr><td>单片机用什么读</td><td>GPIO（第 5 课）</td><td>ADC（第 6 课）</td></tr>
+<tr><td>单片机用什么读</td><td>GPIO（第 6 课）</td><td>ADC（第 7 课）</td></tr>
 </tbody></table>
 <p class="note">左键曲线上的 2.6 V、1.0 V 是估计值，这块板子没有原理图，真实值以后用工具读出来。</p>
 <p>这就是为什么左右键的代码比中键复杂得多：它不是“按了 / 没按”，而是“按了多深”，要先用 ADC 量出来，再由程序决定多深算按下。</p>
@@ -241,7 +260,7 @@ $('btnSvg').addEventListener('click',()=>{pressed=!pressed;btn()});btn();
 const Q=[
  ['1. 单片机的电源是多少伏？',['5 V','3.3 V','12 V'],1,'对。USB 送来 5 V，板上把它降到 3.3 V 给单片机用。','USB 线上是 5 V，但单片机吃的是降压后的 3.3 V。'],
  ['2. 中键按下时，单片机引脚读到的是？',['1（高）','0（低）'],1,'对。按下把引脚接到地，所以是 0。代码里用 ~ 取反变成“按下 = 1”。','再看一下第 4 步的图：按下时引脚直接连到了地。'],
- ['3. 左右键为什么不能只用“读高低”的普通引脚？',['因为它的电压是连续变化的，要知道“按了多深”','因为它比中键大','因为它接在 USB 上'],0,'对。所以左右键要用 ADC 把电压量成数字，这是第 6 课的内容。','提示：看第 5 步的两条曲线。'],
+ ['3. 左右键为什么不能只用“读高低”的普通引脚？',['因为它的电压是连续变化的，要知道“按了多深”','因为它比中键大','因为它接在 USB 上'],0,'对。所以左右键要用 ADC 把电压量成数字，这是第 7 课的内容。','提示：看第 5 步的两条曲线。'],
  ['4. 电压 3.3 V、电阻 1000 Ω，电流是多少？',['3.3 mA','3300 mA','0.33 mA'],0,'对。3.3 ÷ 1000 = 0.0033 A = 3.3 mA。','用电流 = 电压 ÷ 电阻，再把 A 换成 mA（×1000）。'],
 ];
 (function(){

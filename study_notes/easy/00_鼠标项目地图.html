@@ -72,6 +72,25 @@ input[type=range]{width:100%;accent-color:var(--per)}
 svg text{font-family:var(--font-b)}
 svg .m{font-family:var(--font-m)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
 </style>
 <div class="wrap">
 <div class="eyebrow">轻松版 · 第 0 课 · 先看全局</div>
@@ -128,24 +147,25 @@ const ROUTE=[
  ['阶段一 · 打地基（不看代码）'],
  ['0','这只鼠标的地图','零件、程序、数据怎么走'],
  ['1','电怎么传信息','电压、电流、高电平和低电平'],
- ['2','0 和 1','二进制、十六进制、一个字节'],
- ['3','单片机是什么','引脚和寄存器：一排排开关'],
+ ['2','0 和 1','一排开关：二进制、十六进制、字节、寄存器'],
+ ['3','单片机是什么','一块芯片里装了哪些东西'],
  ['4','程序怎么跑','开机、准备、转圈、门铃（中断）'],
+ ['5','代码仓库怎么读','文件怎么分工、#define、板子开关 #if'],
  ['阶段二 · 芯片里的工具（每课都能动手玩）'],
- ['5','GPIO','读一个按键，控制一个开关'],
- ['6','ADC','把电压变成数字'],
- ['7','定时器','每 1 ms 响一次的闹钟'],
- ['8','SPI','和光学传感器对话'],
- ['9','USB','和电脑对话'],
- ['10','EEPROM','断电不丢的小本子'],
+ ['6','GPIO','读一个按键，控制一个开关'],
+ ['7','ADC','把电压变成数字'],
+ ['8','定时器','每 1 ms 响一次的闹钟'],
+ ['9','SPI','和光学传感器对话'],
+ ['10','USB','和电脑对话'],
+ ['11','EEPROM','断电不丢的小本子'],
  ['阶段三 · 沿着路线走'],
- ['11','一次点击','从手指到电脑'],
- ['12','一次“咔哒”','线圈怎么振'],
- ['13','光标移动','传感器的位移怎么上报'],
- ['14','GUI 调参','命令怎么收、参数怎么存'],
+ ['12','一次点击','从手指到电脑'],
+ ['13','一次“咔哒”','线圈怎么振'],
+ ['14','光标移动','传感器的位移怎么上报'],
+ ['15','GUI 调参','命令怎么收、参数怎么存'],
  ['阶段四 · 自己动手'],
- ['15','编译和烧录','怎么安全地改代码、验证'],
- ['16','T1A 新板','把学到的用到新板子上'],
+ ['16','编译和烧录','怎么安全地改代码、验证'],
+ ['17','T1A 新板','把学到的用到新板子上'],
 ];
 function buildRoute(cur){
   const ul=document.getElementById('route');if(!ul)return;
@@ -190,28 +210,28 @@ const N={
  c2:[3,5.5,'GUI 调参软件','MouseTest / 新 GUI'],
 };
 const INFO={
- h1:['左右键红外对管','每个按键下面有一个红外小灯和一个光敏元件。按得越深，照到的光越多或越少，电压就跟着变。这块板子的左右键靠它，不是机械开关。','接到 PIO0_13、PIO0_14（ADC 引脚）；红外灯电源由 PIO0_19 打开','第 1、6、11 课'],
- h2:['中键、侧键、DPI 键','普通的机械按钮：按下接通，松开断开。','PIO0_12 中键、PIO0_11 DPI、PIO0_1 和 PIO0_23 侧键（GPIO）','第 5 课'],
- h3:['滚轮编码器','滚轮转动时，两根线 A、B 轮流变高变低，看谁先变就知道往哪转。','PIO0_17、PIO0_18（GPIO）；app/scroll.c','第 5 课'],
- h4:['PAW3950 光学传感器','鼠标底部的“摄像头”，每秒拍几千张地面照片，比较前后两张算出移动了多少。需要装上透镜才能工作。','SPI 接口；src/PAW3950.c','第 8、13 课'],
- h5:['线圈','按键下面的小电磁铁。通电一瞬间会吸一下，手指就感到“咔哒”。','PIO0_4、PIO0_5 控制通电，PIO0_16 打开升压电源；src/my_electromagnet.c','第 12 课'],
- h6:['USB 口','供电，也是和电脑说话的唯一通道。','src/usbhw.c、usbcore.c','第 9 课'],
- p1:['GPIO（通用输入输出）','最基本的工具：输入时读一根线是高电平还是低电平；输出时让一根线变高或变低。','src/GPIO.c','第 5 课'],
- p2:['ADC（模数转换器）','把 0~3.3 V 的电压量成 0~1023 的数字。GPIO 只能分高和低，ADC 能分出 1024 档。','src/my_adc.c','第 6 课'],
- p3:['SPI','一种用 4 根线一问一答的通信方式，单片机靠它向 PAW3950 要位移数据。','src/SPI.c、src/PAW3950.c','第 8 课'],
- p4:['定时器 CT16B0','芯片里的闹钟，每 1 ms 响一次。程序用它计时，也用它决定什么时候扫描按键。','src/Timer.c','第 7 课'],
- p5:['GPIO 输出 + 延时','让线圈的控制脚变高，等几百微秒，再变低，线圈就“吸”一下。','src/my_electromagnet.c','第 12 课'],
- p6:['USB 控制器','芯片里专门收发 USB 数据的硬件。程序把报文放进它的“柜子”（端点），电脑来取。','src/usbhw.c','第 9 课'],
- p7:['EEPROM','芯片里 4 KB 的小本子，断电不丢。GUI 调好的参数存在这里。','src/IAP_CMD.c','第 10 课'],
- s1:['按键扫描','每 1 ms 把所有按键读一遍，看有没有变化。','app/button.c：Button_Scan()','第 11 课'],
- s2:['按键算法 AP/RT','左右键是“按多深”的连续数值，这段程序决定按到哪里算按下、抬到哪里算松开。','src/my_misc.c','第 11 课'],
- s3:['读位移','通过 SPI 问传感器“你动了多少”，得到 X、Y 两个数。','src/device.c：Device_Optical_Scan()','第 13 课'],
- s4:['滚轮','根据编码器 A、B 两根线的变化判断转了几格。','app/scroll.c','第 5 课'],
- s5:['线圈状态机','收到“按下”或“松开”事件后，按设定的时长给线圈通电，并处理制动、保护。','src/my_electromagnet.c','第 12 课'],
- s6:['组包 + 上报','把按键、位移、滚轮拼成 8 个字节，放进 USB 的 EP1 柜子。','src/device.c：Device_Pack()、Device_Report()','第 11、13 课'],
- s7:['GUI 协议 + 参数','收到 GUI 发来的命令，解析出要改的参数，让它立即生效，再存进 EEPROM。','src/pc_communicate.c、src/my_protocol*.c','第 14 课'],
- c1:['电脑的鼠标驱动','Windows 自带，每 1 ms 来取一次 8 字节报文，变成光标移动和点击。','不在本仓库','第 9 课'],
- c2:['GUI 调参软件','改触发点、振感等参数的电脑软件，通过 USB 的第 3 个接口和鼠标对话。','study_notes/tools/hid_tool.py 是一个简化版','第 14 课'],
+ h1:['左右键红外对管','每个按键下面有一个红外小灯和一个光敏元件。按得越深，照到的光越多或越少，电压就跟着变。这块板子的左右键靠它，不是机械开关。','接到 PIO0_13、PIO0_14（ADC 引脚）；红外灯电源由 PIO0_19 打开','第 1、7、12 课'],
+ h2:['中键、侧键、DPI 键','普通的机械按钮：按下接通，松开断开。','PIO0_12 中键、PIO0_11 DPI、PIO0_1 和 PIO0_23 侧键（GPIO）','第 6 课'],
+ h3:['滚轮编码器','滚轮转动时，两根线 A、B 轮流变高变低，看谁先变就知道往哪转。','PIO0_17、PIO0_18（GPIO）；app/scroll.c','第 6 课'],
+ h4:['PAW3950 光学传感器','鼠标底部的“摄像头”，每秒拍几千张地面照片，比较前后两张算出移动了多少。需要装上透镜才能工作。','SPI 接口；src/PAW3950.c','第 9、14 课'],
+ h5:['线圈','按键下面的小电磁铁。通电一瞬间会吸一下，手指就感到“咔哒”。','PIO0_4、PIO0_5 控制通电，PIO0_16 打开升压电源；src/my_electromagnet.c','第 13 课'],
+ h6:['USB 口','供电，也是和电脑说话的唯一通道。','src/usbhw.c、usbcore.c','第 10 课'],
+ p1:['GPIO（通用输入输出）','最基本的工具：输入时读一根线是高电平还是低电平；输出时让一根线变高或变低。','src/GPIO.c','第 6 课'],
+ p2:['ADC（模数转换器）','把 0~3.3 V 的电压量成 0~1023 的数字。GPIO 只能分高和低，ADC 能分出 1024 档。','src/my_adc.c','第 7 课'],
+ p3:['SPI','一种用 4 根线一问一答的通信方式，单片机靠它向 PAW3950 要位移数据。','src/SPI.c、src/PAW3950.c','第 9 课'],
+ p4:['定时器 CT16B0','芯片里的闹钟，每 1 ms 响一次。程序用它计时，也用它决定什么时候扫描按键。','src/Timer.c','第 8 课'],
+ p5:['GPIO 输出 + 延时','让线圈的控制脚变高，等几百微秒，再变低，线圈就“吸”一下。','src/my_electromagnet.c','第 13 课'],
+ p6:['USB 控制器','芯片里专门收发 USB 数据的硬件。程序把报文放进它的“柜子”（端点），电脑来取。','src/usbhw.c','第 10 课'],
+ p7:['EEPROM','芯片里 4 KB 的小本子，断电不丢。GUI 调好的参数存在这里。','src/IAP_CMD.c','第 11 课'],
+ s1:['按键扫描','每 1 ms 把所有按键读一遍，看有没有变化。','app/button.c：Button_Scan()','第 12 课'],
+ s2:['按键算法 AP/RT','左右键是“按多深”的连续数值，这段程序决定按到哪里算按下、抬到哪里算松开。','src/my_misc.c','第 12 课'],
+ s3:['读位移','通过 SPI 问传感器“你动了多少”，得到 X、Y 两个数。','src/device.c：Device_Optical_Scan()','第 14 课'],
+ s4:['滚轮','根据编码器 A、B 两根线的变化判断转了几格。','app/scroll.c','第 6 课'],
+ s5:['线圈状态机','收到“按下”或“松开”事件后，按设定的时长给线圈通电，并处理制动、保护。','src/my_electromagnet.c','第 13 课'],
+ s6:['组包 + 上报','把按键、位移、滚轮拼成 8 个字节，放进 USB 的 EP1 柜子。','src/device.c：Device_Pack()、Device_Report()','第 12、14 课'],
+ s7:['GUI 协议 + 参数','收到 GUI 发来的命令，解析出要改的参数，让它立即生效，再存进 EEPROM。','src/pc_communicate.c、src/my_protocol*.c','第 15 课'],
+ c1:['电脑的鼠标驱动','Windows 自带，每 1 ms 来取一次 8 字节报文，变成光标移动和点击。','不在本仓库','第 10 课'],
+ c2:['GUI 调参软件','改触发点、振感等参数的电脑软件，通过 USB 的第 3 个接口和鼠标对话。','study_notes/tools/hid_tool.py 是一个简化版','第 15 课'],
 };
 function pos(k){const [c,r]=N[k];return {x:COLS[c][0],y:44+r*66,c}}
 function drawBase(s,onClick){
