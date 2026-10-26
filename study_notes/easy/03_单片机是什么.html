@@ -1,0 +1,315 @@
+<title>单片机是什么</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
+.mx{border-collapse:separate;border-spacing:4px;min-width:720px}
+.mx th{text-align:center;font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.mx th.s{text-align:left;font-size:.85rem;color:var(--muted);font-family:var(--font-b);width:150px}
+.mx td{padding:0;border:0}
+.mx button{width:100%;font:inherit;font-size:.8rem;line-height:1.35;padding:6px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-align:left;min-height:46px}
+.mx button.w-sw{border-left:5px solid var(--sw)}
+.mx button.w-ex{border-left:5px solid var(--muted)}
+.mx button.w-hw{border-left:5px solid var(--per)}
+.mx button.na{color:var(--muted);background:var(--soft);border-style:dashed}
+.mx button[aria-pressed="true"]{outline:3px solid var(--pc);outline-offset:1px}
+.who{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.85rem;margin:.4rem 0}
+.who span{display:inline-flex;align-items:center;gap:6px}
+.who i{width:14px;height:14px;border-radius:3px;display:inline-block}
+pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+</style>
+<div class="wrap">
+<div class="eyebrow">轻松版 · 第 3 课 · 打地基</div>
+<h1>单片机是什么</h1>
+<p class="lede">这一课先看芯片里装了什么，然后学一个以后每天都用的套路：<b>芯片里的任何工具，都按同样的七步来用</b>。后面讲 ADC、定时器、SPI、USB，全都会按这七步从头讲到尾。</p>
+<div class="where"><span>📍</span><div>在地图上：第 ② 列<b>芯片里的工具</b>，整列。</div></div>
+
+<h2><span class="step">1/4</span>一块芯片里的小电脑</h2>
+<p>LPC11U35 只有指甲盖大，但里面是一台完整的小电脑。点图里的每一块看看它是干什么的。</p>
+<div class="box scroll" style="padding:10px"><svg id="chipSvg" viewBox="0 0 760 400" width="760" height="400" role="img" aria-label="芯片内部"></svg></div>
+<div class="card" id="chipInfo" aria-live="polite"><b class="t">点一块试试</b><br>先点中间的 CPU。</div>
+<div class="def"><b>外设</b>：芯片里除了 CPU 和存储器之外的那些“工具”，比如 GPIO、ADC、定时器、SPI、USB。它们是专门的硬件电路，设置好以后自己干活，CPU 不用一直盯着。</div>
+
+<h2><span class="step">2/4</span>每个开关都有门牌号</h2>
+<p>上一课说寄存器是一排开关。芯片里有几百排这样的开关，每一排都有一个<b>地址</b>（门牌号）。程序往某个地址写一个数，就是去拨那一排开关。</p>
+<div class="box scroll"><svg id="addrSvg" viewBox="0 0 760 170" width="760" height="170" role="img" aria-label="地址分布"></svg></div>
+<p>代码里写的 <code>LPC_ADC-&gt;CR</code>，是芯片厂商给地址 <code>0x4001C000</code> 起的名字（定义在 <code>inc/LPC11Uxx.h</code>）。你写名字，编译器替你换成地址。</p>
+
+<h2><span class="step">3/4</span>用任何外设都是这七步</h2>
+<p>把外设想成一台新买的电器。不管是电饭煲还是洗衣机，用法都差不多：</p>
+<div class="box scroll"><svg id="sevenSvg" viewBox="0 0 780 300" width="780" height="300" role="img" aria-label="七步"></svg></div>
+<div class="def"><b>中断标志</b>：外设想叫 CPU 的时候，会把自己的一个开关置 1，这个开关就是“标志”。CPU 去处理（进中断函数）之后，<b>必须把它清回 0</b>，否则 CPU 一出来就看到它还是 1，又被叫回去，程序就卡在中断里出不来了。就像闹钟响了要按掉。</div>
+<div class="def"><b>轮询</b>：不用中断，程序自己隔一会儿去看一眼“好了没”。等的时间很短时（比如 ADC 只要 4 微秒），轮询比中断简单。</div>
+
+<h3>这个项目里四个外设的七步，全部对照</h3>
+<p>每一格都是这个项目里真实的代码。<b>点任意一格</b>，下面显示代码原文、在哪个文件、是谁负责的。边框颜色表示谁负责：</p>
+<div class="who"><span><i style="background:var(--per)"></i>🟦 芯片自动做</span><span><i style="background:var(--muted)"></i>⬜ 现成的例程代码（基本不用改）</span><span><i style="background:var(--sw)"></i>🟩 这个项目自己的代码（你负责）</span><span><i style="background:var(--soft);border:1px dashed var(--line)"></i>这一步不需要</span></div>
+<div class="scroll"><table class="mx" id="mx"></table></div>
+<div class="card" id="mxInfo" aria-live="polite"></div>
+<p>横着看，你会发现规律：</p>
+<ul>
+<li><b>② 开时钟、⑤ 调设置每个外设都有</b>；① 通电只有模拟电路（ADC、USB 的收发器）才需要；③ 解锁只有 SPI 和 I²C 需要；④ 接线只有要用引脚的外设才需要。</li>
+<li><b>⑥ 中断只有两个外设在用</b>：定时器（每 1 ms 叫一次）和 USB（电脑随时会来）。ADC 和 SPI 都是程序自己等。</li>
+<li><b>清标志</b>：定时器的标志是我们的代码自己清的；USB 的标志是例程 <code>usbhw.c</code> 已经帮你清好了，你不用管；ADC 的完成标志是芯片在读数据时自动清的。</li>
+</ul>
+
+<h2><span class="step">4/4</span>以后每个模块课都这样讲</h2>
+<div class="box">
+<p style="margin-top:0"><b>模块课的固定结构</b>（以第 7 课 ADC 为例）：</p>
+<ol style="margin:0;padding-left:1.3em;display:grid;gap:4px">
+<li><b>它是干什么的</b>：原理，用图和动手演示</li>
+<li><b>七步全过程</b>：①~⑦ 每一步的代码、在哪个文件、谁负责，不需要的步骤也说明为什么不需要</li>
+<li><b>中断和标志</b>：用不用中断？标志谁清、在哪清？</li>
+<li><b>项目里怎么用它</b>：哪些函数调用了它、多久调用一次、结果交给谁</li>
+<li><b>容易出错的地方</b>：比如忘了通电、引脚功能选错、标志没清</li>
+<li><b>你能改什么</b>：要改它时改哪几行，会影响什么</li>
+<li><b>T1A 上的变化</b></li>
+</ol>
+</div>
+
+<h2>小测验</h2>
+<div class="box quiz" id="quiz"></div>
+
+<div class="sum"><b>这一课你只需要记住：</b>单片机 = CPU + 存储器 + 一堆外设。用任何外设都是七步：通电 → 开时钟 → 解锁 → 接线 → 调设置 → 要不要中断 → 使用（用了中断就要清标志）。不是每个外设都需要全部七步。</div>
+<h3>本课新词</h3>
+<table><tbody>
+<tr><td><b>外设</b></td><td>芯片里的专用工具电路（GPIO、ADC、定时器、SPI、USB…）</td></tr>
+<tr><td><b>地址</b></td><td>每排开关（寄存器）的门牌号</td></tr>
+<tr><td><b>时钟</b></td><td>让电路一步步工作的节拍。这颗芯片是 48 MHz，每秒 4800 万拍</td></tr>
+<tr><td><b>中断 / 标志</b></td><td>外设叫 CPU 的方式 / 外设用来“举手”的那个开关，处理完要清掉</td></tr>
+<tr><td><b>轮询</b></td><td>不用中断，程序自己去看“好了没”</td></tr>
+</tbody></table>
+<p class="note">下一课：第 4 课 “程序怎么跑”：开机后程序从哪开始、准备工作做了什么、主循环和中断怎么配合。</p>
+</div>
+<script>
+const NS="http://www.w3.org/2000/svg";
+function el(p,t,a,x){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e}
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
+/* chip */
+(function(){
+  const s=$('chipSvg');
+  el(s,'rect',{x:10,y:10,width:740,height:380,rx:16,fill:V('soft'),stroke:V('line'),'stroke-width':2});
+  el(s,'text',{x:26,y:36,'font-size':13,'font-weight':600,fill:V('muted')},'LPC11U35（33 个引脚）');
+  const B=[
+   ['cpu',300,60,160,80,'pc','CPU','大脑，48 MHz','<b class="t">CPU（Cortex-M0）</b><br>大脑。一条一条执行程序里的指令：算数、比较、读写某个地址。每秒能做几千万步。它只会做这些简单的事，复杂功能都靠外设。'],
+   ['clk',490,60,140,80,'gold','时钟','心跳 48 MHz','<b class="t">时钟</b><br>整颗芯片的心跳。外部 12 MHz 晶振经过倍频变成 48 MHz，CPU 和外设都按这个节拍工作。给某个外设“开时钟”，就是把心跳接到它身上，它才会动。（字典：1-2 课）'],
+   ['flash',40,60,220,80,'hw','Flash 64 KB','放程序，断电不丢','<b class="t">Flash（闪存）64 KB</b><br>放程序的地方，断电不丢。前 16 KB 是公司的 Bootloader（引导和升级程序），后面是我们的鼠标程序。你编译出来的 .hex 就是烧进这里。'],
+   ['ram',40,160,220,70,'hw','RAM 12 KB','草稿纸，断电就没','<b class="t">RAM（内存）12 KB</b><br>程序运行时的草稿纸：变量、数组都放这里，读写很快，但断电就清空。其中 2 KB 专门给 USB 放收发的数据。'],
+   ['eep',40,250,220,60,'hw','EEPROM 4 KB','小本子，断电不丢','<b class="t">EEPROM 4 KB</b><br>存参数的小本子，断电不丢，可以一个字节一个字节地改。GUI 调好的触发点、振感就存在这里。（第 11 课）'],
+   ['gpio',300,170,100,52,'per','GPIO','26 个引脚','<b class="t">GPIO</b><br>读引脚高低、让引脚输出高低。按键、片选、线圈控制都用它。（第 6 课）'],
+   ['adc',410,170,100,52,'per','ADC','8 路','<b class="t">ADC</b><br>把引脚上的电压量成 0~1023 的数字。左右键靠它。（第 7 课）'],
+   ['tim',520,170,110,52,'per','定时器','4 个','<b class="t">定时器</b><br>芯片里的闹钟和秒表。CT16B0 每 1 ms 叫一次 CPU。（第 8 课）'],
+   ['ssp',300,232,100,52,'per','SPI','2 个','<b class="t">SPI（SSP0、SSP1）</b><br>和传感器说话的通道。IRPT_V4 板子用 SSP1 连 PAW3950。（第 9 课）'],
+   ['usb',410,232,100,52,'per','USB','1 个','<b class="t">USB 控制器</b><br>和电脑说话。收发包、校验这些事它自己做，程序只管往“柜子”里放数据。（第 10 课）'],
+   ['wdt',520,232,110,52,'per','看门狗','1 个','<b class="t">看门狗</b><br>一个倒计时器。程序要定期“喂”它，如果程序卡死没喂，它就让芯片重启。（字典：1-1 课）'],
+   ['oth',300,294,330,40,'per','还有：USART 串口、I²C','这个项目基本没用','<b class="t">其它外设</b><br>USART 串口、I²C 总线等。这个项目的 IRPT_V4 板子基本没有用到。'],
+   ['sys',650,60,90,274,'muted','系统控制','SYSCON','<b class="t">系统控制（SYSCON）</b><br>总电闸和总开关：哪个外设通电（PDRUNCFG）、哪个外设有时钟（SYSAHBCLKCTRL）、哪个外设解除复位（PRESETCTRL）都在这里。七步里的前三步都是在拨这里的开关。'],
+  ];
+  let sel=null;const g={};
+  B.forEach(b=>{const [k,x,y,w,h,c,t1,t2,info]=b;
+    const grp=el(s,'g',{tabindex:0,role:'button','aria-label':t1,style:'cursor:pointer'});
+    const r=el(grp,'rect',{x,y,width:w,height:h,rx:8,fill:V('panel'),stroke:V(c),'stroke-width':2});
+    el(grp,'text',{x:x+w/2,y:y+h/2-3,'text-anchor':'middle','font-size':15,'font-weight':700,fill:V(c)},t1);
+    el(grp,'text',{x:x+w/2,y:y+h/2+16,'text-anchor':'middle','font-size':11.5,fill:V('muted')},t2);
+    g[k]=r;
+    const go=()=>{if(sel)g[sel].setAttribute('stroke-width',2);sel=k;r.setAttribute('stroke-width',4);const c2=$('chipInfo');c2.style.borderLeftColor=V(c);c2.innerHTML=info};
+    grp.addEventListener('click',go);grp.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}});
+  });
+  el(s,'text',{x:465,y:360,'text-anchor':'middle','font-size':12,fill:V('per')},'↑ 这一圈蓝色的都是“外设”');
+  for(let i=0;i<14;i++){el(s,'rect',{x:40+i*50,y:386,width:16,height:12,fill:V('line')})}
+  el(s,'text',{x:26,y:378,'font-size':11,fill:V('muted')},'引脚 ↓');
+})();
+/* address */
+(function(){
+  const s=$('addrSvg');
+  const R=[['0x0000 0000','Flash：程序','hw',150],['0x1000 0000','RAM：变量','hw',120],['0x2000 4000','USB RAM','hw',100],['0x4000 0000','外设的开关（寄存器）','per',230],['0x5000 0000','GPIO','per',110]];
+  let x=10;R.forEach(([a,t,c,w])=>{el(s,'rect',{x,y:30,width:w-6,height:50,rx:6,fill:V(c),opacity:.18,stroke:V(c)});
+    el(s,'text',{x:x+(w-6)/2,y:60,'text-anchor':'middle','font-size':13,'font-weight':600,fill:V('fg')},t);
+    el(s,'text',{x:x+4,y:22,'font-size':11,class:'m',fill:V('muted')},a);x+=w});
+  const ex=[['LPC_ADC',0x4001C000],['LPC_SYSCON',0x40048000],['LPC_USB',0x40080000]];
+  ex.forEach(([n,a],i)=>{el(s,'text',{x:390,y:108+i*20,'font-size':12,class:'m',fill:V('fg')},`${n.padEnd(11)} = 0x${a.toString(16).toUpperCase()}`)});
+  el(s,'path',{d:'M480 82 L470 94',stroke:V('per'),'stroke-width':1.5});
+  el(s,'text',{x:10,y:118,'font-size':12,fill:V('muted')},'地址就像门牌号：');
+  el(s,'text',{x:10,y:138,'font-size':12,fill:V('muted')},'0x4000 0000 往后一整片，都是外设的开关。');
+})();
+/* seven steps */
+const STEPS=[
+ ['①','通电','插上电源','PDRUNCFG','只有模拟电路要单独通电'],
+ ['②','开时钟','按下电源键','SYSAHBCLKCTRL','几乎每个外设都要'],
+ ['③','解锁','撕掉运输锁','PRESETCTRL','只有 SPI、I²C'],
+ ['④','接线','插上线','IOCON','用到引脚才要'],
+ ['⑤','调设置','选档位','外设自己的寄存器','每个外设都要'],
+ ['⑥','要不要叫你','设个提醒','外设中断 + NVIC','可选'],
+ ['⑦','使用','开始用','启动 / 读写数据','用了中断：处理完要清标志'],
+];
+(function(){
+  const s=$('sevenSvg');const w=106;
+  STEPS.forEach((st,i)=>{const x=6+i*(w+4);const c=i<3?'gold':i<5?'per':i===5?'pc':'sw';
+    el(s,'rect',{x,y:20,width:w,height:250,rx:8,fill:V('panel'),stroke:V(c),'stroke-width':1.5});
+    el(s,'text',{x:x+w/2,y:56,'text-anchor':'middle','font-size':26,'font-weight':700,fill:V(c)},st[0]);
+    el(s,'text',{x:x+w/2,y:88,'text-anchor':'middle','font-size':16,'font-weight':700,fill:V('fg')},st[1]);
+    el(s,'text',{x:x+w/2,y:110,'text-anchor':'middle','font-size':11,fill:V('muted')},'像电器的');el(s,'text',{x:x+w/2,y:126,'text-anchor':'middle','font-size':12,fill:V('muted')},st[2]);
+    el(s,'line',{x1:x+10,x2:x+w-10,y1:138,y2:138,stroke:V('grid')});
+    el(s,'text',{x:x+w/2,y:158,'text-anchor':'middle','font-size':10.5,class:'m',fill:V('fg')},st[3].length>12?st[3].slice(0,8):st[3]);
+    if(st[3].length>12)el(s,'text',{x:x+w/2,y:174,'text-anchor':'middle','font-size':10.5,class:'m',fill:V('fg')},st[3].slice(8));
+    const words=st[4].match(/.{1,8}/g);words.forEach((t,j)=>el(s,'text',{x:x+w/2,y:204+j*16,'text-anchor':'middle','font-size':11.5,fill:V(c)},t));
+    if(i<6)el(s,'path',{d:`M${x+w-1} 56 l6 0`,stroke:V('muted'),'stroke-width':2});
+  });
+  el(s,'text',{x:6,y:292,'font-size':12,fill:V('muted')},'①②③ 在“系统控制”里拨开关；④ 在引脚配置（IOCON）里；⑤⑥⑦ 在外设自己的寄存器里。');
+})();
+/* matrix: [label, who(sw|ex|hw|na), detail html] */
+const MODS=['ADC','定时器 CT16B0','SPI（SSP1）','USB'];
+const MX=[
+ [ // ① power
+  ['PDRUNCFG 4 号关成 0','sw','<pre class="code">LPC_SYSCON-&gt;PDRUNCFG &amp;= ~(1U &lt;&lt; 4); // Open adc power</pre><code>src/my_adc.c:51</code>，在 <code>MyADC_HwInit()</code> 里。<br>ADC 是模拟电路，默认断电省电。这个寄存器 1 = 断电，所以要关成 0 才是通电。'],
+  ['不需要','na','定时器是纯数字电路，跟着芯片一起有电，不用单独通电。'],
+  ['不需要','na','SPI 是纯数字电路，不用单独通电。'],
+  ['PDRUNCFG 10、8 号','ex','<pre class="code">LPC_SYSCON-&gt;PDRUNCFG &amp;= ~(1 &lt;&lt; 10); // Power On USB PHY\nLPC_SYSCON-&gt;PDRUNCFG &amp;= ~(1 &lt;&lt;  8); // Power On USB PLL</pre><code>src/OSC.c:60~61</code>，在 <code>InitUSBOSC()</code> 里（1-5 课）。<br>10 号是 USB 收发器（产生 D+/D- 电压的模拟电路），8 号是给 USB 产生 48 MHz 的 PLL。'],
+ ],
+ [ // ② clock
+  ['SYSAHBCLKCTRL 13 号','sw','<pre class="code">LPC_SYSCON-&gt;SYSAHBCLKCTRL |= (1u &lt;&lt; 13); // enables clock for ADC</pre><code>src/my_adc.c:52</code>。上一课你亲手执行过这一行。'],
+  ['SYSAHBCLKCTRL 7 号','ex','<pre class="code">LPC_SYSCON-&gt;SYSAHBCLKCTRL |= (1&lt;&lt;7); // CT16B0</pre><code>src/Timer.c:162</code>，在 <code>InitCT16B0()</code> 里。<code>Timer.c</code> 是老项目带过来的通用驱动。'],
+  ['SYSAHBCLKCTRL 18 号 + 分频','sw','<pre class="code">LPC_SYSCON-&gt;SYSAHBCLKCTRL |= (1&lt;&lt;18);  // SPI1 时钟\nLPC_SYSCON-&gt;SSP1CLKDIV = 0x01;          // 48MHz / 1</pre><code>src/PAW3950.c:285~286</code>，在 <code>PA3950_ModuleInit()</code> 里。SPI 还多一个“分频”：给它的时钟可以再除一下。'],
+  ['SYSAHBCLKCTRL 14、27 号','ex','<pre class="code">LPC_SYSCON-&gt;SYSAHBCLKCTRL |= (BIT14|BIT27); // USB + USB RAM</pre><code>src/usbhw.c:129</code>，在 <code>NDrv_USB_IOClkConfig()</code> 里。27 号是 USB 专用的那 2 KB RAM。'],
+ ],
+ [ // ③ reset
+  ['不需要','na','ADC 没有复位锁，开了时钟就能用。'],
+  ['不需要','na','定时器没有复位锁。'],
+  ['PRESETCTRL 2 号','sw','<pre class="code">LPC_SYSCON-&gt;PRESETCTRL |= (0x1&lt;&lt;2); // SPI1 Reset De-Asserted</pre><code>src/PAW3950.c:284</code>。<br>SPI 开机时处于“复位锁定”状态，像新电器贴着“运输锁”。不把这个开关置 1 解锁，配置写进去也不工作。这是最容易忘的一步。'],
+  ['不需要','na','USB 没有这个复位锁。'],
+ ],
+ [ // ④ pins
+  ['PIO0_13、PIO0_14 设成模拟输入','sw','<pre class="code">*(p-&gt;pFuncReg) &amp;= ~((1&lt;&lt;3)|(1&lt;&lt;4)); // 不上拉不下拉\nDrvGPIOInput(p-&gt;port, p-&gt;pin);         // 输入\n*(p-&gt;pFuncReg) &amp;= ~(1U &lt;&lt; 7);          // 模拟模式\nMYADC_SET_FUNC(*(p-&gt;pFuncReg), 2);       // 功能 2 = AD2/AD3</pre><code>src/my_adc.c:67~77</code>，<code>MyADC_Init()</code>。<br>一个引脚能干好几种活，要告诉它“你现在当 ADC 输入”，还要关掉上下拉，免得影响电压。'],
+  ['不需要','na','定时器只在芯片内部数数，不用引脚。'],
+  ['3 个引脚改成 SPI 功能','sw','<pre class="code">LPC_IOCON-&gt;PIO0_21 |= 0x02;  // MOSI1 单片机→传感器\nLPC_IOCON-&gt;PIO0_22 |= 0x03;  // MISO1 传感器→单片机\nLPC_IOCON-&gt;PIO1_15 |= 0x03;  // SCK1  时钟</pre><code>src/PAW3950.c:288~295</code>。第 4 根线 NCS（片选）当普通 GPIO 用，程序自己控制（同一函数开头）。'],
+  ['VBUS、USB_CONNECT 两个脚','ex','<pre class="code">LPC_IOCON-&gt;PIO0_3 |= (BIT3|BIT0); // VBUS：检测是否插了线\nLPC_IOCON-&gt;PIO0_6 |= BIT0;        // USB_CONNECT：控制 D+ 上拉</pre><code>src/usbhw.c:134~138</code>。D+、D- 是专用引脚，不用配置。'],
+ ],
+ [ // ⑤ config
+  ['3 MHz、10 位','sw','<pre class="code">LPC_ADC-&gt;CR |= (15U &lt;&lt; 8);   // 48MHz/(15+1) = 3MHz\nLPC_ADC-&gt;CR &amp;= ~(0x7U &lt;&lt; 17); // 11 个时钟，10 位精度</pre><code>src/my_adc.c:54~56</code>。手册要求 ADC 时钟不超过 4.5 MHz。'],
+  ['每 1 µs 数一下，数到 1000','ex','<pre class="code">LPC_CT16B0-&gt;PR  = 47;   // 48MHz/48 = 每 1µs 加 1\nLPC_CT16B0-&gt;MR0 = 999;  // 数到 999（共 1000 下 = 1ms）\nLPC_CT16B0-&gt;MCR = 3;    // 到了：叫 CPU + 从 0 重数\nLPC_CT16B0-&gt;TCR = 1;    // 开始数</pre><code>src/Timer.c:163~170</code>；47 和 999 这两个数是项目定的（<code>inc/Timer.h:17~18</code>，<code>src/device.c:445</code> 调用）。'],
+  ['8 位、模式 3、1 MHz','sw','<pre class="code">LPC_SSP1-&gt;CR0  = 0x01C7;  // 8 位，CPOL=1 CPHA=1\nLPC_SSP1-&gt;CPSR = 0x18;    // 48MHz/(24×2) = 1MHz\nLPC_SSP1-&gt;CR1 |= SSPCR1_SSE; // 启动</pre><code>src/PAW3950.c:298~309</code>。CPOL/CPHA 是 SPI 的“说话方式”，必须和传感器手册一致（第 9 课）。'],
+  ['端点柜子、地址、连接','ex','<pre class="code">LPC_USB-&gt;EPLISTSTART  = USB_EPLIST_ADDR;  // 柜子登记表放哪\nLPC_USB-&gt;DATABUFSTART = USB_EPDATA_PAGE;  // 柜子本身放哪\nLPC_USB-&gt;DEVCMDSTAT  |= USB_DCON;          // 接上 D+ 上拉，告诉电脑“我来了”</pre><code>src/usbhw.c:214~216、341</code>（1-11、1-12 课）。'],
+ ],
+ [ // ⑥ interrupt
+  ['不用，轮询','na','转换只要约 4 µs，程序直接等着看“好了没”（DONE 位），比用中断简单。'],
+  ['用：每 1 ms 叫一次','ex','<pre class="code">LPC_CT16B0-&gt;MCR = 3;               // 外设这边：到点就举手\nNVIC_EnableIRQ(TIMER_16_0_IRQn);    // CPU 这边：允许它叫我</pre><code>src/Timer.c:168、171</code>。中断要两边都打开：外设愿意举手，CPU 愿意听。'],
+  ['不用，轮询','na','读传感器时程序自己等 SPI 发完收完。'],
+  ['用：电脑随时会来','ex','<pre class="code">LPC_USB-&gt;INTEN = DEV_STAT_INT | 0x3FF | ...; // 外设：哪些事要举手\nNVIC_EnableIRQ(USB_IRQn);                     // CPU：允许\nNVIC_SetPriority(USB_IRQn, 1);                // 优先级</pre><code>src/usbhw.c:374、323</code>；优先级在 <code>src/device.c:448</code>（项目设的，1-9 课）。'],
+ ],
+ [ // ⑦ use + flags
+  ['选通道→开始→等→读；标志芯片自动清','hw','<pre class="code">LPC_ADC-&gt;CR |= (1u &lt;&lt; ch);   // 选通道\nLPC_ADC-&gt;CR |= (1u &lt;&lt; 24);   // 开始\nwhile(!(LPC_ADC-&gt;DR[ch] &amp; (1u&lt;&lt;31))) ... // 等“完成”标志\nval = (LPC_ADC-&gt;DR[ch] &gt;&gt; 6) &amp; 0x3FF;     // 取结果</pre>🟩 <code>src/my_adc.c:79</code> <code>MyADC_GetValue()</code>，每 1 ms 被按键扫描调用两次。<br>🟦 “完成”标志：芯片在你读结果寄存器时<b>自动清零</b>，不用写代码清（UM Table 355）。'],
+  ['中断里自己清标志','sw','<pre class="code">void TIMER16_0_IRQHandler(void) {\n  if (LPC_CT16B0-&gt;IR &amp; 1) {\n    LPC_CT16B0-&gt;IR = 1;   // ← 清标志！写 1 清除\n    毫秒计数 + 1; 允许下一次按键扫描; ...\n  }\n}</pre><code>src/Timer.c:65~</code>。<b>这一行一定要有</b>，不清的话 CPU 一出中断马上又被叫回来。这个中断函数里做什么是项目自己写的。'],
+  ['发一个字节、收一个字节','sw','<code>PAW3950_Read()</code>、<code>PAW3950_Write()</code>：<code>src/PAW3950.c:413、431</code>。往 SPI 的数据寄存器写一个字节，芯片自动把它一位一位送出去，同时收回一个字节（第 9 课）。没用中断，没有标志要清。'],
+  ['标志例程已清；你只管数据','ex','<pre class="code">void USB_IRQHandler(void) {\n  disr = LPC_USB-&gt;INTSTAT;   // 读：谁在举手\n  LPC_USB-&gt;INTSTAT = disr;   // ← 清标志：写回去就清掉了\n  ...\n}</pre>⬜ <code>src/usbhw.c:1335~1336</code>，<b>例程已经帮你清了</b>，DEVCMDSTAT 里的 SETUP、复位等标志也是例程清的。<br>🟦 芯片自动：收发包、算 CRC、回 ACK/NAK。<br>🟩 你负责：描述符（<code>usbdesc.c</code>）、往 EP1 放什么报文（<code>USB_LoadInEP_Data()</code>）、收到 GUI 数据后怎么处理。'],
+ ],
+];
+(function(){
+  const t=$('mx');
+  let h='<thead><tr><th class="s">步骤</th>'+MODS.map(m=>`<th>${m}</th>`).join('')+'</tr></thead><tbody>';
+  MX.forEach((row,r)=>{h+=`<tr><th class="s">${STEPS[r][0]} ${STEPS[r][1]}</th>`+row.map((c,ci)=>`<td><button type="button" data-r="${r}" data-c="${ci}" class="${c[1]==='na'?'na':'w-'+c[1]}">${c[0]}</button></td>`).join('')+'</tr>'});
+  t.innerHTML=h+'</tbody>';
+  const who={sw:'🟩 这个项目自己的代码（你负责）',ex:'⬜ 现成的例程代码（基本不用改）',hw:'🟦 芯片自动 + 🟩 你调用',na:'这一步不需要'};
+  const col={sw:'sw',ex:'muted',hw:'per',na:'line'};
+  const show=b=>{t.querySelectorAll('button').forEach(o=>o.setAttribute('aria-pressed',o===b?'true':'false'));
+    const c=MX[b.dataset.r][b.dataset.c];const card=$('mxInfo');card.style.borderLeftColor=V(col[c[1]]);
+    card.innerHTML=`<b class="t">${MODS[b.dataset.c]} · ${STEPS[b.dataset.r][0]} ${STEPS[b.dataset.r][1]}</b>　<span class="note">${who[c[1]]}</span><br>${c[2]}`};
+  t.querySelectorAll('button').forEach(b=>b.onclick=()=>show(b));
+  show(t.querySelector('button[data-r="6"][data-c="1"]'));
+})();
+/* quiz */
+const Q=[
+ ['1. 程序和变量分别放在哪里？',['程序在 Flash，变量在 RAM','程序在 RAM，变量在 Flash','都在 EEPROM'],0,'对。Flash 断电不丢放程序；RAM 是草稿纸放变量。','Flash 断电不丢，RAM 断电就清空。'],
+ ['2. 用 SPI 时最容易忘的一步是？',['开时钟','解锁（PRESETCTRL）','调设置'],1,'对。SPI 开机处于复位锁定，不解锁就不工作。','看矩阵里 ③ 解锁那一行。'],
+ ['3. 定时器中断里那句 LPC_CT16B0->IR = 1 不写会怎样？',['没影响','CPU 一出中断又被叫回去，程序卡死在中断里','定时器变慢'],1,'对。标志没清，CPU 会一直被叫回去。','想想闹钟响了不按掉会怎样。'],
+ ['4. USB 中断的标志谁来清？',['我要自己写','例程 usbhw.c 已经清了','芯片自动清'],1,'对。USB_IRQHandler 开头两行就清了。你负责的是描述符和报文内容。','点矩阵里 USB 的 ⑦ 看看。'],
+];
+(function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0].replace(/</g,'&lt;')}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+</script>
