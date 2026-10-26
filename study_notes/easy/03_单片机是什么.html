@@ -129,26 +129,38 @@ pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);borde
 <div class="def"><b>中断标志</b>：外设想叫 CPU 的时候，会把自己的一个开关置 1，这个开关就是“标志”。CPU 去处理（进中断函数）之后，<b>必须把它清回 0</b>，否则 CPU 一出来就看到它还是 1，又被叫回去，程序就卡在中断里出不来了。就像闹钟响了要按掉。</div>
 <div class="def"><b>轮询</b>：不用中断，程序自己隔一会儿去看一眼“好了没”。等的时间很短时（比如 ADC 只要 4 微秒），轮询比中断简单。</div>
 
-<h3>这个项目里四个外设的七步，全部对照</h3>
-<p>每一格都是这个项目里真实的代码。<b>点任意一格</b>，下面显示代码原文、在哪个文件、是谁负责的。边框颜色表示谁负责：</p>
-<div class="who"><span><i style="background:var(--per)"></i>🟦 芯片自动做</span><span><i style="background:var(--muted)"></i>⬜ 现成的例程代码（基本不用改）</span><span><i style="background:var(--sw)"></i>🟩 这个项目自己的代码（你负责）</span><span><i style="background:var(--soft);border:1px dashed var(--line)"></i>这一步不需要</span></div>
-<div class="scroll"><table class="mx" id="mx"></table></div>
-<div class="card" id="mxInfo" aria-live="polite"></div>
-<p>横着看，你会发现规律：</p>
+<h3>七步只是“清单”，真正的来龙去脉要按时间看</h3>
+<p>七步告诉你“要做哪些事”，但没告诉你<b>什么时候做、谁来做、做完之后它怎么一直工作下去</b>。所以每个模块都画成下面这种<b>生命周期图</b>：</p>
 <ul>
-<li><b>② 开时钟、⑤ 调设置每个外设都有</b>；① 通电只有模拟电路（ADC、USB 的收发器）才需要；③ 解锁只有 SPI 和 I²C 需要；④ 接线只有要用引脚的外设才需要。</li>
-<li><b>⑥ 中断只有两个外设在用</b>：定时器（每 1 ms 叫一次）和 USB（电脑随时会来）。ADC 和 SPI 都是程序自己等。</li>
-<li><b>清标志</b>：定时器的标志是我们的代码自己清的；USB 的标志是例程 <code>usbhw.c</code> 已经帮你清好了，你不用管；ADC 的完成标志是芯片在读数据时自动清的。</li>
+<li><b>从左到右是时间</b>：开机准备（只做一次）→ 平时工作（反复）→ 中断（有的话）→ 停止或出错。</li>
+<li><b>从上到下是谁在做</b>：🟦 芯片自己 / ⬜ 现成的例程代码 / 🟩 这个项目的代码（你负责）。</li>
+<li><b>每个方块上的数字是真实的执行顺序</b>，右上角小标签是它属于七步里的哪一步。点“下一步”按顺序走一遍，或者直接点方块。</li>
 </ul>
+<div class="btns" role="group" aria-label="选择模块" id="modTabs"></div>
+<div class="box scroll" style="padding:10px"><svg id="lifeSvg" viewBox="0 0 900 420" width="900" height="420" role="img" aria-label="模块生命周期"></svg></div>
+<div class="btns"><button type="button" id="lfPrev">上一步</button><button type="button" id="lfNext">下一步</button><span class="note" id="lfPos" style="align-self:center"></span></div>
+<div class="card" id="lifeInfo" aria-live="polite"></div>
+<div class="card" id="lifeSum" style="border-left-color:var(--gold)"></div>
 
+<h3>四个模块放在一起比一比</h3>
+<div class="scroll"><table>
+<thead><tr><th></th><th>ADC</th><th>定时器 CT16B0</th><th>SPI（SSP1）</th><th>USB</th></tr></thead>
+<tbody>
+<tr><td>七步里用到</td><td>①②④⑤⑦</td><td>②⑤⑥⑦</td><td>②③④⑤⑦</td><td>①②④⑤⑥⑦</td></tr>
+<tr><td>初始化代码谁写</td><td>🟩 项目</td><td>⬜ 例程（参数 🟩）</td><td>🟩 项目</td><td>⬜ 例程</td></tr>
+<tr><td>多久用一次</td><td>每 1 ms 两次</td><td>每 1 ms 自己叫一次</td><td>按回报率定期读</td><td>电脑随时来</td></tr>
+<tr><td>怎么知道“好了”</td><td>轮询 DONE</td><td>中断</td><td>轮询状态寄存器</td><td>中断</td></tr>
+<tr><td>标志 / 残留谁清</td><td>🟩 开始前读一次清旧的；🟦 读结果时自动清</td><td>🟩 中断里写 IR = 1</td><td>⬜ 例程读掉接收缓冲里的垃圾</td><td>⬜ 例程在中断里清 INTSTAT</td></tr>
+<tr><td>结果交给谁</td><td>按键算法</td><td>毫秒计数、扫描节拍</td><td>组包（位移）</td><td>电脑 / GUI 协议</td></tr>
+</tbody></table></div>
 <h2><span class="step">4/4</span>以后每个模块课都这样讲</h2>
 <div class="box">
 <p style="margin-top:0"><b>模块课的固定结构</b>（以第 7 课 ADC 为例）：</p>
 <ol style="margin:0;padding-left:1.3em;display:grid;gap:4px">
 <li><b>它是干什么的</b>：原理，用图和动手演示</li>
-<li><b>七步全过程</b>：①~⑦ 每一步的代码、在哪个文件、谁负责，不需要的步骤也说明为什么不需要</li>
-<li><b>中断和标志</b>：用不用中断？标志谁清、在哪清？</li>
-<li><b>项目里怎么用它</b>：哪些函数调用了它、多久调用一次、结果交给谁</li>
+<li><b>生命周期图</b>：开机准备 → 平时工作 → 中断 → 停止/出错，每一步的代码、文件行号、谁负责（就是上面这种图，会画得更细）</li>
+<li><b>七步核对</b>：①~⑦ 哪些有、哪些不需要、为什么</li>
+<li><b>标志和残留</b>：哪些标志要清、谁清、在哪清，例程已经清了的明确标出</li>
 <li><b>容易出错的地方</b>：比如忘了通电、引脚功能选错、标志没清</li>
 <li><b>你能改什么</b>：要改它时改哪几行，会影响什么</li>
 <li><b>T1A 上的变化</b></li>
@@ -245,71 +257,125 @@ const STEPS=[
   });
   el(s,'text',{x:6,y:292,'font-size':12,fill:V('muted')},'①②③ 在“系统控制”里拨开关；④ 在引脚配置（IOCON）里；⑤⑥⑦ 在外设自己的寄存器里。');
 })();
-/* matrix: [label, who(sw|ex|hw|na), detail html] */
-const MODS=['ADC','定时器 CT16B0','SPI（SSP1）','USB'];
-const MX=[
- [ // ① power
-  ['PDRUNCFG 4 号关成 0','sw','<pre class="code">LPC_SYSCON-&gt;PDRUNCFG &amp;= ~(1U &lt;&lt; 4); // Open adc power</pre><code>src/my_adc.c:51</code>，在 <code>MyADC_HwInit()</code> 里。<br>ADC 是模拟电路，默认断电省电。这个寄存器 1 = 断电，所以要关成 0 才是通电。'],
-  ['不需要','na','定时器是纯数字电路，跟着芯片一起有电，不用单独通电。'],
-  ['不需要','na','SPI 是纯数字电路，不用单独通电。'],
-  ['PDRUNCFG 10、8 号','ex','<pre class="code">LPC_SYSCON-&gt;PDRUNCFG &amp;= ~(1 &lt;&lt; 10); // Power On USB PHY\nLPC_SYSCON-&gt;PDRUNCFG &amp;= ~(1 &lt;&lt;  8); // Power On USB PLL</pre><code>src/OSC.c:60~61</code>，在 <code>InitUSBOSC()</code> 里（1-5 课）。<br>10 号是 USB 收发器（产生 D+/D- 电压的模拟电路），8 号是给 USB 产生 48 MHz 的 PLL。'],
- ],
- [ // ② clock
-  ['SYSAHBCLKCTRL 13 号','sw','<pre class="code">LPC_SYSCON-&gt;SYSAHBCLKCTRL |= (1u &lt;&lt; 13); // enables clock for ADC</pre><code>src/my_adc.c:52</code>。上一课你亲手执行过这一行。'],
-  ['SYSAHBCLKCTRL 7 号','ex','<pre class="code">LPC_SYSCON-&gt;SYSAHBCLKCTRL |= (1&lt;&lt;7); // CT16B0</pre><code>src/Timer.c:162</code>，在 <code>InitCT16B0()</code> 里。<code>Timer.c</code> 是老项目带过来的通用驱动。'],
-  ['SYSAHBCLKCTRL 18 号 + 分频','sw','<pre class="code">LPC_SYSCON-&gt;SYSAHBCLKCTRL |= (1&lt;&lt;18);  // SPI1 时钟\nLPC_SYSCON-&gt;SSP1CLKDIV = 0x01;          // 48MHz / 1</pre><code>src/PAW3950.c:285~286</code>，在 <code>PA3950_ModuleInit()</code> 里。SPI 还多一个“分频”：给它的时钟可以再除一下。'],
-  ['SYSAHBCLKCTRL 14、27 号','ex','<pre class="code">LPC_SYSCON-&gt;SYSAHBCLKCTRL |= (BIT14|BIT27); // USB + USB RAM</pre><code>src/usbhw.c:129</code>，在 <code>NDrv_USB_IOClkConfig()</code> 里。27 号是 USB 专用的那 2 KB RAM。'],
- ],
- [ // ③ reset
-  ['不需要','na','ADC 没有复位锁，开了时钟就能用。'],
-  ['不需要','na','定时器没有复位锁。'],
-  ['PRESETCTRL 2 号','sw','<pre class="code">LPC_SYSCON-&gt;PRESETCTRL |= (0x1&lt;&lt;2); // SPI1 Reset De-Asserted</pre><code>src/PAW3950.c:284</code>。<br>SPI 开机时处于“复位锁定”状态，像新电器贴着“运输锁”。不把这个开关置 1 解锁，配置写进去也不工作。这是最容易忘的一步。'],
-  ['不需要','na','USB 没有这个复位锁。'],
- ],
- [ // ④ pins
-  ['PIO0_13、PIO0_14 设成模拟输入','sw','<pre class="code">*(p-&gt;pFuncReg) &amp;= ~((1&lt;&lt;3)|(1&lt;&lt;4)); // 不上拉不下拉\nDrvGPIOInput(p-&gt;port, p-&gt;pin);         // 输入\n*(p-&gt;pFuncReg) &amp;= ~(1U &lt;&lt; 7);          // 模拟模式\nMYADC_SET_FUNC(*(p-&gt;pFuncReg), 2);       // 功能 2 = AD2/AD3</pre><code>src/my_adc.c:67~77</code>，<code>MyADC_Init()</code>。<br>一个引脚能干好几种活，要告诉它“你现在当 ADC 输入”，还要关掉上下拉，免得影响电压。'],
-  ['不需要','na','定时器只在芯片内部数数，不用引脚。'],
-  ['3 个引脚改成 SPI 功能','sw','<pre class="code">LPC_IOCON-&gt;PIO0_21 |= 0x02;  // MOSI1 单片机→传感器\nLPC_IOCON-&gt;PIO0_22 |= 0x03;  // MISO1 传感器→单片机\nLPC_IOCON-&gt;PIO1_15 |= 0x03;  // SCK1  时钟</pre><code>src/PAW3950.c:288~295</code>。第 4 根线 NCS（片选）当普通 GPIO 用，程序自己控制（同一函数开头）。'],
-  ['VBUS、USB_CONNECT 两个脚','ex','<pre class="code">LPC_IOCON-&gt;PIO0_3 |= (BIT3|BIT0); // VBUS：检测是否插了线\nLPC_IOCON-&gt;PIO0_6 |= BIT0;        // USB_CONNECT：控制 D+ 上拉</pre><code>src/usbhw.c:134~138</code>。D+、D- 是专用引脚，不用配置。'],
- ],
- [ // ⑤ config
-  ['3 MHz、10 位','sw','<pre class="code">LPC_ADC-&gt;CR |= (15U &lt;&lt; 8);   // 48MHz/(15+1) = 3MHz\nLPC_ADC-&gt;CR &amp;= ~(0x7U &lt;&lt; 17); // 11 个时钟，10 位精度</pre><code>src/my_adc.c:54~56</code>。手册要求 ADC 时钟不超过 4.5 MHz。'],
-  ['每 1 µs 数一下，数到 1000','ex','<pre class="code">LPC_CT16B0-&gt;PR  = 47;   // 48MHz/48 = 每 1µs 加 1\nLPC_CT16B0-&gt;MR0 = 999;  // 数到 999（共 1000 下 = 1ms）\nLPC_CT16B0-&gt;MCR = 3;    // 到了：叫 CPU + 从 0 重数\nLPC_CT16B0-&gt;TCR = 1;    // 开始数</pre><code>src/Timer.c:163~170</code>；47 和 999 这两个数是项目定的（<code>inc/Timer.h:17~18</code>，<code>src/device.c:445</code> 调用）。'],
-  ['8 位、模式 3、1 MHz','sw','<pre class="code">LPC_SSP1-&gt;CR0  = 0x01C7;  // 8 位，CPOL=1 CPHA=1\nLPC_SSP1-&gt;CPSR = 0x18;    // 48MHz/(24×2) = 1MHz\nLPC_SSP1-&gt;CR1 |= SSPCR1_SSE; // 启动</pre><code>src/PAW3950.c:298~309</code>。CPOL/CPHA 是 SPI 的“说话方式”，必须和传感器手册一致（第 9 课）。'],
-  ['端点柜子、地址、连接','ex','<pre class="code">LPC_USB-&gt;EPLISTSTART  = USB_EPLIST_ADDR;  // 柜子登记表放哪\nLPC_USB-&gt;DATABUFSTART = USB_EPDATA_PAGE;  // 柜子本身放哪\nLPC_USB-&gt;DEVCMDSTAT  |= USB_DCON;          // 接上 D+ 上拉，告诉电脑“我来了”</pre><code>src/usbhw.c:214~216、341</code>（1-11、1-12 课）。'],
- ],
- [ // ⑥ interrupt
-  ['不用，轮询','na','转换只要约 4 µs，程序直接等着看“好了没”（DONE 位），比用中断简单。'],
-  ['用：每 1 ms 叫一次','ex','<pre class="code">LPC_CT16B0-&gt;MCR = 3;               // 外设这边：到点就举手\nNVIC_EnableIRQ(TIMER_16_0_IRQn);    // CPU 这边：允许它叫我</pre><code>src/Timer.c:168、171</code>。中断要两边都打开：外设愿意举手，CPU 愿意听。'],
-  ['不用，轮询','na','读传感器时程序自己等 SPI 发完收完。'],
-  ['用：电脑随时会来','ex','<pre class="code">LPC_USB-&gt;INTEN = DEV_STAT_INT | 0x3FF | ...; // 外设：哪些事要举手\nNVIC_EnableIRQ(USB_IRQn);                     // CPU：允许\nNVIC_SetPriority(USB_IRQn, 1);                // 优先级</pre><code>src/usbhw.c:374、323</code>；优先级在 <code>src/device.c:448</code>（项目设的，1-9 课）。'],
- ],
- [ // ⑦ use + flags
-  ['选通道→开始→等→读；标志芯片自动清','hw','<pre class="code">LPC_ADC-&gt;CR |= (1u &lt;&lt; ch);   // 选通道\nLPC_ADC-&gt;CR |= (1u &lt;&lt; 24);   // 开始\nwhile(!(LPC_ADC-&gt;DR[ch] &amp; (1u&lt;&lt;31))) ... // 等“完成”标志\nval = (LPC_ADC-&gt;DR[ch] &gt;&gt; 6) &amp; 0x3FF;     // 取结果</pre>🟩 <code>src/my_adc.c:79</code> <code>MyADC_GetValue()</code>，每 1 ms 被按键扫描调用两次。<br>🟦 “完成”标志：芯片在你读结果寄存器时<b>自动清零</b>，不用写代码清（UM Table 355）。'],
-  ['中断里自己清标志','sw','<pre class="code">void TIMER16_0_IRQHandler(void) {\n  if (LPC_CT16B0-&gt;IR &amp; 1) {\n    LPC_CT16B0-&gt;IR = 1;   // ← 清标志！写 1 清除\n    毫秒计数 + 1; 允许下一次按键扫描; ...\n  }\n}</pre><code>src/Timer.c:65~</code>。<b>这一行一定要有</b>，不清的话 CPU 一出中断马上又被叫回来。这个中断函数里做什么是项目自己写的。'],
-  ['发一个字节、收一个字节','sw','<code>PAW3950_Read()</code>、<code>PAW3950_Write()</code>：<code>src/PAW3950.c:413、431</code>。往 SPI 的数据寄存器写一个字节，芯片自动把它一位一位送出去，同时收回一个字节（第 9 课）。没用中断，没有标志要清。'],
-  ['标志例程已清；你只管数据','ex','<pre class="code">void USB_IRQHandler(void) {\n  disr = LPC_USB-&gt;INTSTAT;   // 读：谁在举手\n  LPC_USB-&gt;INTSTAT = disr;   // ← 清标志：写回去就清掉了\n  ...\n}</pre>⬜ <code>src/usbhw.c:1335~1336</code>，<b>例程已经帮你清了</b>，DEVCMDSTAT 里的 SETUP、复位等标志也是例程清的。<br>🟦 芯片自动：收发包、算 CRC、回 ACK/NAK。<br>🟩 你负责：描述符（<code>usbdesc.c</code>）、往 EP1 放什么报文（<code>USB_LoadInEP_Data()</code>）、收到 GUI 数据后怎么处理。'],
- ],
-];
+/* lifecycle: lane 0=chip 1=example 2=project; col 0=init 1=run 2=irq 3=stop */
+const LANES=[['🟦 芯片自己','per'],['⬜ 现成例程','muted'],['🟩 项目代码','sw']];
+const PHASES=['开机准备（只做一次）','平时工作（反复）','中断','停止 / 出错'];
+const P=(c)=>`<pre class="code">${c}</pre>`;
+const LIFE={
+adc:{name:'ADC',sum:'<b class="t">ADC 一句话来龙去脉</b><br>开机时 <code>Device_Init()</code> 调 <code>MyADC_Init()</code> 左右各一次：通电、开时钟、设速度（只做一次），再把两个引脚改成模拟输入。之后每 1 ms，按键扫描调 <code>MyADC_GetValue()</code> 左右各一次，每次约 4 µs，读到的数交给按键算法。不用中断，挂起时也不关。',
+ b:[
+ [0,1,'—','IOCON 已有时钟','开机最早就开了',`④ 改引脚功能之前，引脚配置模块（IOCON）自己要有时钟。<code>InitSystemOSC()</code> 里已经开了（<code>src/OSC.c:55</code>，1-2 课）。ADC 代码不用管，但你要知道它是前提。`],
+ [0,2,'①','ADC 通电','my_adc.c:51',P('LPC_SYSCON->PDRUNCFG &amp;= ~(1U &lt;&lt; 4);')+'调用链：<code>Device_Init()</code>（device.c:485）→ <code>MyADC_Init()</code> → <code>MyADC_HwInit()</code>。用 <code>hwInitFlag</code> 保证左右两次调用里只做一次。'],
+ [0,2,'②','开 ADC 时钟','my_adc.c:52',P('LPC_SYSCON->SYSAHBCLKCTRL |= (1u &lt;&lt; 13);')],
+ [0,2,'⑤','3 MHz、10 位','my_adc.c:54~56',P('LPC_ADC->CR |= (15U &lt;&lt; 8);    // 48MHz/16 = 3MHz\nLPC_ADC->CR &amp;= ~(0x7U &lt;&lt; 17); // 11 个时钟，10 位')],
+ [0,2,'④','引脚改成模拟输入','my_adc.c:71~74',P('*(p->pFuncReg) &amp;= ~((1&lt;&lt;3)|(1&lt;&lt;4)); // 不上拉不下拉\nDrvGPIOInput(p->port, p->pin);         // 输入\n*(p->pFuncReg) &amp;= ~(1U &lt;&lt; 7);          // 模拟模式\nMYADC_SET_FUNC(*(p->pFuncReg), 2);       // 功能 2：AD2 / AD3')+'左键 PIO0_13、右键 PIO0_14，各调用一次。'],
+ [1,2,'⑦','清旧标志、选通道、开始','my_adc.c:95~100',P('LPC_ADC->CR &amp;= ~(1u &lt;&lt; 24);   // 先停\nLPC_ADC->CR |= (1u &lt;&lt; ch);     // 选通道\ndummy = LPC_ADC->DR[ch];         // 读一次：清掉上次留下的“完成”标志\nLPC_ADC->CR |= (1u &lt;&lt; 24);     // 开始')+'谁调用：每 1 ms 按键扫描 → <code>LR_GetState()</code>（app/button.c:320~321）左、右各一次。<br><b>注意第 3 行</b>：开始前先读一次结果寄存器，把旧的“完成”标志清掉，否则下面可能马上看到上一次的“完成”，读到旧数据。这是项目代码自己做的清理。'],
+ [1,0,'','转换约 3.67 µs','11 个时钟 × 1/3 MHz','芯片自己完成：采样电压，一位一位比较出 10 位结果，放进 <code>DR[ch]</code> 的 bit15:6，并把 bit31（DONE）置 1。'],
+ [1,2,'⑦','每 2 µs 看一次 DONE','my_adc.c:103~114',P('while(1){\n  MyADC_DelayUs(2);\n  if (LPC_ADC->DR[ch] &amp; (1u&lt;&lt;31)) { 停止转换; break; }\n  if (++cnt &gt;= 10) return -2;   // 20 µs 还没好：超时\n}')+'这就是“轮询”。'],
+ [1,0,'','读结果时 DONE 自动清','UM Table 355','芯片规定：读 <code>DR</code> 寄存器时，DONE 位自动变回 0。所以读完结果不需要再写代码清。'],
+ [1,2,'⑦','取 10 位结果，交给算法','my_adc.c:116~117',P('*pVal = (LPC_ADC->DR[ch] &gt;&gt; 6) &amp; 0x3FF;  // bit15:6\nLPC_ADC->CR &amp;= ~(1u &lt;&lt; ch);            // 取消选通道')+'结果回到 <code>LR_GetState()</code>，拆成两个字节交给 <code>ProcessRecvSampleRawData()</code>（第 12 课）。'],
+ [2,1,'','不用中断','',`ADC 转换只要 4 µs，程序等一下就好，所以没开 ADC 中断，⑥ 这一步不需要。`],
+ [3,2,'','超时 → 本次按“没按”处理','button.c:322~325','如果 20 µs 还没转换完，<code>MyADC_GetValue()</code> 返回 -2，<code>LR_GetState()</code> 直接返回 0，这一毫秒左右键都算松开。正常不会发生。⚠️'],
+ [3,2,'','关 ADC 的函数没被调用','my_adc.c:60','<code>MyADC_HwDeinit()</code>（停止、关时钟、断电）写好了，但没有任何地方调用。所以电脑休眠时 ADC 也一直通着电。如果以后要省电，可以在挂起流程里调用它。'],
+ ]},
+tim:{name:'定时器 CT16B0',sum:'<b class="t">定时器一句话来龙去脉</b><br>开机时 <code>Device_Init()</code> 调 <code>InitCT16B0(47, 999)</code>：开时钟、设成“每 1 µs 数一下，数到 999 就叫 CPU 并从 0 重数”、打开中断。之后芯片每 1 ms 自动打断主循环一次，中断函数先清标志，再更新毫秒计数和各种倒计时；主循环看到倒计时到 0 就去扫按键。',
+ b:[
+ [0,1,'②','开定时器时钟','Timer.c:162',P('LPC_SYSCON->SYSAHBCLKCTRL |= (1&lt;&lt;7);')+'调用链：<code>Device_Init()</code> → <code>InitCT16B0(TIME_CT16B0_PR, TIME_CT16B0_COUNT)</code>（device.c:445）。'],
+ [0,2,'⑤','定参数：47 和 999','Timer.h:17~18',P('#define TIME_CT16B0_COUNT  999  // 0~999 共 1000 下\n#define TIME_CT16B0_PR      47  // 0~47 共 48 分频')+'48 MHz ÷ 48 = 1 MHz，每 1 µs 数一下；数 1000 下 = 1 ms。这两个数是项目定的。'],
+ [0,1,'⑤','写进定时器','Timer.c:163~169',P('LPC_CT16B0->PR  = PR;     // 分频\nLPC_CT16B0->MR0 = Time;   // 比较值\nLPC_CT16B0->MCR = (3&lt;&lt;0); // 到了：置标志 + 清零重数\nLPC_CT16B0->TCR = 1;      // 开始数')],
+ [0,1,'⑥','允许它叫 CPU','Timer.c:171',P('NVIC_EnableIRQ(TIMER_16_0_IRQn);')+'中断要两边都开：外设这边 MCR 让它“愿意举手”，CPU 这边 NVIC 让 CPU “愿意听”。优先级没单独设，用默认的 0（最高）。'],
+ [1,0,'','每 1 µs 加 1','','芯片自己数：TC 从 0 数到 999。'],
+ [1,0,'','数到 999：举手 + 从 0 重数','','芯片自动把 <code>IR</code> 的 bit0 置 1（标志），同时 TC 回到 0。只要 NVIC 允许，CPU 马上被打断。'],
+ [2,2,'⑦','第一件事：清标志','Timer.c:68~70',P('void TIMER16_0_IRQHandler(void) {\n  if (LPC_CT16B0->IR &amp; (1&lt;&lt;0)) {\n    LPC_CT16B0->IR = (1&lt;&lt;0);   // 写 1 清除')+'<b>必须有。</b>不清的话 CPU 一出中断又被叫回来，主循环再也跑不了。这个寄存器是“写 1 清除”：往 bit0 写 1，标志就变 0。'],
+ [2,2,'⑦','毫秒 +1、倒计时 −1','Timer.c:73~112',P('MyTick_IncreaseSysTickMs();          // 系统毫秒 +1\nif (one_ms_cycle) one_ms_cycle--;    // 按键扫描节拍\nif (optical_scan_cycle) optical_scan_cycle--; // 读传感器节拍\n...')+'中断里只做很快的小事：加加减减，不做耗时的工作。'],
+ [1,2,'⑦','主循环看到节拍到了 → 扫按键','device.c:880',P('if (!one_ms_cycle) {\n  one_ms_cycle = 1;\n  Device_Button_Scan();   // 每 1 ms 一次\n}')+'这是“中断里做标记，主循环里干活”的典型写法。'],
+ [3,1,'','写 Flash 时暂停它','gtech_flash.c:136、203','写 Flash（固件升级相关）期间，例程会 <code>NVIC_DisableIRQ(TIMER_16_0_IRQn)</code> 关掉这个中断，写完再打开，防止中断打扰写入。平时不会停。'],
+ ]},
+spi:{name:'SPI（SSP1）',sum:'<b class="t">SPI 一句话来龙去脉</b><br>开机时 <code>PAW3950_Init()</code> 调 <code>PA3950_ModuleInit()</code>：先把片选脚设好，再解锁、开时钟、改 3 个引脚、设成 8 位 / 模式 3 / 1 MHz 并启动。之后主循环按回报率定期调 <code>PAW3950_GetMotionData()</code>：拉低片选，写一个字节、读一个字节，芯片负责把每一位送出去收回来，读完拉高片选，位移交给组包。不用中断。',
+ b:[
+ [0,2,'④','片选脚：普通输出，先拉高','PAW3950.c:274~277','NCS（PIO0_20）当普通 GPIO 用，高 = 不选中传感器。SPI 硬件只管 3 根线，第 4 根片选由程序自己控制。调用链：<code>Device_Init()</code>（device.c:484）→ <code>PAW3950_Init()</code> → <code>PA3950_ModuleInit()</code>（PAW3950.c:265）。'],
+ [0,2,'③','解锁','PAW3950.c:284',P('LPC_SYSCON->PRESETCTRL |= (0x1&lt;&lt;2);')+'SPI 开机处于复位锁定状态，不解锁的话后面写的设置都不生效。<b>最容易忘的一步。</b>'],
+ [0,2,'②','开时钟 + 分频','PAW3950.c:285~286',P('LPC_SYSCON->SYSAHBCLKCTRL |= (1&lt;&lt;18);\nLPC_SYSCON->SSP1CLKDIV = 0x01;   // 48MHz / 1')],
+ [0,2,'④','3 根线改成 SPI 功能','PAW3950.c:288~295',P('LPC_IOCON->PIO0_21 |= 0x02;  // MOSI1\nLPC_IOCON->PIO0_22 |= 0x03;  // MISO1\nLPC_IOCON->PIO1_15 |= 0x03;  // SCK1')],
+ [0,2,'⑤','8 位、模式 3、1 MHz、启动','PAW3950.c:298~309',P('LPC_SSP1->CR0  = 0x01C7;   // 8 位，CPOL=1 CPHA=1\nLPC_SSP1->CPSR = 0x18;     // 48MHz/(24×2) = 1MHz\nLPC_SSP1->CR1 |= SSPCR1_SSE;  // 启动')+'接着会通过 SPI 给传感器写一串初始化设置（第 9、14 课）。'],
+ [1,2,'⑦','拉低片选','PAW3950.c:437','谁调用：主循环 <code>Device_Scan()</code> → <code>Device_Optical_Scan()</code>（device.c:781），每次 <code>optical_scan_cycle</code> 倒数到 0（定时器中断里减）→ <code>PAW3950_GetMotionData()</code> → <code>PAW3950_Read()</code>。<br>拉低 NCS = “传感器，我在跟你说话”。'],
+ [1,1,'⑦','写 1 字节、读 1 字节','SPI.c:375、403',P('while (忙 或 发送缓冲满) {}\nLPC_SSP1->DR = 数据;           // 放进去\nwhile (还没收完) {}\nDummy = LPC_SSP1->DR;          // 把同时收回来的字节读掉')+'<code>SSP_Send()</code>、<code>SSP_Receive()</code> 是例程。'],
+ [1,0,'','一位一位送出、同时收回','1 MHz，8 µs/字节','芯片自己在 SCK 上打 8 个时钟，MOSI 送出 8 位，同时从 MISO 收回 8 位。'],
+ [1,1,'','读掉残留的接收字节','SPI.c:392~399','SPI 每送出一个字节，一定会同时收回一个字节。发送时收回来的是没用的，例程在 <code>SSP_Send()</code> 里顺手读掉（<code>Dummy = DR</code>），不然它会留在接收缓冲里，下次读到的就是错的。<b>这是例程帮你做的清理。</b>'],
+ [1,2,'⑦','拉高片选，位移交给组包','PAW3950.c:448','读完拉高 NCS。X、Y 位移存进 <code>x_value_delta</code>、<code>y_value_delta</code>，发出 OPTICAL_EVENT，<code>Device_Pack()</code> 放进报文第 3~6 字节。'],
+ [2,1,'','不用中断','','程序自己等每个字节收发完（几微秒），⑥ 不需要。'],
+ [3,2,'','没有停止流程','','挂起时 IRPT_V4 没有单独关 SPI 或传感器。'],
+ ]},
+usb:{name:'USB',sum:'<b class="t">USB 一句话来龙去脉</b><br>开机时先给 USB 收发器和 USB PLL 通电（时钟初始化里），项目设好 USB 中断优先级，再调例程 <code>nsAPI_USB_Init()</code>：开时钟、配引脚、登记端点柜子、开中断、接上 D+ 上拉让电脑发现。之后电脑每次发包，芯片自己收发和校验；需要软件处理时打断 CPU，例程在中断里先清标志、再完成枚举问答。项目只做三件事：写描述符、把报文放进 EP1、处理 GUI 从 EP4 发来的命令。',
+ b:[
+ [0,1,'①','USB 收发器、PLL 通电','OSC.c:60~61',P('LPC_SYSCON->PDRUNCFG &amp;= ~(1 &lt;&lt; 10);  // USB 收发器\nLPC_SYSCON->PDRUNCFG &amp;= ~(1 &lt;&lt;  8);  // USB PLL')+'在 <code>InitUSBOSC()</code> 里，开机最早的时钟初始化阶段（1-5 课）。'],
+ [0,2,'⑥','设 USB 中断优先级 = 1','device.c:448',P('NVIC_SetPriority(USB_IRQn, 1);')+'项目设的：比 1 ms 定时器（0）低一级（1-9 课）。'],
+ [0,1,'②④','开时钟、配 2 个引脚','usbhw.c:129~138',P('LPC_SYSCON->SYSAHBCLKCTRL |= (BIT14|BIT27);  // USB + USB RAM\nLPC_IOCON->PIO0_3 |= (BIT3|BIT0);   // VBUS\nLPC_IOCON->PIO0_6 |= BIT0;          // USB_CONNECT')+'<code>nsAPI_USB_Init()</code>（usbhw.c:285）→ <code>NDrv_USB_IOClkConfig()</code>（1-10 课）。'],
+ [0,1,'⑤','登记端点柜子','usbhw.c:214~216',P('LPC_USB->EPLISTSTART  = USB_EPLIST_ADDR;\nLPC_USB->DATABUFSTART = USB_EPDATA_PAGE;')+'1-11 课。'],
+ [0,1,'⑥','允许 USB 中断','usbhw.c:323、374',P('NVIC_EnableIRQ(USB_IRQn);\nLPC_USB->INTEN = DEV_STAT_INT | 0x3FF | ...;')],
+ [0,2,'','描述符：我是谁、有几个接口','usbdesc.c','<b>项目要负责的</b>：VID/PID、3 个接口、报告格式。改设备名、改报文格式都在这里。'],
+ [0,1,'⑤','接上 D+ 上拉 → 电脑发现','usbhw.c:341',P('LPC_USB->DEVCMDSTAT |= USB_DCON;')+'1-12 课。'],
+ [1,0,'','收发包、CRC、ACK/NAK','全自动','电脑每 1 ms 来问 EP1：芯片自己判断柜子里有没有数据，有就发出去并算 CRC，没有就回 NAK。这些都不需要软件参与（L1 课）。'],
+ [1,0,'','需要软件时：置标志、叫 CPU','INTSTAT','比如收到 SETUP、柜子被取走、收到 GUI 数据、总线复位，芯片在 <code>INTSTAT</code> 里置对应的位。'],
+ [2,1,'⑦','先清标志','usbhw.c:1335~1336',P('disr = LPC_USB->INTSTAT;   // 读：谁在举手\nLPC_USB->INTSTAT = disr;   // 写回：全部清掉')+'<b>例程已经帮你清了。</b>DEVCMDSTAT 里的 SETUP 收到（usbhw.c:1403）、总线复位等标志也是例程清的。你不需要写任何清标志的代码。'],
+ [2,1,'⑦','枚举问答、分发到各端点','usbcore.c','例程按描述符回答电脑的问题（L1、1-13 课），再按端点号调用 <code>nsAPI_USB_EndPoint1()</code>~<code>4()</code>。'],
+ [2,2,'⑦','EP4 收到 GUI 数据：只做标记','usbuser.c:248~249',P('case USB_EVT_OUT:\n  g_Main_Setting.EPInOutReq |= EP4_OUT;   // 记一笔')+'中断里不处理命令，只做标记。'],
+ [1,2,'⑦','主循环处理 GUI 命令','pc_communicate.c:882','<code>PC_Communicate()</code> 看到标记，读出 64 字节命令、处理、回复（第 15 课）。'],
+ [1,2,'⑦','把报文放进 EP1','device.c:701',P('USB_LoadInEP_Data(EP_1_MOUSE, report_data.mouse_report, 8);')+'<code>Device_Report()</code> 调用。放进去之后就交给芯片，电脑下次来问时发出去。'],
+ [3,2,'','电脑休眠：挂起','suspend.c:35','<code>Suspend_Check()</code> → <code>wnApi_Events_Suspend_Handler()</code>（usbhw.c:650），挂起期间循环进入深度睡眠，被唤醒后恢复设置（L6）。'],
+ ]},
+};
 (function(){
-  const t=$('mx');
-  let h='<thead><tr><th class="s">步骤</th>'+MODS.map(m=>`<th>${m}</th>`).join('')+'</tr></thead><tbody>';
-  MX.forEach((row,r)=>{h+=`<tr><th class="s">${STEPS[r][0]} ${STEPS[r][1]}</th>`+row.map((c,ci)=>`<td><button type="button" data-r="${r}" data-c="${ci}" class="${c[1]==='na'?'na':'w-'+c[1]}">${c[0]}</button></td>`).join('')+'</tr>'});
-  t.innerHTML=h+'</tbody>';
-  const who={sw:'🟩 这个项目自己的代码（你负责）',ex:'⬜ 现成的例程代码（基本不用改）',hw:'🟦 芯片自动 + 🟩 你调用',na:'这一步不需要'};
-  const col={sw:'sw',ex:'muted',hw:'per',na:'line'};
-  const show=b=>{t.querySelectorAll('button').forEach(o=>o.setAttribute('aria-pressed',o===b?'true':'false'));
-    const c=MX[b.dataset.r][b.dataset.c];const card=$('mxInfo');card.style.borderLeftColor=V(col[c[1]]);
-    card.innerHTML=`<b class="t">${MODS[b.dataset.c]} · ${STEPS[b.dataset.r][0]} ${STEPS[b.dataset.r][1]}</b>　<span class="note">${who[c[1]]}</span><br>${c[2]}`};
-  t.querySelectorAll('button').forEach(b=>b.onclick=()=>show(b));
-  show(t.querySelector('button[data-r="6"][data-c="1"]'));
+  const s=document.getElementById('lifeSvg'),tabs=document.getElementById('modTabs');
+  let cur='adc',idx=0;
+  const LX=92,CW=194,BH=48,GAP=8,TOP=34;
+  function layout(m){
+    const bs=LIFE[m].b;const cnt={};const pos=[];
+    bs.forEach((b,i)=>{const k=b[0]+'_'+b[1];cnt[k]=(cnt[k]||0)+1;pos.push({c:b[0],l:b[1],n:cnt[k]-1})});
+    const laneH=[0,1,2].map(l=>Math.max(1,...[0,1,2,3].map(c=>cnt[c+'_'+l]||0)));
+    const laneY=[TOP];for(let l=1;l<3;l++)laneY[l]=laneY[l-1]+laneH[l-1]*(BH+GAP)+16;
+    const H=laneY[2]+laneH[2]*(BH+GAP)+16;
+    return {pos:pos.map(p=>({x:LX+p.c*(CW+6)+4,y:laneY[p.l]+8+p.n*(BH+GAP)})),laneY,laneH,H};
+  }
+  function draw(){
+    s.textContent='';const L=layout(cur),bs=LIFE[cur].b;
+    s.setAttribute('viewBox',`0 0 900 ${L.H}`);s.setAttribute('height',L.H);
+    PHASES.forEach((p,c)=>{const x=LX+c*(CW+6);el(s,'rect',{x,y:22,width:CW+2,height:L.H-24,rx:8,fill:V('soft'),opacity:.6});el(s,'text',{x:x+CW/2,y:16,'text-anchor':'middle','font-size':12.5,'font-weight':600,fill:V('fg')},p)});
+    el(s,'path',{d:`M${LX} ${L.H-4} H${LX+4*(CW+6)-8}`,stroke:V('muted'),'stroke-width':1.5,'marker-end':'url(#tarr)'});
+    el(s,'defs',{}).innerHTML='<marker id="tarr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker>';
+    LANES.forEach(([t,c],l)=>{const y=L.laneY[l],h=L.laneH[l]*(BH+GAP)+8;
+      el(s,'rect',{x:4,y,width:LX-10,height:h,rx:6,fill:V(c),opacity:.12});
+      t.split(' ').forEach((w,i)=>el(s,'text',{x:(LX-6)/2+2,y:y+h/2-4+i*17,'text-anchor':'middle','font-size':12.5,'font-weight':600,fill:V(c)},w));
+      if(l)el(s,'line',{x1:4,x2:896,y1:y-8,y2:y-8,stroke:V('line'),'stroke-dasharray':'4 4'})});
+    bs.forEach((b,i)=>{const p=L.pos[i],c=LANES[b[1]][1],on=i===idx;
+      const g=el(s,'g',{tabindex:0,role:'button','aria-label':b[3],style:'cursor:pointer'});
+      el(g,'rect',{x:p.x,y:p.y,width:CW-8,height:BH,rx:7,fill:on?V(c):V('panel'),stroke:V(c),'stroke-width':on?2.5:1.5,'stroke-dasharray':b[3].startsWith('不用中断')?'5 4':''});
+      el(g,'circle',{cx:p.x+13,cy:p.y+14,r:10,fill:on?V('bg'):V(c)});
+      el(g,'text',{x:p.x+13,y:p.y+18,'text-anchor':'middle','font-size':11,'font-weight':700,fill:on?V(c):V('bg')},i+1);
+      const t=b[3].length>11?[b[3].slice(0,11),b[3].slice(11)]:[b[3]];
+      t.forEach((tt,k)=>el(g,'text',{x:p.x+28,y:p.y+(t.length>1?18:20)+k*15,'font-size':12.5,'font-weight':600,fill:on?V('bg'):V('fg')},tt));
+      if(t.length===1&&b[4])el(g,'text',{x:p.x+28,y:p.y+38,'font-size':10.5,class:'m',fill:on?V('bg'):V('muted')},b[4]);
+      if(b[2]&&b[2]!=='—')el(g,'text',{x:p.x+CW-14,y:p.y+14,'text-anchor':'end','font-size':11,'font-weight':700,fill:on?V('bg'):V('gold')},b[2]);
+      const go=()=>{idx=i;draw()};g.addEventListener('click',go);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}});
+    });
+    const b=bs[idx],c=LANES[b[1]][1];const card=document.getElementById('lifeInfo');card.style.borderLeftColor=V(c);
+    card.innerHTML=`<b class="t">${idx+1}. ${b[3]}</b>　<span class="note">${LANES[b[1]][0]} · ${PHASES[b[0]]}${b[2]&&b[2]!=='—'?' · 七步 '+b[2]:''}${b[4]?' · '+b[4]:''}</span><br>${b[5]}`;
+    document.getElementById('lfPos').textContent=`第 ${idx+1} / ${bs.length} 步`;
+    document.getElementById('lifeSum').innerHTML=LIFE[cur].sum;
+  }
+  Object.keys(LIFE).forEach(k=>{const b=document.createElement('button');b.type='button';b.textContent=LIFE[k].name;b.setAttribute('aria-pressed',k===cur?'true':'false');
+    b.onclick=()=>{cur=k;idx=0;tabs.querySelectorAll('button').forEach(o=>o.setAttribute('aria-pressed',o===b?'true':'false'));draw()};tabs.appendChild(b)});
+  document.getElementById('lfNext').onclick=()=>{idx=(idx+1)%LIFE[cur].b.length;draw()};
+  document.getElementById('lfPrev').onclick=()=>{idx=(idx-1+LIFE[cur].b.length)%LIFE[cur].b.length;draw()};
+  draw();
 })();
+
 /* quiz */
 const Q=[
  ['1. 程序和变量分别放在哪里？',['程序在 Flash，变量在 RAM','程序在 RAM，变量在 Flash','都在 EEPROM'],0,'对。Flash 断电不丢放程序；RAM 是草稿纸放变量。','Flash 断电不丢，RAM 断电就清空。'],
- ['2. 用 SPI 时最容易忘的一步是？',['开时钟','解锁（PRESETCTRL）','调设置'],1,'对。SPI 开机处于复位锁定，不解锁就不工作。','看矩阵里 ③ 解锁那一行。'],
+ ['2. 用 SPI 时最容易忘的一步是？',['开时钟','解锁（PRESETCTRL）','调设置'],1,'对。SPI 开机处于复位锁定，不解锁就不工作。','看 SPI 生命周期图里的“解锁”。'],
  ['3. 定时器中断里那句 LPC_CT16B0->IR = 1 不写会怎样？',['没影响','CPU 一出中断又被叫回去，程序卡死在中断里','定时器变慢'],1,'对。标志没清，CPU 会一直被叫回去。','想想闹钟响了不按掉会怎样。'],
- ['4. USB 中断的标志谁来清？',['我要自己写','例程 usbhw.c 已经清了','芯片自动清'],1,'对。USB_IRQHandler 开头两行就清了。你负责的是描述符和报文内容。','点矩阵里 USB 的 ⑦ 看看。'],
+ ['4. USB 中断的标志谁来清？',['我要自己写','例程 usbhw.c 已经清了','芯片自动清'],1,'对。USB_IRQHandler 开头两行就清了。你负责的是描述符和报文内容。','看 USB 生命周期图里中断那一列。'],
 ];
 (function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0].replace(/</g,'&lt;')}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
 </script>
