@@ -101,9 +101,9 @@ th{font-weight:600;color:var(--muted);font-size:.8rem;letter-spacing:.03em}
   </table></div>
 
   <h2 id="frame">1 时间：电脑把时间切成 1 ms 一帧</h2>
-  <p>全速 USB 上，电脑每 1 ms 发一个 <b>SOF 包</b>（帧开始），里面带一个 11 位的帧号（0~2047 循环）。每一帧里，电脑按计划去问各个端点。鼠标的 EP1 在描述符里写了 <code>bInterval = 1</code>，所以电脑<b>每一帧</b>都来问一次。</p>
-  <div class="frame"><svg id="svgFrame" width="840" height="300" role="img" aria-label="一个 1 ms 帧的时间轴"></svg></div>
-  <p class="note">一个 1 ms 帧里，SOF 加上鼠标的一次事务也不到 20 µs（约 2%）。剩下的时间总线空闲，或者给其他设备用。时间按位数计算：1 位 = 1/12 MHz ≈ 83.3 ns；包与包之间的总线翻转间隔取约 0.5 µs 的典型值。</p>
+  <p>全速 USB 上，电脑每 1 ms 发一个 <b>SOF 包</b>（帧开始），里面带一个 11 位的帧号（0~2047 循环）。每一帧里，电脑按计划去问各个端点。鼠标的 EP1 在描述符里写了 <code>bInterval = 1</code>，所以电脑<b>每一帧</b>都来问一次；EP2、EP3 也写了 1 ms，同样每帧都被问。<b>SOF 是一个单独的包，后面不跟数据、也不跟握手</b>；SOF 之后电脑再一个个地发起事务，每个事务以一个令牌包开头。</p>
+  <div class="frame"><svg id="svgFrame" width="840" height="316" role="img" aria-label="一个 1 ms 帧的时间轴"></svg></div>
+  <p class="note">一个 1 ms 帧里，SOF 加上鼠标的 3 次 IN 事务也只有 30 µs 左右（约 3%）。剩下的时间总线空闲，或者给其他设备用。时间按位数计算：1 位 = 1/12 MHz ≈ 83.3 ns；包与包之间的总线翻转间隔取约 0.5 µs 的典型值。</p>
 
   <h2 id="formats">2 四种包的格式（按位画，宽度和位数成比例）</h2>
   <p>所有包都以 <b>SYNC</b>（8 位，同步）开头，以 <b>EOP</b>（包结束，约 3 位时间）结尾。第二个字段永远是 <b>PID</b>（8 位，包类型）：低 4 位是类型码，高 4 位是它的<b>按位取反</b>，用来自检。</p>
@@ -237,32 +237,43 @@ function drawFrame(){
   const fg=css("--fg"),mu=css("--muted"),ln=css("--line"),gr=css("--grid");
   const bitUs=1/12;
   const sofBits=8+8+16+3, tokBits=35, dataBits=8+8+64+16+2+3, ackBits=8+8+3, gap=0.5;
-  const ev=[["SOF",0,sofBits*bitUs,css("--f-sync")]];let t=sofBits*bitUs+gap+1.0;
-  ev.push(["IN",t,tokBits*bitUs,css("--f-pid")]);t+=tokBits*bitUs+gap;
-  ev.push(["DATA1",t,dataBits*bitUs,css("--f-data")]);t+=dataBits*bitUs+gap;
-  ev.push(["ACK",t,ackBits*bitUs,css("--f-endp")]);const tEnd=t+ackBits*bitUs;
+  // [label, start(us), dur(us), colorVar, who, group]
+  const ev=[];let t=0;
+  function add(lbl,bits,col,who,g){ev.push([lbl,t,bits*bitUs,css(col),who,g]);t+=bits*bitUs+gap;}
+  add("SOF",sofBits,"--f-sync","电脑",0);t+=1.0;
+  add("IN",tokBits,"--f-pid","电脑",1);add("DATA1",dataBits,"--f-data","鼠标",1);add("ACK",ackBits,"--f-endp","电脑",1);
+  add("IN",tokBits,"--f-pid","电脑",2);add("NAK",ackBits,"--dm","鼠标",2);
+  add("IN",tokBits,"--f-pid","电脑",3);add("NAK",ackBits,"--dm","鼠标",3);
+  const tEnd=t-gap;
   // whole frame bar
   const X0=30,W=780;
   el("text",{x:X0,y:20,fill:mu,"font-size":12,"font-family":css("--font-b")},s,"整个 1 ms 帧（按比例）");
   el("rect",{x:X0,y:28,width:W,height:22,fill:"none",stroke:ln},s);
   el("rect",{x:X0,y:28,width:Math.max(2,W*tEnd/1000),height:22,fill:css("--dp")},s);
   for(let i=0;i<=10;i++){const x=X0+W*i/10;el("line",{x1:x,y1:50,x2:x,y2:56,stroke:mu},s);el("text",{x,y:70,fill:mu,"font-size":11,"text-anchor":"middle","font-family":css("--font-m")},s,(i*100)+" µs");}
-  el("text",{x:X0+W*tEnd/1000+6,y:44,fill:fg,"font-size":12,"font-family":css("--font-b")},s,"← 鼠标的事务都挤在这里（约 "+tEnd.toFixed(1)+" µs）");
+  el("text",{x:X0+W*tEnd/1000+6,y:44,fill:fg,"font-size":12,"font-family":css("--font-b")},s,"← 这一帧里和鼠标有关的包都在这里（约 "+tEnd.toFixed(0)+" µs），其余时间空闲");
   // zoom
-  const ZX=X0,ZW=780,ZT=22;
-  el("text",{x:X0,y:104,fill:mu,"font-size":12,"font-family":css("--font-b")},s,"放大：帧开头 0 ~ "+ZT+" µs");
-  el("line",{x1:X0,y1:28+22,x2:ZX,y2:116,stroke:gr,"stroke-dasharray":"3 3"},s);
+  const ZX=X0,ZW=780,ZT=32;
+  el("text",{x:X0,y:104,fill:mu,"font-size":12,"font-family":css("--font-b")},s,"放大：帧开头 0 ~ "+ZT+" µs（一种典型顺序，实际顺序由电脑安排）");
+  el("line",{x1:X0,y1:50,x2:ZX,y2:116,stroke:gr,"stroke-dasharray":"3 3"},s);
   el("line",{x1:X0+W*ZT/1000,y1:50,x2:ZX+ZW,y2:116,stroke:gr,"stroke-dasharray":"3 3"},s);
   el("rect",{x:ZX,y:116,width:ZW,height:110,fill:"none",stroke:ln},s);
   for(let u=0;u<=ZT;u+=2){const x=ZX+ZW*u/ZT;el("line",{x1:x,y1:116,x2:x,y2:226,stroke:gr},s);el("text",{x,y:244,fill:mu,"font-size":11,"text-anchor":"middle","font-family":css("--font-m")},s,u+"");}
-  el("text",{x:ZX+ZW,y:262,fill:mu,"font-size":11,"text-anchor":"end","font-family":css("--font-b")},s,"时间（µs）");
-  const who={SOF:"电脑",IN:"电脑",DATA1:"鼠标",ACK:"电脑"};
-  ev.forEach((e,i)=>{const x=ZX+ZW*e[1]/ZT,w=ZW*e[2]/ZT,y=(who[e[0]]==="鼠标")?176:132;
+  el("text",{x:ZX+ZW,y:244,fill:mu,"font-size":11,"text-anchor":"end","font-family":css("--font-b")},s,"µs");
+  ev.forEach(e=>{const x=ZX+ZW*e[1]/ZT,w=ZW*e[2]/ZT,y=(e[4]==="鼠标")?176:132;
     el("rect",{x,y,width:w,height:34,rx:3,fill:e[3]},s);
-    el("text",{x:x+w/2,y:y+21,fill:"#fff","font-size":12,"font-weight":600,"text-anchor":"middle","font-family":css("--font-m")},s,e[0]);
-    el("text",{x:x+w/2,y:(y===132?128:222),fill:mu,"font-size":11,"text-anchor":"middle","font-family":css("--font-b")},s,who[e[0]]+" "+e[2].toFixed(1)+"µs");
+    el("text",{x:x+w/2,y:y+21,fill:"#fff","font-size":(w<45?10:12),"font-weight":600,"text-anchor":"middle","font-family":css("--font-m")},s,e[0]);
   });
-  el("text",{x:ZX+6,y:288,fill:mu,"font-size":11.5,"font-family":css("--font-b")},s,"上排：电脑发的包；下排：鼠标发的包。IN + DATA1 + ACK 合起来是一次事务。");
+  el("text",{x:ZX+4,y:128,fill:mu,"font-size":10.5,"font-family":css("--font-b")},s,"电脑发");
+  el("text",{x:ZX+4,y:222,fill:mu,"font-size":10.5,"font-family":css("--font-b")},s,"鼠标发");
+  // group brackets
+  const gname={0:"SOF：只有 1 个包",1:"EP1 IN 事务（有报文）",2:"EP2 IN 事务（NAK）",3:"EP3 IN 事务（NAK）"};
+  [0,1,2,3].forEach(g=>{const es=ev.filter(e=>e[5]===g);const a=es[0][1],b=es[es.length-1][1]+es[es.length-1][2];
+    const x1=ZX+ZW*a/ZT,x2=ZX+ZW*b/ZT;const y=258;
+    el("path",{d:"M"+x1+" "+(y-6)+" L"+x1+" "+y+" L"+x2+" "+y+" L"+x2+" "+(y-6),fill:"none",stroke:css("--fg"),"stroke-width":1.2},s);
+    el("text",{x:(x1+x2)/2,y:y+16,fill:fg,"font-size":11,"text-anchor":"middle","font-family":css("--font-b")},s,gname[g]);
+  });
+  el("text",{x:ZX,y:304,fill:mu,"font-size":11.5,"font-family":css("--font-b")},s,"SOF 不属于任何事务；之后电脑依次去问 EP1、EP2、EP3（描述符里三个 IN 端点都写了每 1 ms 一次）。EP4 OUT 只在 GUI 发命令时才出现。");
 }
 
 /* ---------- section 2: formats ---------- */
