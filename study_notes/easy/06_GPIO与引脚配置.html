@@ -1,0 +1,405 @@
+<title>GPIO 与引脚配置</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
+.mx{border-collapse:separate;border-spacing:4px;min-width:720px}
+.mx th{text-align:center;font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.mx th.s{text-align:left;font-size:.85rem;color:var(--muted);font-family:var(--font-b);width:150px}
+.mx td{padding:0;border:0}
+.mx button{width:100%;font:inherit;font-size:.8rem;line-height:1.35;padding:6px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-align:left;min-height:46px}
+.mx button.w-sw{border-left:5px solid var(--sw)}
+.mx button.w-ex{border-left:5px solid var(--muted)}
+.mx button.w-hw{border-left:5px solid var(--per)}
+.mx button.na{color:var(--muted);background:var(--soft);border-style:dashed}
+.mx button[aria-pressed="true"]{outline:3px solid var(--pc);outline-offset:1px}
+.who{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.85rem;margin:.4rem 0}
+.who span{display:inline-flex;align-items:center;gap:6px}
+.who i{width:14px;height:14px;border-radius:3px;display:inline-block}
+pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
+details.ans{margin:.4rem 0;border:1px dashed var(--line);border-radius:6px;padding:4px 10px;background:var(--panel)}
+details.ans summary{cursor:pointer;color:var(--per);font-size:.9rem}
+details.ans[open]{background:var(--soft)}
+.task{border-left:4px solid var(--per);background:var(--panel);border-radius:0 6px 6px 0;padding:8px 12px;margin:.6rem 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.task .pg{font-family:var(--font-m);font-size:.8rem;color:var(--per)}
+.sim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:640px){.sim{grid-template-columns:minmax(0,1fr)}}
+.sim fieldset{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:0 0 8px}
+.sim legend{font-size:.82rem;color:var(--muted);padding:0 4px}
+.sim label{display:inline-flex;align-items:center;gap:4px;margin:2px 10px 2px 0;font-size:.9rem;cursor:pointer}
+</style>
+<div class="wrap">
+<div class="eyebrow">轻松版 · 第 6 课 · 芯片外设</div>
+<h1>GPIO 与引脚配置</h1>
+<p class="lede">芯片的 33 个引脚，是它和外面世界唯一的接触点。按键怎么被读到、片选怎么拉低、线圈怎么通电，第一步都是“这根脚设成什么样”。这一课把引脚从开机到休眠的一生讲完整，并带你读完手册第 7、8、9 章。</p>
+<div class="where"><span>📍</span><div>在地图上：第 ② 列 <b>GPIO</b>，连着第 ① 列的中键、侧键、DPI 键、滚轮、片选、线圈控制脚。</div></div>
+<div class="card" style="border-left-color:var(--per)"><b class="t">📖 这一课的手册练习方式：我给页码，你去翻</b><br>打开 <code>materials/mcu_reference/LPC11U3x2x1x User Manual.pdf</code>。页面上标了 <span class="mono" style="color:var(--per)">📖 p.xx</span> 的地方，请翻到那一页对照着看。每节后面有几个问题，先自己在手册里找答案，再点开看我的答案。</div>
+
+<h2><span class="step">1/7</span>一根引脚归两个部门管</h2>
+<p>每根引脚都要在两个地方设置：</p>
+<table>
+<thead><tr><th>部门</th><th>管什么</th><th>地址</th><th>手册</th></tr></thead>
+<tbody>
+<tr><td><b>IOCON</b>（引脚配置）</td><td>这根脚<b>给谁用</b>（GPIO、ADC、SPI…）；<b>电气特性</b>：上拉、下拉、模拟/数字、开漏</td><td>0x4004 4000，每根脚一个寄存器</td><td>第 7 章</td></tr>
+<tr><td><b>GPIO</b>（通用输入输出）</td><td>当它是普通 IO 时：<b>输入还是输出</b>（DIR）、<b>读电平</b>（PIN）、<b>输出高/低</b>（SET/CLR）</td><td>0x5000 0000，每个端口一组寄存器，1 位对应 1 根脚</td><td>第 9 章</td></tr>
+</tbody></table>
+<div class="def"><b>上拉 / 下拉</b>：芯片内部一个约几十 kΩ 的电阻，把引脚“轻轻地”拉到 3.3 V（上拉）或 0 V（下拉）。外面没东西驱动时，引脚就是这个电平；外面一驱动，就听外面的（第 1 课的按键电路）。</div>
+<div class="def"><b>开漏</b>：输出时只能把引脚拉到 0 V，不能主动输出 3.3 V。输出“1”时引脚只是松开，要靠外部上拉电阻才会变高。</div>
+<div class="def"><b>悬空</b>：引脚既没被外面驱动，也没有上下拉，电平不确定，读出来可能是 0 也可能是 1。</div>
+
+<div class="box try"><div class="tag">动手 · 引脚模拟器：改设置，看引脚电压和读到的值</div>
+<div class="sim">
+<div>
+<fieldset><legend>IOCON · FUNC 这根脚给谁用</legend>
+<label><input type="radio" name="fn" value="gpio" checked>GPIO</label><label><input type="radio" name="fn" value="per">别的外设（如 ADC）</label></fieldset>
+<fieldset><legend>IOCON · MODE 内部电阻</legend>
+<label><input type="radio" name="md" value="up" checked>上拉（复位值）</label><label><input type="radio" name="md" value="down">下拉</label><label><input type="radio" name="md" value="none">都不接</label></fieldset>
+<fieldset><legend>GPIO · DIR 方向</legend>
+<label><input type="radio" name="dr" value="in" checked>输入（复位值）</label><label><input type="radio" name="dr" value="out">输出</label></fieldset>
+<fieldset><legend>GPIO · 输出值（SET / CLR）</legend>
+<label><input type="radio" name="ov" value="1">SET：高</label><label><input type="radio" name="ov" value="0" checked>CLR：低</label></fieldset>
+<fieldset><legend>引脚外面接了什么</legend>
+<label><input type="radio" name="ex" value="btn" checked>按键到地（松开）</label><label><input type="radio" name="ex" value="btnp">按键到地（按下）</label><label><input type="radio" name="ex" value="none">什么都没接</label></fieldset>
+<label style="margin-top:4px"><input type="checkbox" id="od">这是 PIO0_4 / PIO0_5（真开漏脚）</label>
+</div>
+<div><svg id="pinSvg" viewBox="0 0 380 300" width="100%" style="max-width:380px" role="img" aria-label="引脚状态"></svg>
+<div class="card" id="pinInfo" aria-live="polite" style="margin-top:6px"></div></div>
+</div>
+</div>
+
+<h2><span class="step">2/7</span>GPIO 的一生：生命周期图</h2>
+<p>点“下一步”按顺序走，或者直接点方块。说明里的 📖 只给出处，请翻到那一页看原文。</p>
+<div class="box scroll" style="padding:10px"><svg id="lifeSvg" viewBox="0 0 900 420" width="900" height="420" role="img" aria-label="GPIO 生命周期"></svg></div>
+<div class="btns"><button type="button" id="lfPrev">上一步</button><button type="button" id="lfNext">下一步</button><span class="note" id="lfPos" style="align-self:center"></span></div>
+<div class="card" id="lifeInfo" aria-live="polite"></div>
+<div class="card" style="border-left-color:var(--gold)"><b class="t">GPIO 一句话来龙去脉</b><br>开机时所有脚都是“输入 + 上拉”，只有 PIO0_11~14 归 JTAG、PIO0_4/5 是没有上拉的开漏脚。<code>InitGPIO()</code> 把 JTAG 的 4 根脚收回来当 GPIO，再按 IRPT_V4 的接线把每根脚设成输入或输出，输出脚一律“先设电平再切方向”防毛刺。平时：按键扫描每 1 ms 读一次 PIN；SPI 收发前后用 CLR/SET 拉低拉高片选；振动时用 SET/CLR 控制线圈脚。电脑休眠时，中键、侧键、DPI 键被设成“组中断”，按任意一个就把芯片叫醒。</div>
+
+<h2><span class="step">3/7</span>七步核对</h2>
+<table>
+<thead><tr><th>步骤</th><th>GPIO 需要吗</th><th>在哪</th></tr></thead>
+<tbody>
+<tr><td>① 通电</td><td>不需要</td><td>数字电路，跟芯片一起有电</td></tr>
+<tr><td>② 开时钟</td><td>需要：GPIO（bit6）、IOCON（bit16）；用中断还要 bit19、23、24</td><td>bit6 开机后已经是 1；<code>GPIO.c:310</code> 再写一次；bit16 在 <code>OSC.c:55</code></td></tr>
+<tr><td>③ 解锁</td><td>不需要</td><td>GPIO 没有复位锁</td></tr>
+<tr><td>④ 引脚</td><td><b>这是 GPIO 的主要工作</b></td><td>IOCON：FUNC、MODE、OD（<code>GPIO.c</code> IRPT_V4 分支）</td></tr>
+<tr><td>⑤ 配置</td><td>需要：DIR 方向，输出脚的初始电平</td><td>同上</td></tr>
+<tr><td>⑥ 中断</td><td>只在电脑休眠时用（组中断唤醒）</td><td><code>wnDrv_Pmu.c:66~93</code></td></tr>
+<tr><td>⑦ 使用</td><td>读 PIN，写 SET / CLR</td><td>按键、滚轮、片选、线圈</td></tr>
+</tbody></table>
+
+<h2><span class="step">4/7</span>📖 手册导读：第 7 章 IOCON（第 80~127 页）</h2>
+<p>这一章前面 4 页讲原理，后面四十多页是“每根脚一张表”。按下面的顺序读：</p>
+<div class="task"><span class="pg">📖 p.80 · 7.1 How to read this chapter</span><br>先看这一节的表：不同封装可用的引脚不一样。我们的芯片是 <b>HVQFN33</b> 封装，只有 PIO0_0~PIO0_23 加上 PIO1_15、PIO1_19。</div>
+<div class="task"><span class="pg">📖 p.81~83 · 7.3 General description（7.3.1 ~ 7.3.9）</span><br>9 个小节，每节讲 IOCON 寄存器里的一种设置。全部读一遍，每节只有几行：
+<table style="margin-top:6px"><tbody>
+<tr><td>7.3.1 Pin function</td><td>FUNC 位。重点句：<i>“The DIR registers have no effect for peripheral functions.”</i></td></tr>
+<tr><td>7.3.2 Pin mode</td><td>MODE：上拉、下拉、不接、中继模式</td></tr>
+<tr><td>7.3.3 Hysteresis</td><td>迟滞（防抖的一种硬件手段）</td></tr>
+<tr><td>7.3.4 Input inverter</td><td>输入取反</td></tr>
+<tr><td>7.3.5 Input glitch filter</td><td>10 ns 毛刺滤波</td></tr>
+<tr><td>7.3.6 Open-drain mode</td><td>开漏</td></tr>
+<tr><td>7.3.7 Analog mode</td><td>模拟模式（ADC 用，第 7 课）</td></tr>
+<tr><td>7.3.8 I2C mode</td><td>PIO0_4/5 的特殊之处</td></tr>
+<tr><td>7.3.9 RESET pin</td><td>复位脚</td></tr>
+</tbody></table></div>
+<details class="ans"><summary>问题 1：MODE 的复位值是什么？“中继模式（repeater）”是什么意思？</summary>7.3.2 第一段：<i>“The default value is pull-up enabled.”</i> 复位后是上拉。中继模式：引脚是高就开上拉，是低就开下拉，让没人驱动的引脚保持最后一次的电平，不至于悬空。</details>
+<details class="ans"><summary>问题 2：一根脚选了 SPI 功能后，DIR 寄存器还管它的方向吗？</summary>不管。7.3.1：<i>“For any peripheral function, the pin direction is controlled automatically … The DIR registers have no effect for peripheral functions.”</i> 所以 SPI 的三根线不用设 DIR，只有当普通 GPIO 时 DIR 才有用。</details>
+<div class="task"><span class="pg">📖 p.84~86 · Table 75 Register overview</span><br>所有引脚寄存器的总表：名字、地址、<b>复位值</b>。注意大部分是 <code>0x0000 0090</code>，有几个不一样。</div>
+<details class="ans"><summary>问题 3：0x90 拆开是什么意思？哪几根脚的复位值不是 0x90？</summary>0x90 = 1001 0000：FUNC = 000，MODE = 10（上拉），ADMODE（bit7）= 1（数字）。PIO0_4、PIO0_5 是 <b>0x0000 0080</b>：它们是 I²C 脚，bit7:3 是保留位，没有 MODE，所以没有上拉（第 89 页 Table 80 会讲）。你在表里还能找到其它和 0x90 不一样的，自己数一数。</details>
+<div class="task"><span class="pg">📖 p.87 Table 77（PIO0_1）· p.89 Table 80（PIO0_4）· p.94 Table 87（TDI_PIO0_11）</span><br>翻开这三张表并排比较。它们都是“一根脚的寄存器”，但位的定义不一样。</div>
+<details class="ans"><summary>问题 4：这三张表最大的不同是什么？</summary>
+<b>PIO0_1</b>：普通脚，FUNC = 0 就是 GPIO，有 MODE、HYS、INV、OD。<br>
+<b>PIO0_4</b>：I²C 脚，FUNC = 0 是 GPIO（open-drain），<b>没有 MODE、没有 OD</b>，bit9:8 是 I2CMODE。<br>
+<b>TDI_PIO0_11</b>：JTAG 脚，<b>FUNC = 0 是 TDI，要写 1 才是 GPIO</b>；还有 ADMODE（它能当 AD0）。<br>
+所以规矩是：<b>改任何一根脚之前，先查它自己那张表</b>。</details>
+
+<h2><span class="step">5/7</span>📖 手册导读：第 8 章 引脚功能总表（第 128~152 页）</h2>
+<div class="task"><span class="pg">📖 p.128 · Table 131</span>：按芯片型号和封装选该看哪张表。LPC11U3x + HVQFN33 → 看 <b>Figure 15</b> 和 <b>Table 135</b>。<br>
+<span class="pg">📖 p.129 · Figure 15</span>：HVQFN33 的引脚图，芯片俯视图上每个脚的编号和名字。<br>
+<span class="pg">📖 p.145 起 · Table 135 LPC11U3x pin description</span>：每根脚有哪些功能、复位后状态（比如 “I; PU” = 输入、上拉）。</div>
+<details class="ans"><summary>问题 5：PIO0_1 在 HVQFN33 封装上是第几脚？它一共有哪几种功能？</summary>第 3 脚。名字写作 <code>PIO0_1/CLKOUT/CT32B0_MAT2/USB_FTOGGLE</code>：GPIO、时钟输出、定时器匹配输出、USB 帧翻转。复位后 “I; PU”：输入、上拉。原理图（如 T1A 的）上的引脚号就是这个编号，对原理图时要用它。</details>
+<details class="ans"><summary>问题 6：PIO0_13 有哪些功能？为什么这个项目能拿它当 ADC 用？</summary>名字是 <code>TDO/PIO0_13/CT32B1_MAT0/AD2</code>：JTAG 的 TDO、GPIO、定时器匹配、ADC 第 2 路。IRPT_V4 用它的 AD2 读左键；T1A 打算用它的 CT32B1_MAT0 或 GPIO 控制线圈（03 适配清单）。</details>
+
+<h2><span class="step">6/7</span>📖 手册导读：第 9 章 GPIO（第 153~169 页）</h2>
+<div class="task"><span class="pg">📖 p.153 · 9.2 Basic configuration</span>：GPIO 的“七步”：时钟 bit6（端口）、bit19（引脚中断）、组中断的时钟和唤醒设置。<br>
+<span class="pg">📖 p.154 · 9.4 Introduction</span>：GPIO 由三块组成：<b>引脚中断</b>（最多 8 根脚各自触发）、<b>组中断</b>（一组脚合起来触发，2 组）、<b>端口</b>（读写电平）。这个项目平时只用端口，休眠时用组中断 0。<br>
+<span class="pg">📖 p.156 · Table 140</span>：端口寄存器总览。重点看 DIR、PIN、SET、CLR、NOT 五个。<br>
+<span class="pg">📖 p.164~166 · Table 160（DIR）、Table 164（PIN）、Table 168（SET）、Table 170（CLR）</span>：每张表都很短，读一遍。<br>
+<span class="pg">📖 p.167~169 · 9.6 Functional description</span>：<b>这一节最值得精读</b>，尤其 9.6.2 GPIO output 和 9.6.5 Recommended practices。</div>
+<details class="ans"><summary>问题 7：往 SET 里写一个数，写成 0 的位会怎样？为什么代码用 SET[0] = (1&lt;&lt;20) 而不是 |=？</summary>写 0 的位<b>不受影响</b>，只有写 1 的位变高。所以直接用 <code>=</code> 就只改那一根脚，不需要先读出来。这样更快，也不怕“读出来还没写回去时被中断改了”。CLR 同理。</details>
+<details class="ans"><summary>问题 8：9.6.2 说，写引脚要真正生效需要满足哪两个条件？</summary>1）这根脚在 IOCON 里选成了 GPIO；2）它在 DIR 里被设成了输出。两个条件有一个不满足，“写引脚”就没有效果。但输出寄存器里的值还是会被记下（可以先写值、后切方向，这正是防毛刺的原理）。</details>
+<details class="ans"><summary>问题 9：读 PIN 寄存器，读到的是什么？引脚是输出时也能读吗？</summary>读到的是引脚上<b>实际的电平</b>，不管它是输入还是输出、是不是被别的外设占用（9.6.2 最后一段：<i>“returns the state of pins, regardless of their direction or alternate functions”</i>）。</details>
+<details class="ans"><summary>问题 10：组中断的标志怎么清？去 p.161 Table 151 找。</summary>CTRL 寄存器 bit0 INT：<i>“This bit is cleared by writing a one to it. Writing zero has no effect.”</i> 写 1 清零。代码 <code>LPC_GPIO_GROUP_INT0->CTRL |= 0x1;</code>（<code>GPIO.c:268</code>）就是在清它。</details>
+
+<h2><span class="step">7/7</span>容易出错的地方、你能改什么、T1A</h2>
+<h3>容易出错</h3>
+<table><tbody>
+<tr><td>JTAG 脚忘了改 FUNC</td><td>PIO0_11~14 复位后不是 GPIO，读写都没用。要先 <code>FUNC = 1</code>。PIO0_10、PIO0_15 是 SWD 调试口，不要改，否则下载器连不上。</td></tr>
+<tr><td>输出脚先切方向再设电平</td><td>切成输出那一刻会先输出旧值 0，产生毛刺。NCS 出毛刺，传感器会以为被选中。</td></tr>
+<tr><td>ADC 脚开着上拉</td><td>上拉会把电压往 3.3 V 拉，读数不准。</td></tr>
+<tr><td>拿 PIO0_4/5 当普通输出</td><td>真开漏，输出 1 时只是松开，需要外部上拉才会变高。IRPT_V4 的线圈 PWM 就接在这两根脚上，板上是否有上拉要问杰哥 ⚠️（1-3 课）。</td></tr>
+<tr><td>对 SET/CLR 用 <code>|=</code></td><td>能用但多余，还会先读一次；直接 <code>=</code>。</td></tr>
+<tr><td>引脚号对错</td><td>原理图上的是封装脚号（第 3 脚），代码里的是端口号（PIO0_1）。用第 8 章 Table 135 对照。</td></tr>
+</tbody></table>
+<h3>你能改什么：比如加一个按键</h3>
+<ol style="padding-left:1.2em">
+<li><code>inc/my_board.h</code>：IRPT_V4 分支里定义新按键的端口和引脚号</li>
+<li><code>src/GPIO.c</code> IRPT_V4 分支：设成输入（如果是 PIO0_11~14 要先改 FUNC）</li>
+<li><code>inc/button.h</code>：把它加进 <code>BUTTON_PORT0</code> 的掩码，定义它在报文里的位</li>
+<li><code>app/button.c</code>：<code>Button_GetState()</code> 里加上它的位置换算（第 17 课）</li>
+<li><code>src/wnDrv_Pmu.c</code>：要它能唤醒电脑，就加进组中断的 <code>ENA</code></li>
+</ol>
+<h3>T1A 上的变化</h3>
+<p>T1A 几乎每根脚的用途都变了（<code>03_T1A适配清单.md</code> 第一节）。和本课最相关的几条：</p>
+<table><tbody>
+<tr><td>PIO0_4 / PIO0_5</td><td>不再接线圈，改做 I²C 接充电芯片（这才是它们本来的用途）</td></tr>
+<tr><td>PIO0_13 / PIO0_14</td><td>改接线圈 PWM：先改 FUNC = 1，而且它们是普通推挽脚，<code>IOCTRL_NoPull</code> / <code>IOCTR_PushPull</code> 这次真的会起作用</td></tr>
+<tr><td>按键</td><td>四个按键换了引脚，而且外部有 47 kΩ 上拉；<code>BUTTON_PORT0</code> 掩码和唤醒的 <code>ENA</code> 都要改</td></tr>
+<tr><td>PIO0_1</td><td>改接充电芯片的 /CE，不再是按键</td></tr>
+</tbody></table>
+
+<h2>小测验</h2>
+<div class="box quiz" id="quiz"></div>
+<div class="sum"><b>这一课你只需要记住：</b>一根脚 = IOCON（给谁用、上下拉）+ GPIO（方向、读写）。开机全是“输入 + 上拉”，PIO0_11~14 是 JTAG 要改 FUNC。输出脚先设电平再切方向。读用 PIN，写用 SET/CLR（写 1 才生效）。改任何一根脚之前，先查它自己的那张 IOCON 表。</div>
+<h3>本课新词</h3>
+<table><tbody>
+<tr><td><b>IOCON</b></td><td>引脚配置模块：功能、上下拉、模拟/数字、开漏</td></tr>
+<tr><td><b>上拉 / 下拉 / 悬空</b></td><td>内部电阻把脚拉高 / 拉低 / 没人管电平不确定</td></tr>
+<tr><td><b>开漏 / 推挽</b></td><td>只能拉低 / 能拉低也能推高</td></tr>
+<tr><td><b>DIR / PIN / SET / CLR</b></td><td>方向 / 读电平 / 写 1 变高 / 写 1 变低</td></tr>
+<tr><td><b>组中断</b></td><td>一组引脚合起来触发一个中断，这里用来唤醒</td></tr>
+<tr><td><b>毛刺</b></td><td>不该出现的短暂电平跳变</td></tr>
+</tbody></table>
+<p class="note">字典：更细的逐行讲解在 <code>study_notes/1-3_GPIO初始化.md</code>。下一课：第 7 课 ADC，读第 19 章。</p>
+</div>
+<script>
+const NS="http://www.w3.org/2000/svg";
+function el(p,t,a,x){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e}
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
+/* ---------- pin simulator ---------- */
+let last=3.3;
+function pinSim(){
+  const g=n=>document.querySelector(`input[name=${n}]:checked`).value;
+  const fn=g('fn'),md=g('md'),dr=g('dr'),ov=g('ov'),ex=g('ex'),od=$('od').checked;
+  document.querySelectorAll('input[name=md]').forEach(x=>x.disabled=od);
+  let v=null,why='',warn='',state;
+  const pressed=ex==='btnp';
+  if(fn==='per'){v=null;why='这根脚已经交给别的外设（比如 ADC），GPIO 的 DIR 和 SET/CLR 对它<b>没有作用</b>（手册 7.3.1）。电压由那个外设或外部电路决定。';}
+  else if(dr==='out'){
+    if(ov==='1'&&!od){v=pressed?0:3.3;why=pressed?'推挽输出高，但按键把引脚直接接到了地。':'推挽输出高：芯片主动把引脚推到 3.3 V。';if(pressed)warn='⚠️ 芯片在输出 3.3 V，按键又把它直接接到地：这是<b>短路</b>，会有大电流流过，可能损坏芯片。所以接按键的脚只能当输入！';}
+    else if(ov==='0'){v=0;why=od?'开漏输出低：把引脚拉到 0 V。':'推挽输出低：芯片把引脚拉到 0 V。';}
+    else{ // od & 1
+      if(pressed){v=0;why='开漏输出 1 = 松开，按键把它接到地，所以是 0 V。';}
+      else{v=null;why='开漏输出 1：引脚只是<b>松开</b>，没有外部上拉电阻的话就是<b>悬空</b>，电平不确定。PIO0_4/5 要输出高电平，板上必须有上拉电阻。';}
+    }
+  } else {
+    if(pressed){v=0;why='输入：按键按下，把引脚直接接到地，0 V。内部上拉电阻挡住了电流，不会短路。';}
+    else if(od){v=null;why='PIO0_4/5 没有内部上拉，外面又没驱动：<b>悬空</b>。这两根脚当输入时需要外部上拉。';}
+    else if(md==='up'){v=3.3;why='输入 + 上拉：外面没人驱动，内部电阻把它拉到 3.3 V。按键松开时就是这样。';}
+    else if(md==='down'){v=0;why='输入 + 下拉：外面没人驱动，内部电阻把它拉到 0 V。注意：这样按键按下和松开都是 0，读不出区别！';}
+    else{v=null;why='输入 + 不接电阻 + 外面没人驱动：<b>悬空</b>，读数随机跳。ADC 脚这样设没问题，因为外面有电路一直驱动它；按键脚这样设就会乱读。';}
+  }
+  if(ex==='none'&&dr==='in'&&fn==='gpio'&&!od){/* same as above */}
+  const read=v===null?'不确定（0 或 1 都可能）':(v>=2.31?'1':v<=0.99?'0':'不确定');
+  const s=$('pinSvg');s.textContent='';
+  el(s,'rect',{x:10,y:20,width:150,height:240,rx:10,fill:V('soft'),stroke:V('line')});
+  el(s,'text',{x:85,y:42,'text-anchor':'middle','font-size':13,'font-weight':700,fill:V('fg')},'芯片里面');
+  el(s,'rect',{x:24,y:56,width:122,height:42,rx:6,fill:V('panel'),stroke:V('gold')});el(s,'text',{x:85,y:74,'text-anchor':'middle','font-size':11.5,fill:V('gold')},'IOCON');
+  el(s,'text',{x:85,y:90,'text-anchor':'middle','font-size':10.5,class:'m',fill:V('fg')},(fn==='gpio'?'FUNC=GPIO':'FUNC=外设')+' '+(od?'开漏':({up:'上拉',down:'下拉',none:'无'})[md]));
+  el(s,'rect',{x:24,y:108,width:122,height:56,rx:6,fill:V('panel'),stroke:V('per')});el(s,'text',{x:85,y:126,'text-anchor':'middle','font-size':11.5,fill:V('per')},'GPIO');
+  el(s,'text',{x:85,y:142,'text-anchor':'middle','font-size':10.5,class:'m',fill:V('fg')},'DIR='+(dr==='in'?'输入':'输出')+(dr==='out'?' 出='+ov:''));
+  el(s,'text',{x:85,y:157,'text-anchor':'middle','font-size':10.5,class:'m',fill:V('fg')},'PIN 读到 '+(read.length>2?'?':read));
+  if(!od&&fn==='gpio'&&md!=='none'&&!(dr==='out')){el(s,'rect',{x:52,y:178,width:14,height:40,fill:V('panel'),stroke:V('muted')});el(s,'text',{x:72,y:200,'font-size':10,fill:V('muted')},md==='up'?'上拉→3.3V':'下拉→0V')}
+  el(s,'line',{x1:160,x2:220,y1:200,y2:200,stroke:V('fg'),'stroke-width':3});
+  el(s,'rect',{x:150,y:192,width:16,height:16,fill:V('fg')});
+  el(s,'text',{x:190,y:190,'text-anchor':'middle','font-size':11,fill:V('muted')},'引脚');
+  const col=v===null?V('gold'):v>2?V('sw'):V('per');
+  el(s,'circle',{cx:250,cy:200,r:26,fill:col,opacity:.9});
+  el(s,'text',{x:250,y:205,'text-anchor':'middle','font-size':13,'font-weight':700,fill:V('bg')},v===null?'悬空':v+' V');
+  el(s,'line',{x1:276,x2:310,y1:200,y2:200,stroke:V('fg'),'stroke-width':2});
+  if(ex==='none'){el(s,'text',{x:315,y:204,'font-size':12,fill:V('muted')},'没接')}
+  else{ if(pressed)el(s,'line',{x1:310,x2:350,y1:200,y2:200,stroke:V('pc'),'stroke-width':4});else el(s,'line',{x1:310,x2:345,y1:200,y2:180,stroke:V('fg'),'stroke-width':3});
+    el(s,'line',{x1:350,x2:350,y1:200,y2:250,stroke:V('fg'),'stroke-width':2});[[336,364,250],[341,359,257],[346,354,264]].forEach(([a,b,y])=>el(s,'line',{x1:a,x2:b,y1:y,y2:y,stroke:V('fg'),'stroke-width':2}));el(s,'text',{x:330,y:172,'font-size':11,fill:V('fg')},pressed?'按键按下':'按键松开')}
+  el(s,'text',{x:10,y:290,'font-size':12.5,'font-weight':700,fill:V('fg')},'单片机读 PIN 得到：'+read);
+  $('pinInfo').innerHTML=why+(warn?'<br><span style="color:var(--bad)">'+warn+'</span>':'');
+  $('pinInfo').style.borderLeftColor=warn?V('bad'):col;
+}
+document.querySelectorAll('.sim input').forEach(x=>x.addEventListener('change',pinSim));pinSim();
+/* ---------- lifecycle ---------- */
+const LANES=[['🟦 芯片自己','per'],['⬜ 现成例程','muted'],['🟩 项目代码','sw']];
+const PHASES=['开机准备（只做一次）','平时工作（反复）','中断（休眠时）','停止 / 注意'];
+const P=c=>`<pre class="code">${c}</pre>`;
+const B=[
+ [0,0,'','复位：全部输入 + 上拉','📖 p.84 Table 75','芯片复位后，大部分引脚的 IOCON = 0x90（GPIO、上拉），DIR = 0（输入）。例外：PIO0_11~14 的 FUNC = 0 是 JTAG；PIO0_4/5 是开漏脚，没有上拉（0x80）。','📖 p.84 Table 75（复位值）；p.164 Table 160（DIR 复位值 0）；数据手册 6.2 节'],
+ [0,1,'②','开 GPIO 时钟','GPIO.c:310',P('LPC_SYSCON->SYSAHBCLKCTRL |= ((1&lt;&lt;6)|(1&lt;&lt;19)|(1&lt;&lt;23)|(1&lt;&lt;24));')+'bit6 端口（开机后其实已经是 1），bit19 引脚中断，bit23/24 组中断 0/1。IOCON 自己的时钟 bit16 更早在 <code>OSC.c:55</code> 打开。调用链：<code>Device_Init()</code> → <code>InitGPIO()</code>（device.c:421）。','📖 p.31 Table 24；p.153 9.2'],
+ [0,1,'④','JTAG 4 根脚收回当 GPIO','GPIO.c:314~321',P('LPC_IOCON->TDI_PIO0_11 &amp;= ~0x07;  LPC_IOCON->TDI_PIO0_11 |= 0x01;\n... PIO0_12、13、14 同样')+'先清 FUNC 三位再写 1，不动其它位。PIO0_10、PIO0_15 是 SWD 调试口，故意不改。','📖 p.94 Table 87（TDI_PIO0_11）'],
+ [0,2,'④⑤','输入脚：按键、MOTION、滚轮','GPIO.c:480~494',P('DrvGPIOInput(FRONT_BUTTON_PORT, FRONT_BUTTON_PIN);  // PIO0_1\n... PIO0_23、PIO0_12、PIO0_11、PIO0_2、PIO0_17、PIO0_18')+'只设 DIR = 输入，MODE 保持复位值“上拉”。按键按下接地，读到 0。<br>这段 IRPT_V4 分支是给这块板子加进老文件 <code>GPIO.c</code> 的，所以算项目代码。','📖 p.164 Table 160（DIR）'],
+ [0,2,'④⑤','输出脚：先设电平再切方向','GPIO.c:485~517',P('IOCTRL_NoPull(NCS);                     // 1 不接上下拉\nIOCTRL_HighLevel(NCS_PORT, NCS_PIN);    // 2 先把输出值设成高\nIOCTR_PushPull(NCS);                    // 3 推挽\nIOCTRL_CfgAsOutput(NCS_PORT, NCS_PIN);  // 4 最后切成输出')+'NCS、IR_EN 先设高；HP_EN、PWM1、PWM2 先设低。顺序反了，切输出的瞬间会先输出旧值 0，产生毛刺。','📖 p.167 9.6.2 GPIO output（输出值可以在切方向之前写好）'],
+ [0,2,'④','ADC 脚：关掉上拉','GPIO.c:500~503',P('IOCTRL_NoPull(LB_ADC);  DrvGPIOInput(LB_ADC_PORT, LB_ADC_PIN);\nIOCTRL_NoPull(RB_ADC);  DrvGPIOInput(RB_ADC_PORT, RB_ADC_PIN);')+'PIO0_13、PIO0_14 先当无上拉的输入，<code>MyADC_Init()</code> 再把 FUNC 改成 AD、ADMODE 改成模拟（第 7 课）。','📖 p.82 7.3.7 Analog mode'],
+ [1,2,'⑦','每 1 ms 读按键','button.h:149',P('#define BUTTON_PORT0 ((~LPC_GPIO->PIN[0]) &amp; (MIDDLE_BUTTON_MASK | DPI_CYCLE_BUTTON_MASK | ...))')+'一次读整个端口 0 的 32 根脚，取反（按下 = 1），再用掩码只留按键那几位。谁调用：<code>Button_GetState()</code>（app/button.c:551），每 1 ms。','📖 p.165 Table 164（PIN）；p.169 9.6.5“To make a decision based on multiple pins, read and mask a PORT register.”'],
+ [1,2,'⑦','读滚轮 A、B','scroll.c',P('wheel_value_ZA = DrvGPIORead(ZA_PORT, ZA_PIN);\nwheel_value_ZB = DrvGPIORead(ZB_PORT, ZB_PIN);')+'<code>DrvGPIORead()</code>（GPIO.c）读 PIN 里的一位。','📖 p.165 Table 164'],
+ [1,2,'⑦','SPI 前后拉低、拉高片选','PAW3950.c:437、448',P('LPC_GPIO->CLR[0] = (1 &lt;&lt; 20);   // NCS 低：选中传感器\n... SPI 收发 ...\nLPC_GPIO->SET[0] = (1 &lt;&lt; 20);   // NCS 高：放开')+'用 <code>=</code> 不用 <code>|=</code>：写 0 的位不受影响。','📖 p.166 Table 168（SET）、Table 170（CLR）'],
+ [1,2,'⑦','振动时控制线圈脚','my_electromagnet.c:82~88',P('#define Ele_LeftOpen()   DrvGPIOOutput(PWM1_PORT, PWM1_PIN, 1)\n#define Ele_LeftClose()  DrvGPIOOutput(PWM1_PORT, PWM1_PIN, 0)')+'按下或松开时，给线圈脚输出 1、等几百微秒、再输出 0（第 15 课）。注意 PWM1/2 是 PIO0_4/5 真开漏脚 ⚠️。',''],
+ [1,0,'','PIN 随时反映实际电平','','芯片自己：任何时候读 PIN，都是引脚上此刻的真实电平，不管它是输入、输出还是被别的外设占用。','📖 p.167 9.6.1、9.6.2 末段'],
+ [2,1,'⑥','休眠前：按键设成组中断','wnDrv_Pmu.c:66~93',P('ENA[0] = MIDDLE | K5 | DPI | K4 的掩码;     // 这几根脚参与\nInitGPIOGroupedInterrupt(0, ENA, FALSE, 0, POL); // 任一个、边沿、低有效\nLPC_SYSCON->STARTERP1 = (GPIOINT0 | USB_WAKEUP); // 组中断 0 可以唤醒')+'电脑休眠时，<code>wnApi_Events_Suspend_Handler()</code>（usbhw.c:650）调用它。<code>InitGPIOGroupedInterrupt()</code>（GPIO.c:792）里先清标志、清 NVIC 挂起位、再开中断。','📖 p.161 Table 151（CTRL）；p.153 9.2（STARTERP1）'],
+ [2,0,'','按键按下：叫醒芯片 + 举手','','芯片自己：组中断 0 里任何一根脚变低，就把芯片从深度睡眠里叫醒，并把 CTRL 的 INT 位置 1。',''],
+ [2,1,'⑦','中断函数：恢复 + 清标志','GPIO.c:239~268',P('void GINT0_IRQHandler(void) {\n  if (LPC_GPIO_GROUP_INT0->CTRL &amp; 0x1) {\n    if (suspendFlag == 1) { 设“恢复”标志; 重新打开各中断; }\n    LPC_GPIO_GROUP_INT0->CTRL |= 0x1;   // 写 1 清标志\n  }\n}')+'<b>例程已经清了标志</b>。之后主循环里 <code>Suspend_Check()</code> 看到恢复标志，做唤醒后的恢复（第 20 课）。','📖 p.161 Table 151：INT “cleared by writing a one to it”'],
+ [3,2,'','红外灯一直亮着','','IR_EN（PIO0_19）只在 <code>InitGPIO()</code> 里设高过一次，休眠时也没关。如果以后要省电，可以在挂起流程里拉低它。',''],
+ [3,2,'','PIO0_4/5 的上拉要确认','','线圈 PWM 接在真开漏脚上，输出 1 时只是松开。板上有没有外部上拉、I2CMODE 要不要改成 01，要问杰哥 ⚠️。','📖 p.89 Table 80'],
+];
+(function(){
+  const s=$('lifeSvg');let idx=0;const LX=86,CW=192,BH=48,GAP=8,TOP=34;
+  function layout(){const cnt={};const pos=B.map(b=>{const k=b[0]+'_'+b[1];cnt[k]=(cnt[k]||0)+1;return{c:b[0],l:b[1],n:cnt[k]-1}});
+    const laneH=[0,1,2].map(l=>Math.max(1,...[0,1,2,3].map(c=>cnt[c+'_'+l]||0)));const laneY=[TOP];for(let l=1;l<3;l++)laneY[l]=laneY[l-1]+laneH[l-1]*(BH+GAP)+16;
+    return{pos:pos.map(p=>({x:LX+p.c*(CW+6)+4,y:laneY[p.l]+8+p.n*(BH+GAP)})),laneY,laneH,H:laneY[2]+laneH[2]*(BH+GAP)+16}}
+  function draw(){s.textContent='';const L=layout();s.setAttribute('viewBox',`0 0 900 ${L.H}`);s.setAttribute('height',L.H);
+    PHASES.forEach((p,c)=>{const x=LX+c*(CW+6);el(s,'rect',{x,y:22,width:CW+2,height:L.H-24,rx:8,fill:V('soft'),opacity:.6});el(s,'text',{x:x+CW/2,y:16,'text-anchor':'middle','font-size':12.5,'font-weight':600,fill:V('fg')},p)});
+    LANES.forEach(([t,c],l)=>{const y=L.laneY[l],h=L.laneH[l]*(BH+GAP)+8;el(s,'rect',{x:4,y,width:LX-10,height:h,rx:6,fill:V(c),opacity:.12});t.split(' ').forEach((w,i)=>el(s,'text',{x:(LX-6)/2+2,y:y+h/2-4+i*17,'text-anchor':'middle','font-size':12.5,'font-weight':600,fill:V(c)},w))});
+    B.forEach((b,i)=>{const p=L.pos[i],c=LANES[b[1]][1],on=i===idx;const g=el(s,'g',{tabindex:0,role:'button','aria-label':b[3],style:'cursor:pointer'});
+      el(g,'rect',{x:p.x,y:p.y,width:CW-8,height:BH,rx:7,fill:on?V(c):V('panel'),stroke:V(c),'stroke-width':on?2.5:1.5});
+      el(g,'circle',{cx:p.x+13,cy:p.y+14,r:10,fill:on?V('bg'):V(c)});el(g,'text',{x:p.x+13,y:p.y+18,'text-anchor':'middle','font-size':11,'font-weight':700,fill:on?V(c):V('bg')},i+1);
+      const lim=b[2].length>1?9:11;const t=b[3].length>lim?[b[3].slice(0,lim),b[3].slice(lim)]:[b[3]];t.forEach((tt,k)=>el(g,'text',{x:p.x+28,y:p.y+(t.length>1?18:20)+k*15,'font-size':12.5,'font-weight':600,fill:on?V('bg'):V('fg')},tt));
+      if(t.length===1&&b[4])el(g,'text',{x:p.x+28,y:p.y+38,'font-size':10.5,class:'m',fill:on?V('bg'):V('muted')},b[4]);
+      if(b[2])el(g,'text',{x:p.x+CW-14,y:p.y+14,'text-anchor':'end','font-size':11,'font-weight':700,fill:on?V('bg'):V('gold')},b[2]);
+      const go=()=>{idx=i;draw()};g.addEventListener('click',go);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}})});
+    const b=B[idx],c=LANES[b[1]][1];const card=$('lifeInfo');card.style.borderLeftColor=V(c);
+    card.innerHTML=`<b class="t">${idx+1}. ${b[3]}</b>　<span class="note">${LANES[b[1]][0]} · ${PHASES[b[0]]}${b[2]?' · 七步 '+b[2]:''}${b[4]&&!b[4].startsWith('📖')?' · '+b[4]:''}</span><br>${b[5]}${b[6]?`<div class="man"><div class="src" style="color:var(--per)">${b[6]}</div><div class="zh">翻到这一页，对照原文看。</div></div>`:''}`;
+    $('lfPos').textContent=`第 ${idx+1} / ${B.length} 步`}
+  $('lfNext').onclick=()=>{idx=(idx+1)%B.length;draw()};$('lfPrev').onclick=()=>{idx=(idx-1+B.length)%B.length;draw()};draw();
+})();
+/* ---------- quiz ---------- */
+const Q=[
+ ['1. 开机复位后，PIO0_1 是什么状态？',['输出低','输入 + 上拉','悬空'],1,'对。大部分脚复位后都是输入 + 上拉（Table 75：0x90；Table 160：DIR = 0）。','查 p.84 Table 75 的复位值。'],
+ ['2. PIO0_12（中键）开机后能直接当 GPIO 读吗？',['能','不能，它复位后是 JTAG 的 TMS，要先把 FUNC 改成 1'],1,'对。PIO0_11~14 复位后都是 JTAG 功能。','看 p.94 起 Table 87~90 的 FUNC = 0 是什么。'],
+ ['3. 片选 NCS 为什么要先 SET 再设 DIR？',['没区别','防止切成输出瞬间输出旧值 0，产生毛刺','SET 必须在 DIR 后面'],1,'对。输出值可以在切方向之前写好（9.6.2）。','想想 DIR 一切成输出，引脚立刻输出什么。'],
+ ['4. LPC_GPIO->SET[0] = (1<<20) 会影响 PIO0_21 吗？',['会，PIO0_21 被清成 0','不会，写 0 的位不受影响'],1,'对。SET/CLR 只认写 1 的位。','看 Table 168 对写 0 的说明。'],
+ ['5. 电脑休眠时，按哪些键能把鼠标叫醒？',['左右键','中键、侧键、DPI 键','任何键'],1,'对。wnDrv_Pmu.c 把这几根脚设成了组中断 0。左右键是 ADC 读的模拟量，不在组中断里。','看生命周期图第 12 步。'],
+ ['6. 组中断的标志 INT 怎么清？',['写 0','写 1','读一下就清了'],1,'对。Table 151：写 1 清零，写 0 没用。例程 GINT0_IRQHandler 已经做了。','翻 p.161 Table 151。'],
+];
+(function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0].replace(/</g,'&lt;')}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+</script>
