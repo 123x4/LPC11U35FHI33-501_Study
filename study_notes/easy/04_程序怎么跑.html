@@ -1,0 +1,352 @@
+<title>程序怎么跑</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
+.mx{border-collapse:separate;border-spacing:4px;min-width:720px}
+.mx th{text-align:center;font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.mx th.s{text-align:left;font-size:.85rem;color:var(--muted);font-family:var(--font-b);width:150px}
+.mx td{padding:0;border:0}
+.mx button{width:100%;font:inherit;font-size:.8rem;line-height:1.35;padding:6px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-align:left;min-height:46px}
+.mx button.w-sw{border-left:5px solid var(--sw)}
+.mx button.w-ex{border-left:5px solid var(--muted)}
+.mx button.w-hw{border-left:5px solid var(--per)}
+.mx button.na{color:var(--muted);background:var(--soft);border-style:dashed}
+.mx button[aria-pressed="true"]{outline:3px solid var(--pc);outline-offset:1px}
+.who{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.85rem;margin:.4rem 0}
+.who span{display:inline-flex;align-items:center;gap:6px}
+.who i{width:14px;height:14px;border-radius:3px;display:inline-block}
+pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+</style>
+<div class="wrap">
+<div class="eyebrow">轻松版 · 第 4 课 · 打地基</div>
+<h1>程序怎么跑</h1>
+<p class="lede">插上 USB 线那一刻起，芯片里发生了什么？这一课从通电讲到主循环，再讲清楚中断（门铃）到底是怎么打断程序、又怎么回来的。学完你就能回答：<b>一行代码，在什么时候、被谁执行。</b></p>
+<div class="where"><span>📍</span><div>在地图上：第 0 课的“便利店店员”那一节，这次拆开细看。所有模块都挂在这条主线上。</div></div>
+
+<h2><span class="step">1/5</span>从通电到 main()</h2>
+<p>你写的程序不是芯片通电后第一个运行的。在它前面还有两个“门卫”。点“下一步”看一遍：</p>
+<div class="box try"><div class="tag">动手 · 点“下一步”，跟着芯片开机</div>
+<div class="scroll"><svg id="bootSvg" viewBox="0 0 820 300" width="820" height="300" role="img" aria-label="开机流程"></svg></div>
+<div class="btns"><button type="button" id="btPrev">上一步</button><button type="button" id="btNext">下一步</button><span class="note" id="btPos" style="align-self:center"></span></div>
+<div class="card" id="btInfo" aria-live="polite"></div>
+</div>
+<div class="def"><b>Bootloader（引导程序）</b>：开机先运行的一小段程序，决定“跳去运行正式程序”还是“留下来接收新固件”。这个项目有两个：芯片出厂自带的（在 ROM 里，改不了），和公司自己写的（在 Flash 最前面 16 KB）。</div>
+<div class="def"><b>向量表</b>：程序最开头的一张“电话簿”，每一行写着一个地址：开机从哪里开始、每种中断该去找哪个函数。CPU 遇到中断时就来这里查号码。</div>
+<div class="def"><b>栈</b>：RAM 里的一块“临时记事区”（这个项目 512 字节）。函数调用、中断发生时，CPU 把“我刚才做到哪了”记在这里，回来时再取出来。</div>
+
+<h2><span class="step">2/5</span>开门准备：Device_Init()</h2>
+<p><code>main()</code> 只有两行：先 <code>Device_Init()</code> 准备一次，再 <code>Device_Active()</code> 永远循环。下面是 IRPT_V4 板子真正执行的准备清单（<code>src/device.c:415</code>），<b>顺序是有讲究的</b>：</p>
+<ul class="tl" id="initList"></ul>
+<div class="card" style="border-left-color:var(--pc)"><b class="t">注意：准备还没做完，门铃就已经开始响了</b><br>第 8 步开了 1 ms 定时器中断，第 10 步开了 USB 中断。之后 <code>Device_Init()</code> 还在往下走，但这两个中断已经在工作了：电脑和鼠标的枚举问答，就是在第 12 步“等 500 ms”这段时间里由 USB 中断完成的。</div>
+
+<h2><span class="step">3/5</span>转圈干活：Device_Active()</h2>
+<p><code>src/device.c:493</code>。<code>while(1)</code> 就是“永远重复”，括号里的条件 1 永远成立，所以永远不会出来。每一圈做这些事：</p>
+<pre class="code">while (1)
+{
+    Device_Scan();        // ① 看一眼：读传感器；每 1 ms 扫一次按键和滚轮
+    Device_Pack();        // ② 有变化就拼成报文
+    Device_Report();      // ③ 把报文放进 USB 的 EP1
+    wwdt_feed();          // ④ 喂看门狗
+    PC_Communicate();     // ⑤ GUI 发来命令了吗
+    Suspend_Check();      // ⑥ 电脑休眠了吗
+    Ele_PollingTask();    // ⑦ 线圈的定时和保护
+    Task_ParamGuard();    // ⑧ 参数要不要存进 EEPROM
+    MyDebug_Task();       // 调试用，现在是空的
+    MyADC_Poll_Test();    // 测试用，内容被 #if 0 关掉了
+}</pre>
+<p>每一项都是“看一眼，有事就做，没事马上走”，不会停下来等。所以一圈很快，远远不到 1 ms。<b>主循环不能有“死等”</b>，否则别的事都会被耽误。</p>
+
+<h2><span class="step">4/5</span>门铃响了：中断到底怎么发生</h2>
+<p>中断最神奇的地方是：主循环正在做任何事，都可以被打断，处理完又<b>一点不差</b>地回到原来那一行接着做，主循环自己完全感觉不到。这是怎么做到的？以 1 ms 定时器为例，点“下一步”：</p>
+<div class="box try"><div class="tag">动手 · 点“下一步”，看一次中断的完整过程</div>
+<div class="scroll"><svg id="irqSvg" viewBox="0 0 820 360" width="820" height="360" role="img" aria-label="中断过程"></svg></div>
+<div class="btns"><button type="button" id="iqPrev">上一步</button><button type="button" id="iqNext">下一步</button><span class="note" id="iqPos" style="align-self:center"></span></div>
+<div class="card" id="iqInfo" aria-live="polite"></div>
+</div>
+<div class="man"><div class="src">📖 用户手册 UM10462 · 第 24 章 · 24.3.3.6.1 Exception entry · 第 448~449 页 · Fig 81</div>
+<div class="en">When the processor takes an exception ... the processor pushes information onto the current stack.
+This operation is referred to as stacking and the structure of eight data words is referred as a stack frame.
+... The processor performs a vector fetch that reads the exception handler start address from the vector table.</div>
+<div class="zh">进中断时，CPU 自动把 8 个数（R0~R3、R12、LR、PC、xPSR）压进栈，这叫“压栈”；然后去向量表查中断函数的地址。这些都是硬件自动做的，不用写代码。</div></div>
+
+<h2><span class="step">5/5</span>中断的三道闸门、优先级、怎么传话</h2>
+<h3>三道闸门：三个都开，门铃才会响</h3>
+<div class="box scroll"><svg id="gateSvg" viewBox="0 0 800 170" width="800" height="170" role="img" aria-label="三道闸门"></svg></div>
+<table>
+<thead><tr><th>闸门</th><th>在哪</th><th>这个项目里</th><th>手册</th></tr></thead>
+<tbody>
+<tr><td>① 外设自己愿意举手</td><td>外设的寄存器</td><td>定时器 <code>MCR = 3</code>；USB <code>INTEN</code></td><td>各外设章节（Table 303、Table 223）</td></tr>
+<tr><td>② NVIC 允许这一路</td><td>NVIC 的 ISER</td><td><code>NVIC_EnableIRQ(...)</code></td><td>第 6 章 Table 61，第 71 页</td></tr>
+<tr><td>③ 总开关没关</td><td>CPU 的 PRIMASK</td><td>平时开着；写 EEPROM 时 <code>__disable_irq()</code> 关掉所有中断（<code>src/IAP_CMD.c:47</code>，1-6 课）</td><td>第 24 章</td></tr>
+</tbody></table>
+<h3>优先级：两个门铃同时响听谁的</h3>
+<p>数字越小越优先（0 最高，3 最低，第 6 章 Table 71：<i>“0 = highest priority. 3 = lowest priority.”</i>）。这个项目里定时器是 0，USB 是 1。所以 USB 中断处理到一半时，定时器还能插进来，处理完再回到 USB；反过来不行。</p>
+<h3>中断和主循环怎么传话：一个全局变量</h3>
+<p>中断里只做很快的小事，真正的工作留给主循环。它们之间靠<b>全局变量</b>（所有函数都能看到的变量）传话。以按键扫描为例：</p>
+<div class="box scroll"><svg id="talkSvg" viewBox="0 0 800 200" width="800" height="200" role="img" aria-label="中断与主循环传话"></svg></div>
+<div class="card" style="border-left-color:var(--gold)"><b class="t">⚠️ 以后自己写这种变量时注意</b><br>中断和主循环共用的变量，规范的写法要加 <code>volatile</code>（告诉编译器“这个值随时可能被别人改，每次都要重新读”）。项目里的 <code>one_ms_cycle</code> 没加（<code>src/Timer.c:27</code>），现在能正常工作，是因为主循环每一圈都会调用别的函数，编译器不敢偷懒。但你新写的共用变量，<b>要加上 volatile</b>。</div>
+<h3>这个项目的三个门铃</h3>
+<table>
+<thead><tr><th>中断</th><th>向量表位置</th><th>中断函数</th><th>多久一次</th><th>优先级</th><th>做什么</th></tr></thead>
+<tbody>
+<tr><td>1 ms 定时器</td><td>第 32 项（0x4080）</td><td><code>TIMER16_0_IRQHandler</code><br>Timer.c:65</td><td>每 1 ms</td><td>0</td><td>清标志、毫秒 +1、各种倒计时 −1</td></tr>
+<tr><td>USB</td><td>第 38 项（0x4098）</td><td><code>USB_IRQHandler</code><br>usbhw.c:1331</td><td>电脑来时</td><td>1</td><td>清标志、枚举问答、端点事件做标记</td></tr>
+<tr><td>看门狗</td><td>第 41 项（0x40A4）</td><td><code>WDT_IRQHandler</code><br>WWDT.c:36</td><td>几乎不会</td><td>0</td><td>超时（约 65 秒没喂）就复位芯片（1-1 课）</td></tr>
+</tbody></table>
+<p class="note">向量表里的地址是从 <code>output/Sample.hex</code> 里直接读出来的：0x4080 处存着 0x4D05，正是 <code>TIMER16_0_IRQHandler</code> 的地址（<code>List/Sample.map</code> 第 898 行；最低位的 1 表示 Thumb 指令，0-4 课）。其它没用到的中断都指向同一个死循环 <code>Default_Handler</code>。</p>
+
+<h2>小测验</h2>
+<div class="box quiz" id="quiz"></div>
+
+<div class="sum"><b>这一课你只需要记住：</b>通电后先跑两个 Bootloader，再从向量表找到程序入口，C 库把变量准备好，才进 <code>main()</code>。<code>main()</code> 先准备一次（Device_Init），再永远转圈（Device_Active）。中断随时插队：硬件自动保存现场、查向量表、执行中断函数、恢复现场。中断里只做小事，靠全局变量通知主循环去干活。</div>
+<h3>本课新词</h3>
+<table><tbody>
+<tr><td><b>Bootloader</b></td><td>开机先跑的引导程序，决定运行正式程序还是升级</td></tr>
+<tr><td><b>向量表</b></td><td>程序开头的电话簿：开机入口、每种中断的函数地址</td></tr>
+<tr><td><b>栈</b></td><td>RAM 里的临时记事区，记“做到哪了”</td></tr>
+<tr><td><b>中断服务函数</b></td><td>门铃响时被执行的函数，名字固定（如 <code>TIMER16_0_IRQHandler</code>）</td></tr>
+<tr><td><b>优先级</b></td><td>门铃同时响时先听谁的，数字小的优先</td></tr>
+<tr><td><b>全局变量 / volatile</b></td><td>所有函数都能看到的变量 / 告诉编译器“每次都重新读”</td></tr>
+</tbody></table>
+<p class="note">下一课：第 5 课 “代码仓库怎么读”：几十个文件怎么分工、<code>#define</code> 和 <code>#if</code> 板子开关怎么看，以后你自己能在仓库里找到任何东西。</p>
+</div>
+<script>
+const NS="http://www.w3.org/2000/svg";
+function el(p,t,a,x){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e}
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
+const man=(w,en,zh)=>`<div class="man"><div class="src">📖 ${w}</div><div class="en">${en}</div>${zh?`<div class="zh">${zh}</div>`:''}</div>`;
+function stepper(svgId,prev,next,pos,info,N,draw){let i=0;const go=()=>{draw(i);$(pos).textContent=`第 ${i+1} / ${N} 步`};$(next).onclick=()=>{i=(i+1)%N;go()};$(prev).onclick=()=>{i=(i-1+N)%N;go()};go()}
+/* ---------- boot ---------- */
+const BOOT=[
+ ['rom',null,'通电：ROM 里的出厂启动程序','per','芯片通电（或复位）后，CPU 最先运行的是 NXP 出厂时固化在 ROM 里的启动程序，谁也改不了。它检查要不要进入“ISP 下载模式”（用于救砖烧录），不需要就跳去 Flash 地址 0 的程序（0-1 课）。'],
+ ['fb',null,'公司 Bootloader：检查、决定去哪','muted','Flash 最前面 16 KB（0x0000~0x3FFF）是公司的 Bootloader（0-3 课）：<br>· 看 Flash 0xFE00 是不是 0xAA：是 = 上次升级完整，有可用的程序；<br>· 看是不是程序要求“留下来升级”；<br>· 都正常：把我们程序的向量表复制到 RAM 开头，设置 SYSMEMREMAP 让 CPU 从 RAM 查向量表，然后跳去我们的程序。'+man('用户手册 UM10462 · 第 3 章 · Table 7 · 第 23 页 · SYSMEMREMAP','1:0  MAP  0x1  User RAM Mode. Interrupt vectors are re-mapped to Static RAM.','MAP = 1：中断向量改从 RAM 里读。')],
+ ['vec','vram','我们程序的向量表（0x4000）','sw','我们的程序从 Flash 0x4000 开始，最开头 192 字节就是向量表（48 项 × 4 字节）。用 <code>output/Sample.hex</code> 读出来：<pre class="code">0x4000：0x1000 1BD8   ← 第 0 项：栈顶地址\n0x4004：0x0000 9A1D   ← 第 1 项：开机入口 Reset_Handler\n...\n0x4080：0x0000 4D05   ← 第 32 项：1 ms 定时器中断函数</pre>'+man('用户手册 UM10462 · 第 24 章 · 第 446~447 页 · Vector table','The vector table contains the reset value of the stack pointer, and the start addresses, also called exception vectors, for all exception handlers.','向量表里放着：栈指针的初值，以及每种中断（异常）处理函数的起始地址。')],
+ ['rh',null,'Reset_Handler：只有 2 条指令','muted','<code>src/startup_LPC11Uxx.s:127</code>，地址 0x9A1C。读出 <code>__main</code> 的地址，跳过去。很多项目在这里调用 <code>SystemInit()</code> 配时钟，这个项目把它注释掉了，时钟在 <code>Device_Init()</code> 里配（0-4 课）。'],
+ ['cm','var','__main：C 库准备变量','muted','C 语言库提供的代码（0x40C0），不在我们的源文件里：<br>① 设好栈指针 = 0x1000 1BD8；<br>② <b>把有初值的变量从 Flash 搬到 RAM</b>：比如 <code>my_electromagnet.c</code> 里写了 <code>.pressVibrateDurationUs = 100</code>，这个 100 平时存在 Flash（0xF100 起），开机时被搬到 RAM 里的变量 <code>leftEle</code> 上；<br>③ <b>把没写初值的变量全部清零</b>（6016 字节，连栈一起）。<br>所以进入 main() 时，所有全局变量都已经是你写的初值或 0。'],
+ ['main',null,'main()：我们的代码开始了','sw','<code>src/Main.c</code>，地址 0x40D8：<pre class="code">int main(void)\n{\n    Device_Init();     // 准备一次\n    Device_Active();   // 永远转圈，不会返回\n    return 0;          // 永远到不了这里\n}</pre>'],
+];
+(function(){
+  const s=$('bootSvg');
+  function draw(i){s.textContent='';const cur=BOOT[i];
+    const bar=(y,label,parts)=>{el(s,'text',{x:8,y:y+24,'font-size':13,'font-weight':600,fill:V('fg')},label);
+      parts.forEach(([x,w,t,k,c])=>{const on=cur[0]===k||cur[1]===k;el(s,'rect',{x,y,width:w,height:40,rx:5,fill:on?V(c):V('soft'),stroke:on?V(c):V('line'),'stroke-width':on?2:1,opacity:on?.9:1});
+        t.split('\n').forEach((tt,j,a)=>el(s,'text',{x:x+w/2,y:y+(a.length>1?17+j*15:25),'text-anchor':'middle','font-size':11.5,fill:on?V('bg'):V('fg')},tt))})};
+    bar(20,'ROM',[[90,200,'NXP 出厂启动程序','rom','per']]);
+    bar(90,'Flash',[[90,150,'公司 Bootloader\n0x0000~0x3FFF','fb','muted'],[244,70,'向量表\n0x4000','vec','sw'],[318,110,'Reset_Handler\n0x9A1C','rh','muted'],[432,80,'__main\n0x40C0','cm','muted'],[516,90,'main() 等\n我们的代码','main','sw'],[610,110,'变量初值\n0xF100','cm','gold'],[724,70,'0xFE00\n0xAA 标志','fb','muted']]);
+    bar(170,'RAM',[[90,150,'向量表副本\n0x1000 0000','vram','sw'],[244,300,'全局变量\n0x1000 0100 起','var','gold'],[548,172,'栈 512 字节\n顶 0x1000 1BD8','var','per']]);
+    el(s,'text',{x:90,y:244,'font-size':13,'font-weight':700,fill:V(cur[3])},`▶ 现在：${cur[2]}`);
+    el(s,'text',{x:90,y:268,'font-size':11.5,fill:V('muted')},'Flash 断电不丢，放程序；RAM 断电就清空，放变量和栈。');
+    const c=$('btInfo');c.style.borderLeftColor=V(cur[3]);c.innerHTML=`<b class="t">${i+1}. ${cur[2]}</b><br>${cur[4]}`;}
+  stepper('bootSvg','btPrev','btNext','btPos','btInfo',BOOT.length,draw);
+})();
+/* ---------- init list ---------- */
+const INIT=[
+ ['wwdt_config(0xFFFF)','看门狗','ex','最先做：万一后面哪一步卡死，约 65 秒后自动复位重来。','1-1'],
+ ['InitSystemOSC(...)','系统时钟 48 MHz','ex','之后所有外设都按 48 MHz 的节拍工作，必须排在前面。这里也打开了 IOCON 的时钟。','1-2'],
+ ['InitGPIO()','引脚','ex','把按键、片选、红外灯电源等引脚设成输入或输出。','1-3'],
+ ['Ele_Init()','线圈驱动','sw','线圈控制脚和相关定时器。','1-4'],
+ ['InitUSBOSC(...)','USB 时钟 48 MHz','ex','USB 收发器和 USB PLL 通电。USB 初始化（第 10 步）之前必须先有它。','1-5'],
+ ['Param_Init()','从 EEPROM 读参数','sw','读出上次 GUI 保存的触发点、振感等。要在用到参数的功能之前读好。','1-6'],
+ ['MyDebug_Init()','调试','sw','现在是空的。','1-7'],
+ ['InitCT16B0(47, 999)','1 ms 定时器','ex','从这一刻起，<b>每 1 ms 的定时器中断开始工作</b>。','1-8',1],
+ ['NVIC_SetPriority(USB_IRQn, 1)','USB 中断优先级','sw','先定好优先级，再开 USB 中断。','1-9'],
+ ['nsAPI_USB_Init()','USB 初始化','ex','开时钟、配引脚、登记端点、开中断、接上 D+ 上拉。<b>从这一刻起电脑发现鼠标，USB 中断开始工作。</b>','1-10~1-13',1],
+ ['三个 xxx_Pointer_Init()','老配置系统的地址','ex','只是给几个指针变量赋值。','1-14'],
+ ['TimerDelayMsec(500)','等 500 ms','ex','等一等。<b>电脑和鼠标的枚举问答就在这段时间里由 USB 中断完成。</b>','—',1],
+ ['Device_Manually_Enter_RestoreDefault() 等 5 个','老配置系统','ex','检查要不要恢复出厂设置、加载按键映射等（Device_check_Profile、Custom_Init、RamMalloc_Init、Custom_Load_ModeSetting）。','1-15~'],
+ ['LPC_SYSCON->BODCTRL = ...','掉电复位','sw','电源电压低于约 2.63 V 时自动复位，防止低电压下乱跑。','—'],
+ ['PAW3950_Init()','光学传感器','sw','SPI 初始化 + 给传感器写设置。','第 9 课'],
+ ['MyADC_Init(左)、MyADC_Init(右)','ADC','sw','左右键的 ADC。','第 7 课'],
+];
+(function(){const ul=$('initList');INIT.forEach((x,i)=>{const li=document.createElement('li');li.className=(x[2]==='ex'?'ex':'')+(x[5]?' irq':'');
+  li.innerHTML=`<b>${i+1}.</b> <b class="fn">${x[0]}</b><span class="tag2">${x[1]}</span><span class="tag2">${x[2]==='ex'?'⬜ 现成':'🟩 项目'}</span><span class="tag2">${x[4]}</span><span class="why">${x[3]}</span>`;ul.appendChild(li)})})();
+/* ---------- irq ---------- */
+const CODE=['while (1) {','  Device_Scan();','  Device_Pack();','  Device_Report();','  wwdt_feed();','  PC_Communicate();   ← 正在这里','  Suspend_Check();','  ...','}'];
+const ISR=['void TIMER16_0_IRQHandler(void) {','  if (LPC_CT16B0->IR & 1) {','    LPC_CT16B0->IR = 1;    // 清标志','    毫秒 +1;','    one_ms_cycle--;  ...','  }','}'];
+const IRQ=[
+ ['主循环正在干活','sw',{pc:5},'CPU 正在执行 <code>PC_Communicate()</code> 里的某一行。它不知道定时器马上要响。'],
+ ['定时器数到 999：举手','per',{pc:5,tim:1},'🟦 芯片自动：定时器的计数器 TC 等于 MR0（999），因为 <code>MCR = 3</code>，它把 <code>IR</code> 的 bit0 置 1，同时 TC 回到 0 重新数。'+man('UM10462 · 第 15 章 · Table 297 · 第 337 页','0  MR0INT  Interrupt flag for match channel 0.','')],
+ ['NVIC 检查三道闸门和优先级','per',{pc:5,tim:1,nvic:1},'🟦 芯片自动：NVIC 看到第 16 路有请求；这一路已被 <code>NVIC_EnableIRQ</code> 允许，总开关 PRIMASK 也开着，CPU 现在没在处理更高优先级的中断，于是决定：打断。'],
+ ['CPU 自动保存现场（压栈）','per',{pc:5,tim:1,nvic:1,stack:1},'🟦 芯片自动：CPU 把 8 个数压进栈：R0~R3、R12、LR、<b>PC（被打断的下一条指令的地址）</b>、xPSR（状态）。有了这些，之后才能一点不差地回来。'+man('UM10462 · 第 24 章 · 24.3.3.6.1 · 第 448 页','... the processor pushes information onto the current stack. This operation is referred to as stacking and the structure of eight data words is referred as a stack frame.','')],
+ ['查向量表：第 32 项 = 0x4D05','per',{tim:1,stack:1,vec:1},'🟦 芯片自动：CT16B0 是第 16 号外设中断，前面还有 16 个系统异常，所以在向量表第 16 + 16 = 32 项。读出 0x4D05，跳过去（最低位 1 表示 Thumb 指令，实际地址 0x4D04）。'+man('UM10462 · 第 24 章 · 第 449 页','The processor performs a vector fetch that reads the exception handler start address from the vector table.','')],
+ ['执行中断函数','sw',{stack:1,isr:1},'🟩 我们的代码：<code>src/Timer.c:65</code>。先清标志（不清会被反复叫回来），再做几件很快的小事。这里不做按键扫描这种耗时的事。'],
+ ['返回：自动恢复现场','per',{pc:5,unstack:1},'🟦 芯片自动：中断函数结束时，CPU 从栈里把那 8 个数取回来，PC 恢复成被打断的位置，主循环从 <code>PC_Communicate()</code> 那一行接着往下走，像什么都没发生过。整个过程只用了几微秒。'],
+ ['主循环下一圈：看到节拍到了','sw',{pc:1},'🟩 主循环转到 <code>Device_Scan()</code>，看到 <code>one_ms_cycle</code> 被中断减成了 0，于是把它设回 1，去扫一次按键。这样按键扫描就正好每 1 ms 一次。'],
+];
+(function(){
+  const s=$('irqSvg');
+  function draw(i){s.textContent='';const f=IRQ[i][2];
+    el(s,'text',{x:10,y:18,'font-size':12.5,'font-weight':600,fill:V('fg')},'主循环（我们的代码）');
+    CODE.forEach((t,k)=>{const on=f.pc===k&&!f.isr;el(s,'rect',{x:10,y:26+k*22,width:250,height:20,rx:3,fill:on?V('sw'):'transparent',opacity:on?.25:1});el(s,'text',{x:16,y:40+k*22,'font-size':11.5,class:'m',fill:V('fg')},t)});
+    if(f.pc!=null&&!f.isr)el(s,'text',{x:2,y:40+f.pc*22,'font-size':12,fill:V('pc'),'font-weight':700},'▶');
+    // timer
+    el(s,'rect',{x:290,y:26,width:150,height:64,rx:6,fill:f.tim?V('per'):V('panel'),stroke:V('per'),opacity:f.tim?.85:1});
+    el(s,'text',{x:365,y:50,'text-anchor':'middle','font-size':13,'font-weight':600,fill:f.tim?V('bg'):V('fg')},'定时器 CT16B0');
+    el(s,'text',{x:365,y:72,'text-anchor':'middle','font-size':11.5,class:'m',fill:f.tim?V('bg'):V('muted')},f.tim?'IR bit0 = 1 举手':'TC 数数中…');
+    el(s,'rect',{x:290,y:104,width:150,height:50,rx:6,fill:f.nvic?V('per'):V('panel'),stroke:V('per'),opacity:f.nvic?.85:1});
+    el(s,'text',{x:365,y:134,'text-anchor':'middle','font-size':13,'font-weight':600,fill:f.nvic?V('bg'):V('fg')},'NVIC：要不要打断');
+    // stack
+    el(s,'text',{x:470,y:18,'font-size':12.5,'font-weight':600,fill:V('fg')},'栈（RAM）');
+    ['xPSR','PC = 返回地址','LR','R12','R3','R2','R1','R0'].forEach((t,k)=>{const on=f.stack&&!f.unstack;el(s,'rect',{x:470,y:26+k*20,width:130,height:18,rx:2,fill:on?V('gold'):V('soft'),stroke:V('line')});el(s,'text',{x:476,y:39+k*20,'font-size':10.5,class:'m',fill:on?V('bg'):V('muted')},on?t:(f.unstack?'已取回':'—'))});
+    // vector
+    el(s,'text',{x:630,y:18,'font-size':12.5,'font-weight':600,fill:V('fg')},'向量表');
+    [['0','0x1000 1BD8'],['1','0x0000 9A1D'],['…',''],['32','0x0000 4D05'],['…',''],['38','0x0000 9353']].forEach(([n,a],k)=>{const on=f.vec&&n==='32';el(s,'rect',{x:630,y:26+k*22,width:180,height:20,rx:3,fill:on?V('pc'):V('soft'),stroke:V('line')});el(s,'text',{x:636,y:40+k*22,'font-size':11,class:'m',fill:on?V('bg'):V('fg')},`${n.padEnd(3)} ${a}`)});
+    // isr
+    el(s,'text',{x:290,y:204,'font-size':12.5,'font-weight':600,fill:V('fg')},'中断函数 TIMER16_0_IRQHandler（0x4D04）');
+    ISR.forEach((t,k)=>{el(s,'rect',{x:290,y:212+k*19,width:340,height:18,rx:2,fill:f.isr?V('sw'):'transparent',opacity:f.isr?.2:1});el(s,'text',{x:296,y:225+k*19,'font-size':11,class:'m',fill:f.isr?V('fg'):V('muted')},t)});
+    // arrows
+    if(f.nvic)el(s,'path',{d:'M365 90 V104',stroke:V('per'),'stroke-width':2});
+    if(f.stack&&!f.vec&&!f.isr)el(s,'path',{d:'M440 129 C455 129 455 90 470 90',stroke:V('gold'),'stroke-width':2,fill:'none'});
+    if(f.vec)el(s,'path',{d:'M720 152 C720 185 640 185 632 206',stroke:V('pc'),'stroke-width':2,fill:'none'});
+    if(f.unstack)el(s,'path',{d:'M470 100 C380 100 300 130 262 136',stroke:V('gold'),'stroke-width':2,fill:'none','stroke-dasharray':'5 4'});
+    const c=$('iqInfo');c.style.borderLeftColor=V(IRQ[i][1]);c.innerHTML=`<b class="t">${i+1}. ${IRQ[i][0]}</b><br>${IRQ[i][3]}`;}
+  stepper('irqSvg','iqPrev','iqNext','iqPos','iqInfo',IRQ.length,draw);
+})();
+/* ---------- gates ---------- */
+(function(){const s=$('gateSvg');
+  el(s,'rect',{x:10,y:55,width:120,height:50,rx:8,fill:V('panel'),stroke:V('per'),'stroke-width':2});el(s,'text',{x:70,y:85,'text-anchor':'middle','font-size':13,'font-weight':600,fill:V('fg')},'外设有事');
+  [['① 外设中断使能','MCR / INTEN'],['② NVIC 这一路','NVIC_EnableIRQ'],['③ 总开关','PRIMASK']].forEach(([t,s2],k)=>{const x=170+k*190;
+    el(s,'rect',{x,y:40,width:150,height:80,rx:8,fill:V('panel'),stroke:V('gold'),'stroke-width':2});
+    el(s,'text',{x:x+75,y:72,'text-anchor':'middle','font-size':13.5,'font-weight':700,fill:V('gold')},t);
+    el(s,'text',{x:x+75,y:96,'text-anchor':'middle','font-size':11.5,class:'m',fill:V('muted')},s2);
+    el(s,'path',{d:`M${x-30} 80 h24`,stroke:V('muted'),'stroke-width':2})});
+  el(s,'path',{d:'M720 80 h20',stroke:V('muted'),'stroke-width':2});
+  el(s,'rect',{x:740,y:55,width:52,height:50,rx:8,fill:V('pc')});el(s,'text',{x:766,y:85,'text-anchor':'middle','font-size':13,'font-weight':700,fill:V('bg')},'CPU');
+  el(s,'text',{x:10,y:150,'font-size':12,fill:V('muted')},'任何一道没开，门铃都不会响。查“为什么中断不进”时，就按这三道一个个查。');})();
+/* ---------- talk ---------- */
+(function(){const s=$('talkSvg');const L=150,W=600,X=t=>L+t*W/4;
+  el(s,'text',{x:10,y:44,'font-size':12.5,'font-weight':600,fill:V('pc')},'定时器中断');
+  el(s,'text',{x:10,y:120,'font-size':12.5,'font-weight':600,fill:V('sw')},'主循环');
+  el(s,'text',{x:10,y:170,'font-size':12.5,'font-weight':600,fill:V('fg')},'one_ms_cycle');
+  for(let t=0;t<=4;t++){el(s,'line',{x1:X(t),x2:X(t),y1:20,y2:180,stroke:V('grid')});el(s,'text',{x:X(t),y:196,'text-anchor':'middle','font-size':11,class:'m',fill:V('muted')},t+' ms')}
+  for(let t=1;t<=3;t++){el(s,'rect',{x:X(t)-6,y:28,width:12,height:24,fill:V('pc')});el(s,'text',{x:X(t)+10,y:44,'font-size':11,fill:V('pc')},'减成 0')}
+  for(let k=0;k<60;k++){el(s,'rect',{x:L+k*10,y:108,width:7,height:16,fill:V('sw'),opacity:.25})}
+  el(s,'text',{x:L+2,y:100,'font-size':11,fill:V('muted')},'一圈接一圈，每圈都看一眼 one_ms_cycle');
+  for(let t=1;t<=3;t++){el(s,'rect',{x:X(t)+8,y:104,width:44,height:24,rx:3,fill:V('sw')});el(s,'text',{x:X(t)+30,y:121,'text-anchor':'middle','font-size':11,fill:V('bg')},'扫按键')}
+  let d=`M${L} 160`;for(let t=1;t<=3;t++){d+=` H${X(t)} V176 H${X(t)+12} V160`}d+=` H${L+W}`;el(s,'path',{d,stroke:V('fg'),fill:'none','stroke-width':2});
+  el(s,'text',{x:X(0)+4,y:156,'font-size':10,class:'m',fill:V('muted')},'1');el(s,'text',{x:X(1)+2,y:190-4,'font-size':10,class:'m',fill:V('muted')},'');
+})();
+/* ---------- quiz ---------- */
+const Q=[
+ ['1. 芯片通电后，最先运行的是？',['main()','NXP 出厂固化在 ROM 里的启动程序','公司 Bootloader'],1,'对。顺序是：ROM 启动程序 → 公司 Bootloader → 我们的程序。','第 1 步的图里，最上面那一条是什么？'],
+ ['2. 全局变量的初值（比如 = 100）平时存在哪？开机后谁把它放进 RAM？',['存在 Flash，__main 开机时搬过去','一直在 RAM 里','存在 EEPROM，Param_Init 读出来'],0,'对。RAM 断电就清空，所以初值只能存在 Flash，由 C 库的 __main 搬。','RAM 断电就清空，初值不可能一直在 RAM。'],
+ ['3. 进中断时，“刚才做到哪了”是谁保存的？',['我们在中断函数开头写代码保存','CPU 硬件自动压栈','不用保存'],1,'对。CPU 自动把 8 个数压栈，返回时自动取回。','看第 4 步动画的“压栈”那一步。'],
+ ['4. 定时器中断不进，按顺序该查哪三处？',['外设中断使能 → NVIC → 总开关 PRIMASK','只查 NVIC','重新烧录'],0,'对。三道闸门一道道查。','看第 5 步的三道闸门。'],
+ ['5. 为什么按键扫描放在主循环里，而不直接放在定时器中断里？',['中断里只做很快的小事，耗时的工作留给主循环','中断里不能调用函数','放哪都一样'],0,'对。中断太长会耽误别的中断（比如 USB），也会让主循环卡顿。','中断里做久了，会发生什么？'],
+];
+(function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0]}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+</script>
