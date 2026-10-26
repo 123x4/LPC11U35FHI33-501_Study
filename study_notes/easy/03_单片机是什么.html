@@ -105,6 +105,18 @@ svg .m{font-family:var(--font-m)}
 .who span{display:inline-flex;align-items:center;gap:6px}
 .who i{width:14px;height:14px;border-radius:3px;display:inline-block}
 pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
 </style>
 <div class="wrap">
 <div class="eyebrow">轻松版 · 第 3 课 · 打地基</div>
@@ -129,12 +141,66 @@ pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);borde
 <div class="def"><b>中断标志</b>：外设想叫 CPU 的时候，会把自己的一个开关置 1，这个开关就是“标志”。CPU 去处理（进中断函数）之后，<b>必须把它清回 0</b>，否则 CPU 一出来就看到它还是 1，又被叫回去，程序就卡在中断里出不来了。就像闹钟响了要按掉。</div>
 <div class="def"><b>轮询</b>：不用中断，程序自己隔一会儿去看一眼“好了没”。等的时间很短时（比如 ADC 只要 4 微秒），轮询比中断简单。</div>
 
+<h3>📖 怎么查芯片手册</h3>
+<p>上面每一个“拨哪个开关”，都不是凭空来的，全部出自芯片手册。以后每一课讲到寄存器，都会把手册原文一起给你看。先认识一下手册：</p>
+<table>
+<thead><tr><th>手册</th><th>文件（仓库 <code>materials/mcu_reference/</code>）</th><th>查什么</th></tr></thead>
+<tbody>
+<tr><td><b>用户手册</b> UM10462</td><td><code>LPC11U3x2x1x User Manual.pdf</code>（523 页）</td><td><b>每个寄存器、每个开关是干什么的</b>。写代码主要查它</td></tr>
+<tr><td><b>数据手册</b></td><td><code>LPC11U3X.pdf</code></td><td>电气参数（第 1 课的 2.31 V 就出自这里）、引脚表、封装</td></tr>
+</tbody></table>
+<p>用户手册<b>一个外设一章</b>，每章的结构都一样：</p>
+<div class="box">
+<ol style="margin:0;padding-left:1.3em;display:grid;gap:3px">
+<li><b>How to read this chapter</b>：这章适用哪些型号</li>
+<li><b>Basic configuration</b>：基本配置。<b>这就是七步！</b>比如 ADC 章 19.2 写着：引脚在 IOCON 里配置、在 SYSAHBCLKCTRL 置 bit13、电源由 PDRUNCFG 控制</li>
+<li><b>Features / Pin description</b>：能干什么、用哪些引脚</li>
+<li><b>Register description</b>：先是一张<b>寄存器总览表</b>（名字、地址、复位值），然后每个寄存器一张<b>位描述表</b></li>
+<li><b>Functional description</b>：工作原理</li>
+</ol></div>
+<table>
+<thead><tr><th>这个项目常查的章</th><th></th></tr></thead>
+<tbody>
+<tr><td>第 3 章 系统控制 SYSCON</td><td>通电 PDRUNCFG（Table 47）、时钟 SYSAHBCLKCTRL（Table 24）、解锁 PRESETCTRL（Table 8）</td></tr>
+<tr><td>第 6 章 NVIC</td><td>中断开关和优先级</td></tr>
+<tr><td>第 7 章 IOCON</td><td>每个引脚一张表：功能、上下拉、模拟/数字</td></tr>
+<tr><td>第 9 章 GPIO · 第 11 章 USB · 第 13 章 SPI · 第 15 章 16 位定时器 · 第 19 章 ADC · 第 20 章 Flash/EEPROM</td><td>各个外设</td></tr>
+</tbody></table>
+<h3>位描述表怎么读</h3>
+<p>下面是手册第 43 页 Table 47 的真实内容（节选）。每一列的意思：</p>
+<div class="um"><div class="cap">Table 47. Power configuration register (PDRUNCFG, address 0x4004 8238) bit description</div>
+<div class="scroll"><table><thead><tr><th>Bit</th><th>Symbol</th><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td>4</td><td>ADC_PD</td><td></td><td>ADC power-down</td></tr><tr><td></td><td></td><td>0</td><td>Powered</td></tr><tr><td></td><td></td><td>1</td><td>Powered down</td></tr>
+<tr><td>8</td><td>USBPLL_PD</td><td></td><td>USB PLL power-down</td></tr>
+<tr><td>10</td><td>USBPAD_PD</td><td></td><td>USB transceiver power-down configuration</td></tr>
+</tbody></table></div></div>
+<table><tbody>
+<tr><td><b>Bit</b></td><td>开关的编号（第 2 课的“几号开关”）</td></tr>
+<tr><td><b>Symbol</b></td><td>开关的名字。<code>_PD</code> 结尾 = power-down（断电），所以 1 是断电、0 是通电</td></tr>
+<tr><td><b>Value</b></td><td>写 0 或写 1 分别是什么意思</td></tr>
+<tr><td><b>Reset value</b></td><td>开机时默认是几（上表省略了）</td></tr>
+<tr><td><b>Access</b>（有的表有）</td><td><b>R/W</b> 能读能写；<b>RO</b> 只读；<b>WO</b> 只写；<b>R/WC</b> 读出来看状态，<b>写 1 清零</b>（中断标志常见，比如 USB 的 INTSTAT）</td></tr>
+</tbody></table>
+<div class="box try"><div class="tag">动手 · 查表：要给 SPI1 开时钟，拨 SYSAHBCLKCTRL 的几号？点那一行</div>
+<div class="um"><div class="cap">Table 24. System clock control register (SYSAHBCLKCTRL, address 0x4004 8080)（节选，手册第 31 页）</div>
+<div class="scroll"><table id="t24"><thead><tr><th>Bit</th><th>Symbol</th><th>Description</th></tr></thead><tbody>
+<tr class="pick" data-b="7"><td>7</td><td>CT16B0</td><td>Enables clock for 16-bit counter/timer 0.</td></tr>
+<tr class="pick" data-b="11"><td>11</td><td>SSP0</td><td>Enables clock for SSP0.</td></tr>
+<tr class="pick" data-b="13"><td>13</td><td>ADC</td><td>Enables clock for ADC.</td></tr>
+<tr class="pick" data-b="14"><td>14</td><td>USB</td><td>Enables clock to the USB register interface.</td></tr>
+<tr class="pick" data-b="16"><td>16</td><td>IOCON</td><td>Enables clock for I/O configuration block.</td></tr>
+<tr class="pick" data-b="18"><td>18</td><td>SSP1</td><td>Enables clock for SSP1.</td></tr>
+<tr class="pick" data-b="27"><td>27</td><td>USBRAM</td><td>Enables USB SRAM block at address 0x2000 4000.</td></tr>
+</tbody></table></div></div>
+<div class="fb note" id="t24fb" aria-live="polite">点表里的一行。</div>
+</div>
 <h3>七步只是“清单”，真正的来龙去脉要按时间看</h3>
 <p>七步告诉你“要做哪些事”，但没告诉你<b>什么时候做、谁来做、做完之后它怎么一直工作下去</b>。所以每个模块都画成下面这种<b>生命周期图</b>：</p>
 <ul>
 <li><b>从左到右是时间</b>：开机准备（只做一次）→ 平时工作（反复）→ 中断（有的话）→ 停止或出错。</li>
 <li><b>从上到下是谁在做</b>：🟦 芯片自己 / ⬜ 现成的例程代码 / 🟩 这个项目的代码（你负责）。</li>
 <li><b>每个方块上的数字是真实的执行顺序</b>，右上角小标签是它属于七步里的哪一步。点“下一步”按顺序走一遍，或者直接点方块。</li>
+<li>下方说明里有 <b>📖 手册原文</b>：在哪一章、哪张表、第几页，英文原文和中文意思。可以打开 PDF 对照着看。</li>
 </ul>
 <div class="btns" role="group" aria-label="选择模块" id="modTabs"></div>
 <div class="box scroll" style="padding:10px"><svg id="lifeSvg" viewBox="0 0 900 420" width="900" height="420" role="img" aria-label="模块生命周期"></svg></div>
@@ -257,6 +323,41 @@ const STEPS=[
   });
   el(s,'text',{x:6,y:292,'font-size':12,fill:V('muted')},'①②③ 在“系统控制”里拨开关；④ 在引脚配置（IOCON）里；⑤⑥⑦ 在外设自己的寄存器里。');
 })();
+/* manual refs: key = module + box title; [where, original, 中文] */
+const MAN={
+'adc|IOCON 已有时钟':['第 3 章 · Table 24 · 第 31 页 · SYSAHBCLKCTRL','16  IOCON  Enables clock for I/O configuration block.','16 号：给引脚配置模块（IOCON）开时钟。'],
+'adc|ADC 通电':['第 3 章 · Table 47 · 第 43 页 · PDRUNCFG','4  ADC_PD  ADC power-down\n      0  Powered\n      1  Powered down','4 号：ADC 断电开关。0 = 通电，1 = 断电。'],
+'adc|开 ADC 时钟':['第 3 章 · Table 24 · 第 31 页 · SYSAHBCLKCTRL','13  ADC  Enables clock for ADC.','13 号：给 ADC 开时钟。'],
+'adc|3 MHz、10 位':['第 19 章 · Table 352 · 第 385 页 · ADC CR','15:8  CLKDIV  The APB clock (PCLK) is divided by CLKDIV +1 to produce\n      the clock for the ADC, which should be less than or equal to 4.5 MHz.\n19:17 CLKS  0x0  11 clocks / 10 bits','CLKDIV：分频值 +1 就是除数，ADC 时钟不能超过 4.5 MHz。CLKS = 0：11 个时钟、10 位精度。'],
+'adc|引脚改成模拟输入':['第 7 章 · Table 89 · 第 96 页 · TDO_PIO0_13（PIO0_14 是 Table 90）','2:0  FUNC    0x2  AD2.\n4:3  MODE    0x0  Inactive (no pull-down/pull-up resistor enabled).\n7    ADMODE  0    Analog input mode.','FUNC = 2 选 AD2；MODE = 0 不上拉不下拉；ADMODE = 0 模拟模式。'],
+'adc|清旧标志、选通道、开始':['第 19 章 · Table 352 · 第 385~386 页 · ADC CR','7:0    SEL    Selects which of the AD7:0 pins is (are) to be sampled...\n26:24  START  0x1  Start conversion now.','SEL：选哪个通道（软件模式一次只能选一个）；START = 1：马上开始转换。'],
+'adc|转换约 3.67 µs':['第 19 章 · 19.2 · 第 383 页','An accurate conversion requires 11 clock cycles.','一次准确的转换需要 11 个时钟。'],
+'adc|每 2 µs 看一次 DONE':['第 19 章 · Table 355 · 第 387 页 · ADC DR','31  DONE  This bit is set to 1 when an A/D conversion completes.','31 号：转换完成时变成 1。'],
+'adc|读结果时 DONE 自动清':['第 19 章 · Table 355 · 第 387 页 · ADC DR','31  DONE  ... It is cleared when this register is read.','读这个寄存器时，DONE 自动清零。'],
+'adc|取 10 位结果，交给算法':['第 19 章 · Table 355 · 第 387 页 · ADC DR','15:6  V_VREF  When DONE is 1, this field contains a binary fraction\n      representing the voltage on the ADn pin, divided by the voltage on the VREF pin.','结果在 bit15:6，表示“引脚电压 ÷ 参考电压”，所以要右移 6 位再取 10 位。'],
+'adc|不用中断':['第 19 章 · Table 354 · 第 387 页 · ADC INTEN','7:0  ADINTEN  These bits allow control over which A/D channels generate\n     interrupts for conversion completion.','ADC 也可以用中断（INTEN），这个项目没开。'],
+'tim|开定时器时钟':['第 3 章 · Table 24 · 第 31 页 · SYSAHBCLKCTRL','7  CT16B0  Enables clock for 16-bit counter/timer 0.','7 号：给 16 位定时器 0 开时钟。'],
+'tim|定参数：47 和 999':['第 15 章 · Table 295 · 第 335 页 · CT16B0 寄存器总览','PR   Prescale Register. When the Prescale Counter (PC) is equal to this value,\n     the next clock increments the TC and clears the PC.\nMR0  Match Register 0. MR0 can be enabled through the MCR to reset the TC,\n     stop both the TC and PC, and/or generate an interrupt every time MR0 matches the TC.','PR：预分频，计满 PR+1 下，主计数器 TC 才加 1。MR0：比较值，TC 等于它时可以触发中断或清零。'],
+'tim|写进定时器':['第 15 章 · Table 303 · 第 339 页 · MCR；Table 299 · 第 337 页 · TCR','MCR 0  MR0I  Interrupt on MR0: an interrupt is generated when MR0 matches the value in the TC.\nMCR 1  MR0R  Reset on MR0: the TC will be reset if MR0 matches it.\nTCR 0  CEN   Counter enable.','MCR = 3 就是 bit0 + bit1：到了既要中断、又要清零重数。TCR = 1：开始计数。'],
+'tim|允许它叫 CPU':['第 6 章 · Table 61 · 第 71 页 · NVIC ISER0','16  ISE_CT16B0  Interrupt enable.','NVIC 里第 16 号中断就是 CT16B0。优先级在 IPR4 的 bit7:6（0 最高，3 最低）。'],
+'tim|数到 999：举手 + 从 0 重数':['第 15 章 · Table 297 · 第 337 页 · IR','0  MR0INT  Interrupt flag for match channel 0.','0 号：MR0 匹配时的中断标志。'],
+'tim|第一件事：清标志':['第 15 章 · 15.7.1 · 第 337 页','If an interrupt is generated then the corresponding bit in the IR will be HIGH.\nWriting a logic one to the corresponding IR bit will reset the interrupt.\nWriting a zero has no effect.','发生中断时 IR 对应位变 1。往这一位写 1 才能清掉，写 0 没用。所以代码是 IR = 1，而不是 IR = 0。'],
+'spi|解锁':['第 3 章 · Table 8 · 第 23 页 · PRESETCTRL','2  SSP1_RST_N  SSP1 reset control\n      0  Resets the SSP1 peripheral.\n      1  SSP1 reset de-asserted.','2 号：0 = SSP1 处于复位（锁住），1 = 解除复位。开机默认是 0。'],
+'spi|开时钟 + 分频':['第 3 章 · Table 24 · 第 31 页；Table 27 · 第 34 页 · SSP1CLKDIV','18  SSP1  Enables clock for SSP1.','18 号：给 SSP1 开时钟。SSP1CLKDIV 设 SPI 用的时钟要再除几（1 = 不除，0 = 关掉）。'],
+'spi|3 根线改成 SPI 功能':['第 7 章 · Table 97、98 · 第 103 页；Table 115 · 第 116 页','PIO0_21  FUNC 0x2  MOSI1.\nPIO0_22  FUNC 0x3  MISO1.\nPIO1_15  FUNC 0x3  SCK1.','同一个功能（比如 MOSI1）在不同引脚上对应的 FUNC 值不一样，一定要查每个引脚自己的表。'],
+'spi|8 位、模式 3、1 MHz、启动':['第 13 章 · Table 260 · 第 278 页 · CR0；Table 264 · 第 280 页 · CPSR；Table 261 · 第 279 页 · CR1','CR0 3:0   DSS   Data Size Select.  (0x7 = 8-bit transfer)\nCR0 6     CPOL  Clock Out Polarity.\nCR0 7     CPHA  Clock Out Phase.\nCR0 15:8  SCR   Serial Clock Rate.\nbit 频率 = PCLK / (CPSDVSR × [SCR+1])','0x01C7：DSS = 7（8 位）、CPOL = 1、CPHA = 1、SCR = 1。频率 = 48 MHz / (24 × 2) = 1 MHz。'],
+'spi|写 1 字节、读 1 字节':['第 13 章 · Table 263 · 第 280 页 · SR；Table 262 · 第 279 页 · DR','1  TNF  Transmit FIFO Not Full.\n2  RNE  Receive FIFO Not Empty.\n4  BSY  Busy. This bit is 0 if the SPI controller is idle...','例程就是在等这几位：发送缓冲没满（TNF）才写；不忙（BSY = 0）且收到了（RNE = 1）才读。'],
+'spi|读掉残留的接收字节':['第 13 章 · Table 263 · 第 280 页 · SR','2  RNE  Receive FIFO Not Empty. This bit is 0 if the Receive FIFO is empty, 1 if not.','发送一个字节后 RNE 会变成 1：接收缓冲里有一个字节。不读掉它，就会一直留在那里。'],
+'usb|USB 收发器、PLL 通电':['第 3 章 · Table 47 · 第 43 页 · PDRUNCFG','8   USBPLL_PD  USB PLL power-down\n10  USBPAD_PD  USB transceiver power-down configuration','8 号：USB PLL；10 号：USB 收发器。都是 0 = 通电。'],
+'usb|设 USB 中断优先级 = 1':['第 6 章 · Table 71 · 第 78 页 · NVIC IPR5','23:22  IP_USB_IRQ  Interrupt Priority. 0 = highest priority. 3 = lowest priority.','USB 中断的优先级在 IPR5 的 bit23:22。'],
+'usb|开时钟、配 2 个引脚':['第 3 章 · Table 24 · 第 31 页；第 7 章 · Table 79 · 第 88 页、Table 82 · 第 90 页','14  USB     Enables clock to the USB register interface.\n27  USBRAM  Enables USB SRAM block at address 0x2000 4000.\nPIO0_3  FUNC 0x1  USB_VBUS.\nPIO0_6  FUNC 0x1  USB_CONNECT.',''],
+'usb|登记端点柜子':['第 11 章 · Table 216 · 第 229 页 · EPLISTSTART','USB EP Command/Status List start address','端点登记表放在 RAM 的哪个地址（1-11 课）。'],
+'usb|允许 USB 中断':['第 11 章 · Table 223 · 第 232 页 · INTEN；第 6 章 · Table 61 · 第 71 页','22  ISE_USB_IRQ  Interrupt enable.','INTEN 选哪些事件要举手；NVIC 第 22 号是 USB 中断。'],
+'usb|接上 D+ 上拉 → 电脑发现':['第 11 章 · Table 214 · 第 226 页 · DEVCMDSTAT','16  DCON  Device status - connect.   RW','DCON = 1：通过 USB_CONNECT 脚接上 D+ 上拉，电脑就发现设备了。'],
+'usb|需要软件时：置标志、叫 CPU':['第 11 章 · Table 222 · 第 231 页 · INTSTAT','0  EP0OUT  Interrupt status register bit for the Control EP0 OUT direction.\n   This bit will be set if NBytes transitions to zero ... or a SETUP packet is successfully received.','每个端点、每个方向一位，收发完成时置 1。'],
+'usb|先清标志':['第 11 章 · Table 222 · 第 231 页 · INTSTAT','Access: R/WC\nSoftware can clear this bit by writing a one to it.','R/WC：读出来看状态，写 1 清零。所以例程读出来再原样写回去，就把所有举手的位都清了。'],
+};
+
 /* lifecycle: lane 0=chip 1=example 2=project; col 0=init 1=run 2=irq 3=stop */
 const LANES=[['🟦 芯片自己','per'],['⬜ 现成例程','muted'],['🟩 项目代码','sw']];
 const PHASES=['开机准备（只做一次）','平时工作（反复）','中断','停止 / 出错'];
@@ -328,7 +429,7 @@ usb:{name:'USB',sum:'<b class="t">USB 一句话来龙去脉</b><br>开机时先�
 (function(){
   const s=document.getElementById('lifeSvg'),tabs=document.getElementById('modTabs');
   let cur='adc',idx=0;
-  const LX=92,CW=194,BH=48,GAP=8,TOP=34;
+  const LX=86,CW=192,BH=48,GAP=8,TOP=34;
   function layout(m){
     const bs=LIFE[m].b;const cnt={};const pos=[];
     bs.forEach((b,i)=>{const k=b[0]+'_'+b[1];cnt[k]=(cnt[k]||0)+1;pos.push({c:b[0],l:b[1],n:cnt[k]-1})});
@@ -360,6 +461,7 @@ usb:{name:'USB',sum:'<b class="t">USB 一句话来龙去脉</b><br>开机时先�
     });
     const b=bs[idx],c=LANES[b[1]][1];const card=document.getElementById('lifeInfo');card.style.borderLeftColor=V(c);
     card.innerHTML=`<b class="t">${idx+1}. ${b[3]}</b>　<span class="note">${LANES[b[1]][0]} · ${PHASES[b[0]]}${b[2]&&b[2]!=='—'?' · 七步 '+b[2]:''}${b[4]?' · '+b[4]:''}</span><br>${b[5]}`;
+    const mm=MAN[cur+'|'+b[3]];if(mm)card.innerHTML+=`<div class="man"><div class="src">📖 用户手册 UM10462 · ${mm[0]}</div><div class="en">${mm[1]}</div>${mm[2]?`<div class="zh">${mm[2]}</div>`:''}</div>`;
     document.getElementById('lfPos').textContent=`第 ${idx+1} / ${bs.length} 步`;
     document.getElementById('lifeSum').innerHTML=LIFE[cur].sum;
   }
@@ -378,4 +480,9 @@ const Q=[
  ['4. USB 中断的标志谁来清？',['我要自己写','例程 usbhw.c 已经清了','芯片自动清'],1,'对。USB_IRQHandler 开头两行就清了。你负责的是描述符和报文内容。','看 USB 生命周期图里中断那一列。'],
 ];
 (function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0].replace(/</g,'&lt;')}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+
+(function(){const t=document.getElementById('t24'),fb=document.getElementById('t24fb');if(!t)return;
+t.querySelectorAll('tr.pick').forEach(r=>r.addEventListener('click',()=>{t.querySelectorAll('tr').forEach(o=>o.classList.remove('ok','bad'));
+ if(r.dataset.b==='18'){r.classList.add('ok');fb.innerHTML='✓ 对，18 号 SSP1。代码就是 <code>SYSAHBCLKCTRL |= (1&lt;&lt;18)</code>（PAW3950.c:285）。查表的方法就是：找到寄存器的位描述表，在 Symbol 列找外设名字，左边的 Bit 就是几号开关。';fb.style.color=V('good')}
+ else{r.classList.add('bad');fb.textContent=r.dataset.b==='11'?'这是 SSP0。IRPT_V4 的传感器接在 SSP1 上，再找找。':'不是这个，看 Symbol 那一列找 SSP1。';fb.style.color=V('muted')}}))})();
 </script>
