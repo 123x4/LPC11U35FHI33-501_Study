@@ -1,0 +1,373 @@
+<title>定时器</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
+.mx{border-collapse:separate;border-spacing:4px;min-width:720px}
+.mx th{text-align:center;font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.mx th.s{text-align:left;font-size:.85rem;color:var(--muted);font-family:var(--font-b);width:150px}
+.mx td{padding:0;border:0}
+.mx button{width:100%;font:inherit;font-size:.8rem;line-height:1.35;padding:6px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-align:left;min-height:46px}
+.mx button.w-sw{border-left:5px solid var(--sw)}
+.mx button.w-ex{border-left:5px solid var(--muted)}
+.mx button.w-hw{border-left:5px solid var(--per)}
+.mx button.na{color:var(--muted);background:var(--soft);border-style:dashed}
+.mx button[aria-pressed="true"]{outline:3px solid var(--pc);outline-offset:1px}
+.who{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.85rem;margin:.4rem 0}
+.who span{display:inline-flex;align-items:center;gap:6px}
+.who i{width:14px;height:14px;border-radius:3px;display:inline-block}
+pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
+details.ans{margin:.4rem 0;border:1px dashed var(--line);border-radius:6px;padding:4px 10px;background:var(--panel)}
+details.ans summary{cursor:pointer;color:var(--per);font-size:.9rem}
+details.ans[open]{background:var(--soft)}
+.task{border-left:4px solid var(--per);background:var(--panel);border-radius:0 6px 6px 0;padding:8px 12px;margin:.6rem 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.task .pg{font-family:var(--font-m);font-size:.8rem;color:var(--per)}
+.sim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:640px){.sim{grid-template-columns:minmax(0,1fr)}}
+.sim fieldset{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:0 0 8px}
+.sim legend{font-size:.82rem;color:var(--muted);padding:0 4px}
+.sim label{display:inline-flex;align-items:center;gap:4px;margin:2px 10px 2px 0;font-size:.9rem;cursor:pointer}
+</style>
+<div class="wrap">
+<div class="eyebrow">轻松版 · 第 8 课 · 芯片外设</div>
+<h1>定时器：芯片里的秒表和闹钟</h1>
+<p class="lede">“每 1 ms 扫一次按键”“线圈通电 500 µs”“ADC 等 2 µs”，这些时间都靠定时器。这个项目里计时的方法有好几种，有的准、有的不准，有的会卡住程序、有的不会。这一课把它们一次讲清楚，并读手册第 15 章。</p>
+<div class="where"><span>📍</span><div>在地图上：第 ② 列 <b>定时器 CT16B0</b>。它给第 ③ 列几乎所有模块提供节拍。</div></div>
+<div class="card" style="border-left-color:var(--per)"><b class="t">📖 手册练习方式：我给页码，你去翻</b><br>精读第 15 章（16 位定时器，p.333~350）；第 16 章（32 位定时器）和第 18 章（SysTick）只需要知道和第 15 章有什么不同。</div>
+
+<h2><span class="step">1/8</span>定时器就是“数时钟拍子”的计数器</h2>
+<p>芯片的时钟是 48 MHz，每秒 4800 万拍。定时器做的事很简单：<b>数拍子</b>。它里面有两个计数器和一个比较器：</p>
+<div class="box scroll"><svg id="blockSvg" viewBox="0 0 800 190" width="800" height="190" role="img" aria-label="定时器结构"></svg></div>
+<table>
+<thead><tr><th>名字</th><th>是什么</th><th>打个比方</th></tr></thead>
+<tbody>
+<tr><td><b>PC</b>（预分频计数器）</td><td>每来一拍时钟加 1，加到 PR 就清零，同时让 TC 加 1</td><td>“秒针”：转一圈，分针走一格</td></tr>
+<tr><td><b>PR</b>（预分频值）</td><td>PC 数到几就归零</td><td>秒针一圈有几格</td></tr>
+<tr><td><b>TC</b>（定时计数器）</td><td>真正的计数值</td><td>“分针”</td></tr>
+<tr><td><b>MR0~MR3</b>（匹配值）</td><td>TC 一等于它，就做设定好的事</td><td>闹钟设定的时间</td></tr>
+<tr><td><b>MCR</b>（匹配控制）</td><td>匹配时做什么：举手（中断）/ 清零重数 / 停下</td><td>闹钟响了以后：响铃、重新开始、还是关掉</td></tr>
+<tr><td><b>IR</b>（中断标志）</td><td>匹配时置 1，要写 1 才能清掉</td><td>“闹钟响过”的标记</td></tr>
+<tr><td><b>TCR</b>（控制）</td><td>开始 / 停止</td><td>秒表的开始键</td></tr>
+</tbody></table>
+<div class="box try"><div class="tag">动手 · 定时器模拟器（手册 Figure 57 的设置：PR = 2，MR0 = 6）</div>
+<div class="row">
+<label class="stat" for="tPR">PR（预分频）<input id="tPR" type="range" min="0" max="4" value="2"><b id="tPRo">2</b></label>
+<label class="stat" for="tMR">MR0（匹配值）<input id="tMR" type="range" min="1" max="9" value="6"><b id="tMRo">6</b></label>
+<div class="stat"><span>MCR</span><label><input type="checkbox" id="tI" checked> 中断</label> <label><input type="checkbox" id="tR" checked> 清零</label> <label><input type="checkbox" id="tS"> 停止</label></div>
+</div>
+<div class="scroll"><svg id="timSvg" viewBox="0 0 780 230" width="780" height="230" role="img" aria-label="定时器计数过程"></svg></div>
+<div class="card" id="timInfo" aria-live="polite"></div>
+</div>
+
+<h2><span class="step">2/8</span>1 ms 是怎么数出来的</h2>
+<div class="box"><p style="margin-top:0">这个项目的 CT16B0：<b>PR = 47，MR0 = 999，MCR = 3（中断 + 清零）</b>（<code>inc/Timer.h:17~18</code>）。</p>
+<pre class="code">时钟 48 MHz
+  └─ PC 数 0~47，共 48 拍     → 每 48 拍 TC 加 1：48 MHz ÷ 48 = 1 MHz，也就是每 1 µs 加 1
+       └─ TC 数 0~999，共 1000 下 → 1000 × 1 µs = 1 ms，到 999 时：举手 + 清零
+所以：每 48 × 1000 = 48 000 拍 = 1 ms，中断一次</pre>
+<p style="margin-bottom:0">为什么是 47 和 999，不是 48 和 1000？因为都是<b>从 0 开始数</b>：0~47 是 48 个数，0~999 是 1000 个数。手册 Figure 57 的例子也是这样：PR = 2、MR = 6，每 3 × 7 = 21 拍一个循环。</p></div>
+<div class="box try"><div class="tag">动手 · 算一算</div>
+<div class="row">
+<label class="stat" for="cPR">PR<input id="cPR" type="number" value="47" min="0" max="65535" style="width:100%;font:inherit"></label>
+<label class="stat" for="cMR">MR0<input id="cMR" type="number" value="999" min="0" max="65535" style="width:100%;font:inherit"></label>
+<div class="stat"><span>TC 每次加 1 间隔</span><b id="cTick"></b></div>
+<div class="stat"><span>中断周期</span><b id="cPer"></b></div>
+</div>
+<p class="note" style="margin:0" id="cNote"></p>
+</div>
+
+<h2><span class="step">3/8</span>这个项目里的 5 种计时方法</h2>
+<p>这是本课最重要的一张表。以后你自己写代码要等一段时间，就从这里面选：</p>
+<div class="scroll"><table>
+<thead><tr><th>方法</th><th>用什么</th><th>准不准</th><th>等的时候 CPU 能干别的吗</th><th>项目里用在</th></tr></thead>
+<tbody>
+<tr><td><b>① 1 ms 中断节拍</b></td><td>CT16B0 中断</td><td>准</td><td>能（中断自己来）</td><td>毫秒计数、按键扫描节拍、传感器读取节拍</td></tr>
+<tr><td><b>② 看毫秒数</b></td><td><code>MyTick_GetTickMs()</code> 做减法</td><td>准到 1 ms</td><td><b>能</b>：看一眼时间没到就走</td><td>线圈消抖计时（my_electromagnet.c:277）、<code>POLLING_INTERVAL_MS</code></td></tr>
+<tr><td><b>③ 微秒忙等</b></td><td><code>CT16B1_DelayUs()</code></td><td>准到 1 µs</td><td><b>不能</b>：一直盯着 TC 直到时间到</td><td>ADC 等 2 µs、线圈通电几百 µs、传感器 SPI 间隔 3 µs</td></tr>
+<tr><td><b>④ 毫秒忙等</b></td><td><code>MyTick_DelayMs()</code></td><td>准到 1 ms</td><td>不能</td><td>传感器初始化的延时（<code>PAW3950_DelayMs</code>）</td></tr>
+<tr><td><b>⑤ 软件空循环</b></td><td><code>DrvDelay()</code>、<code>nsAPI_SSP_Delay1us()</code></td><td><b>不准</b>（看编译器和 CPU 速度）</td><td>不能</td><td><code>TimerDelayMsec(500)</code>（开机等 500 ms）、<code>Device_Report()</code> 等 EP1 空</td></tr>
+</tbody></table></div>
+<div class="card" style="border-left-color:var(--gold)"><b class="t">怎么选</b><br>能用 ② 就用 ②：“现在几点了？还没到就先去干别的”，主循环不会被卡住。等的时间极短（几微秒）、或者必须精确到微秒时用 ③。不要新写 ⑤。</div>
+
+<h2><span class="step">4/8</span>定时器的一生：生命周期图</h2>
+<div class="box scroll" style="padding:10px"><svg id="lifeSvg" viewBox="0 0 900 420" width="900" height="420" role="img" aria-label="定时器生命周期"></svg></div>
+<div class="btns"><button type="button" id="lfPrev">上一步</button><button type="button" id="lfNext">下一步</button><span class="note" id="lfPos" style="align-self:center"></span></div>
+<div class="card" id="lifeInfo" aria-live="polite"></div>
+<div class="card" style="border-left-color:var(--gold)"><b class="t">定时器一句话来龙去脉</b><br><code>Device_Init()</code> 调 <code>InitCT16B0(47, 999)</code>，CT16B0 从此每 1 ms 打断一次主循环，中断里清标志、毫秒 +1、十几个倒计时 −1，主循环看倒计时决定什么时候扫按键、读传感器。需要等几微秒时，<code>CT16B1_DelayUs()</code> 每次临时设置 CT16B1 每 1 µs 加 1，然后盯着 TC 等。CT32B0 被线圈模块设成每 1 µs 加 1，但中断一直没打开，所以它只是在空转。</div>
+
+<h2><span class="step">5/8</span>七步核对：CT16B0 和 CT16B1</h2>
+<table>
+<thead><tr><th>步骤</th><th>CT16B0（1 ms 节拍）</th><th>CT16B1（微秒忙等）</th><th>手册</th></tr></thead>
+<tbody>
+<tr><td>① 通电</td><td colspan="2">不需要（数字电路）</td><td>—</td></tr>
+<tr><td>② 时钟</td><td>bit7（Timer.c:162）</td><td>bit8（每次调用都写一次，Timer.c:208）</td><td>📖 p.31 Table 24</td></tr>
+<tr><td>③ 解锁</td><td colspan="2">不需要</td><td>—</td></tr>
+<tr><td>④ 引脚</td><td colspan="2">不需要：只在芯片内部数数，没用匹配输出脚</td><td>📖 p.334 15.6</td></tr>
+<tr><td>⑤ 配置</td><td>PR = 47、MR0 = 999、MCR = 3、TCR = 1</td><td>TC = PC = 0、PR = 47、MCR = 0、TCR = 1</td><td>📖 p.337~340</td></tr>
+<tr><td>⑥ 中断</td><td>用：NVIC 开，优先级 0</td><td>不用（MCR = 0，不会举手）</td><td>📖 p.71 Table 61</td></tr>
+<tr><td>⑦ 使用</td><td>中断里：<b>先写 IR = 1 清标志</b>，再更新计数</td><td>循环读 TC 直到够数，再 TCR = 0 停下</td><td>📖 p.337 15.7.1、Table 297</td></tr>
+</tbody></table>
+
+<h2><span class="step">6/8</span>📖 手册导读：第 15 章 16 位定时器（p.333~350）</h2>
+<div class="task"><span class="pg">📖 p.333 · 15.2 Basic configuration</span>：定时器的“七步”。<br><span class="pg">📖 p.334 · 15.5 General description</span>：一句话讲清定时器能干什么：数时钟、4 个匹配、1 个捕获、PWM。<br><span class="pg">📖 p.335 · Table 295 寄存器总览</span>：IR、TCR、TC、PR、PC、MCR、MR0~3、CCR、CR0、EMR、CTCR、PWMC。</div>
+<details class="ans"><summary>问题 1：Table 295 里哪些寄存器这个项目用到了？哪些没用？</summary>用到：IR、TCR、TC、PR、PC、MCR、MR0（MR1~3 也写了同样的值但没用）。没用：捕获（CCR、CR0）、外部匹配输出（EMR）、计数模式（CTCR，保持复位值 = 数时钟）、PWM（PWMC）。</details>
+<div class="task"><span class="pg">📖 p.337 · 15.7.1 Interrupt Register + Table 297</span>、<span class="pg">15.7.2 TCR</span><br><span class="pg">📖 p.338 · 15.7.3 TC、15.7.4 PR、15.7.5 PC</span><br><span class="pg">📖 p.339 · 15.7.6 MCR + Table 303</span>、<span class="pg">p.340 · 15.7.7 Match Registers</span></div>
+<details class="ans"><summary>问题 2：清中断标志，写 0 还是写 1？</summary>写 1。15.7.1：<i>“Writing a logic one to the corresponding IR bit will reset the interrupt. Writing a zero has no effect.”</i></details>
+<details class="ans"><summary>问题 3：MCR = 3 是哪两个功能？如果写成 MCR = 7 会怎样？</summary>3 = bit0（MR0I：匹配时中断）+ bit1（MR0R：匹配时 TC 清零）。7 还多了 bit2（MR0S：匹配时停止），定时器第一次到 999 就停了，只会中断一次。</details>
+<details class="ans"><summary>问题 4：16 位的 TC 数到最大会怎样？对 CT16B1_DelayUs 有什么限制？</summary>15.7.3：数到 0xFFFF 后回到 0，<b>不会产生中断</b>。CT16B1 每 1 µs 加 1，所以一次最多等 65535 µs ≈ 65 ms。函数参数是 <code>unsigned short</code>，正好不会超。</details>
+<div class="task"><span class="pg">📖 p.349 · 15.8 Example timer operation + Figure 57、58</span>：<b>强烈建议看图</b>。PR = 2、MR = 6 时，PC、TC、复位、中断在每一拍怎么变。上面的模拟器就是照着这张图做的。</div>
+<details class="ans"><summary>问题 5：Figure 57 里，中断是在 TC 等于 6 的那一刻产生，还是下一拍？</summary>下一拍：<i>“The interrupt indicating that a match occurred is generated in the next clock after the timer reached the match value.”</i> TC 在 6 停留完整的一个计数周期，然后清零，同时产生中断。</details>
+<div class="task"><span class="pg">📖 p.347 起 · 15.7.12 PWM</span>（了解）：定时器还能直接从引脚输出 PWM 波形。T1A 的线圈脚 PIO0_13/14 正好是 CT32B1 的匹配输出，以后可以考虑用它代替忙等（第 15、22 课）。</div>
+<div class="task"><span class="pg">📖 p.351 起 · 第 16 章 32 位定时器</span>：结构和第 15 章几乎一样，区别是 TC、PR、MR 都是 32 位。<br><span class="pg">📖 p.379 · 第 18 章 SysTick</span>：Cortex-M0 内核自带的 24 位定时器，很多项目用它做 1 ms 节拍。这个项目没用，用的是 CT16B0。</div>
+<details class="ans"><summary>问题 6：为什么线圈模块用 32 位的 CT32B0，而不是 16 位的？</summary>32 位 TC 每 1 µs 加 1，要 4295 秒（约 71 分钟）才回绕，可以一直让它跑，用“当前 TC + 通电时长”设匹配值，不用担心中途回绕（<code>my_electromagnet.c</code> 的另一个分支就是这样写的，第 15 课）。</details>
+
+<h2><span class="step">7/8</span>容易出错的地方</h2>
+<table><tbody>
+<tr><td>中断里忘了清 IR</td><td>CPU 一出中断又被叫回来，主循环卡死。</td></tr>
+<tr><td>用写 0 清标志</td><td>没用，要写 1。</td></tr>
+<tr><td>PR、MR 少减 1</td><td>写成 48、1000，周期就变成 49 × 1001 = 49049 拍，长了约 2.2%。</td></tr>
+<tr><td>16 位溢出</td><td>CT16B1 最多 65 ms；要等更久用毫秒计数。</td></tr>
+<tr><td>在中断里调用忙等</td><td>中断占太久，会耽误别的中断（比如 USB）。</td></tr>
+<tr><td>两处同时用 CT16B1</td><td><code>CT16B1_DelayUs()</code> 每次都会清零重来。如果主循环正在用它等，中断里也调用它，主循环那次等待就乱了。现在只在主循环里用，没问题；以后不要在中断里调用它 ⚠️。</td></tr>
+<tr><td>毫秒计数回绕</td><td><code>mySysTickMs</code> 是 32 位，49.7 天后回到 0。用 <code>now - start &gt; 时长</code>（无符号减法）判断，回绕时也是对的；不要写成 <code>now &gt; start + 时长</code>。</td></tr>
+</tbody></table>
+
+<h2><span class="step">8/8</span>你能改什么、T1A</h2>
+<ul>
+<li><b>要一个新的周期任务</b>（比如每 100 ms 做一次）：在函数开头写 <code>POLLING_INTERVAL_MS(100);</code>（<code>inc/my_tick.h:15</code>），时间没到就直接 return。不需要新定时器。</li>
+<li><b>中断里加一个倒计时</b>：照 <code>one_ms_cycle</code> 的写法，在 <code>TIMER16_0_IRQHandler()</code> 里加一行 <code>if (x) x--;</code>，主循环看它到 0 再做事。记得变量加 <code>volatile</code>（第 4 课）。</li>
+<li><b>把线圈的忙等改成定时器中断</b>：CT32B0 已经在跑了，打开 MR0 中断就行，主循环在通电期间不再被卡住。这是第 15 课的话题。</li>
+</ul>
+<p><b>T1A</b>：1 ms 节拍和微秒延时不用改。线圈脚换到 PIO0_13/14，正好是 CT32B1_MAT0/MAT1，可以考虑用硬件匹配输出直接控制线圈脉冲（<code>03_T1A适配清单.md</code>）。</p>
+
+<h2>小测验</h2>
+<div class="box quiz" id="quiz"></div>
+<div class="sum"><b>这一课你只需要记住：</b>定时器 = 预分频（PR）+ 计数（TC）+ 匹配（MR），匹配时可以中断、清零、停止。PR = 47、MR = 999 → 每 1 ms 一次。中断标志写 1 清除。项目里计时有 5 种方法，优先用“看毫秒数”，不要卡住主循环。</div>
+<h3>本课新词</h3>
+<table><tbody>
+<tr><td><b>预分频</b></td><td>先把时钟除一下，再拿去数</td></tr>
+<tr><td><b>匹配（Match）</b></td><td>计数值等于设定值时触发动作</td></tr>
+<tr><td><b>忙等</b></td><td>CPU 什么都不干，一直盯着直到时间到</td></tr>
+<tr><td><b>非阻塞</b></td><td>没到时间就先去做别的，下次再来看</td></tr>
+<tr><td><b>回绕（溢出）</b></td><td>计数到最大值后回到 0</td></tr>
+<tr><td><b>PWM</b></td><td>定时器直接在引脚上输出高低交替的方波</td></tr>
+</tbody></table>
+<p class="note">字典：<code>1-7_1-8_1ms定时器.md</code>、<code>1-4_线圈驱动初始化.md</code>（CT32B0）。下一课：第 9 课 SPI 与 PAW3950，读第 13 章和传感器手册。</p>
+</div>
+<script>
+const NS="http://www.w3.org/2000/svg";
+function el(p,t,a,x){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e}
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
+/* block diagram */
+(function(){const s=$('blockSvg');
+  const bx=(x,y,w,h,c,t,t2)=>{el(s,'rect',{x,y,width:w,height:h,rx:8,fill:V('panel'),stroke:V(c),'stroke-width':2});el(s,'text',{x:x+w/2,y:y+24,'text-anchor':'middle','font-size':14,'font-weight':700,fill:V(c)},t);if(t2)el(s,'text',{x:x+w/2,y:y+44,'text-anchor':'middle','font-size':11.5,fill:V('muted')},t2)};
+  const ar=(x1,y1,x2,y2)=>el(s,'path',{d:`M${x1} ${y1} L${x2} ${y2}`,stroke:V('muted'),'stroke-width':2,'marker-end':'url(#ba)'});
+  el(s,'defs',{}).innerHTML='<marker id="ba" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker>';
+  bx(10,40,110,60,'gold','时钟','48 MHz');bx(160,40,140,60,'per','PC','数到 PR 归零');bx(340,40,140,60,'sw','TC','PC 归零时 +1');bx(520,40,120,60,'pc','比较','TC == MR0 ?');
+  ar(120,70,160,70);ar(300,70,340,70);ar(480,70,520,70);
+  [['中断（IR 置 1）',20],['TC 清零',60],['停止',100]].forEach(([t,dy])=>{el(s,'path',{d:`M640 70 C670 70 670 ${dy+30} 690 ${dy+30}`,stroke:V('pc'),fill:'none','stroke-width':1.5});el(s,'text',{x:694,y:dy+34,'font-size':12,fill:V('fg')},t)});
+  el(s,'text',{x:650,y:172,'font-size':11,fill:V('muted')},'做哪几样由 MCR 决定');
+  el(s,'text',{x:10,y:150,'font-size':12,fill:V('muted')},'PR、MR0、MCR 是你设置的；PC、TC 是它自己数的；IR 是它举手的标记。');})();
+/* timer sim */
+(function(){
+  const s=$('timSvg');let t0=0;
+  function run(){const PR=+$('tPR').value,MR=+$('tMR').value,I=$('tI').checked,R=$('tR').checked,S=$('tS').checked;$('tPRo').textContent=PR;$('tMRo').textContent=MR;
+    const N=36;let pc=0,tc=0,on=true,rows=[],irq=[],resetAt=[],stopAt=null;
+    for(let k=0;k<N;k++){rows.push({pc,tc,on});
+      if(!on)continue;
+      if(pc>=PR){pc=0; if(tc===MR&&(R||S||I)){ if(I)irq.push(k+1); if(R){tc=0;resetAt.push(k+1)} else if(!S) tc=tc+1; if(S){on=false;stopAt=k+1}} else tc=tc+1; if(!R&&tc>9)tc=0;} else pc++;}
+    s.textContent='';const L=90,W=19;
+    el(s,'text',{x:4,y:30,'font-size':12,fill:V('gold')},'时钟');el(s,'text',{x:4,y:70,'font-size':12,fill:V('per')},'PC');el(s,'text',{x:4,y:110,'font-size':12,fill:V('sw')},'TC');el(s,'text',{x:4,y:150,'font-size':12,fill:V('pc')},'中断');
+    rows.forEach((r,k)=>{const x=L+k*W;el(s,'path',{d:`M${x} 36 V20 H${x+W/2} V36 H${x+W}`,stroke:V('gold'),fill:'none'});
+      el(s,'rect',{x,y:54,width:W-2,height:24,fill:V('soft'),stroke:V('line')});el(s,'text',{x:x+W/2-1,y:71,'text-anchor':'middle','font-size':11,class:'m',fill:V('fg')},r.on?r.pc:'-');
+      const hit=r.tc===MR&&r.on;el(s,'rect',{x,y:94,width:W-2,height:24,fill:hit?V('sw'):V('soft'),stroke:V('line'),opacity:hit?.6:1});el(s,'text',{x:x+W/2-1,y:111,'text-anchor':'middle','font-size':11,class:'m',fill:V('fg')},r.tc)});
+    irq.forEach(k=>{if(k<N){const x=L+k*W;el(s,'rect',{x,y:136,width:W-2,height:22,rx:3,fill:V('pc')});el(s,'text',{x:x+W/2-1,y:151,'text-anchor':'middle','font-size':10,fill:V('bg')},'!')}});
+    if(stopAt!=null&&stopAt<N)el(s,'text',{x:L+stopAt*W,y:180,'font-size':11,fill:V('bad')},'← 停止（TCR 被清 0）');
+    const per=(PR+1)*(MR+1);
+    el(s,'text',{x:L,y:205,'font-size':12.5,fill:V('fg')},`每 ${PR+1} 拍 TC 加 1；TC 从 0 数到 ${MR} 共 ${MR+1} 下 → 一个循环 ${(PR+1)} × ${(MR+1)} = ${per} 拍`);
+    $('timInfo').innerHTML=`绿色格子：TC 等于 MR0 的那一段。${I?'红色“!”是中断：在 TC 达到匹配值后的下一拍产生（手册 15.8）。':'没勾“中断”：匹配时不会叫 CPU。'}${R?'勾了“清零”：匹配后 TC 回到 0，周而复始，这就是 1 ms 节拍的做法。':'没勾“清零”：TC 继续往上数（16 位要数到 65535 才回绕，这里为了演示只画到 9）。'}${S?' 勾了“停止”：第一次匹配就停下，只中断一次。':''}`;}
+  ['tPR','tMR','tI','tR','tS'].forEach(id=>$(id).addEventListener('input',run));['tI','tR','tS'].forEach(id=>$(id).addEventListener('change',run));run();
+})();
+/* calc */
+function calc(){const PR=Math.max(0,+$('cPR').value||0),MR=Math.max(0,+$('cMR').value||0);const tick=(PR+1)/48;const per=tick*(MR+1);
+  $('cTick').textContent=tick<1?(tick*1000).toFixed(1)+' ns':tick.toFixed(3)+' µs';$('cPer').textContent=per<1000?per.toFixed(2)+' µs':(per/1000).toFixed(3)+' ms';
+  $('cNote').textContent=(PR>65535||MR>65535)?'⚠️ 16 位定时器的 PR、MR 最大 65535。':`时钟 48 MHz：(${PR}+1) × (${MR}+1) = ${(PR+1)*(MR+1)} 拍。试试改成 47 和 499，看看是不是 0.5 ms。`}
+['cPR','cMR'].forEach(id=>$(id).addEventListener('input',calc));calc();
+/* lifecycle */
+const LANES=[['🟦 芯片自己','per'],['⬜ 现成例程','muted'],['🟩 项目代码','sw']];
+const PHASES=['开机准备（只做一次）','平时工作（反复）','中断（每 1 ms）','停止 / 注意'];
+const P=c=>`<pre class="code">${c}</pre>`;
+const B=[
+ [0,2,'⑤','定参数：47 和 999','Timer.h:17~18',P('#define TIME_CT16B0_COUNT       999   //0 To 999 = 1000\n#define TIME_CT16B0_PR          47    //0 To 47 = 48')+'调用：<code>InitCT16B0(TIME_CT16B0_PR ,TIME_CT16B0_COUNT) ;</code>（device.c:445，在 <code>Device_Init()</code> 里）。','📖 p.338 Table 301 PR'],
+ [0,1,'②','CT16B0 开时钟','Timer.c:162',P('    LPC_SYSCON->SYSAHBCLKCTRL |= (1&lt;&lt;7) ;   //Set AHB Clock To The CT16B0 Domain'),'📖 p.31 Table 24 bit7'],
+ [0,1,'⑤','PR、MR、MCR、启动','Timer.c:163~169',P('    LPC_CT16B0->PR = PR ;\n    LPC_CT16B0->MR0 = Time ;              //Set MR0 Data\n	LPC_CT16B0->MR1 = Time ;              //Set MR1 Data\n	LPC_CT16B0->MR2 = Time ;\n	LPC_CT16B0->MR3 = Time ;\n    LPC_CT16B0->MCR = ( 3 &lt;&lt; 0 ) ;        //Setup Interrupt Fg &amp; Reset TC\n    LPC_CT16B0->TCR = 1 ;')+'MR1~3 也写了同样的值，但 MCR 只管 MR0，所以它们不起作用。<code>Timer.c</code> 是老项目的驱动文件。','📖 p.339 Table 303 MCR；p.337 Table 299 TCR'],
+ [0,1,'⑥','允许 CT16B0 中断','Timer.c:171',P('    NVIC_EnableIRQ(TIMER_16_0_IRQn) ;')+'优先级没有单独设，默认 0（最高）。','📖 p.71 Table 61 bit16'],
+ [0,2,'','CT32B0：线圈用，只数不叫','my_electromagnet.c:993~1006',P('static void Ele_InitCT32B0(void)\n{\n  ...\n  LPC_CT32B0->PR = 47; //TC will increase by 1 every 1us(1MHz = 48MHz/48).\n  LPC_CT32B0->MCR = 0;\n  LPC_CT32B0->TCR = 1 ;\n  NVIC_EnableIRQ(TIMER_32_0_IRQn) ;\n}')+'由 <code>Ele_Init()</code> 调用（1-4 课）。MCR = 0：不会匹配、不会举手。因为 <code>BRAKE_FUNC_ENABLE = 1</code>，线圈走的是忙等那条路，打开 MR0 中断的代码在另一个分支里，没被编译（第 15 课）。','📖 p.351 第 16 章'],
+ [1,0,'','每拍 PC+1，每 48 拍 TC+1','1 µs 一下','芯片自己：PC 数 0~47，归零时 TC 加 1。TC 数到 999 时，IR 的 bit0 置 1、TC 清零。','📖 p.338 15.7.5；p.349 Figure 57'],
+ [1,2,'⑦','主循环看节拍','device.c:880',P('	if (!one_ms_cycle)\n	{\n		one_ms_cycle = 1;\n		Send_Button_F = TRUE;\n		Device_Button_Scan();\n		...')+'中断把 <code>one_ms_cycle</code> 减到 0，主循环看到 0 就设回 1 并扫按键：正好每 1 ms 一次（第 4 课）。',''],
+ [1,2,'⑦','看毫秒数（不卡住）','my_tick.c、my_tick.h:15',P('/* src/my_tick.c */\nuint32_t MyTick_GetTickMs(void)\n{\n  return mySysTickMs;\n}\n\n/* inc/my_tick.h */\n#define POLLING_INTERVAL_MS(x) do{ \\\n  static uint32_t lastStamp = 0; \\\n  uint32_t nowStamp = MyTick_GetTickMs(); \\\n  if(nowStamp - lastStamp &lt; (x)) {return;} \\\n  lastStamp = nowStamp; \\\n}while(0)')+'线圈消抖就是这样计时的：记下开始时刻 <code>debounceBeginTick = MyTick_GetTickMs();</code>（my_electromagnet.c:277），之后每圈看“现在 − 开始”够不够。',''],
+ [1,1,'⑦','CT16B1 微秒忙等','Timer.c:202~224',P('void CT16B1_DelayUs(unsigned short us)\n{\n	LPC_CT16B1->TCR = 0;//stop timer1\n	if(us &lt;= 1)\n	{\n		return;\n	}\n	LPC_SYSCON->SYSAHBCLKCTRL |= (1&lt;&lt;8) ;\n	LPC_CT16B1->TC = 0;//clear\n	LPC_CT16B1->PC = 0;//clear\n	LPC_CT16B1->PR = 47 ;//TC will increase by 1 every 1us(1MHz = 48MHz/48).\n	LPC_CT16B1->MCR = 0;\n	LPC_CT16B1->TCR = 1 ;//start timer1\n	if(us &lt;= 2)\n	{\n		LPC_CT16B1->TCR = 0 ;//stop timer\n		return;\n	}\n	while((LPC_CT16B1->TC) &lt; (us - 2));\n	LPC_CT16B1->TCR = 0 ;//stop timer\n}')+'每次调用都重新设置一遍，然后<b>盯着 TC 一直等</b>。减 2 是补偿函数本身花的时间。谁在用：ADC 等 DONE（<code>MyADC_DelayUs</code>）、线圈通电时长（my_electromagnet.c:794 等）、传感器 SPI 间隔（<code>PAW3950_DelayUs</code>）。','📖 p.338 TC、PC、PR'],
+ [1,1,'','软件空循环（不准）','device.c:1321、1360',P('void DrvDelay(unsigned long DelayData)\n{\n    unsigned int DelayLoop ;\n    while(DelayData!=0)\n    {\n        DelayLoop = DELAY_COUNT ;\n        while(DelayLoop!=0)\n        { ... DelayLoop-- ; ... }\n    }\n}')+'<code>TimerDelayMsec(t)</code> → <code>DrvDelay(t * 10)</code>（app/optical_3325.c:115）。只是空转数数，时间取决于编译器和 CPU 速度。用在开机 <code>TimerDelayMsec(500)</code> 和 <code>Device_Report()</code> 里等 EP1 空。',''],
+ [2,0,'','NVIC 打断主循环','','芯片自己：压栈、查向量表第 32 项、跳进 <code>TIMER16_0_IRQHandler</code>（第 4 课动画）。','📖 p.448 24.3.3.6'],
+ [2,1,'⑦','先清标志','Timer.c:68~70',P('void TIMER16_0_IRQHandler(void)\n{\n    if ( LPC_CT16B0->IR &amp; (0x1&lt;&lt;0) )\n    {\n        LPC_CT16B0->IR = (0x01&lt;&lt;0) ;'),'📖 p.337 15.7.1、Table 297'],
+ [2,1,'⑦','毫秒 +1、倒计时 −1','Timer.c:73~118',P('		MyTick_IncreaseSysTickMs();\n		if(Debounce_cnt!=0) Debounce_cnt--;\n		if(one_ms_cycle)one_ms_cycle--;\n		...\n		if (tm_usb_sof)tm_usb_sof--;\n		if(timer_1s)timer_1s--;\n		...\n		if (optical_scan_cycle)optical_scan_cycle--;\n		if(dpitimerdelay) dpitimerdelay--;\n		if(timer16_0_counter)timer16_0_counter--;\n		if( timer16_resume_counter)timer16_resume_counter--;')+'十几个“倒计时”变量都在这里减，主循环各自看它们到 0 了没有。<code>MyTick_IncreaseSysTickMs()</code> 是项目新加的（my_tick.c）。',''],
+ [3,1,'','写 Flash 时暂停','gtech_flash.c:136、203','写 Flash/EEPROM 期间，例程会 <code>NVIC_DisableIRQ(TIMER_16_0_IRQn)</code>，写完再打开。这段时间毫秒计数会少走几拍。',''],
+ [3,0,'','16 位 / 32 位回绕','','CT16B1 的 TC 最多 65535（约 65 ms）就回到 0；毫秒计数 32 位，约 49.7 天回到 0。用无符号减法 <code>now - start</code> 判断，回绕时也正确。','📖 p.338 15.7.3'],
+ [3,2,'','忙等期间主循环停住','','线圈通电几百微秒时，<code>CT16B1_DelayUs()</code> 一直在等，主循环别的事都停了（中断照常）。这是第 15 课要讨论的改进点。',''],
+];
+(function(){
+  const s=$('lifeSvg');let idx=0;const LX=86,CW=192,BH=48,GAP=8,TOP=34;
+  function layout(){const cnt={};const pos=B.map(b=>{const k=b[0]+'_'+b[1];cnt[k]=(cnt[k]||0)+1;return{c:b[0],l:b[1],n:cnt[k]-1}});
+    const laneH=[0,1,2].map(l=>Math.max(1,...[0,1,2,3].map(c=>cnt[c+'_'+l]||0)));const laneY=[TOP];for(let l=1;l<3;l++)laneY[l]=laneY[l-1]+laneH[l-1]*(BH+GAP)+16;
+    return{pos:pos.map(p=>({x:LX+p.c*(CW+6)+4,y:laneY[p.l]+8+p.n*(BH+GAP)})),laneY,laneH,H:laneY[2]+laneH[2]*(BH+GAP)+16}}
+  function draw(){s.textContent='';const L=layout();s.setAttribute('viewBox',`0 0 900 ${L.H}`);s.setAttribute('height',L.H);
+    PHASES.forEach((p,c)=>{const x=LX+c*(CW+6);el(s,'rect',{x,y:22,width:CW+2,height:L.H-24,rx:8,fill:V('soft'),opacity:.6});el(s,'text',{x:x+CW/2,y:16,'text-anchor':'middle','font-size':12.5,'font-weight':600,fill:V('fg')},p)});
+    LANES.forEach(([t,c],l)=>{const y=L.laneY[l],h=L.laneH[l]*(BH+GAP)+8;el(s,'rect',{x:4,y,width:LX-10,height:h,rx:6,fill:V(c),opacity:.12});t.split(' ').forEach((w,i)=>el(s,'text',{x:(LX-6)/2+2,y:y+h/2-4+i*17,'text-anchor':'middle','font-size':12.5,'font-weight':600,fill:V(c)},w))});
+    B.forEach((b,i)=>{const p=L.pos[i],c=LANES[b[1]][1],on=i===idx;const g=el(s,'g',{tabindex:0,role:'button','aria-label':b[3],style:'cursor:pointer'});
+      el(g,'rect',{x:p.x,y:p.y,width:CW-8,height:BH,rx:7,fill:on?V(c):V('panel'),stroke:V(c),'stroke-width':on?2.5:1.5});
+      el(g,'circle',{cx:p.x+13,cy:p.y+14,r:10,fill:on?V('bg'):V(c)});el(g,'text',{x:p.x+13,y:p.y+18,'text-anchor':'middle','font-size':11,'font-weight':700,fill:on?V(c):V('bg')},i+1);
+      const lim=b[2].length>1?9:11;const t=b[3].length>lim?[b[3].slice(0,lim),b[3].slice(lim)]:[b[3]];t.forEach((tt,k)=>el(g,'text',{x:p.x+28,y:p.y+(t.length>1?18:20)+k*15,'font-size':12.5,'font-weight':600,fill:on?V('bg'):V('fg')},tt));
+      if(t.length===1&&b[4])el(g,'text',{x:p.x+28,y:p.y+38,'font-size':10.5,class:'m',fill:on?V('bg'):V('muted')},b[4].length>24?b[4].slice(0,24)+'…':b[4]);
+      if(b[2])el(g,'text',{x:p.x+CW-14,y:p.y+14,'text-anchor':'end','font-size':11,'font-weight':700,fill:on?V('bg'):V('gold')},b[2]);
+      const go=()=>{idx=i;draw()};g.addEventListener('click',go);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}})});
+    const b=B[idx],c=LANES[b[1]][1];const card=$('lifeInfo');card.style.borderLeftColor=V(c);
+    card.innerHTML=`<b class="t">${idx+1}. ${b[3]}</b>　<span class="note">${LANES[b[1]][0]} · ${PHASES[b[0]]}${b[2]?' · 七步 '+b[2]:''}${b[4]?' · '+b[4]:''}</span><br>${b[5]}${b[6]?`<div class="man"><div class="src" style="color:var(--per)">${b[6]}</div><div class="zh">翻到这一页，对照原文看。</div></div>`:''}`;
+    $('lfPos').textContent=`第 ${idx+1} / ${B.length} 步`}
+  $('lfNext').onclick=()=>{idx=(idx+1)%B.length;draw()};$('lfPrev').onclick=()=>{idx=(idx-1+B.length)%B.length;draw()};draw();
+})();
+/* quiz */
+const Q=[
+ ['1. PR = 47 时，TC 每隔多久加 1？',['47 µs','1 µs','48 ms'],1,'对。48 MHz ÷ (47+1) = 1 MHz。','PC 数 0~47 共 48 拍。'],
+ ['2. MCR = 3 表示匹配时做什么？',['中断 + 清零','只中断','停止'],0,'对。bit0 中断、bit1 清零（Table 303）。','3 = 二进制 011。'],
+ ['3. 定时器中断标志怎么清？',['写 0','写 1','读一下'],1,'对。15.7.1：写 1 清，写 0 没用。','翻 p.337。'],
+ ['4. 想每 100 ms 做一次某件事，最省事、不卡主循环的办法是？',['再开一个定时器','函数开头写 POLLING_INTERVAL_MS(100)','CT16B1_DelayUs(100000)'],1,'对。看毫秒数，不到就 return。CT16B1 最多也只能等 65 ms。','看第 3 节的表。'],
+ ['5. CT16B1_DelayUs(500) 期间主循环在干什么？',['继续做别的事','停在那里等','进入休眠'],1,'对。这就是“忙等”，只有中断能插进来。','看第 3 节的表第 ③ 行。'],
+ ['6. 毫秒计数 49.7 天后回到 0，用 now - start > 1000 判断会出错吗？',['会','不会，无符号减法在回绕时也正确'],1,'对。比如 start = 0xFFFFFF00，now = 0x100，now - start = 0x200。','试着用 32 位无符号数算一下。'],
+];
+(function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0]}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+</script>
