@@ -182,8 +182,9 @@ details.ans[open]{background:var(--soft)}
 const NS="http://www.w3.org/2000/svg";
 function el(p,t,a,x){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e}
 const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
-const UPDATED='第 10 课（USB）';
+const UPDATED='第 11 课（EEPROM 与 IAP，没有用到引脚）';
 const LOG=[
+ ['第 11 课','EEPROM 和 IAP 在芯片内部，不占引脚；只提到 PIO0_1 / PIO0_3 是 ISP 入口脚（了解即可）'],
  ['第 10 课','USB 四根脚：PIO0_3（VBUS）、USB_DM、USB_DP、PIO0_6（CONNECT）标为已学'],
  ['第 9 课','SPI 三根线 PIO0_21 / PIO0_22 / PIO1_15、片选 PIO0_20、MOTION PIO0_2 标为已学'],
  ['第 7 课','PIO0_13 / PIO0_14 改成 AD2 / AD3 的过程、PIO0_19 红外电源'],
@@ -196,13 +197,13 @@ const CAT={btn:['按键 / 滚轮','sw'],sen:['光学传感器 / SPI','per'],adc:
 const PINS=[
  [1,'PIO1_19','none','0=PIO1_19 · 1=DTR · 2=SSEL1','119 / p.119','输入，上拉','没用','没有代码设置，保持复位状态','—',[],'未接'],
  [2,'RESET/PIO0_0','sys','0=RESET · 1=PIO0_0','76 / p.86','RESET 功能','复位脚：拉低就复位芯片','没有改（保持 RESET 功能）','—',[],'nRESET，同时接 PAW3950 的复位 ⚠️'],
- [3,'PIO0_1','btn','0=PIO0_1 · 1=CLKOUT · 2=CT32B0_MAT2 · 3=USB_FTOGGLE','77 / p.87','输入，上拉','前侧键 K4（按下 = 0）；复位时也是 ROM 检查的 ISP 脚','<code>GPIO.c:480</code> 设为输入（FUNC、MODE 保持复位值：GPIO、上拉）','每 1 ms 通过 <code>BUTTON_PORT0</code> 读（button.h:149）；休眠时进组中断唤醒（wnDrv_Pmu.c:66）',[1,6],'/CE：充电芯片使能 ⚠️'],
+ [3,'PIO0_1','btn','0=PIO0_1 · 1=CLKOUT · 2=CT32B0_MAT2 · 3=USB_FTOGGLE','77 / p.87','输入，上拉','前侧键 K4（按下 = 0）；复位时也是 ROM 检查的 ISP 脚','<code>GPIO.c:480</code> 设为输入（FUNC、MODE 保持复位值：GPIO、上拉）','每 1 ms 通过 <code>BUTTON_PORT0</code> 读（button.h:149）；休眠时进组中断唤醒（wnDrv_Pmu.c:66）',[1,6,11],'/CE：充电芯片使能 ⚠️'],
  [4,'XTALIN','sys','晶振输入（专用）','—','—','12 MHz 晶振','<code>OSC.c:35</code> 给晶振通电（1-2 课）','—',[3],'12 MHz 晶振（不变）'],
  [5,'XTALOUT','sys','晶振输出（专用）','—','—','12 MHz 晶振','同上','—',[3],'同上'],
  [6,'VDD','sys','电源 3.3 V','—','—','电源；也是 ADC 的参考电压','—','—',[1,7],'不变'],
  [7,'PIO0_20','sen','0=PIO0_20 · 1=CT16B1_CAP0','96 / p.102','输入，上拉','PAW3950 片选 NCS（低 = 选中）','<code>GPIO.c:486~489</code>：无上下拉 → 先设高 → 推挽 → 输出；<code>PAW3950.c:274~277</code> 又设一遍','每次读写传感器：CLR 拉低、SET 拉高（PAW3950.c:437、448）',[6,9],'NCS（不变）'],
  [8,'PIO0_2','sen','0=PIO0_2 · 1=SSEL0 · 2=CT16B0_CAP0 · 3=IOH_0','78 / p.88','输入，上拉','PAW3950 的 MOTION（有移动时传感器拉低）','<code>GPIO.c:485</code> 设输入（上拉）；<code>PAW3950.c:279~280</code> 改成无上下拉','<b>代码没读这根线</b>，改为通过 SPI 读 0x02 寄存器',[6,9],'MOTION（不变）'],
- [9,'PIO0_3','usb','0=PIO0_3 · 1=USB_VBUS · 2=IOH_1','79 / p.88','输入，上拉','USB_VBUS：检测是否插着 USB 线','<code>usbhw.c:134~135</code>：FUNC = 1（USB_VBUS）、MODE = 01 下拉（注释：不下拉 VBUS 内部会悬空）','芯片自己看：有 5 V → DEVCMDSTAT 的 VBUSDEBOUNCED = 1',[10],'R41 10k 上拉到 VDD ⚠️'],
+ [9,'PIO0_3','usb','0=PIO0_3 · 1=USB_VBUS · 2=IOH_1','79 / p.88','输入，上拉','USB_VBUS：检测是否插着 USB 线','<code>usbhw.c:134~135</code>：FUNC = 1（USB_VBUS）、MODE = 01 下拉（注释：不下拉 VBUS 内部会悬空）','芯片自己看：有 5 V → DEVCMDSTAT 的 VBUSDEBOUNCED = 1',[10,11],'R41 10k 上拉到 VDD ⚠️'],
  [10,'PIO0_4','coil','0=PIO0_4（开漏）· 1=I2C SCL · 2=IOH_2','80 / p.89','GPIO，<b>无上拉</b>（真开漏）','左线圈 PWM1','<code>GPIO.c:510~513</code>：先设低再切输出（NoPull、PushPull 对这根脚无效）','振动时输出 1 → 等 → 输出 0（my_electromagnet.c:82~88）',[6],'SCL：充电芯片 I²C'],
  [11,'PIO0_5','coil','0=PIO0_5（开漏）· 1=I2C SDA · 2=IOH_3','81 / p.89','GPIO，<b>无上拉</b>（真开漏）','右线圈 PWM2','<code>GPIO.c:514~517</code>：同上','同上',[6],'SDA：充电芯片 I²C'],
  [12,'PIO0_21','sen','0=PIO0_21 · 1=CT16B1_MAT0 · 2=MOSI1','97 / p.103','输入，上拉','SPI MOSI1：单片机 → 传感器','<code>PAW3950.c:288~289</code>：FUNC = 2','SSP1 硬件自己用',[9],'MOSI → 霍尔芯片（SSP1）'],
