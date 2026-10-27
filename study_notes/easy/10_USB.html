@@ -1,0 +1,669 @@
+<title>USB 端点与枚举</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
+.mx{border-collapse:separate;border-spacing:4px;min-width:720px}
+.mx th{text-align:center;font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.mx th.s{text-align:left;font-size:.85rem;color:var(--muted);font-family:var(--font-b);width:150px}
+.mx td{padding:0;border:0}
+.mx button{width:100%;font:inherit;font-size:.8rem;line-height:1.35;padding:6px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-align:left;min-height:46px}
+.mx button.w-sw{border-left:5px solid var(--sw)}
+.mx button.w-ex{border-left:5px solid var(--muted)}
+.mx button.w-hw{border-left:5px solid var(--per)}
+.mx button.na{color:var(--muted);background:var(--soft);border-style:dashed}
+.mx button[aria-pressed="true"]{outline:3px solid var(--pc);outline-offset:1px}
+.who{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.85rem;margin:.4rem 0}
+.who span{display:inline-flex;align-items:center;gap:6px}
+.who i{width:14px;height:14px;border-radius:3px;display:inline-block}
+pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
+details.ans{margin:.4rem 0;border:1px dashed var(--line);border-radius:6px;padding:4px 10px;background:var(--panel)}
+details.ans summary{cursor:pointer;color:var(--per);font-size:.9rem}
+details.ans[open]{background:var(--soft)}
+.task{border-left:4px solid var(--per);background:var(--panel);border-radius:0 6px 6px 0;padding:8px 12px;margin:.6rem 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.task .pg{font-family:var(--font-m);font-size:.8rem;color:var(--per)}
+.sim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:640px){.sim{grid-template-columns:minmax(0,1fr)}}
+.sim fieldset{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:0 0 8px}
+.sim legend{font-size:.82rem;color:var(--muted);padding:0 4px}
+.sim label{display:inline-flex;align-items:center;gap:4px;margin:2px 10px 2px 0;font-size:.9rem;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;margin:.4rem 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+</style>
+<div class="wrap">
+<div class="eyebrow">轻松版 · 第 10 课 · 芯片外设</div>
+<h1>USB：鼠标怎么把数据交给电脑</h1>
+<p class="lede">鼠标算好的“移动了多少、按了哪个键”，最后都要通过 USB 交给电脑；GUI 软件发来的设置，也是从 USB 进来的。USB 是这个项目里最复杂的外设，但好消息是：<b>最难的部分芯片硬件和现成例程都做好了</b>。这一课的目标是让你分清三件事：芯片自己做什么、例程替你做了什么、项目代码只需要碰哪几个口子。手册看第 11 章（第 10 章是另一套用不到的驱动，只翻一下）。</p>
+<div class="where"><span>📍</span><div>在地图上：第 ② 列 <b>USB</b> ↔ 第 ③ 列 <b>发报告</b>、<b>收 GUI 命令</b>、<b>挂起</b>。第 1 课讲过 USB 线上的电信号，这一课讲芯片和代码。</div></div>
+<div class="card" style="border-left-color:var(--per)"><b class="t">📖 手册练习方式升级：只给寄存器名，你先自己找</b><br>从这一课开始，第 7 节只告诉你“去找 DEVCMDSTAT 的表”。请先在 PDF 里搜索这个名字，找到它的 Table 编号和页码，自己读一遍，再点开答案对照。小窍门：PDF 里按 Ctrl+F 搜 <code>(DEVCMDSTAT</code>（带左括号），能直接跳到表的标题。</div>
+
+<h2><span class="step">1/9</span>先记住一句话：电脑是老板，鼠标只能等着被问</h2>
+<div class="box scroll"><svg id="pollSvg" viewBox="0 0 780 230" width="780" height="230" role="img" aria-label="电脑每 1 ms 来问一次"></svg></div>
+<p>USB 上<b>永远是电脑先开口</b>。鼠标不能主动“喊”电脑，只能把要发的数据先放好，等电脑来问。这个项目里，电脑每 <b>1 ms</b> 来问一次鼠标：“有新数据吗？”</p>
+<ul>
+<li>放好了 → 芯片把数据发出去，电脑回一句“收到”（<b>ACK</b>）。</li>
+<li>没放 → 芯片自动回一句“没有”（<b>NAK</b>），电脑过 1 ms 再来问。</li>
+</ul>
+<div class="def"><b>主机（Host）</b>：电脑。所有通信都由它发起。<br><b>设备（Device）</b>：鼠标。只能回答。<br><b>ACK / NAK</b>：“收到 / 现在没有”，<b>由芯片硬件自动回答</b>，代码不用管。<br><b>帧（Frame）</b>：电脑把时间切成 1 ms 一格，每格开头发一个 <b>SOF</b>（帧开始）信号。</div>
+<table>
+<thead><tr><th>线</th><th>作用</th><th>IRPT_V4 引脚</th><th>谁在管</th></tr></thead>
+<tbody>
+<tr><td><b>VBUS</b>（5 V）</td><td>给鼠标供电；芯片看它有没有电，判断线插没插</td><td>3 号脚 PIO0_3 → 功能 USB_VBUS</td><td>🟦 芯片自己判断</td></tr>
+<tr><td><b>D+ / D−</b></td><td>两根数据线，一起传一个信号（第 1 课的“差分”）</td><td>14 号 USB_DP、13 号 USB_DM（专用脚）</td><td>🟦 芯片收发，代码碰不到</td></tr>
+<tr><td><b>CONNECT</b></td><td>控制 D+ 上的 1.5 kΩ 上拉电阻：拉上了，电脑才“看见”有设备插进来</td><td>15 号脚 PIO0_6 → 功能 USB_CONNECT</td><td>代码写 1 个位打开</td></tr>
+<tr><td><b>GND</b></td><td>地</td><td>—</td><td>—</td></tr>
+</tbody></table>
+<p class="note">芯片硬件已经包办了：把 0/1 变成 D+/D− 上的电压、加校验码（CRC）、检查收到的包对不对、回 ACK/NAK。这些在代码里一行都看不到。</p>
+
+<h2><span class="step">2/9</span>端点：芯片里的几个“小柜子”</h2>
+<p>电脑和鼠标之间不是一根管子，而是好几个“柜子”，叫<b>端点（Endpoint）</b>。每个柜子有编号和方向，各管一类数据。方向永远站在<b>电脑</b>的角度说：</p>
+<div class="def"><b>IN</b>：数据进电脑（鼠标 → 电脑）。<br><b>OUT</b>：数据出电脑（电脑 → 鼠标）。<br><b>ACTIVE 位</b>：每个柜子上的一个“已放好 / 等着收”标记，存在 USB 专用内存里。<b>这一位是整个 USB 代码的核心</b>。</div>
+<div class="box try"><div class="tag">动手 · 端点 1（IN，发鼠标数据）：先点“电脑来问”，再试试“项目放数据”</div>
+<div class="scroll"><svg id="epSvg" viewBox="0 0 780 250" width="780" height="250" role="img" aria-label="端点柜子模拟"></svg></div>
+<div class="btns"><button type="button" id="epLoad">项目放数据（WriteEP）</button><button type="button" id="epPoll">电脑来问（IN 令牌）</button><button type="button" id="epCheck">项目问：柜子空了吗？（EP_Status）</button><button type="button" id="epReset">重来</button></div>
+<div class="card" id="epInfo" aria-live="polite"></div>
+</div>
+<p>记住这条规则就够用了：</p>
+<table>
+<thead><tr><th></th><th>ACTIVE = 1</th><th>ACTIVE = 0</th></tr></thead>
+<tbody>
+<tr><td><b>IN 端点</b>（发给电脑）</td><td>数据已放好，等电脑来取</td><td>已经被取走了 → 可以放下一包</td></tr>
+<tr><td><b>OUT 端点</b>（电脑发来）</td><td>柜子空着，等电脑放东西</td><td>电脑放东西进来了 → 去读</td></tr>
+</tbody></table>
+<p><b>代码设 1，芯片清 0。</b>代码放好数据（或读完数据）就把 ACTIVE 设成 1；芯片发完（或收完）自动清成 0。项目里的 <code>nsAPI_USB_EP_Status()</code> 就是去看这一位：<b>返回 TRUE = ACTIVE 是 0</b>（IN：可以放；OUT：有新数据）。</p>
+
+<h2><span class="step">3/9</span>枚举：插上线以后，电脑和鼠标的“自我介绍”</h2>
+<p>插上 USB 线后，电脑不知道这是什么东西，要先问一大堆问题，这个过程叫<b>枚举</b>。点“下一步”，看每一步是谁在干活：</p>
+<div class="box try"><div class="tag">动手 · 从插线到开始工作，10 步</div>
+<div class="scroll"><svg id="enumSvg" viewBox="0 0 780 300" width="780" height="300" role="img" aria-label="枚举过程"></svg></div>
+<div class="btns"><button type="button" id="enPrev">上一步</button><button type="button" id="enNext">下一步</button><span class="note" id="enPos" style="align-self:center"></span></div>
+<div class="card" id="enInfo" aria-live="polite"></div>
+</div>
+<div class="def"><b>枚举（Enumeration）</b>：电脑认识新设备的过程。<br><b>端点 0（控制端点）</b>：每个 USB 设备都必须有的“前台”，专门用来回答电脑的问题。<br><b>SETUP 包</b>：电脑在端点 0 上提的问题，固定 8 个字节。<br><b>描述符（Descriptor）</b>：鼠标的“自我介绍”，是一串写死在代码里的字节。</div>
+<p><b>结论：枚举全部由现成代码完成</b>（<code>usbcore.c</code> 回答问题，<code>usbdesc.c</code> 提供答案）。项目要关心的只有“答案”的内容，也就是描述符。</p>
+
+<h2><span class="step">4/9</span>这个项目的自我介绍：描述符里写了什么</h2>
+<table>
+<thead><tr><th>项目</th><th>值</th><th>代码位置</th></tr></thead>
+<tbody>
+<tr><td>厂商号 VID / 产品号 PID</td><td>0x1A81 / 0x2071</td><td><code>inc/usbdesc.h:39~40</code></td></tr>
+<tr><td>供电方式、最大电流</td><td>USB 线供电、可远程唤醒、400 mA</td><td><code>usbdesc.c:233~234</code></td></tr>
+<tr><td>接口数</td><td>3 个（鼠标、键盘、自定义）</td><td><code>usbdesc.c:230</code></td></tr>
+</tbody></table>
+<table>
+<thead><tr><th>接口</th><th>端点</th><th>方向</th><th>装什么</th><th>项目里怎么用</th></tr></thead>
+<tbody>
+<tr><td>0 鼠标</td><td><b>EP1</b>（0x81）</td><td>IN</td><td>按键 + X/Y + 滚轮，每 1 ms 一包</td><td><code>USB_LoadInEP_Data(EP_1_MOUSE, …)</code>（device.c:701）</td></tr>
+<tr><td>1 键盘</td><td><b>EP2</b>（0x82）</td><td>IN</td><td>宏按键模拟键盘</td><td><code>USB_LoadInEP_Data(EP_2_KEYBOARD, …)</code>（device.c:725）</td></tr>
+<tr><td rowspan="2">2 自定义（GUI 用）</td><td><b>EP3</b>（0x83）</td><td>IN</td><td>回给 GUI 的 64 字节</td><td>宏 <code>EP_3_CUSTION_<b>OUT</b></code> ⚠️</td></tr>
+<tr><td><b>EP4</b>（0x04）</td><td>OUT</td><td>GUI 发来的 64 字节命令</td><td>宏 <code>EP_4_CUSTION_<b>IN</b></code> ⚠️</td></tr>
+</tbody></table>
+<div class="card" style="border-left-color:var(--bad)"><b class="t">⚠️ 名字和方向是反的</b><br><code>inc/usb.h:282~283</code>：<code>EP_3_CUSTION_OUT</code> 实际是 IN 端点（0x83），<code>EP_4_CUSTION_IN</code> 实际是 OUT 端点（0x04）。起名的人是站在<b>鼠标</b>的角度（“鼠标往外发 / 鼠标往里收”），而 USB 规定站在<b>电脑</b>的角度。看代码时以 <code>inc/hiduser.h:39~46</code> 的数字为准：最高位 1（0x8_）= IN。</div>
+<div class="def"><b>HID</b>（人机接口设备）：USB 里专门给鼠标、键盘这类设备的一套规矩。电脑自带 HID 驱动，所以鼠标插上就能用，不用装驱动。<br><b>报告（Report）</b>：HID 设备每次发给电脑的那一包数据。<b>报告描述符</b>（<code>usbdesc.c:36</code> 起）告诉电脑每个字节代表什么。</div>
+
+<h2><span class="step">5/9</span>USB 的一生：生命周期图</h2>
+<div class="box scroll" style="padding:10px"><svg id="lifeSvg" viewBox="0 0 900 420" width="900" height="420" role="img" aria-label="USB 生命周期"></svg></div>
+<div class="btns"><button type="button" id="lfPrev">上一步</button><button type="button" id="lfNext">下一步</button><span class="note" id="lfPos" style="align-self:center"></span></div>
+<div class="card" id="lifeInfo" aria-live="polite"></div>
+<div class="card" style="border-left-color:var(--gold)"><b class="t">一句话来龙去脉</b><br><code>Device_Init()</code> 先调 <code>InitUSBOSC()</code> 让 USB PLL 输出 48 MHz，再设 USB 中断优先级为 1，然后调 <code>nsAPI_USB_Init()</code>：开时钟、设两个引脚、在 USB 专用内存里画好“柜子表”、打开中断、拉上 D+ 上拉。之后枚举全部在 USB 中断里由现成代码完成。平时主循环做两件事：<code>Device_Report()</code> 等 EP1 空了就把鼠标数据放进去；<code>PC_Communicate()</code> 看 EP4 有没有 GUI 发来的命令。电脑 3 ms 不来问，芯片报“挂起”，主循环的 <code>Suspend_Check()</code> 让单片机睡觉。</div>
+<div class="card" style="border-left-color:var(--sw)"><b class="t">项目代码只需要碰的 3 个口子</b><br>① <b>描述符</b>（<code>usbdesc.c</code>）：告诉电脑“我是谁、有几个柜子、每包长什么样”。<br>② <b>发</b>：<code>USB_LoadInEP_Data(端点, 数据, 长度)</code>（usb.c:244）。<br>③ <b>收</b>：<code>Usb_Read_Bytes(EP_4_CUSTION_IN, buf, 64)</code>（usb.c:50），在 <code>PC_Communicate()</code> 里调。<br>其余的 <code>usbhw.c</code>、<code>usbcore.c</code>、<code>usbuser.c</code>、<code>hiduser.c</code> 都可以当成黑盒。</div>
+
+<h2><span class="step">6/9</span>七步核对 + 标志位谁来清</h2>
+<table>
+<thead><tr><th>步骤</th><th>USB</th><th>代码</th><th>手册（自己找）</th></tr></thead>
+<tbody>
+<tr><td>① 通电</td><td><b>需要</b>：USB 收发器（PHY）、USB PLL</td><td>OSC.c:60~61</td><td>PDRUNCFG</td></tr>
+<tr><td>② 时钟</td><td>USB PLL 输出 48 MHz（12 MHz × 4）；再开 USB 寄存器（bit14）和 USB 内存（bit27）的时钟</td><td>OSC.c:63~74；usbhw.c:129</td><td>USBPLLCTRL、USBCLKSEL、SYSAHBCLKCTRL</td></tr>
+<tr><td>③ 解锁</td><td>不需要</td><td>—</td><td>—</td></tr>
+<tr><td>④ 引脚</td><td>PIO0_3 → VBUS（加下拉）；PIO0_6 → CONNECT。D+/D− 是专用脚，不用设</td><td>usbhw.c:134~138</td><td>PIO0_3、PIO0_6 的 IOCON 表</td></tr>
+<tr><td>⑤ 配置</td><td>柜子表放在 0x2000 4000；打开设备（DEV_EN）；拉上 D+ 上拉（DCON）</td><td>usbhw.c:214~216、368、341</td><td>EPLISTSTART、DATABUFSTART、DEVCMDSTAT</td></tr>
+<tr><td>⑥ 中断</td><td><b>要用</b>：设备状态 + 10 个端点 + 每 1 ms 帧中断；优先级 1</td><td>usbhw.c:323、374；device.c:448</td><td>INTEN、INTSTAT</td></tr>
+<tr><td>⑦ 使用</td><td>发：写数据进柜子，ACTIVE 置 1；收：等 ACTIVE 变 0，读出来，再置 1</td><td>usbhw.c:1239、1157</td><td>Endpoint command/status list（Figure 22）</td></tr>
+</tbody></table>
+
+<h3>标志位清单：哪些例程已经替你清了</h3>
+<table>
+<thead><tr><th>标志</th><th>谁置 1</th><th>谁清、怎么清</th><th>不清会怎样</th></tr></thead>
+<tbody>
+<tr><td><b>INTSTAT</b> 全部位</td><td>🟦 芯片</td><td>⬜ 例程：中断一进来就“读出来、原样写回去”，一次清掉全部（usbhw.c:1335~1336）。写 1 清除</td><td>中断出来又马上进去，死循环</td></tr>
+<tr><td><b>DEVCMDSTAT 的 SETUP</b>（bit8）</td><td>🟦 芯片：收到电脑的问题</td><td>⬜ 例程：处理完写 1 清掉（usbhw.c:1403）</td><td>端点 0 后面的包全部被芯片回 NAK，枚举卡住</td></tr>
+<tr><td><b>DEVCMDSTAT 的 DRES_C、DSUS_C、DCON_C</b>（bit26、25、24）</td><td>🟦 芯片：总线复位、挂起变化、断开</td><td>⬜ 例程<b>没有专门清</b>，是被别的 <code>DEVCMDSTAT |= …</code> 顺手清掉的（见第 8 节的坑）</td><td>—</td></tr>
+<tr><td>端点的 <b>ACTIVE</b> 位</td><td>代码置 1</td><td>🟦 芯片发完 / 收完自动清 0</td><td>这不是“要清的标志”，而是“要重新置 1 的开关”：OUT 端点读完不重新置 1，就收不到下一包</td></tr>
+<tr><td>软件标志 <code>USB_DEVICE_STATUS_SUSPEND</code></td><td>⬜ 中断里的 <code>USB_Suspend()</code>（usbhw.c:470）</td><td>⬜ 主循环里的 <code>wnApi_Events_Suspend_Handler()</code>（usbhw.c:654）</td><td>—</td></tr>
+<tr><td>软件标志 <code>EPInOutReq</code> 的 EP4_OUT 位</td><td>⬜ 中断里 <code>nsAPI_USB_EndPoint4()</code>（usbuser.c:249）</td><td><b>没人看，也没人清</b>。收命令是直接查 ACTIVE 位</td><td>没影响，但会误导你以为“收命令靠这个标志”</td></tr>
+</tbody></table>
+
+<h2><span class="step">7/9</span>📖 手册导读：第 11 章 USB（只给名字，先自己找）</h2>
+<div class="task"><b>任务 1：</b>找到第 11 章开头的 <b>Basic configuration</b>，数一数要做几件事，和第 6 节的七步表对一对。</div>
+<details class="ans"><summary>答案</summary><b>11.2，p.221</b>。5 件事：设 IOCON 引脚；SYSAHBCLKCTRL 开 bit14（USB 寄存器）和 bit27（USB 内存）；PDRUNCFG 给 USB PHY 和 USB PLL 通电；设 USB 主时钟（Table 29）；需要的话设 USB 唤醒。代码全做了，唯一“需要的话”的唤醒也做了（REMOTE_WAKEUP_ENABLE = 1）。</details>
+<div class="task"><b>任务 2：</b>找 <b>DEVCMDSTAT</b> 的表。看 Access 列：哪几位是 <code>RWC</code>？bit7、bit16、bit17 分别是什么？</div>
+<details class="ans"><summary>答案</summary><b>Table 214，p.226~228</b>。<br>RWC（读 / 写 1 清）：bit8 SETUP、bit24 DCON_C、bit25 DSUS_C、bit26 DRES_C。<br>bit7 DEV_EN：打开设备，芯片才会回应。bit16 DCON：置 1 且 VBUS 有电，D+ 上拉就接上，电脑发现设备。bit17 DSUS：3 ms 没动静芯片置 1 = 挂起；挂起时写 0 = 主动叫醒电脑（远程唤醒）。<br>原文 bit8：<i>“As long as this bit is set all received IN and OUT tokens will be NAKed by HW. SW must clear this bit by writing a one.”</i></details>
+<div class="task"><b>任务 3：</b>找 <b>INTSTAT</b> 和 <b>INTEN</b> 的表。bit0~9、bit30、bit31 各是什么？例程往 INTEN 写的是 <code>DEV_STAT_INT | 0x3FF | FRAME_INT</code>，等于多少？</div>
+<details class="ans"><summary>答案</summary><b>Table 222（p.231~232）、Table 223（p.232）</b>。bit0~9：10 个物理端点（EP0 OUT、EP0 IN、EP1 OUT、EP1 IN … EP4 IN），某个端点的 ACTIVE 被芯片清 0 时置 1。bit30 FRAME_INT：每 1 ms 一次。bit31 DEV_INT：设备状态变化（复位、挂起、断开）。全部是 R/WC。<br>0x8000 0000 | 0x3FF | 0x4000 0000 = <b>0xC000 03FF</b>，正好和 usbhw.c:370 清 INTSTAT 用的数一样。</details>
+<div class="task"><b>任务 4：</b>找 <b>EPLISTSTART</b> 和 <b>DATABUFSTART</b>。为什么柜子表地址 0x2000 4000 可以用？再查 SYSAHBCLKCTRL 的 bit27 看看这个地址是什么。</div>
+<details class="ans"><summary>答案</summary><b>Table 216、217，p.229</b>。EPLISTSTART 低 8 位固定是 0，所以表必须放在 256 字节对齐的地址；0x2000 4000 低 8 位是 0，可以。DATABUFSTART 只有 bit31:22 能写，所有柜子的数据必须在同一个 4 MB 范围里。<br>SYSAHBCLKCTRL bit27（Table 24，p.31）：<i>“Enables USB SRAM block at address 0x2000 4000.”</i> 这是芯片里专门给 USB 的 2 KB 内存。</details>
+<div class="task"><b>任务 5：</b>搜 <b>Endpoint command/status list</b>（11.7.1），找到那张大图和紧接着的命令表。A 位是什么？软件能不能把它写成 0？</div>
+<details class="ans"><summary>答案</summary><b>Figure 22（p.234）、Table 227（p.235）</b>。每个柜子一个 32 位的字：bit31 A（Active）、bit30 D（Disabled）、bit29 S（Stall）……bit25:16 NBytes（字节数）、bit15:0 地址偏移。<br>A：<i>“Software can only set this bit to ‘1’. As long as this bit is set to one, software is not allowed to update any of the values in this 32-bit word.”</i> 软件只能置 1，不能写 0；ACTIVE 是 1 的时候连这个字都不能改。想取消要用 EPSKIP 寄存器。这就是为什么发数据之前要先查 <code>nsAPI_USB_EP_Status()</code>。</details>
+<div class="task"><b>任务 6：</b>找 <b>USBPLLCTRL</b>，用代码里的 MSEL = 3、PSEL = 1（inc/OSC.h:24~25）和晶振 12 MHz 算 USB 时钟。再搜 <b>Clocking</b>（11.4.7）看看 USB 时钟要求多少。</div>
+<details class="ans"><summary>答案</summary><b>Table 11，p.25</b>：M = MSEL + 1 = 4，输出 = 12 MHz × 4 = <b>48 MHz</b>。PSEL 只影响 PLL 内部，不改输出。<br><b>11.4.7，p.225</b>：USB 主时钟必须是 48 MHz ± 500 ppm，而且全速模式必须来自外部晶振（不能用内部 IRC）。所以 USB 设备必须焊晶振。</details>
+<div class="task"><b>任务 7：</b>找 <b>PIO0_3</b> 和 <b>PIO0_6</b> 的 IOCON 表。代码写的是 <code>PIO0_3 |= (BIT3|BIT0)</code>、<code>PIO0_6 |= BIT0</code>，翻译成中文。</div>
+<details class="ans"><summary>答案</summary><b>Table 79（p.88）、Table 82（p.90）</b>。PIO0_3：FUNC = 1 → USB_VBUS；bit4:3 MODE = 01 → 下拉。PIO0_6：FUNC = 1 → USB_CONNECT。<br>为什么 VBUS 要下拉？usbhw.c:131~133 的注释说：没有下拉的话 VBUS 内部会悬空，检测会出错（NXP 自己的评估板上遇到的问题）。</details>
+<div class="task"><b>任务 8：</b>搜 <b>Suspend and resume</b>（11.4.5）。多久没动静算挂起？挂起时鼠标最多能用多少电？</div>
+<details class="ans"><summary>答案</summary><b>11.4.5，p.224</b>：总线上超过 <b>3 ms</b> 没动静进入挂起；挂起的设备最多只能用 <b>500 µA</b>（原文“500 A”是 PDF 丢了 µ 字）。所以挂起时要关传感器、关线圈、让单片机深度睡眠，这就是 <code>wnApi_Events_Suspend_Handler()</code> 做的事。</details>
+<div class="task"><b>第 10 章翻一下就行：</b>第 10 章 “USB on-chip drivers” 是芯片 ROM 里自带的另一套 USB 驱动。<b>这个项目没用它</b>，用的是第 11 章的寄存器直接操作（usbhw.c）。知道有这回事即可。</div>
+
+<h2><span class="step">8/9</span>容易出错、你能改什么、T1A</h2>
+<table><tbody>
+<tr><td>DEVCMDSTAT 用 <code>|=</code> 会顺手清标志 ⚠️</td><td>DEVCMDSTAT 里 RWC 位和普通位混在一起。<code>DEVCMDSTAT |= X</code> 会先读出来（某个 _C 位可能是 1），再原样写回去 → 那个 _C 位被清掉了。例程正是靠这一点“顺手”清 DRES_C 等位的。你自己改 DEVCMDSTAT 时要知道：任何一次 <code>|=</code> 或 <code>&amp;=</code> 都可能清掉还没处理的状态变化。</td></tr>
+<tr><td>端点方向看反</td><td><code>EP_3_CUSTION_OUT</code> / <code>EP_4_CUSTION_IN</code> 名字和 USB 方向相反（第 4 节）。</td></tr>
+<tr><td>上一包还没被取走就写</td><td>ACTIVE = 1 时不能改柜子。<code>Device_Report()</code>（device.c:693~700）先最多等 600 µs 查 <code>nsAPI_USB_EP_Status()</code>；但等不到也照样写 ⚠️。<code>USB_LoadInEP_Data()</code> 本身不检查（usb.c:291 那行检查被注释掉了）。</td></tr>
+<tr><td>中断里做太多事</td><td>USB 中断优先级 1，只做设标志、回答枚举。真正的活（发报告、处理 GUI 命令）都在主循环里做。改的时候保持这个习惯。</td></tr>
+<tr><td>改描述符后电脑不认</td><td>Windows 会记住 VID/PID 对应的描述符。改了描述符但 VID/PID 没变，电脑可能用旧的缓存。调试时可以在设备管理器里卸载设备再插，或者临时改 PID。</td></tr>
+<tr><td>usb.c 里很多“死代码”</td><td><code>Usb_Init()</code>、<code>check_usb_and_endpoint()</code>（usb.c:20、89）全仓库没人调用，是从老项目（另一种芯片）搬过来的残留。真正的初始化是 device.c:449 直接调 <code>nsAPI_USB_Init()</code>。</td></tr>
+</tbody></table>
+<h3>你能改什么</h3>
+<ul>
+<li><b>VID / PID、产品名字</b>：<code>inc/usbdesc.h:39~40</code>，字符串在 <code>usbdesc.c:358</code> 起。</li>
+<li><b>回报率</b>：端点描述符的 bInterval（现在都是 1 = 1 ms，即 1000 Hz）。全速 USB 最快就是 1 ms。</li>
+<li><b>报告格式</b>：报告描述符（<code>usbdesc.c:36</code> 起）+ 组包代码（第 16 课）必须一起改，两边不一致电脑会解析错。</li>
+<li><b>GUI 命令</b>：<code>PC_Communicate()</code>（pc_communicate.c:882）里的 <code>switch(receive_buff[COMMAND])</code>，第 18 课详细讲。</li>
+</ul>
+<h3>T1A 上</h3>
+<p>USB 部分<b>基本不用改</b>：PIO0_3（VBUS）、PIO0_6（CONNECT）、D+/D− 在 T1A 上不变（<code>03_T1A适配清单.md</code>）。要改的是：</p>
+<ul>
+<li><b>新协议 + GUI</b>：可能要改自定义接口（EP3/EP4）的报告长度和 <code>PC_Communicate()</code> 的命令表（第 18 课）。</li>
+<li><b>VID / PID</b>：新产品是否换号，问杰哥。</li>
+<li><b>充电芯片 BQ21128</b>：USB 线插着时也在给电池充电。描述符里的 400 mA 是向电脑申请的最大电流，要和充电电流一起算，问硬件同事。</li>
+</ul>
+
+<h2>小测验</h2>
+<div class="box quiz" id="quiz"></div>
+<div class="sum"><b>这一课你只需要记住：</b>USB 上电脑是老板，每 1 ms 来问一次；鼠标只能先把数据放进端点（柜子），等电脑来取。每个柜子有个 ACTIVE 位：代码置 1，芯片清 0。枚举、ACK/NAK、CRC 全是芯片和现成代码做的。项目只碰 3 个口子：描述符、<code>USB_LoadInEP_Data()</code>、<code>Usb_Read_Bytes()</code>。中断标志 INTSTAT 和 SETUP 例程已经清了。</div>
+<h3>本课新词</h3>
+<table><tbody>
+<tr><td><b>主机 / 设备</b></td><td>电脑 / 鼠标；永远是主机先开口</td></tr>
+<tr><td><b>端点</b></td><td>传数据的“柜子”，有编号和方向</td></tr>
+<tr><td><b>IN / OUT</b></td><td>进电脑 / 出电脑（站在电脑的角度）</td></tr>
+<tr><td><b>ACTIVE 位</b></td><td>柜子“已放好 / 等着收”的标记，代码置 1，芯片清 0</td></tr>
+<tr><td><b>ACK / NAK</b></td><td>“收到 / 现在没有”，芯片自动回答</td></tr>
+<tr><td><b>帧 / SOF</b></td><td>1 ms 一格 / 每格开头的信号</td></tr>
+<tr><td><b>枚举</b></td><td>插上线后电脑认识设备的过程</td></tr>
+<tr><td><b>描述符</b></td><td>设备的自我介绍，一串写死的字节</td></tr>
+<tr><td><b>SETUP 包</b></td><td>电脑在端点 0 上提的问题</td></tr>
+<tr><td><b>HID / 报告</b></td><td>鼠标键盘用的 USB 规矩 / 每次发的一包数据</td></tr>
+<tr><td><b>挂起</b></td><td>3 ms 没动静，设备要省电睡觉</td></tr>
+<tr><td><b>VID / PID</b></td><td>厂商号 / 产品号，电脑靠它认设备</td></tr>
+</tbody></table>
+<p class="note">下一课：第 11 课 EEPROM 与 IAP（手册第 20 章）：鼠标的设置怎么断电不丢。</p>
+</div>
+<script>
+const NS="http://www.w3.org/2000/svg";
+function el(p,t,a,x){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e}
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const P=s=>`<pre class="code">${esc(s)}</pre>`;
+const arrowDefs=s=>{el(s,'defs',{}).innerHTML=['pc','per','muted','sw','bad','good'].map(c=>`<marker id="a_${c}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--${c})"/></marker>`).join('')};
+
+/* ---------- 1. polling timeline ---------- */
+(function(){const s=$('pollSvg');arrowDefs(s);
+  const L=100,W=134,yPC=50,yM=170;
+  el(s,'text',{x:14,y:yPC+5,'font-size':13,'font-weight':700,fill:V('pc')},'电脑（老板）');
+  el(s,'text',{x:14,y:yM+5,'font-size':13,'font-weight':700,fill:V('sw')},'鼠标');
+  el(s,'line',{x1:L,y1:yPC,x2:L+5*W,y2:yPC,stroke:V('pc'),'stroke-width':2});
+  el(s,'line',{x1:L,y1:yM,x2:L+5*W,y2:yM,stroke:V('sw'),'stroke-width':2});
+  const ans=['DATA','NAK','DATA','DATA','NAK'];
+  for(let i=0;i<5;i++){const x=L+i*W;
+    el(s,'line',{x1:x,y1:22,x2:x,y2:yM+30,stroke:V('grid'),'stroke-dasharray':'3 4'});
+    el(s,'text',{x:x+W/2,y:18,'text-anchor':'middle','font-size':11.5,fill:V('muted')},`第 ${i+1} 个 1 ms`);
+    el(s,'rect',{x:x+4,y:yPC-11,width:30,height:22,rx:4,fill:V('soft'),stroke:V('pc')});el(s,'text',{x:x+19,y:yPC+4,'text-anchor':'middle','font-size':10.5,fill:V('pc')},'SOF');
+    el(s,'line',{x1:x+44,y1:yPC+4,x2:x+44,y2:yM-8,stroke:V('pc'),'stroke-width':1.8,'marker-end':'url(#a_pc)'});
+    el(s,'text',{x:x+50,y:yPC+40,'font-size':11.5,fill:V('pc')},'IN：有吗？');
+    const ok=ans[i]==='DATA';const c=ok?'sw':'muted';
+    el(s,'line',{x1:x+110,y1:yM-6,x2:x+110,y2:yPC+8,stroke:V(c),'stroke-width':1.8,'marker-end':`url(#a_${c})`});
+    el(s,'text',{x:x+104,y:yM-24,'text-anchor':'end','font-size':11.5,'font-weight':ok?700:400,fill:V(c)},ok?'数据':'NAK');
+    if(ok)el(s,'text',{x:x+112,y:yPC-16,'text-anchor':'middle','font-size':10.5,fill:V('good')},'ACK 收到');}
+  el(s,'text',{x:L,y:yM+50,'font-size':12,fill:V('fg')},'每格开头电脑发 SOF，然后问端点 1“有新数据吗”。放好了就发，没放芯片自动回 NAK。');
+})();
+
+/* ---------- 2. endpoint cabinet ---------- */
+const PKTS=['X+3 Y−1','X+5 Y 0','X 0 Y+2','左键按下','X−4 Y+1'];
+let ep;
+function epReset(){ep={active:0,data:null,n:0,sent:[],irq:false,msg:'柜子现在是空的（ACTIVE = 0）。试试先点“电脑来问”。',mc:'muted'};drawEp()}
+function drawEp(){const s=$('epSvg');s.textContent='';arrowDefs(s);
+  // PC
+  el(s,'rect',{x:10,y:60,width:150,height:110,rx:10,fill:V('soft'),stroke:V('pc'),'stroke-width':2});
+  el(s,'text',{x:85,y:84,'text-anchor':'middle','font-size':14,'font-weight':700,fill:V('pc')},'电脑');
+  el(s,'text',{x:85,y:106,'text-anchor':'middle','font-size':11.5,fill:V('muted')},'已收到：');
+  ep.sent.slice(-3).forEach((t,i)=>el(s,'text',{x:85,y:126+i*16,'text-anchor':'middle','font-size':12,class:'m',fill:V('fg')},t));
+  // chip
+  el(s,'rect',{x:220,y:20,width:330,height:210,rx:12,fill:'none',stroke:V('per'),'stroke-width':1.5,'stroke-dasharray':'5 4'});
+  el(s,'text',{x:232,y:40,'font-size':12.5,'font-weight':700,fill:V('per')},'🟦 单片机里的 USB 硬件');
+  // cabinet
+  const on=ep.active===1;
+  el(s,'rect',{x:300,y:62,width:170,height:100,rx:8,fill:on?V('sw'):V('panel'),opacity:on?.18:1,stroke:V('sw'),'stroke-width':2});
+  el(s,'rect',{x:300,y:62,width:170,height:100,rx:8,fill:'none',stroke:V('sw'),'stroke-width':2});
+  el(s,'text',{x:385,y:84,'text-anchor':'middle','font-size':13,'font-weight':700,fill:V('fg')},'端点 1 IN（柜子）');
+  el(s,'text',{x:385,y:116,'text-anchor':'middle','font-size':14,class:'m',fill:ep.data?V('fg'):V('muted')},ep.data||'（空）');
+  el(s,'rect',{x:330,y:132,width:110,height:22,rx:11,fill:on?V('sw'):V('soft')});
+  el(s,'text',{x:385,y:147,'text-anchor':'middle','font-size':12,'font-weight':700,fill:on?V('bg'):V('muted')},`ACTIVE = ${ep.active}`);
+  // INTSTAT
+  el(s,'text',{x:300,y:190,'font-size':11.5,fill:V('muted')},'INTSTAT bit3（EP1IN）：');
+  el(s,'rect',{x:440,y:177,width:26,height:20,rx:4,fill:ep.irq?V('gold'):V('soft')});el(s,'text',{x:453,y:191,'text-anchor':'middle','font-size':12,class:'m',fill:ep.irq?V('bg'):V('muted')},ep.irq?1:0);
+  el(s,'text',{x:300,y:216,'font-size':11,fill:V('muted')},ep.irq?'→ 进 USB 中断，例程读出来写回去清掉':'');
+  // project
+  el(s,'rect',{x:610,y:60,width:160,height:110,rx:10,fill:V('soft'),stroke:V('sw'),'stroke-width':2});
+  el(s,'text',{x:690,y:84,'text-anchor':'middle','font-size':14,'font-weight':700,fill:V('sw')},'🟩 项目代码');
+  el(s,'text',{x:690,y:106,'text-anchor':'middle','font-size':11.5,fill:V('muted')},'Device_Report()');
+  el(s,'text',{x:690,y:128,'text-anchor':'middle','font-size':11.5,fill:V('muted')},`下一包：${PKTS[ep.n%PKTS.length]}`);
+  // wires
+  el(s,'line',{x1:160,y1:100,x2:296,y2:100,stroke:V('pc'),'stroke-width':1.5,'stroke-dasharray':'4 3'});
+  el(s,'text',{x:228,y:94,'text-anchor':'middle','font-size':10.5,fill:V('pc')},'D+ / D−');
+  el(s,'line',{x1:606,y1:115,x2:474,y2:115,stroke:V('sw'),'stroke-width':1.5,'stroke-dasharray':'4 3'});
+  const card=$('epInfo');card.innerHTML=ep.msg;card.style.borderLeftColor=V(ep.mc)}
+$('epLoad').onclick=()=>{if(ep.active){ep.msg='⚠️ ACTIVE 还是 1：上一包电脑还没取走。手册（Table 227）规定这时<b>软件不许改这个柜子</b>。所以 <code>Device_Report()</code> 放数据前要先查 <code>nsAPI_USB_EP_Status()</code>。';ep.mc='bad';drawEp();return}
+  ep.data=PKTS[ep.n%PKTS.length];ep.n++;ep.active=1;ep.irq=false;ep.msg=`项目调 <code>USB_LoadInEP_Data()</code> → <code>nsAPI_USB_WriteEP()</code>：把“${ep.data}”复制进柜子，最后把 ACTIVE 置 1（usbhw.c:1292）。<b>这时数据还没发出去</b>，要等电脑来问。`;ep.mc='sw';drawEp()};
+$('epPoll').onclick=()=>{if(ep.active){ep.sent.push(ep.data);ep.msg=`电脑来问 → 芯片看到 ACTIVE = 1，<b>自己</b>把“${ep.data}”发出去；电脑回 ACK 后，芯片把 ACTIVE 清成 0，并把 INTSTAT bit3 置 1。整个过程代码一行都没参与。`;ep.data=null;ep.active=0;ep.irq=true;ep.mc='per'}
+  else{ep.irq=false;ep.msg='电脑来问 → 芯片看到 ACTIVE = 0（没放数据）→ <b>自动</b>回 NAK。电脑过 1 ms 再来问。代码不知道这件事发生过。';ep.mc='muted'}drawEp()};
+$('epCheck').onclick=()=>{ep.msg=ep.active?'<code>nsAPI_USB_EP_Status(HID_EP1_IN)</code> 返回 <b>FALSE</b>：ACTIVE = 1，上一包还在柜子里，先别放。':'<code>nsAPI_USB_EP_Status(HID_EP1_IN)</code> 返回 <b>TRUE</b>：ACTIVE = 0，柜子空了，可以放下一包。（usbhw.c:1444~1448）';ep.mc='gold';drawEp()};
+$('epReset').onclick=epReset;epReset();
+
+/* ---------- 3. enumeration ---------- */
+const ACT=[['电脑','pc'],['🟦 芯片','per'],['⬜ 现成代码','muted'],['🟩 项目代码','sw']];
+const EN=[
+ [0,1,'插线：VBUS 有 5 V','线一插上，5 V 经过 PIO0_3（功能 USB_VBUS）进芯片。芯片自己把 DEVCMDSTAT 的 VBUSDEBOUNCED 置 1。'],
+ [3,2,'开机：调 nsAPI_USB_Init()','<code>Device_Init()</code>（device.c:449）调 <code>nsAPI_USB_Init()</code>。它开时钟、设引脚、画柜子表、开中断，最后 <code>DEVCMDSTAT |= USB_DCON</code>（usbhw.c:341）。'],
+ [1,0,'D+ 被拉高 → 电脑发现设备','芯片看到 DCON = 1 且 VBUS 有电，就把 D+ 上的 1.5 kΩ 上拉接通（PIO0_6 = USB_CONNECT）。电脑看到 D+ 变高，知道插进来一个全速设备。'],
+ [0,1,'电脑：总线复位','电脑先让设备复位。芯片置 DRES_C → 进 USB 中断 → 例程 <code>NDrv_USB_Reset()</code>（usbhw.c:354）重新画柜子表、开中断。地址回到 0。'],
+ [0,2,'电脑：“你是谁？”（设备描述符）','电脑在端点 0 发 SETUP 包 GET_DESCRIPTOR。芯片收下、置 SETUP 位、进中断 → <code>nsAPI_USB_EndPoint0()</code>（usbcore.c:703）→ 第 775 行。'],
+ [2,0,'回答：VID 0x1A81、PID 0x2071 …','现成代码从 <code>usbdesc.c</code> 的 <code>USB_DeviceDescriptor</code>（:197）取出 18 个字节，放进端点 0 IN；芯片在电脑来问时发出去。'],
+ [0,2,'电脑：“你的地址是 N”','SET_ADDRESS（usbcore.c:767）→ <code>nsAPI_USB_SetAddress()</code>（usbhw.c:809）把 N 写进 DEVCMDSTAT 的 DEV_ADDR。之后电脑只用 N 叫它。'],
+ [0,2,'电脑：要配置、报告、字符串描述符','配置描述符（usbdesc.c:218）：3 个接口、4 个端点、400 mA；报告描述符（:36 起）：每包怎么解析。电脑据此装好鼠标 / 键盘驱动。'],
+ [0,2,'电脑：SET_CONFIGURATION','usbcore.c:795 → <code>NDrv_USB_Configure()</code> 打开所有端点中断；<code>nsAPI_USB_Configure_Event()</code>（usbuser.c:125）把 <code>Enumeration_Finish</code> 置 TRUE。<b>枚举完成</b>。'],
+ [3,1,'开始工作：每 1 ms 一包','从此电脑每 1 ms 问一次 EP1。项目的 <code>Device_Report()</code> 有新数据就放进柜子。<b>前面 9 步，项目代码只参与了第 2 步</b>。'],
+];
+(function(){const s=$('enumSvg');let idx=0;const X=[90,300,500,690],TOP=46,ROW=24;
+  function draw(){s.textContent='';arrowDefs(s);const H=TOP+EN.length*ROW+20;s.setAttribute('viewBox',`0 0 780 ${H}`);s.setAttribute('height',H);
+    ACT.forEach(([t,c],i)=>{el(s,'rect',{x:X[i]-62,y:6,width:124,height:26,rx:6,fill:V(c),opacity:.15});el(s,'text',{x:X[i],y:24,'text-anchor':'middle','font-size':13,'font-weight':700,fill:V(c)},t);el(s,'line',{x1:X[i],y1:34,x2:X[i],y2:H-6,stroke:V(c),'stroke-width':1.2,opacity:.45})});
+    EN.forEach((e,i)=>{if(i>idx)return;const y=TOP+i*ROW+8,on=i===idx,c=ACT[e[0]][1],a=X[e[0]],b=X[e[1]];const dir=b>a?1:-1;
+      el(s,'line',{x1:a,y1:y,x2:b-dir*4,y2:y,stroke:V(c),'stroke-width':on?2.6:1.4,opacity:on?1:.45,'marker-end':`url(#a_${c})`});
+      el(s,'circle',{cx:a,cy:y,r:9,fill:on?V(c):V('panel'),stroke:V(c)});el(s,'text',{x:a,y:y+4,'text-anchor':'middle','font-size':10.5,'font-weight':700,fill:on?V('bg'):V(c)},i+1);
+      const mid=(a+b)/2;el(s,'text',{x:mid,y:y-5,'text-anchor':'middle','font-size':11,'font-weight':on?700:400,fill:on?V('fg'):V('muted')},e[2].length>18?e[2].slice(0,18)+'…':e[2])});
+    const e=EN[idx];const card=$('enInfo');card.style.borderLeftColor=V(ACT[e[0]][1]);card.innerHTML=`<b class="t">${idx+1}. ${e[2]}</b>　<span class="note">${ACT[e[0]][0]} → ${ACT[e[1]][0]}</span><br>${e[3]}`;
+    $('enPos').textContent=`第 ${idx+1} / ${EN.length} 步`}
+  $('enNext').onclick=()=>{idx=(idx+1)%EN.length;draw()};$('enPrev').onclick=()=>{idx=(idx-1+EN.length)%EN.length;draw()};draw()})();
+
+/* ---------- 5. lifecycle ---------- */
+const LANES=[['🟦 芯片自己','per'],['⬜ 现成代码','muted'],['🟩 项目代码','sw']];
+const PHASES=['开机准备（只做一次）','平时工作（主循环反复）','USB 中断','挂起 / 唤醒'];
+const B=[
+ [0,1,'①②','USB PLL 出 48 MHz','OSC.c:58~75',P(String.raw`void InitUSBOSC(unsigned char USBSEL , unsigned char USBPSEL , unsigned char USBMSEL ,unsigned char USBDiv )
+{
+	LPC_SYSCON->PDRUNCFG &= ~(1 << 10) ;		//Power On USB PHY
+	LPC_SYSCON->PDRUNCFG &= ~(1 <<  8) ;		//Power On USB PLL
+	LPC_SYSCON->USBPLLCLKSEL = 0x01 ;		//Select USB PLL clock source(Only System oscillator)
+	...
+	LPC_SYSCON->USBPLLCTRL = ((USBPSEL<<5) | USBMSEL) ;	//USB Feedback divider value
+	while (!(LPC_SYSCON->USBPLLSTAT & 0x01)) ;
+	LPC_SYSCON->USBCLKSEL = 0x00 ;			//Select USB clock source(0 = USB PLL ; 1 = Main Clock)
+	LPC_SYSCON->USBCLKDIV = USBDiv ;		//Set USB clock divider
+}`)+'调用链：<code>Device_Init()</code>（device.c:429）→ <code>InitUSBOSC( USB_SEL , USB_PSEL , USB_MSEL , USB_DIV_VAL)</code>。<br>宏展开（inc/OSC.h:23~26）：<code>InitUSBOSC(1, 1, 3, 1)</code> → 12 MHz × (3+1) = 48 MHz。<br><code>OSC.c</code> 是公司老项目代码。','找：PDRUNCFG、USBPLLCLKSEL、USBPLLCTRL、USBCLKSEL'],
+ [0,2,'⑥','中断优先级 1，调初始化','device.c:448~449',P(String.raw`	NVIC_SetPriority(USB_IRQn , 1);
+	nsAPI_USB_Init();/* USB Initialization */`)+'数字越小越优先。USB 是 1，比定时器等更优先，保证电脑的问题能及时回答。',''],
+ [0,1,'②④','开时钟、设 VBUS / CONNECT 脚','usbhw.c:123~139',P(String.raw`void NDrv_USB_IOClkConfig(void)
+{
+	/* Enable AHB clock to the GPIO domain. */
+	LPC_SYSCON->SYSAHBCLKCTRL |= BIT6;
+	/* Enable AHB clock to the USB block and USB RAM. */
+	LPC_SYSCON->SYSAHBCLKCTRL |= (BIT14|BIT27);
+	...
+	LPC_IOCON->PIO0_3 &= ~0x1F;
+	LPC_IOCON->PIO0_3 |= (BIT3|BIT0);	/* Secondary function VBUS */
+	LPC_IOCON->PIO0_6 &= ~0x07;
+	LPC_IOCON->PIO0_6 |= BIT0;	//BIT0		/* Secondary function SoftConn */
+}`)+'调用链：<code>nsAPI_USB_Init()</code>（usbhw.c:285）→ <code>NDrv_USB_IOClkConfig()</code>（:303）。<br><code>usbhw.c</code> 文件头写着 “NXP LPC11xx USB example”：底子是 NXP 例程，公司改过函数名、加过挂起处理。','找：SYSAHBCLKCTRL、PIO0_3、PIO0_6'],
+ [0,1,'⑤','画“柜子表”','usbhw.c:209~280',P(String.raw`	addr = (U32 *)USB_EPLIST_ADDR;
+	LPC_USB->EPLISTSTART = USB_EPLIST_ADDR;
+	data_ptr = USB_EPDATA_ADDR;
+	LPC_USB->DATABUFSTART = USB_EPDATA_PAGE;
+
+	*addr++ = (USB_MAX_PACKET0 << 16)|((U16)(data_ptr >> 6));
+	...
+	for(i = 2; i < USB_EP_NUM; i++)
+	{
+		/* Buffer 0 */
+		*addr++ = EP_DISABLED|(USB_MAX_NON_ISO_SIZE << 16)|((U16)(data_ptr >> 6));`)+'宏展开（inc/usbhw.h:64~66）：<code>USB_EPLIST_ADDR</code> = 0x2000 4000，<code>USB_EPDATA_ADDR</code> = 0x2000 4100，<code>USB_EPDATA_PAGE</code> = 0x2000 0000。<br>每个柜子一个 32 位字：字节数放在 bit25:16，数据地址 ÷ 64 放在低 16 位。EP1~EP4 先标成 DISABLED，等枚举完再打开。<br>调用链：<code>NDrv_USB_Reset()</code>（:366）→ <code>NDrv_USB_EPInit()</code>。','找：EPLISTSTART、DATABUFSTART、Endpoint command/status list'],
+ [0,1,'⑤⑥','打开设备、清标志、开中断','usbhw.c:354~375',P(String.raw`void NDrv_USB_Reset(void)
+{
+	g_USBHW_Setting.BufferUsed = 0;
+	g_USBHW_Setting.EPActiveFlag = 0;
+
+	/* Initialize EP Command/Status List. */
+	NDrv_USB_EPInit();
+
+	LPC_USB->DEVCMDSTAT |= USB_EN;
+	/* Clear all EP interrupts, device status, and SOF interrupts. */
+	LPC_USB->INTSTAT = 0xC00003FF;
+	LPC_USB->INTEN  = DEV_STAT_INT | 0x3FF | (USB_SOF_EVENT ? FRAME_INT : 0);
+}`)+'<b>先清旧标志、再开中断</b>（和第 8 课定时器一样的顺序）。<br>宏展开：<code>USB_EN</code> = BIT7（DEV_EN）；<code>DEV_STAT_INT</code> = 0x8000 0000；<code>FRAME_INT</code> = BIT30；<code>USB_SOF_EVENT</code> = 1（inc/usbcfg.h:111）。<br>这个函数开机调一次，<b>每次电脑发总线复位也会在中断里再调一次</b>。','找：DEVCMDSTAT、INTSTAT、INTEN'],
+ [0,1,'⑤','接上 D+ 上拉','usbhw.c:338~344',P(String.raw`void NDrv_USB_Connect(U8 con)
+{
+	if(con)
+	LPC_USB->DEVCMDSTAT |= USB_DCON;
+	else
+	LPC_USB->DEVCMDSTAT &= ~USB_DCON;
+}`)+'宏展开：<code>USB_DCON</code> = BIT16。调用链：<code>nsAPI_USB_Init()</code> 最后一行 <code>NDrv_USB_Connect(TRUE)</code>（:327）。','找：DEVCMDSTAT'],
+ [0,0,'','1.5 kΩ 上拉接通，电脑开始枚举','—','VBUS 有电且 DCON = 1 → 芯片接通 D+ 的上拉 → 电脑发现设备 → 第 3 节的枚举过程。',''],
+ [1,0,'','自动收发、ACK/NAK、CRC','—','电脑每 1 ms 来问。芯片看 ACTIVE 位：是 1 就发 / 收，然后清 0 并置 INTSTAT 对应位；是 0 就回 NAK。',''],
+ [1,2,'⑦','EP1 空了就放鼠标数据','device.c:689~701',P(String.raw`			if(HID_Protocol == 1)
+			{
+				for(i=0;i<60;i++)
+				{
+					if(nsAPI_USB_EP_Status(HID_EP1_IN))
+					{
+					break;
+					}
+					nsAPI_SSP_Delay1us(10);
+				}
+				report_data.mouse_report[0]=0x01;
+
+				USB_LoadInEP_Data(EP_1_MOUSE, report_data.mouse_report, 8);
+			}`)+'调用链：主循环（device.c:513）→ <code>Device_Report()</code> → <code>USB_LoadInEP_Data()</code>（usb.c:244）→ <code>nsAPI_USB_WriteEP()</code>（usbhw.c:1239）。<br>最多等 60 × 10 µs = 600 µs 让柜子变空。<code>HID_Protocol == 1</code> 是正常模式（8 字节，第 0 字节是报告号 0x01）；BIOS 里是启动模式（3 字节，:715）。',''],
+ [1,1,'⑦','WriteEP：数据进柜子、ACTIVE = 1','usbhw.c:1239~1293',P(String.raw`	/* Get EP command/status List, update the length field and data pointer. */
+	*addr &= ~0x3FFFFFF;
+	cnt &= PKT_LNGTH_MASK;
+	*addr |= (cnt << 16)|(U16)((g_USBHW_Setting.EPList[index[1]].buf_ptr) >> 6);
+
+	dataptr = (U32 *)g_USBHW_Setting.EPList[index[1]].buf_ptr;
+	for (n = 0; n < (cnt + 3) / 4; n++)
+	{
+		*((__packed U32 *)dataptr) = *((__packed U32 *)pData);
+		pData += 4;
+		dataptr++;
+	}
+	...
+	*addr |= BUF_ACTIVE;
+	return (cnt);`)+'先写字节数和地址，再复制数据，<b>最后</b>才置 ACTIVE（宏 <code>BUF_ACTIVE</code> = BIT31）。顺序不能反：ACTIVE 一置 1，芯片随时可能发走。','找：Endpoint command/status list'],
+ [1,2,'⑦','看 EP4 有没有 GUI 命令','pc_communicate.c:882~915',P(String.raw`void PC_Communicate(void)
+{
+	BOOL crc;
+	Tool_Clear_ArrayData(receive_buff,0,(TRANSFER_LENGTH-1));
+
+	if (Usb_Read_Bytes(EP_4_CUSTION_IN,receive_buff,TRANSFER_LENGTH))
+	{
+
+	}else
+	{
+		switch(report_continue_tag)
+		...
+		return;
+	}
+
+	switch(receive_buff[COMMAND])
+	{`)+'调用链：主循环（device.c:517）→ <code>PC_Communicate()</code> → <code>Usb_Read_Bytes()</code>（usb.c:50）。<br>宏展开：<code>EP_4_CUSTION_IN</code> → <code>EP_4_DRIVE_OUT</code> → <code>HID_EP4_OUT</code> = 0x04（OUT 端点）；<code>TRANSFER_LENGTH</code> = 64。<br>注意 if 里是空的：<b>收到了</b>就往下走到 <code>switch(receive_buff[COMMAND])</code> 处理命令；<b>没收到</b>才进 else，处理“分几包回传”的后续，然后 return。',''],
+ [1,1,'⑦','ReadEP：取出来、ACTIVE 重新置 1','usb.c:77~84、usbhw.c:1157~1230',P(String.raw`/* usb.c */
+	if(nsAPI_USB_EP_Status(endpoint_num))
+	{
+		nsAPI_USB_EnableEP(endpoint_num);
+		if( nsAPI_USB_ReadEP(endpoint_num, buf))
+		{
+			result = TRUE;
+		}
+	}
+
+/* usbhw.c:1192 */
+	/* Clear buffer after EP read, reset EP length and buffer pointer field */
+	*addr &= ~0x3FFFFFF;
+	...
+		*addr |= ((g_USBHW_Setting.EPList[index[1]].buf_length << 16)
+		| (U16)((g_USBHW_Setting.EPList[index[1]].buf_ptr) >> 6) | BUF_ACTIVE);`)+'OUT 端点：ACTIVE = 0 表示电脑放东西进来了。读完<b>必须重新置 ACTIVE</b>，否则电脑下次发命令芯片只会回 NAK。<code>usb.c</code> 是公司老项目代码（注释里的 <code>USBFS_</code> 是从另一种芯片的项目搬过来的）。','找：Endpoint command/status list'],
+ [2,0,'','INTSTAT 置位 → 进中断','—','芯片：端点收发完、每 1 ms 帧开始、复位 / 挂起 / 恢复时，置 INTSTAT 对应位；INTEN 也开着 → 进 <code>USB_IRQHandler</code>。',''],
+ [2,1,'⑥','读出来、原样写回去 = 全清','usbhw.c:1331~1336',P(String.raw`void USB_IRQHandler (void)
+{
+  uint32_t disr, val, n, m;
+
+  disr = LPC_USB->INTSTAT;         /* Get Interrupt Status and clear immediately. */
+  LPC_USB->INTSTAT = disr;`)+'<b>例程替你清了中断标志</b>。INTSTAT 是“写 1 清”：读到哪些位是 1，就写哪些位 1 回去，正好全部清掉，又不会误清别的。之后用 <code>disr</code> 这份“快照”判断发生了什么。','找：INTSTAT'],
+ [2,1,'','复位 / 挂起 / 恢复','usbhw.c:1339~1372',P(String.raw`  if (disr & DEV_STAT_INT) {
+    val = LPC_USB->DEVCMDSTAT;       /* Device Status */
+
+    if (val & USB_DRESET_C) {               /* Reset */
+      NDrv_USB_Reset();
+      USB_Reset_Event();
+    }
+    ...
+    if (val & USB_DSUS_C) {                 /* Suspend/Resume */
+      if (val & USB_DSUS) {                 /* Suspend */
+        USB_Suspend();
+        USB_Suspend_Event();
+      } else {                              /* Resume */
+        USB_Resume();
+        LPC_SYSCON->USBCLKCTRL = 0;
+        USB_Resume_Event();
+      }
+    }
+    goto isr_end;
+  }`)+'（去掉了 <code>#if</code> 行，按 inc/usbcfg.h 的设置保留实际编译的部分。）<br>DRES_C、DSUS_C 这里<b>没有专门写 1 清</b>，是被 <code>NDrv_USB_Reset()</code> 里的 <code>DEVCMDSTAT |= USB_EN</code> 这类写法顺手清掉的（第 8 节）。','找：DEVCMDSTAT'],
+ [2,1,'','SETUP → 回答枚举、写 1 清 SETUP','usbhw.c:1397~1405',P(String.raw`        if ((n & 1) == 0) {                 /* OUT Endpoint */
+          if (n == 0) {                     /* Control OUT Endpoint */
+            if ( LPC_USB->DEVCMDSTAT & USB_SETUP_RCVD ) {
+ 											/* Setup packet is received. */
+              if (USB_P_EP[0]) {
+                USB_P_EP[0](USB_EVT_SETUP);
+				LPC_USB->DEVCMDSTAT |= USB_SETUP_RCVD;
+                continue;`)+'宏展开：<code>USB_SETUP_RCVD</code> = BIT8；<code>USB_P_EP[0]</code> = <code>nsAPI_USB_EndPoint0</code>（usbuser.c:165 的函数表）。<br><b>例程替你清了 SETUP 位</b>。不清的话，手册说端点 0 后面的包全被 NAK。','找：DEVCMDSTAT'],
+ [2,1,'','其他端点 → 记一笔','usbuser.c:240~252',P(String.raw`void nsAPI_USB_EndPoint4(U32 event)
+{
+	switch (event)
+	{
+		case USB_EVT_IN:
+		g_Main_Setting.EPInOutReq |= EP4_IN;
+		break;
+
+		case USB_EVT_OUT:
+		g_Main_Setting.EPInOutReq |= EP4_OUT;
+		break;
+	}
+}`)+'中断里只设一个软件标志，不处理数据。但 <b>EP4_OUT 这个标志全仓库没人读</b>：<code>PC_Communicate()</code> 是直接查 ACTIVE 位的。',''],
+ [3,0,'','3 ms 没动静 → DSUS = 1','—','电脑睡眠或关机时不再发 SOF。芯片 3 ms 没看到动静就置 DSUS、DSUS_C → 进中断。',''],
+ [3,1,'','中断里只记一笔','usbhw.c:441~490',P(String.raw`void USB_Suspend (void)
+{
+	...
+			NVIC_EnableIRQ(TIMER_16_0_IRQn);
+			timer16_0_counter=300;
+	#if REMOTE_WAKEUP_ENABLE
+		{
+    g_USBCore_Setting.USB_Device_Status|= USB_DEVICE_STATUS_SUSPEND;
+		}`)+'中断里不睡觉，只设标志，留给主循环处理。',''],
+ [3,2,'','主循环：关东西、深度睡眠','suspend.c:35~50 → usbhw.c:650~690',P(String.raw`/* suspend.c */
+    wnApi_Events_Suspend_Handler();
+
+	while(suspendFlag == 1)
+	{
+		nsAPI_SSP_Delay1us(300);
+		wnDrv_Pmu_Sleep(MCU_DEEP_SLEEP);
+	}
+
+/* usbhw.c:652 */
+    if((g_USBCore_Setting.USB_Device_Status & USB_DEVICE_STATUS_SUSPEND) == USB_DEVICE_STATUS_SUSPEND)
+    {
+		g_USBCore_Setting.USB_Device_Status	&= ~USB_DEVICE_STATUS_SUSPEND;
+		...
+    if(Ele_IsVibrating(ELE_POS_LEFT) || Ele_IsVibrating(ELE_POS_RIGHT))
+    {
+      return;
+    }
+		suspendFlag=1;
+		Usb_Stop();
+		...
+		wnDrv_Pmu_Sleep(MCU_DEEP_SLEEP);`)+'调用链：主循环（device.c:519）→ <code>Suspend_Check()</code> → <code>wnApi_Events_Suspend_Handler()</code>。<br>线圈还在振动就先不睡。<code>Usb_Stop()</code> 关掉每 1 ms 的帧中断。按键（GINT0，第 6 课）或电脑恢复会把它叫醒。挂起 / 唤醒的完整流程在第 20 课。',''],
+ [3,1,'','醒来：恢复时钟，必要时叫醒电脑','usbhw.c:694~752',P(String.raw`BOOLEAN wnApi_Events_Resume_Handler(void)
+{
+	...
+		InitSystemOSC( MAIN_SEL , PSEL , MSEL , SYS_AHB_DIV_VAL ) ;
+		Usb_Start();
+		...
+			LPC_USB->DEVCMDSTAT &= ~USB_DSUS;
+
+			while(LPC_USB->DEVCMDSTAT & USB_DSUS)
+			{
+
+			}`)+'睡觉时关了的时钟要重新开。如果是按键把鼠标叫醒的，写 DSUS = 0 = <b>远程唤醒</b>：鼠标主动叫醒电脑（手册说只有挂起时写 0 才有用）。','找：DEVCMDSTAT、USBCLKCTRL'],
+];
+(function(){
+  const s=$('lifeSvg');let idx=0;const LX=86,CW=192,BH=48,GAP=8,TOP=34;
+  function layout(){const cnt={};const pos=B.map(b=>{const k=b[0]+'_'+b[1];cnt[k]=(cnt[k]||0)+1;return{c:b[0],l:b[1],n:cnt[k]-1}});
+    const laneH=[0,1,2].map(l=>Math.max(1,...[0,1,2,3].map(c=>cnt[c+'_'+l]||0)));const laneY=[TOP];for(let l=1;l<3;l++)laneY[l]=laneY[l-1]+laneH[l-1]*(BH+GAP)+16;
+    return{pos:pos.map(p=>({x:LX+p.c*(CW+6)+4,y:laneY[p.l]+8+p.n*(BH+GAP)})),laneY,laneH,H:laneY[2]+laneH[2]*(BH+GAP)+16}}
+  function draw(){s.textContent='';const L=layout();s.setAttribute('viewBox',`0 0 900 ${L.H}`);s.setAttribute('height',L.H);s.setAttribute('style','width:100%;height:auto;min-width:720px');
+    PHASES.forEach((p,c)=>{const x=LX+c*(CW+6);el(s,'rect',{x,y:22,width:CW+2,height:L.H-24,rx:8,fill:V('soft'),opacity:.6});el(s,'text',{x:x+CW/2,y:16,'text-anchor':'middle','font-size':12.5,'font-weight':600,fill:V('fg')},p)});
+    LANES.forEach(([t,c],l)=>{const y=L.laneY[l],h=L.laneH[l]*(BH+GAP)+8;el(s,'rect',{x:4,y,width:LX-10,height:h,rx:6,fill:V(c),opacity:.12});t.split(' ').forEach((w,i)=>el(s,'text',{x:(LX-6)/2+2,y:y+h/2-12+i*17,'text-anchor':'middle','font-size':12,'font-weight':600,fill:V(c)},w))});
+    B.forEach((b,i)=>{const p=L.pos[i],c=LANES[b[1]][1],on=i===idx;const g=el(s,'g',{tabindex:0,role:'button','aria-label':b[3],style:'cursor:pointer'});
+      el(g,'rect',{x:p.x,y:p.y,width:CW-8,height:BH,rx:7,fill:on?V(c):V('panel'),stroke:V(c),'stroke-width':on?2.5:1.5});
+      el(g,'circle',{cx:p.x+13,cy:p.y+14,r:10,fill:on?V('bg'):V(c)});el(g,'text',{x:p.x+13,y:p.y+18,'text-anchor':'middle','font-size':11,'font-weight':700,fill:on?V(c):V('bg')},i+1);
+      const lim=b[2].length>1?9:11;const t=b[3].length>lim?[b[3].slice(0,lim),b[3].slice(lim)]:[b[3]];t.forEach((tt,k)=>el(g,'text',{x:p.x+28,y:p.y+(t.length>1?18:20)+k*15,'font-size':12.5,'font-weight':600,fill:on?V('bg'):V('fg')},tt.length>13?tt.slice(0,13)+'…':tt));
+      if(t.length===1&&b[4])el(g,'text',{x:p.x+28,y:p.y+38,'font-size':10.5,class:'m',fill:on?V('bg'):V('muted')},b[4].length>24?b[4].slice(0,24)+'…':b[4]);
+      if(b[2])el(g,'text',{x:p.x+CW-14,y:p.y+14,'text-anchor':'end','font-size':11,'font-weight':700,fill:on?V('bg'):V('gold')},b[2]);
+      const go=()=>{idx=i;draw()};g.addEventListener('click',go);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}})});
+    const b=B[idx],c=LANES[b[1]][1];const card=$('lifeInfo');card.style.borderLeftColor=V(c);
+    card.innerHTML=`<b class="t">${idx+1}. ${b[3]}</b>　<span class="note">${LANES[b[1]][0]} · ${PHASES[b[0]]}${b[2]?' · 七步 '+b[2]:''}${b[4]&&b[4]!=='—'?' · '+b[4]:''}</span><br>${b[5]}${b[6]?`<div class="man"><div class="src" style="color:var(--per)">📖 ${b[6]}</div><div class="zh">先自己在手册里搜到这张表，再对照代码看（答案在第 7 节）。</div></div>`:''}`;
+    $('lfPos').textContent=`第 ${idx+1} / ${B.length} 步`}
+  $('lfNext').onclick=()=>{idx=(idx+1)%B.length;draw()};$('lfPrev').onclick=()=>{idx=(idx-1+B.length)%B.length;draw()};draw();
+})();
+
+/* ---------- quiz ---------- */
+const Q=[
+ ['1. 鼠标有新数据，能不能主动发给电脑？',['能，随时发','不能，只能放进端点，等电脑来问'],1,'对。USB 上永远是电脑先开口。','回顾第 1 节。'],
+ ['2. 电脑来问 EP1，但柜子里没放数据，谁回答“没有”（NAK）？',['芯片硬件自动回','USB 中断里的例程','项目代码'],0,'对。代码完全不知道这件事。','看第 2 节的模拟器，点“电脑来问”。'],
+ ['3. nsAPI_USB_EP_Status(HID_EP1_IN) 返回 TRUE 是什么意思？',['柜子里有数据还没发','ACTIVE = 0，上一包被取走了，可以放下一包'],1,'对。TRUE = ACTIVE 是 0。','看第 2 节的表。'],
+ ['4. 枚举（电脑问“你是谁”）主要是谁在做？',['项目代码 device.c','现成代码 usbcore.c + 描述符 usbdesc.c','电脑自己猜'],1,'对。项目只提供描述符的内容。','看第 3 节第 5~9 步。'],
+ ['5. EP_4_CUSTION_IN 实际是什么方向的端点？',['IN（鼠标 → 电脑）','OUT（电脑 → 鼠标），GUI 发命令用'],1,'对。名字是站在鼠标角度起的，USB 规定站在电脑角度。','看第 4 节的红框。'],
+ ['6. USB 中断里的 INTSTAT 标志要不要你自己清？',['要，在项目代码里清','不用，例程一进中断就读出来写回去全清了'],1,'对。usbhw.c:1335~1336。','看第 6 节的标志位清单。'],
+ ['7. 读完 EP4 收到的命令后，如果没把 ACTIVE 重新置 1，会怎样？',['没影响','电脑下次发命令，芯片只回 NAK，收不到'],1,'对。nsAPI_USB_ReadEP() 末尾替你做了。','看生命周期第 12 步。'],
+];
+(function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0]}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+</script>

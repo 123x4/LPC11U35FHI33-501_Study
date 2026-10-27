@@ -15,6 +15,7 @@
 | 第 7 课 ADC | `07_ADC.html` | https://claude.ai/artifact/3CLVMetraYoANnCKhpJuC6 |
 | 第 8 课 定时器 | `08_定时器.html` | https://claude.ai/artifact/RjnBzgLW6mYK5WRAY7Xviy |
 | 第 9 课 SPI 与 PAW3950 | `09_SPI与PAW3950.html` | https://claude.ai/artifact/7HACF2oXVpWjSqS19giSyB |
+| 第 10 课 USB | `10_USB.html` | https://claude.ai/artifact/C5mHnxa8bSv88j9P2V7jvN |
 
 完整路线见第 0 课第 5 节（24 课，第 0~23 课）。
 
@@ -69,6 +70,7 @@
 - 学习者：实习生，没写过完整项目，学校的基础知识大多忘了；目标是独立接管本项目，熟悉项目代码和芯片手册，最终完成 T1A 适配。
 - 讲法：中文、大白话、多图、可动手；一课只讲一件事；新词第一次出现就解释；每课有小测验和“本课新词”；外设课按“生命周期图 + 七步 + 标志由谁清 + 手册整章导读”成体系讲；区分 🟦 芯片自动 / ⬜ 现成例程 / 🟩 项目代码；手册引用写清章、表、页和原文。
 - 约束：不和 STM32 比较；不做有变砖风险的操作；不单独讲 C 语言基础；不创建 CLAUDE.md。
-- 进度：第 0~9 课已完成。**下一课：第 10 课 USB（手册第 10、11 章）。手册练习方式从这一课起改为“只给寄存器名，先自己在手册里找到它的表，再看答案”。**
+- 进度：第 0~10 课已完成。**下一课：第 11 课 EEPROM 与 IAP（手册第 20 章）。手册练习方式仍是“只给寄存器名，先自己在手册里找到它的表，再看答案”（第 10~13 课）。**
+- 第 10 课发现的问题（待问杰哥 / 以后改）：`EP_3_CUSTION_OUT` / `EP_4_CUSTION_IN` 名字和 USB 方向相反；`Device_Report()` 等 600 µs 后柜子不空也照样写；`EPInOutReq` 的 EP4_OUT 标志没人读；`usb.c` 里 `Usb_Init()`、`check_usb_and_endpoint()` 没人调用；DEVCMDSTAT 的 _C 位靠 `|=` 顺手清。
 - 页面贴代码一律用源代码原文，需要时另写“宏展开”和“调用链”。
 - 页面源文件就是本目录下的 .html；旧讲义（0-x、1-x、L1、L2）在上一级目录，作为字典。

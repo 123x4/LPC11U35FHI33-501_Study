@@ -152,6 +152,8 @@ details.ans[open]{background:var(--soft)}
 .sim fieldset{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:0 0 8px}
 .sim legend{font-size:.82rem;color:var(--muted);padding:0 4px}
 .sim label{display:inline-flex;align-items:center;gap:4px;margin:2px 10px 2px 0;font-size:.9rem;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;margin:.4rem 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
 </style>
 <div class="wrap">
 <div class="eyebrow">轻松版 · 课程总目标</div>
@@ -215,7 +217,7 @@ const CODE=[
  ['src/GPIO.c','o','6（字典 1-3）','引脚初始化'],['src/my_adc.c','p','7','ADC'],['src/ADC.c','x','7','老 ADC 驱动，IRPT 没用'],
  ['src/Timer.c','o','8（字典 1-7、1-8）','定时器、1 ms 中断、微秒延时'],['src/my_tick.c','p','8','毫秒计数'],
  ['src/SPI.c','o','9','SPI 收发'],['src/PAW3950.c','p','9、16','光学传感器'],
- ['src/usbhw.c','n','10（字典 1-10~1-13）','USB 硬件层、中断'],['src/usbcore.c','n','10','枚举'],['src/usbuser.c','n','10','端点回调'],['src/hiduser.c','n','10','HID 请求'],['src/usb.c','n','10','发送封装'],['src/usbdesc.c','p','10（字典 1-13）','描述符'],
+ ['src/usbhw.c','n','10（字典 1-10~1-13）','USB 硬件层、中断'],['src/usbcore.c','n','10','枚举'],['src/usbuser.c','n','10','端点回调'],['src/hiduser.c','n','10','HID 请求'],['src/usb.c','o','10','发送 / 接收封装（从老项目搬来，一半是没人调用的残留）'],['src/usbdesc.c','p','10（字典 1-13）','描述符'],
  ['src/IAP_CMD.c','o','11（字典 1-6）','EEPROM 读写（IAP）'],['src/eeprom.c','x','11','编译了但没有代码进芯片'],['src/gtech_flash.c','o','11、19','Flash/EEPROM 封装'],
  ['src/WWDT.c','o','12（字典 1-1）','看门狗'],['src/OSC.c','o','13（字典 1-2、1-5）','时钟'],['src/wnDrv_Pmu.c','n','13、20','低功耗'],
  ['app/button.c','o','14、17','按键扫描'],['src/my_misc.c','p','14','按键算法 AP/RT'],['src/my_electromagnet.c','p','15（字典 1-4）','线圈'],['src/TI_DRV8833.c','x','15','电机驱动芯片，IRPT 没用'],
@@ -249,5 +251,4 @@ function render(){
  document.querySelectorAll('input[data-k]').forEach(x=>x.onchange=()=>{ST[x.dataset.k]=x.checked;save();stat($('codeStat'),CODE,'c','已掌握的文件');stat($('manStat'),MAN,'m','已掌握的章')});
 }
 render();
-
 </script>
