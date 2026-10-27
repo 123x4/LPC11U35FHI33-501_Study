@@ -18,6 +18,8 @@
 
 完整路线见第 0 课第 5 节（24 课，第 0~23 课）。
 
+**引脚总表**（每学完一课都要更新：`PINS` 里的“学过”和用法、`UPDATED`、`LOG`）：`引脚总表.html` → https://claude.ai/artifact/5PUa6UQrGCyzkQPpPrzByB
+
 **课程总目标与进度**：`学习目标与覆盖.html` → https://claude.ai/artifact/Fe6KbvbH6bcSansEMkZds1
 “熟悉代码 / 熟悉手册”的具体标准、每个编译文件和每一章手册分别在哪一课讲，可勾选进度。
 

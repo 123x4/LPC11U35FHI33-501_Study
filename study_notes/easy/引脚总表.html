@@ -1,0 +1,282 @@
+<title>引脚总表</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
+.mx{border-collapse:separate;border-spacing:4px;min-width:720px}
+.mx th{text-align:center;font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.mx th.s{text-align:left;font-size:.85rem;color:var(--muted);font-family:var(--font-b);width:150px}
+.mx td{padding:0;border:0}
+.mx button{width:100%;font:inherit;font-size:.8rem;line-height:1.35;padding:6px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-align:left;min-height:46px}
+.mx button.w-sw{border-left:5px solid var(--sw)}
+.mx button.w-ex{border-left:5px solid var(--muted)}
+.mx button.w-hw{border-left:5px solid var(--per)}
+.mx button.na{color:var(--muted);background:var(--soft);border-style:dashed}
+.mx button[aria-pressed="true"]{outline:3px solid var(--pc);outline-offset:1px}
+.who{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.85rem;margin:.4rem 0}
+.who span{display:inline-flex;align-items:center;gap:6px}
+.who i{width:14px;height:14px;border-radius:3px;display:inline-block}
+pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
+details.ans{margin:.4rem 0;border:1px dashed var(--line);border-radius:6px;padding:4px 10px;background:var(--panel)}
+details.ans summary{cursor:pointer;color:var(--per);font-size:.9rem}
+details.ans[open]{background:var(--soft)}
+.task{border-left:4px solid var(--per);background:var(--panel);border-radius:0 6px 6px 0;padding:8px 12px;margin:.6rem 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.task .pg{font-family:var(--font-m);font-size:.8rem;color:var(--per)}
+.sim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:640px){.sim{grid-template-columns:minmax(0,1fr)}}
+.sim fieldset{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:0 0 8px}
+.sim legend{font-size:.82rem;color:var(--muted);padding:0 4px}
+.sim label{display:inline-flex;align-items:center;gap:4px;margin:2px 10px 2px 0;font-size:.9rem;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;margin:.4rem 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+</style>
+<div class="wrap">
+<div class="eyebrow">轻松版 · 随课更新的参考页</div>
+<h1>引脚总表</h1>
+<p class="lede">LPC11U35FHI33/501（HVQFN33 封装）全部 33 个脚：每个脚能干什么、IRPT_V4 板子上拿它干什么、在代码哪里设置的、你在哪一课学过、T1A 上要改成什么。<b>每学完一课，这一页都会更新。</b></p>
+<div class="card" id="stamp" style="border-left-color:var(--gold)"></div>
+
+<h2>芯片引脚图</h2>
+<p>点任意一个脚看详情。颜色是 IRPT_V4 上的用途；<b>粗外框</b> = 你已经在课上学过它。</p>
+<div class="legend" id="legend"></div>
+<div class="box scroll" style="padding:10px"><svg id="chip" viewBox="0 0 640 640" width="640" height="640" role="img" aria-label="HVQFN33 引脚图"></svg></div>
+<p class="note">示意图：脚号从左上角第 1 脚开始，逆时针排列（左边 1~8 从上到下，下边 9~16 从左到右，右边 17~24 从下到上，上边 25~32 从右到左），中间散热焊盘是第 33 脚 VSS。请以用户手册 p.129 Figure 15 为准。</p>
+<div class="card" id="pinInfo" aria-live="polite"></div>
+
+<h2>全部引脚</h2>
+<div class="btns" role="group" aria-label="筛选" id="flt"></div>
+<div class="scroll"><table id="ptab"></table></div>
+
+<h2>怎么看“能干什么”这一列</h2>
+<p>每个脚的 IOCON 寄存器里 FUNC（bit2:0）选它当什么用。比如 <code>0=TDO 1=PIO0_13 2=AD2 3=CT32B1_MAT0</code>：写 0 当 JTAG 的 TDO，写 1 当普通 GPIO，写 2 当 ADC 第 2 路，写 3 当定时器匹配输出。<b>复位后 FUNC = 0</b>，所以表里第一个就是开机时的功能。出处：用户手册第 7 章，每个脚一张表（表号和页码在详情里）；封装脚号来自数据手册 Table 3 的 HVQFN33 列和用户手册 p.145 Table 135。</p>
+
+<h2>更新记录</h2>
+<ul id="log"></ul>
+</div>
+<script>
+const NS="http://www.w3.org/2000/svg";
+function el(p,t,a,x){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e}
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
+const UPDATED='第 9 课（SPI 与 PAW3950）';
+const LOG=[
+ ['第 9 课','SPI 三根线 PIO0_21 / PIO0_22 / PIO1_15、片选 PIO0_20、MOTION PIO0_2 标为已学'],
+ ['第 7 课','PIO0_13 / PIO0_14 改成 AD2 / AD3 的过程、PIO0_19 红外电源'],
+ ['第 6 课','按键、滚轮、片选、线圈脚、JTAG 脚的 GPIO 初始化；PIO0_4/5 真开漏'],
+ ['建表','按数据手册 Table 3 与用户手册第 7 章整理全部 33 个脚'],
+];
+/* category colors */
+const CAT={btn:['按键 / 滚轮','sw'],sen:['光学传感器 / SPI','per'],adc:['左右键红外 / ADC','gold'],coil:['线圈','pc'],usb:['USB','hw'],sys:['电源 / 时钟 / 调试 / 复位','muted'],none:['IRPT_V4 没用','line']};
+/* pin: [no, name, cat, funcs, iocon(table,page), reset, irpt, config(html), runtime(html), lessons(array or []), t1a] */
+const PINS=[
+ [1,'PIO1_19','none','0=PIO1_19 · 1=DTR · 2=SSEL1','119 / p.119','输入，上拉','没用','没有代码设置，保持复位状态','—',[],'未接'],
+ [2,'RESET/PIO0_0','sys','0=RESET · 1=PIO0_0','76 / p.86','RESET 功能','复位脚：拉低就复位芯片','没有改（保持 RESET 功能）','—',[],'nRESET，同时接 PAW3950 的复位 ⚠️'],
+ [3,'PIO0_1','btn','0=PIO0_1 · 1=CLKOUT · 2=CT32B0_MAT2 · 3=USB_FTOGGLE','77 / p.87','输入，上拉','前侧键 K4（按下 = 0）；复位时也是 ROM 检查的 ISP 脚','<code>GPIO.c:480</code> 设为输入（FUNC、MODE 保持复位值：GPIO、上拉）','每 1 ms 通过 <code>BUTTON_PORT0</code> 读（button.h:149）；休眠时进组中断唤醒（wnDrv_Pmu.c:66）',[1,6],'/CE：充电芯片使能 ⚠️'],
+ [4,'XTALIN','sys','晶振输入（专用）','—','—','12 MHz 晶振','<code>OSC.c:35</code> 给晶振通电（1-2 课）','—',[3],'12 MHz 晶振（不变）'],
+ [5,'XTALOUT','sys','晶振输出（专用）','—','—','12 MHz 晶振','同上','—',[3],'同上'],
+ [6,'VDD','sys','电源 3.3 V','—','—','电源；也是 ADC 的参考电压','—','—',[1,7],'不变'],
+ [7,'PIO0_20','sen','0=PIO0_20 · 1=CT16B1_CAP0','96 / p.102','输入，上拉','PAW3950 片选 NCS（低 = 选中）','<code>GPIO.c:486~489</code>：无上下拉 → 先设高 → 推挽 → 输出；<code>PAW3950.c:274~277</code> 又设一遍','每次读写传感器：CLR 拉低、SET 拉高（PAW3950.c:437、448）',[6,9],'NCS（不变）'],
+ [8,'PIO0_2','sen','0=PIO0_2 · 1=SSEL0 · 2=CT16B0_CAP0 · 3=IOH_0','78 / p.88','输入，上拉','PAW3950 的 MOTION（有移动时传感器拉低）','<code>GPIO.c:485</code> 设输入（上拉）；<code>PAW3950.c:279~280</code> 改成无上下拉','<b>代码没读这根线</b>，改为通过 SPI 读 0x02 寄存器',[6,9],'MOTION（不变）'],
+ [9,'PIO0_3','usb','0=PIO0_3 · 1=USB_VBUS · 2=IOH_1','79 / p.88','输入，上拉','USB_VBUS：检测是否插着 USB 线','<code>usbhw.c:134~135</code>：FUNC = 1（USB_VBUS）、MODE = 01 下拉','USB 硬件自己用',[],'R41 10k 上拉到 VDD ⚠️'],
+ [10,'PIO0_4','coil','0=PIO0_4（开漏）· 1=I2C SCL · 2=IOH_2','80 / p.89','GPIO，<b>无上拉</b>（真开漏）','左线圈 PWM1','<code>GPIO.c:510~513</code>：先设低再切输出（NoPull、PushPull 对这根脚无效）','振动时输出 1 → 等 → 输出 0（my_electromagnet.c:82~88）',[6],'SCL：充电芯片 I²C'],
+ [11,'PIO0_5','coil','0=PIO0_5（开漏）· 1=I2C SDA · 2=IOH_3','81 / p.89','GPIO，<b>无上拉</b>（真开漏）','右线圈 PWM2','<code>GPIO.c:514~517</code>：同上','同上',[6],'SDA：充电芯片 I²C'],
+ [12,'PIO0_21','sen','0=PIO0_21 · 1=CT16B1_MAT0 · 2=MOSI1','97 / p.103','输入，上拉','SPI MOSI1：单片机 → 传感器','<code>PAW3950.c:288~289</code>：FUNC = 2','SSP1 硬件自己用',[9],'MOSI → 霍尔芯片（SSP1）'],
+ [13,'USB_DM','usb','USB D-（专用）','—','—','USB 数据线 D-','不需要配置','USB 硬件自己用',[],'不变'],
+ [14,'USB_DP','usb','USB D+（专用）','—','—','USB 数据线 D+','不需要配置','USB 硬件自己用',[],'不变'],
+ [15,'PIO0_6','usb','0=PIO0_6 · 1=USB_CONNECT · 2=SCK0','82 / p.90','输入，上拉','USB_CONNECT：控制 D+ 上的 1.5 kΩ 上拉，让电脑发现设备','<code>usbhw.c:137~138</code>：FUNC = 1','<code>DEVCMDSTAT</code> 的 DCON 位控制（usbhw.c:341）',[],'USB_Connect（不变）'],
+ [16,'PIO0_7','none','0=PIO0_7 · 1=CTS · 2=IOH_5','83 / p.91','输入，上拉','没用','没有代码设置','—',[],'中键 MB'],
+ [17,'PIO0_8','none','0=PIO0_8 · 1=MISO0 · 2=CT16B0_MAT0 · 4=IOH_6','84 / p.91','输入，上拉','没用','没有代码设置','—',[],'MISO0 → PAW3950（SSP0）'],
+ [18,'PIO0_9','none','0=PIO0_9 · 1=MOSI0 · 2=CT16B0_MAT1 · 4=IOH_7','85 / p.92','输入，上拉','没用','没有代码设置','—',[],'MOSI0 → PAW3950（SSP0）'],
+ [19,'SWCLK/PIO0_10','sys','0=SWCLK · 1=PIO0_10 · 2=SCK0 · 3=CT16B0_MAT2','86 / p.93','SWCLK 调试','SWD 调试时钟（下载、调试用）','故意不改（GPIO.c 里这一行被注释掉了）','—',[6],'SWCLK <b>兼</b> SCK0 → PAW3950 ⚠️ 调试冲突'],
+ [20,'PIO0_22','sen','0=PIO0_22 · 1=AD6 · 2=CT16B1_MAT1 · 3=MISO1','98 / p.103','输入，上拉','SPI MISO1：传感器 → 单片机','<code>PAW3950.c:291~292</code>：FUNC = 3','SSP1 硬件自己用',[9],'MISO ← 霍尔芯片（SSP1）'],
+ [21,'TDI/PIO0_11','btn','0=TDI · 1=PIO0_11 · 2=AD0 · 3=CT32B0_MAT3','87 / p.94','<b>JTAG TDI</b>','DPI 键（按下 = 0）','<code>GPIO.c:314~315</code>：FUNC 改成 1（GPIO）；<code>GPIO.c:483</code> 设输入，上拉','每 1 ms 读；休眠时组中断唤醒',[6],'前侧键 L_FORWARD'],
+ [22,'TMS/PIO0_12','btn','0=TMS · 1=PIO0_12 · 2=AD1 · 3=CT32B1_CAP0','88 / p.95','<b>JTAG TMS</b>','中键（按下 = 0）','<code>GPIO.c:316~317</code>：FUNC = 1；<code>GPIO.c:482</code> 输入，上拉','同上',[6],'后侧键 L_BACK'],
+ [23,'TDO/PIO0_13','adc','0=TDO · 1=PIO0_13 · 2=AD2 · 3=CT32B1_MAT0','89 / p.96','<b>JTAG TDO</b>','左键红外信号 → ADC 第 2 路','<code>GPIO.c:318~319</code> FUNC = 1 → <code>GPIO.c:500~501</code> 无上下拉、输入 → <code>my_adc.c:71~74</code> 模拟模式、FUNC = 2（AD2）','每 1 ms 读一次 ADC（my_adc.c:79）',[6,7],'左线圈 PWM1（推挽，可用 CT32B1_MAT0）'],
+ [24,'TRST/PIO0_14','adc','0=TRST · 1=PIO0_14 · 2=AD3 · 3=CT32B1_MAT1','90 / p.97','<b>JTAG TRST</b>','右键红外信号 → ADC 第 3 路','同上，FUNC 最终 = 2（AD3）','同上',[6,7],'右线圈 PWM2（可用 CT32B1_MAT1）'],
+ [25,'SWDIO/PIO0_15','sys','0=SWDIO · 1=PIO0_15 · 2=AD4 · 3=CT32B1_MAT2','91 / p.98','SWDIO 调试','SWD 调试数据','故意不改','—',[6],'SWDIO（不变）'],
+ [26,'PIO0_16','coil','0=PIO0_16 · 1=AD5 · 2=CT32B1_MAT3 · 3=IOH_8','92 / p.99','输入，上拉','HP_EN：线圈升压电源开关','<code>GPIO.c:506~509</code>：无上下拉 → 先设低（关）→ 推挽 → 输出','<code>Ele_EnableBoost()</code> / <code>Ele_DisableBoost()</code>（my_electromagnet.c:87~88）',[6],'Hall_PWR_EN：霍尔芯片电源'],
+ [27,'PIO0_23','btn','0=PIO0_23 · 1=AD7 · 2=IOH_9','99 / p.104','输入，上拉','后侧键 K5（按下 = 0）','<code>GPIO.c:481</code> 设输入，上拉','每 1 ms 读；休眠时组中断唤醒',[6],'DPI 键（也连充电芯片 /QON）⚠️'],
+ [28,'PIO1_15','sen','0=PIO1_15 · 1=DCD · 2=CT16B0_MAT2 · 3=SCK1','115 / p.116','输入，上拉','SPI SCK1：时钟','<code>PAW3950.c:294~295</code>：FUNC = 3','SSP1 硬件自己用',[9],'SCK → 霍尔芯片（SSP1）'],
+ [29,'VDD','sys','电源 3.3 V','—','—','电源','—','—',[1],'不变'],
+ [30,'PIO0_17','btn','0=PIO0_17 · 1=RTS · 2=CT32B0_CAP0 · 3=SCLK','93 / p.100','输入，上拉','滚轮编码器 A 相','<code>GPIO.c:492</code> 设输入，上拉（ENABLE_WHEEL_SCAN = 1）','每 1 ms 读（scroll.c，DrvGPIORead）',[6],'SCROLL_EN：编码器发光管使能'],
+ [31,'PIO0_18','btn','0=PIO0_18 · 1=RXD · 2=CT32B0_MAT0','94 / p.100','输入，上拉','滚轮编码器 B 相','<code>GPIO.c:493</code> 设输入，上拉','同上',[6],'SCROLL_UP'],
+ [32,'PIO0_19','adc','0=PIO0_19 · 1=TXD · 2=CT32B0_MAT1','95 / p.101','输入，上拉','IR_EN：红外发射管电源（高 = 开）','<code>GPIO.c:496~499</code>：无上下拉 → 先设高 → 推挽 → 输出','之后不再改：休眠时也一直亮',[6,7],'SCROLL_DOWN'],
+ [33,'VSS（散热焊盘）','sys','地','—','—','地','—','—',[1],'不变'],
+];
+(function(){
+  $('stamp').innerHTML=`<b class="t">最后更新：${UPDATED}</b><br>已学过的脚：${PINS.filter(p=>p[9].length).length} / 33。课号指“轻松版”课程。`;
+  $('legend').innerHTML=Object.values(CAT).map(([t,c])=>`<span><i class="sw" style="background:${V(c)};height:12px;width:12px;border-radius:3px"></i>${t}</span>`).join('');
+  const s=$('chip');const C0=140,C1=500;
+  el(s,'rect',{x:C0,y:C0,width:C1-C0,height:C1-C0,rx:18,fill:V('soft'),stroke:V('line'),'stroke-width':2});
+  el(s,'circle',{cx:C0+22,cy:C0+22,r:6,fill:V('muted')});
+  el(s,'text',{x:320,y:300,'text-anchor':'middle','font-size':20,'font-weight':700,fill:V('fg')},'LPC11U35');
+  el(s,'text',{x:320,y:326,'text-anchor':'middle','font-size':13,fill:V('muted')},'FHI33/501 · HVQFN33');
+  const pad=el(s,'g',{style:'cursor:pointer',tabindex:0,role:'button','aria-label':'33 VSS'});el(pad,'rect',{x:250,y:350,width:140,height:70,rx:8,fill:V('panel'),stroke:V('muted'),'stroke-dasharray':'4 3'});el(pad,'text',{x:320,y:390,'text-anchor':'middle','font-size':12,fill:V('muted')},'33 VSS（底部焊盘）');
+  pad.addEventListener('click',()=>show(32));
+  const step=(C1-C0-40)/7;
+  function pos(n){ // returns x,y,side
+    if(n<=8)return{x:C0,y:C0+20+(n-1)*step,s:'L'};
+    if(n<=16)return{x:C0+20+(n-9)*step,y:C1,s:'B'};
+    if(n<=24)return{x:C1,y:C1-20-(n-17)*step,s:'R'};
+    return{x:C1-20-(n-25)*step,y:C0,s:'T'};}
+  const g={};
+  PINS.slice(0,32).forEach((p,i)=>{const P=pos(p[0]);const c=CAT[p[2]][1];const learned=p[9].length>0;
+    const grp=el(s,'g',{style:'cursor:pointer',tabindex:0,role:'button','aria-label':p[0]+' '+p[1]});
+    let rx,ry,w,h,tx,ty,anchor,rot='';
+    if(P.s==='L'){w=34;h=26;rx=P.x-w;ry=P.y-h/2;tx=rx-6;ty=P.y+4;anchor='end'}
+    if(P.s==='R'){w=34;h=26;rx=P.x;ry=P.y-h/2;tx=rx+w+6;ty=P.y+4;anchor='start'}
+    if(P.s==='B'){w=26;h=34;rx=P.x-w/2;ry=P.y;tx=P.x;ty=ry+h+6;anchor='end';rot=`rotate(-60 ${tx} ${ty})`}
+    if(P.s==='T'){w=26;h=34;rx=P.x-w/2;ry=P.y-h;tx=P.x;ty=ry-6;anchor='start';rot=`rotate(-60 ${tx} ${ty})`}
+    const r=el(grp,'rect',{x:rx,y:ry,width:w,height:h,rx:4,fill:V(c),opacity:p[2]==='none'?.5:.9,stroke:learned?V('fg'):V('line'),'stroke-width':learned?3:1});
+    el(grp,'text',{x:rx+w/2,y:ry+h/2+4,'text-anchor':'middle','font-size':11,'font-weight':700,fill:p[2]==='none'?V('muted'):V('bg')},p[0]);
+    const lbl=p[1].replace(/^(TDI|TMS|TDO|TRST|SWCLK|SWDIO|RESET)\//,'');
+    el(grp,'text',{x:tx,y:ty,'text-anchor':anchor,'font-size':11.5,class:'m',fill:V('fg'),transform:rot},lbl);
+    g[i]=r;grp.addEventListener('click',()=>show(i));grp.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();show(i)}});
+  });
+  let sel=null;
+  window.show=function(i){const p=PINS[i];if(sel!=null&&g[sel])g[sel].setAttribute('stroke-dasharray','');sel=i;if(g[i])g[i].setAttribute('stroke-dasharray','4 2');
+    const c=CAT[p[2]][1];const card=$('pinInfo');card.style.borderLeftColor=V(c);
+    card.innerHTML=`<b class="t">第 ${p[0]} 脚 · ${p[1]}</b>　<span class="note">${CAT[p[2]][0]}</span>
+    <table style="margin-top:6px"><tbody>
+    <tr><td style="width:120px">能干什么（FUNC）</td><td class="mono">${p[3]}</td></tr>
+    <tr><td>手册</td><td>${p[4]==='—'?'—':'📖 用户手册第 7 章 Table '+p[4].replace(' / ','，')}</td></tr>
+    <tr><td>开机时（复位后）</td><td>${p[5]}</td></tr>
+    <tr><td><b>IRPT_V4 用途</b></td><td>${p[6]}</td></tr>
+    <tr><td>在哪设置</td><td>${p[7]}</td></tr>
+    <tr><td>平时谁用它</td><td>${p[8]}</td></tr>
+    <tr><td>学过</td><td>${p[9].length?p[9].map(n=>'第 '+n+' 课').join('、'):'还没学到'}</td></tr>
+    <tr><td><b>T1A 用途</b></td><td>${p[10]}</td></tr></tbody></table>`;}
+  show(22);
+  let cur='all';const F=[['all','全部'],['learned','已学过'],['todo','还没学'],['used','IRPT_V4 在用']];
+  function table(){const rows=PINS.filter(p=>cur==='all'||(cur==='learned'&&p[9].length)||(cur==='todo'&&!p[9].length)||(cur==='used'&&p[2]!=='none'));
+    $('ptab').innerHTML='<thead><tr><th>脚</th><th>名字</th><th>能干什么（FUNC）</th><th>IRPT_V4 用途</th><th>学过</th><th>T1A</th></tr></thead><tbody>'+rows.map(p=>`<tr style="cursor:pointer" data-i="${PINS.indexOf(p)}"><td class="mono"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${V(CAT[p[2]][1])};margin-right:4px"></span>${p[0]}</td><td class="mono" style="white-space:nowrap">${p[1]}</td><td class="mono" style="font-size:.78rem">${p[3]}</td><td>${p[6]}</td><td style="white-space:nowrap">${p[9].length?'✓ '+p[9].join('、'):'—'}</td><td>${p[10]}</td></tr>`).join('')+'</tbody>';
+    $('ptab').querySelectorAll('tr[data-i]').forEach(tr=>tr.onclick=()=>{show(+tr.dataset.i);$('pinInfo').scrollIntoView({behavior:'smooth',block:'center'})});}
+  F.forEach(([k,t])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.setAttribute('aria-pressed',k===cur?'true':'false');b.onclick=()=>{cur=k;$('flt').querySelectorAll('button').forEach(o=>o.setAttribute('aria-pressed',o===b?'true':'false'));table()};$('flt').appendChild(b)});
+  table();
+  $('log').innerHTML=LOG.map(([a,b])=>`<li><b>${a}</b>：${b}</li>`).join('');
+})();
+</script>
