@@ -1,0 +1,378 @@
+<title>SPI 与 PAW3950</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
+.mx{border-collapse:separate;border-spacing:4px;min-width:720px}
+.mx th{text-align:center;font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.mx th.s{text-align:left;font-size:.85rem;color:var(--muted);font-family:var(--font-b);width:150px}
+.mx td{padding:0;border:0}
+.mx button{width:100%;font:inherit;font-size:.8rem;line-height:1.35;padding:6px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-align:left;min-height:46px}
+.mx button.w-sw{border-left:5px solid var(--sw)}
+.mx button.w-ex{border-left:5px solid var(--muted)}
+.mx button.w-hw{border-left:5px solid var(--per)}
+.mx button.na{color:var(--muted);background:var(--soft);border-style:dashed}
+.mx button[aria-pressed="true"]{outline:3px solid var(--pc);outline-offset:1px}
+.who{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.85rem;margin:.4rem 0}
+.who span{display:inline-flex;align-items:center;gap:6px}
+.who i{width:14px;height:14px;border-radius:3px;display:inline-block}
+pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
+details.ans{margin:.4rem 0;border:1px dashed var(--line);border-radius:6px;padding:4px 10px;background:var(--panel)}
+details.ans summary{cursor:pointer;color:var(--per);font-size:.9rem}
+details.ans[open]{background:var(--soft)}
+.task{border-left:4px solid var(--per);background:var(--panel);border-radius:0 6px 6px 0;padding:8px 12px;margin:.6rem 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.task .pg{font-family:var(--font-m);font-size:.8rem;color:var(--per)}
+.sim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:640px){.sim{grid-template-columns:minmax(0,1fr)}}
+.sim fieldset{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:0 0 8px}
+.sim legend{font-size:.82rem;color:var(--muted);padding:0 4px}
+.sim label{display:inline-flex;align-items:center;gap:4px;margin:2px 10px 2px 0;font-size:.9rem;cursor:pointer}
+</style>
+<div class="wrap">
+<div class="eyebrow">轻松版 · 第 9 课 · 芯片外设</div>
+<h1>SPI 与光学传感器 PAW3950</h1>
+<p class="lede">鼠标移动多少，是 PAW3950 算出来的；单片机通过 SPI 这条“4 根线的电话”去问它。这一课先讲 SPI 怎么一位一位地传数据，再讲 PAW3950 的“说话规矩”，最后把开机初始化和每次读位移的全过程走一遍。要读两本手册：芯片用户手册第 13 章、PAW3950 数据手册第 6、7 章。</p>
+<div class="where"><span>📍</span><div>在地图上：第 ① 列 <b>PAW3950</b> ↔ 第 ② 列 <b>SPI</b> ↔ 第 ③ 列 <b>读位移</b>。</div></div>
+<div class="card" style="border-left-color:var(--per)"><b class="t">📖 手册练习方式：我给页码，你去翻（这是最后一课用这种方式）</b><br>用户手册：<code>materials/mcu_reference/LPC11U3x2x1x User Manual.pdf</code> 第 13 章（p.275~290）。传感器手册：<code>materials/PAW3950DM-T5QU_DS_V1.2_18062024_Confidential.pdf</code>（下面写成“PAW p.xx”）。</div>
+
+<h2><span class="step">1/8</span>SPI：4 根线、一边说一边听</h2>
+<table>
+<thead><tr><th>线</th><th>方向</th><th>作用</th><th>IRPT_V4 引脚</th></tr></thead>
+<tbody>
+<tr><td><b>SCLK</b>（时钟）</td><td>单片机 → 传感器</td><td>打拍子：每一拍传 1 位。<b>只有主机（单片机）能发时钟</b>，所以传感器永远是被动回答</td><td>PIO1_15</td></tr>
+<tr><td><b>MOSI</b></td><td>单片机 → 传感器</td><td>Master Out Slave In：单片机说的话</td><td>PIO0_21</td></tr>
+<tr><td><b>MISO</b></td><td>传感器 → 单片机</td><td>Master In Slave Out：传感器说的话</td><td>PIO0_22</td></tr>
+<tr><td><b>NCS</b>（片选）</td><td>单片机 → 传感器</td><td>拉低 = “我在跟你说话”。线上可以挂好几个设备，靠片选区分</td><td>PIO0_20（普通 GPIO）</td></tr>
+</tbody></table>
+<div class="def"><b>同步</b>：双方按同一个时钟收发，不需要事先约定速度（不像串口）。<br><b>主机 / 从机</b>：发时钟的是主机（单片机），被动的是从机（传感器）。</div>
+<p>SPI 最特别的地方：<b>两边各有一个 8 位的“移位寄存器”，首尾接成一个圈</b>。每打一拍时钟，单片机移出一位给传感器，同时传感器也移出一位给单片机。8 拍以后，<b>两边的字节正好互换</b>。所以“发”和“收”永远同时发生：想收一个字节，就必须发一个字节（哪怕是没用的 0xFF）。</p>
+<div class="box try"><div class="tag">动手 · 点“下一拍”，看两个字节怎么互换（读 Motion 寄存器 0x02）</div>
+<div class="scroll"><svg id="ringSvg" viewBox="0 0 780 300" width="780" height="300" role="img" aria-label="SPI 移位寄存器"></svg></div>
+<div class="btns"><button type="button" id="rgStep">下一拍</button><button type="button" id="rgByte">跳过这个字节</button><button type="button" id="rgReset">重来</button></div>
+<div class="card" id="rgInfo" aria-live="polite"></div>
+</div>
+<div class="man"><div class="src">📖 用户手册 p.275 · 13.4 General description（请翻过去读这一段）</div><div class="en">Data transfers are in principle full duplex, with frames of 4 bits to 16 bits of data flowing from the master to the slave and from the slave to the master. In practice it is often the case that only one of these data flows carries meaningful data.</div><div class="zh">原理上双向同时传；实际上往往只有一个方向的数据有用。上面的例子里，第 1 个字节只有单片机说的有用，第 2 个字节只有传感器说的有用。</div></div>
+
+<h2><span class="step">2/8</span>SPI 的 4 种“说话方式”：CPOL 和 CPHA</h2>
+<p>双方还要约定两件事：<b>没说话时时钟线停在高还是低</b>（CPOL），<b>在第几个边沿读数据</b>（CPHA）。约定不一致，读到的全是错的。</p>
+<div class="box try"><div class="tag">动手 · 切换 CPOL / CPHA</div>
+<div class="btns" id="modeBtns"></div>
+<div class="scroll"><svg id="modeSvg" viewBox="0 0 780 200" width="780" height="200" role="img" aria-label="SPI 模式波形"></svg></div>
+<p class="note" id="modeNote" style="margin:0"></p>
+</div>
+<p>PAW3950 手册规定用<b>模式 3</b>（CPOL = 1、CPHA = 1）：时钟平时是高；数据在下降沿变化、在上升沿被读取（PAW p.27 第 6.0 节、p.28 第 6.3 节）。代码 <code>LPC_SSP1-&gt;CR0 = 0x01C7</code> 里 CPOL、CPHA 两位都是 1，正好对上。</p>
+
+<h2><span class="step">3/8</span>PAW3950 的说话规矩</h2>
+<p>和传感器的每一次对话都是 <b>2 个字节</b>：第 1 个字节 = 读还是写（最高位）+ 寄存器地址（低 7 位），第 2 个字节 = 数据。</p>
+<div class="box scroll"><svg id="protoSvg" viewBox="0 0 800 300" width="800" height="300" role="img" aria-label="读写协议"></svg></div>
+<table>
+<thead><tr><th>时间要求（PAW p.13 AC 表）</th><th>手册要求</th><th>代码实际</th></tr></thead>
+<tbody>
+<tr><td>SCLK 最高频率 f<sub>SCLK</sub></td><td>≤ 16 MHz（p.9）</td><td>1 MHz（CPSR = 24、SCR = 1）</td></tr>
+<tr><td>读：发完地址到开始读数据 t<sub>SRAD</sub></td><td>≥ 1 µs</td><td>等 3 µs（<code>PAW3950_DelayUs(3)</code>）</td></tr>
+<tr><td>两次命令之间 t<sub>SWW</sub> / t<sub>SWR</sub> / t<sub>SRR</sub></td><td>≥ 3 / 2.5 / 2.5 µs</td><td>拉高 NCS 后等 3 µs，再加上下一次拉低后的 3 µs</td></tr>
+<tr><td>NCS 拉低到第一个时钟 t<sub>NCS-SCLK</sub></td><td>≥ 120 ns</td><td>3 µs</td></tr>
+</tbody></table>
+<p class="note">这个项目把每个间隔都留得比要求宽，所以很稳，代价是慢一点。读一次位移（5 次读）大约 100 µs。</p>
+
+<h2><span class="step">4/8</span>SPI 和 PAW3950 的一生：生命周期图</h2>
+<div class="box scroll" style="padding:10px"><svg id="lifeSvg" viewBox="0 0 900 420" width="900" height="420" role="img" aria-label="SPI 生命周期"></svg></div>
+<div class="btns"><button type="button" id="lfPrev">上一步</button><button type="button" id="lfNext">下一步</button><span class="note" id="lfPos" style="align-self:center"></span></div>
+<div class="card" id="lifeInfo" aria-live="polite"></div>
+<div class="card" style="border-left-color:var(--gold)"><b class="t">一句话来龙去脉</b><br><code>Device_Init()</code> 最后调 <code>PAW3950_Init()</code>：先把 SSP1 设成 8 位、模式 3、1 MHz，再按 PAW3950 手册 7.1 的开机流程：等 50 ms → 拉一下片选复位 SPI → 软件复位 → 读产品 ID（应为 0x53）→ 写入厂家给的一百多条初始化设置 → 清掉位移寄存器 → 设 1600 CPI。之后主循环每隔一段时间（定时器中断倒数 <code>optical_scan_cycle</code>）读一次 0x02，有移动就再读 0x03~0x06 拿到 X、Y，交给组包。每次读写一个寄存器：拉低 NCS → 发地址 → 等 3 µs → 收数据 → 拉高 NCS。</div>
+
+<h2><span class="step">5/8</span>七步核对：SSP1</h2>
+<table>
+<thead><tr><th>步骤</th><th>SSP1</th><th>代码（PAW3950.c）</th><th>手册</th></tr></thead>
+<tbody>
+<tr><td>① 通电</td><td>不需要</td><td>—</td><td>—</td></tr>
+<tr><td>② 时钟</td><td>bit18，再加 SSP1CLKDIV = 1</td><td>:285~286</td><td>📖 p.31 Table 24；p.34 Table 27</td></tr>
+<tr><td>③ 解锁</td><td><b>需要</b>：PRESETCTRL bit2 = 1</td><td>:284</td><td>📖 p.23 Table 8；p.275 13.2 第 4 条</td></tr>
+<tr><td>④ 引脚</td><td>MOSI、MISO、SCK 三根改功能；NCS 用 GPIO</td><td>:274~295</td><td>📖 p.103 Table 97/98；p.116 Table 115</td></tr>
+<tr><td>⑤ 配置</td><td>8 位、SPI 格式、模式 3、1 MHz、启动</td><td>:298~309</td><td>📖 p.278~280 Table 260/261/264</td></tr>
+<tr><td>⑥ 中断</td><td>不用，轮询状态寄存器</td><td>—</td><td>📖 p.280~282 Table 265~268（了解）</td></tr>
+<tr><td>⑦ 使用</td><td>写 DR 发送；等 SR；读 DR 收；发送时收到的垃圾字节要读掉</td><td>SPI.c:375、403</td><td>📖 p.279~280 Table 262/263</td></tr>
+</tbody></table>
+
+<h2><span class="step">6/8</span>📖 用户手册导读：第 13 章 SSP/SPI（p.275~290）</h2>
+<div class="task"><span class="pg">📖 p.275 · 13.2 Basic configuration</span>：SSP 的“七步”，4 条，请对照第 5 节的表。<br><span class="pg">📖 p.275 · 13.3 Features</span>：支持 3 种协议、主从都能做、<b>发送和接收各有 8 帧 FIFO</b>、每帧 4~16 位。<br><span class="pg">📖 p.275 · 13.4</span>：上面引用的“原理上全双工”。<br><span class="pg">📖 p.276 · Table 257 引脚说明、Table 259 SSP1 寄存器总览</span></div>
+<details class="ans"><summary>问题 1：13.2 第 4 条为什么特别强调 Reset？</summary>原文：<i>“Before accessing the SSP/SPI block, ensure that the SSP0/1_RST_N bits … in the PRESETCTRL register are set to 1.”</i> SSP 开机处于复位状态，不先解除，后面写的设置都无效。这是用 SPI 最容易忘的一步（第 3 课）。</details>
+<details class="ans"><summary>问题 2：FIFO 是什么？8 帧 FIFO 对这个项目有什么影响？</summary>FIFO 是先进先出的小队列：可以一次往 DR 写好几个字节，硬件按顺序发；收到的字节也先排队，等你来读。这个项目每次只发一个字节就等它发完，没有用到队列的能力。但正因为有接收队列，<b>发送时顺带收到的字节如果不读掉，会一直排在队列里</b>，下次读到的就是旧的（所以 <code>SSP_Send()</code> 发完要读一次 DR 丢掉）。</details>
+<div class="task"><span class="pg">📖 p.278 · Table 260 CR0</span>：DSS、FRF、CPOL、CPHA、SCR。<b>精读</b>。<br><span class="pg">📖 p.279 · Table 261 CR1</span>：LBM、SSE（启动）、MS（主/从）。<br><span class="pg">📖 p.279 · Table 262 DR</span>、<span class="pg">p.280 · Table 263 SR</span>、<span class="pg">p.280 · Table 264 CPSR</span></div>
+<details class="ans"><summary>问题 3：把 0x01C7 按 Table 260 拆开</summary>0x01C7 = 0000 0001 1100 0111：DSS（3:0）= 0111 → 8 位一帧；FRF（5:4）= 00 → SPI；CPOL（6）= 1；CPHA（7）= 1；SCR（15:8）= 1。</details>
+<details class="ans"><summary>问题 4：SPI 时钟频率怎么算？这个项目是多少？</summary>Table 260 SCR 说明里有公式：PCLK / (CPSDVSR × [SCR+1])。PCLK = 48 MHz ÷ SSP1CLKDIV(1) = 48 MHz；CPSDVSR = 0x18 = 24；SCR = 1。48 / (24 × 2) = <b>1 MHz</b>。</details>
+<details class="ans"><summary>问题 5：CR1 里 MS 位没设，这个项目是主机还是从机？</summary>MS 复位值 0 = 主机（Master）。没写就是主机，正好。</details>
+<details class="ans"><summary>问题 6：SR 的 BSY、TNF、RNE 分别是什么？例程等的是什么条件？</summary>TNF = 发送队列没满（能往里写）；RNE = 接收队列不空（有东西可读）；BSY = 正在收发。<code>SSP_Send()</code> 先等“没满且不忙”再写，然后等“不忙且收到了”再读掉。</details>
+<div class="task"><span class="pg">📖 p.283~287 · 13.7.2 SPI frame format、Figure 33~36</span>：4 种模式的波形图。<b>重点看 p.287 Figure 36（CPOL = 1、CPHA = 1）</b>，和上面第 2 节的模拟器对照。</div>
+
+<h2><span class="step">7/8</span>📖 PAW3950 手册导读</h2>
+<div class="task"><span class="pg">📖 PAW p.27 · 6.0 Control Interface、6.1、6.2 Chip Select</span>：模式 3、最高 16 MHz；片选的规矩。<br><span class="pg">📖 PAW p.28 · 6.3 Protocol、6.4 Write</span>，<span class="pg">p.29 · 6.5 Read</span>，<span class="pg">p.30 · 6.6 Burst Read</span>，<span class="pg">p.31 · 6.7 命令之间的时间</span><br><span class="pg">📖 PAW p.13 · AC Electrical Specifications</span>：上面第 3 节表里的数都在这里。<br><span class="pg">📖 PAW p.32 · 7.1 System Initialization</span>：开机流程 8 步。<br><span class="pg">📖 PAW p.45 · 7.4.2</span>：Motion 位和 MOTION 引脚（第 6 课问过）。<br><span class="pg">📖 PAW p.60~62 · 寄存器表、Product_ID</span></div>
+<details class="ans"><summary>问题 7：6.2 为什么说“不用的时候不要一直拉低 NCS”？</summary>原文：<i>“The port must not be remained enabled when not in use to prevent misinterpret ESD and EFT/B events and put the chip into an unknown state.”</i> 片选一直低着，线上的干扰（静电、电快速脉冲）可能被当成命令。所以代码每次读写完都把 NCS 拉高。</details>
+<details class="ans"><summary>问题 8：读寄存器 0x02 时，第一个字节发什么？写寄存器 0x48 呢？</summary>读：最高位 0 → 0x02（代码 <code>regAddr &amp; ~(1&lt;&lt;7)</code>）。写：最高位 1 → 0x48 | 0x80 = 0xC8（代码 <code>regAddr | (1&lt;&lt;7)</code>）。</details>
+<details class="ans"><summary>问题 9：对照 7.1 的 8 步，PAW3950_Init() 每一步在哪？</summary>1 上电（硬件）；2 等 50 ms（:329）；3 NCS 高 1 ms 再拉低（:331~333）；4 写 0x3A = 0x5A（:341）；5 等 5 ms（:342）；6 读 Product_ID（:346~354）；7 写初始化设置（:357~389）；8 读 0x02~0x06（:391~395）。代码完全按手册的顺序写的。</details>
+<details class="ans"><summary>问题 10：Product_ID 应该是多少？为什么要先读它？</summary>p.62：默认值 0x53。它是固定不变的，读到 0x53 就说明 SPI 线接对了、模式对了、传感器活着。7.1 第 6 步要求“任何读写之前先读它验证”。</details>
+<details class="ans"><summary>问题 11：6.6 Burst Read 是什么？这个项目用了吗？</summary>一次片选连续读出多个位移寄存器，不用每个都发地址，更快。这个项目没用，是一个个单独读的（<code>PAW3950_GetMotionDataSingleRead</code>）。以后要提高回报率可以考虑改成 burst。</details>
+
+<h2><span class="step">8/8</span>容易出错、你能改什么、T1A</h2>
+<table><tbody>
+<tr><td>CPOL / CPHA 和传感器不一致</td><td>读到的全是错位的数据。先读 Product_ID 验证。</td></tr>
+<tr><td>忘了 PRESETCTRL 解锁</td><td>SSP 不工作，读出来全是 0 或卡在等待里。</td></tr>
+<tr><td>接收队列里有残留</td><td>读到的是上一个字节。发送后要把收到的读掉（例程已经做了）。</td></tr>
+<tr><td>NCS 一直拉低</td><td>容易被干扰。每次对话都要用 NCS 框起来。</td></tr>
+<tr><td>间隔太短</td><td>违反 t<sub>SRAD</sub>、t<sub>SRR</sub>，读到错误数据。</td></tr>
+<tr><td>初始化失败没人管 ⚠️</td><td><code>PAW3950_Init()</code> 读不到 0x53 会返回 -1，但 <code>Device_Init()</code>（device.c:484）没检查返回值。传感器坏了或没接好，鼠标照样启动，只是光标不动。</td></tr>
+<tr><td><code>PAW3950_Read()</code> 的小隐患 ⚠️</td><td>参数 <code>length</code> 大于 1 时，每次都写进同一个 <code>pData</code>（应该是 <code>pData + i</code>）。现在所有调用都是 length = 1，所以没出问题；以后改成一次读多个就会出错。</td></tr>
+</tbody></table>
+<h3>你能改什么</h3>
+<ul>
+<li><b>改 CPI（灵敏度）</b>：<code>PAW3950_SetCPI(1600)</code>（PAW3950.c:398）。全仓库只有这一处调用，所以现在 DPI 键不会改传感器的 CPI。</li>
+<li><b>提速</b>：SCLK 最高可到 16 MHz；把 CPSR 从 24 改小即可（必须是偶数）。间隔延时也可以按手册最小值缩短。</li>
+<li><b>改用 Burst Read</b>：一次读出 Motion 和 X、Y，减少片选次数。</li>
+</ul>
+<h3>T1A 上</h3>
+<p>T1A 上 PAW3950 改接 <b>SSP0</b>（MISO = PIO0_8、MOSI = PIO0_9、SCLK = PIO0_10），SSP1 改给两颗霍尔芯片用（<code>03_T1A适配清单.md</code>）。要改：③ 解锁位改成 bit0、② 时钟改成 bit11 和 SSP0CLKDIV、④ 三根脚的 FUNC、所有 <code>SSP_Send(1, …)</code> 改成 0。<br>⚠️ PIO0_10 同时是 SWD 调试的 SWCLK：改成 SCK0 之后，调试器就连不上了。这件事要和杰哥确认怎么调试。</p>
+
+<h2>小测验</h2>
+<div class="box quiz" id="quiz"></div>
+<div class="sum"><b>这一课你只需要记住：</b>SPI = 时钟 + 两根数据线 + 片选，主机打拍子，每拍双方各交换一位，8 拍换一个字节，所以收一个字节必须发一个字节。双方要约定 CPOL/CPHA（PAW3950 用模式 3）。PAW3950 每次对话 2 字节：最高位 1 写、0 读，加 7 位地址，然后数据。用 SSP 要记得 PRESETCTRL 解锁。</div>
+<h3>本课新词</h3>
+<table><tbody>
+<tr><td><b>SPI / SSP</b></td><td>同步串行接口；SSP 是 NXP 对它的叫法</td></tr>
+<tr><td><b>主机 / 从机</b></td><td>发时钟的 / 被动回答的</td></tr>
+<tr><td><b>移位寄存器</b></td><td>每拍把所有位往前挪一格的寄存器</td></tr>
+<tr><td><b>CPOL / CPHA</b></td><td>时钟空闲电平 / 在第几个边沿采样</td></tr>
+<tr><td><b>FIFO</b></td><td>先进先出的小队列</td></tr>
+<tr><td><b>CPI</b></td><td>鼠标灵敏度：移动 1 英寸报告多少个点</td></tr>
+</tbody></table>
+<p class="note">下一课：第 10 课 USB（手册第 10、11 章）。从下一课开始，手册部分只给寄存器名，请先自己在手册里找到它的表，再看答案。</p>
+</div>
+<script>
+const NS="http://www.w3.org/2000/svg";
+function el(p,t,a,x){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e}
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
+const b8=n=>n.toString(2).padStart(8,'0');const hx=n=>'0x'+n.toString(16).toUpperCase().padStart(2,'0');
+/* ---------- shift ring ---------- */
+const BYTES=[{m:0x02,s:0xFF,tm:'第 1 个字节：单片机发地址 0x02（最高位 0 = 读）',ts:'传感器这时还不知道要读什么，送出的是没意义的 0xFF'},{m:0xFF,s:0x80,tm:'第 2 个字节：单片机发一个没用的 0xFF，只为了产生 8 拍时钟',ts:'传感器送出 Motion 寄存器的值 0x80（bit7 = 1：有移动）'}];
+let rg={b:0,k:0,m:BYTES[0].m,s:BYTES[0].s,gotM:[],gotS:[]};
+function rgReset(){rg={b:0,k:0,m:BYTES[0].m,s:BYTES[0].s,gotM:[],gotS:[]};drawRing()}
+function rgStep(){if(rg.b>=2)return;const mo=(rg.m>>7)&1,so=(rg.s>>7)&1;rg.m=((rg.m<<1)|so)&0xFF;rg.s=((rg.s<<1)|mo)&0xFF;rg.k++;rg.last={mo,so};
+  if(rg.k===8){rg.gotM.push(rg.m);rg.gotS.push(rg.s);rg.b++;rg.k=0;if(rg.b<2){rg.m=BYTES[rg.b].m;rg.s=BYTES[rg.b].s}}drawRing()}
+function drawRing(){const s=$('ringSvg');s.textContent='';
+  const reg=(x,y,val,c,t,done)=>{el(s,'text',{x,y:y-8,'font-size':13,'font-weight':700,fill:V(c)},t);const bits=b8(val);
+    for(let i=0;i<8;i++){el(s,'rect',{x:x+i*30,y,width:28,height:34,rx:4,fill:bits[i]==='1'?V(c):V('soft'),opacity:bits[i]==='1'?.8:1,stroke:V('line')});el(s,'text',{x:x+i*30+14,y:y+23,'text-anchor':'middle','font-size':15,class:'m',fill:bits[i]==='1'?V('bg'):V('muted')},bits[i])}
+    el(s,'text',{x:x+250,y:y+23,'font-size':13,class:'m',fill:V('fg')},hx(val))};
+  reg(30,62,rg.m,'sw','单片机的移位寄存器');reg(470,62,rg.s,'hw','PAW3950 的移位寄存器');
+  el(s,'path',{d:'M30 100 C30 145 740 145 740 100',stroke:V('sw'),fill:'none','stroke-width':2,'marker-end':'url(#ra)'});el(s,'text',{x:385,y:160,'text-anchor':'middle','font-size':12,fill:V('sw')},'MOSI：单片机最左一位 → 传感器最右边');
+  el(s,'path',{d:'M466 79 C445 34 360 34 344 66',stroke:V('hw'),fill:'none','stroke-width':2,'marker-end':'url(#ra)'});el(s,'text',{x:405,y:30,'text-anchor':'middle','font-size':12,fill:V('hw')},'MISO：传感器最左一位 → 单片机最右边');
+  el(s,'defs',{}).innerHTML='<marker id="ra" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker>';
+  for(let i=0;i<8;i++){el(s,'rect',{x:30+i*30,y:184,width:28,height:16,rx:3,fill:i<rg.k&&rg.b<2?V('gold'):V('soft')})}
+  el(s,'text',{x:30,y:214,'font-size':12,fill:V('muted')},rg.b<2?`SCLK：第 ${rg.b+1} 个字节的第 ${rg.k} / 8 拍`:'两个字节都换完了');
+  const res=[];if(rg.gotM[0]!=null)res.push(`第 1 字节换完：单片机收到 ${hx(rg.gotM[0])}（丢掉），传感器收到 ${hx(rg.gotS[0])}（= 地址，知道要读 0x02 了）`);if(rg.gotM[1]!=null)res.push(`第 2 字节换完：单片机收到 <b>${hx(rg.gotM[1])}</b> = Motion 寄存器的值`);
+  el(s,'text',{x:30,y:244,'font-size':12.5,fill:V('fg')},rg.b<2?BYTES[rg.b].tm:'');el(s,'text',{x:30,y:266,'font-size':12.5,fill:V('fg')},rg.b<2?BYTES[rg.b].ts:'');
+  $('rgInfo').innerHTML=(rg.last&&rg.b<2&&rg.k>0?`这一拍：单片机移出 <b>${rg.last.mo}</b>（给传感器），传感器移出 <b>${rg.last.so}</b>（给单片机），两边都往左挪一格。<br>`:'')+(res.join('<br>')||'点“下一拍”开始。每一拍，两边同时把最左边一位送给对方，再往左挪一格。');}
+$('rgStep').onclick=rgStep;$('rgByte').onclick=()=>{const b=rg.b;while(rg.b===b&&rg.b<2)rgStep()};$('rgReset').onclick=rgReset;drawRing();
+/* ---------- modes ---------- */
+(function(){let cpol=1,cpha=1;const bb=$('modeBtns');
+  [[0,0],[0,1],[1,0],[1,1]].forEach(([p,h])=>{const b=document.createElement('button');b.type='button';b.textContent=`模式 ${p*2+h}：CPOL=${p} CPHA=${h}`+(p&&h?'（PAW3950）':'');b.setAttribute('aria-pressed',p===cpol&&h===cpha?'true':'false');b.onclick=()=>{cpol=p;cpha=h;bb.querySelectorAll('button').forEach(o=>o.setAttribute('aria-pressed',o===b?'true':'false'));draw()};bb.appendChild(b)});
+  function draw(){const s=$('modeSvg');s.textContent='';const L=90,W=70,hi=30,lo=70,dhi=110,dlo=150;const bits=[0,0,0,0,0,0,1,0];
+    el(s,'text',{x:4,y:55,'font-size':12,fill:V('gold')},'SCLK');el(s,'text',{x:4,y:135,'font-size':12,fill:V('sw')},'MOSI');
+    const idle=cpol?hi:lo,act=cpol?lo:hi;let d=`M20 ${idle} H${L}`;for(let i=0;i<8;i++){const x=L+i*W;d+=` V${act} H${x+W/2} V${idle} H${x+W}`}d+=' H770';el(s,'path',{d,stroke:V('gold'),fill:'none','stroke-width':2});
+    // data: changes at "change edge"; sample at the other
+    for(let i=0;i<8;i++){const x=L+i*W;const sx=cpha?x+W/2:x;const cx=cpha?x:x-W/2;
+      const y=bits[i]?dhi:dlo;const x0=Math.max(40,cpha?x:x-W/2),x1=x0+W;el(s,'path',{d:`M${x0} ${y} H${x1}`,stroke:V('sw'),'stroke-width':2.5});
+      el(s,'path',{d:`M${x0} ${dhi} L${x0+5} ${dlo}`,stroke:V('sw'),'stroke-width':1,opacity:.4});
+      el(s,'text',{x:x0+W/2,y:dhi-6,'text-anchor':'middle','font-size':11,class:'m',fill:V('sw')},bits[i]);
+      el(s,'line',{x1:sx,x2:sx,y1:20,y2:162,stroke:V('pc'),'stroke-dasharray':'3 3'});el(s,'path',{d:`M${sx} 166 l-5 8 h10 z`,fill:V('pc')})}
+    el(s,'text',{x:L,y:192,'font-size':12,fill:V('pc')},'▲ 红虚线：读取（采样）数据的时刻');
+    const first=cpol?'下降沿':'上升沿',second=cpol?'上升沿':'下降沿';
+    $('modeNote').innerHTML=`CPOL = ${cpol}：没说话时时钟停在<b>${cpol?'高':'低'}</b>。CPHA = ${cpha}：在每个时钟周期的<b>第 ${cpha?'二':'一'}个边沿（${cpha?second:first}）读数据</b>，在另一个边沿换数据。${cpol&&cpha?' 这就是 PAW3950 要求的模式 3：“data changes at SCLK falling edge and latched at SCLK rising edge”（PAW p.28）。':''} 波形里传的是 0x02（0000 0010）。`}
+  draw();})();
+/* ---------- protocol ---------- */
+(function(){const s=$('protoSvg');
+  const row=(y,title,b1,b1t,b2,b2t,who2,gap)=>{el(s,'text',{x:10,y:y-10,'font-size':13.5,'font-weight':700,fill:V('fg')},title);
+    el(s,'path',{d:`M40 ${y+8} H70 V${y+28} H${gap?720:690} V${y+8} H760`,stroke:V('pc'),fill:'none','stroke-width':2});el(s,'text',{x:4,y:y+22,'font-size':11,fill:V('pc')},'NCS');
+    const bx=(x,w,c,top,bot,yy)=>{el(s,'rect',{x,y:yy,width:w,height:34,rx:4,fill:V(c),opacity:.85});el(s,'text',{x:x+w/2,y:yy+15,'text-anchor':'middle','font-size':12,'font-weight':700,class:'m',fill:V('bg')},top);el(s,'text',{x:x+w/2,y:yy+29,'text-anchor':'middle','font-size':10.5,fill:V('bg')},bot)};
+    el(s,'text',{x:4,y:y+58,'font-size':11,fill:V('sw')},'MOSI');el(s,'text',{x:4,y:y+98,'font-size':11,fill:V('hw')},'MISO');
+    bx(90,90,'pc','R/W','1 位',y+38);bx(184,210,'sw',b1,b1t,y+38);
+    const x2=gap?470:400;if(gap){el(s,'text',{x:400,y:y+60,'font-size':11,fill:V('muted')},'等 tSRAD');}
+    if(who2==='m')bx(x2,240,'sw',b2,b2t,y+38);else{bx(x2,240,'hw',b2,b2t,y+78);el(s,'text',{x:x2,y:y+60,'font-size':11,fill:V('muted')},'（单片机发 0xFF 产生时钟）')}};
+  row(28,'写：Write(0x48, 0x1F)  →  MOSI 送出 0xC8, 0x1F','1 + 地址 0x48','第 1 字节 = 0xC8','0x1F','第 2 字节：要写的数据','m',false);
+  row(168,'读：Read(0x02)  →  MOSI 送出 0x02，MISO 回 0x80','0 + 地址 0x02','第 1 字节 = 0x02','0x80','第 2 字节：传感器回答','s',true);})();
+/* ---------- lifecycle ---------- */
+const LANES=[['🟦 芯片 / 传感器','per'],['⬜ 现成代码','muted'],['🟩 项目代码','sw']];
+const PHASES=['开机准备（只做一次）','平时工作（定期读位移）','一次寄存器读','注意 / 出错'];
+const P=c=>`<pre class="code">${c}</pre>`;
+const B=[
+ [0,2,'④⑤','片选、MOTION 脚','PAW3950.c:274~280',P('  PAW3950_IO_NoPull(PAW3950_IO_NCS);\n  PAW3950_IO_CfgAsOutput(PAW3950_IO_NCS_PORT, PAW3950_IO_NCS_PIN);\n  PAW3950_IO_HighLevel(PAW3950_IO_NCS_PORT, PAW3950_IO_NCS_PIN);\n  //MOTION\n  PAW3950_IO_NoPull(PAW3950_IO_MOTION);\n  PAW3950_IO_CfgAsInput(PAW3950_IO_MOTION_PORT, PAW3950_IO_MOTION_PIN);')+'调用链：<code>Device_Init()</code>（device.c:484）→ <code>PAW3950_Init()</code>（:319）→ <code>PA3950_ModuleInit()</code>（:265）。','📖 第 6 课'],
+ [0,2,'③②','解锁、开时钟、分频','PAW3950.c:284~286',P('  LPC_SYSCON->PRESETCTRL |= (0x1&lt;&lt;2) ;      //SPI1 Reset De-Asserted\n  LPC_SYSCON->SYSAHBCLKCTRL |= (1&lt;&lt;18) ;    //Setup AHB Clock To The SPI1 Domain\n  LPC_SYSCON->SSP1CLKDIV = 0x01 ;           //SPI1 Clock Divider 1(48MHz/1=48MHz)'),'📖 p.23 Table 8；p.31 Table 24；p.34 Table 27；p.275 13.2'],
+ [0,2,'④','3 根线改成 SPI','PAW3950.c:288~295',P('   LPC_IOCON->PIO0_21 &amp;= ~0x07 ;  LPC_IOCON->PIO0_21 |= 0x02 ;  //MOSI1\n   LPC_IOCON->PIO0_22 &amp;= ~0x07 ;  LPC_IOCON->PIO0_22 |= 0x03 ;  //MISO1\n   LPC_IOCON->PIO1_15 &amp;= ~0x07 ;  LPC_IOCON->PIO1_15 |= 0x03 ;  //SCK1'),'📖 p.103 Table 97/98；p.116 Table 115'],
+ [0,2,'⑤','8 位、模式 3、1 MHz','PAW3950.c:298~309',P('  LPC_SSP1->CR0 = 0x01C7  ;   //CPOL = 1 CPHA = 1 8Bits\n  LPC_SSP1->CPSR = 0x18 ;\n  //SPI SPEED = ((MCU_OSC/SSP1CLKDIV)/(CPSR*[CR0 High Byte+1]))\n  //((48MHz/1)/(24*[1+1])) = 1Mhz\n  LPC_SSP1->CR1 |= SSPCR1_SSE ;  //Enable SSP1'),'📖 p.278 Table 260；p.279 Table 261；p.280 Table 264'],
+ [0,2,'','传感器开机流程（手册 7.1）','PAW3950.c:329~354',P('  PAW3950_DelayMs(50);   //Wait for at least 50ms\n  PAW3950_IO_HighLevel(NCS…);  PAW3950_DelayMs(1);  PAW3950_IO_LowLevel(NCS…);\n  PAW3950_Write(0x3A, 0x5A); //Power_Up_Reset\n  PAW3950_DelayMs(5);\n  for(uint8_t i = 0; i &lt; 3; i++)\n  {\n    PAW3950_Read(0x00, &amp;tmp, 1);\n  }\n  if(tmp != 0x53) { … return -1; }')+'等 50 ms → 复位 SPI 口 → 软件复位 → 读产品 ID。读 3 次只看最后一次。','PAW p.32 7.1；p.62 Product_ID'],
+ [0,2,'','写初始化设置、清位移、设 CPI','PAW3950.c:357~401',P('  for(...) PAW3950_Write(regSettingOfInit0[i][0], regSettingOfInit0[i][1]);\n  for(...) PAW3950_Write(regSettingOfInit1[i][0], regSettingOfInit1[i][1]);\n  for(i&lt;45) { PAW3950_Read(0x6C,&amp;tmp,1); if(tmp == 0x80) break; PAW3950_DelayUs(990); }\n  for(...) PAW3950_Write(regSettingOfInit2[i][0], regSettingOfInit2[i][1]);\n  PAW3950_Read(0x02 … 0x06)   // 清位移\n  PAW3950_SetCPI(1600)')+'这些寄存器设置是传感器厂家给的“标准配方”（PAW p.33 起 7.1.2），不需要理解每一项。','PAW p.32~ 7.1.2'],
+ [1,0,'','传感器自己拍照、算位移','','PAW3950 每秒拍几千张桌面照片，算出 X、Y 移动量，累加在 0x03~0x06，并把 0x02 的 bit7 置 1。','PAW p.45 7.4'],
+ [1,2,'⑦','定期问：动了吗？','device.c:781~800、PAW3950.c:495~530',P('/* device.c */\n	if (!optical_scan_cycle)          // 定时器中断里倒数（Timer.c:112）\n	{\n		optical_scan_cycle = device_ReportRata;\n		...\n    if(!PAW3950_GetMotionData(&amp;xTmp, &amp;yTmp))\n\n/* PAW3950.c:503 */\n  PAW3950_Read(0x02, &amp;motionFlag, 1);\n  if(motionFlag &amp; (0x01 &lt;&lt; 7))\n  {\n    PAW3950_Read(0x03, &amp;xLow, 1);\n    PAW3950_Read(0x04, &amp;xHigh, 1);\n    PAW3950_Read(0x05, &amp;yLow, 1);\n    PAW3950_Read(0x06, &amp;yHigh, 1);')+'调用链：<code>Device_Active()</code> → <code>Device_Scan()</code>（device.c:878）→ <code>Device_Optical_Scan()</code> → <code>PAW3950_GetMotionData()</code>（:535）→ <code>PAW3950_GetMotionDataSingleRead()</code>（:495）。读完 X、Y 交给组包（第 16 课）。','PAW p.60 寄存器表'],
+ [2,2,'⑦','拉低片选、发地址','PAW3950.c:431~440',P('int32_t PAW3950_Read(uint8_t regAddr, uint8_t *pData, uint16_t length)\n{\n  addr = regAddr &amp; (~(1 &lt;&lt; 7));      // 最高位清 0 = 读\n  PAW3950_IO_LowLevel(PAW3950_IO_NCS_PORT, PAW3950_IO_NCS_PIN);\n  PAW3950_DelayUs(3);\n  SSP_Send(1, &amp;addr, 1);\n  PAW3950_DelayUs(3);                     // ≥ tSRAD 1µs'),'PAW p.29 6.5；p.13 tSRAD'],
+ [2,1,'⑦','SSP_Send：发 1 字节，读掉回来的','SPI.c:375~399',P('    if(Ssp_Nums == SSP_USE_SSP1)\n    {\n        while((LPC_SSP1->SR &amp; (SSP_SR_TNF_NOTFULL | SSP_SR_BSY_BUSY)) != SSP_SR_TNF_NOTFULL){}\n        LPC_SSP1->DR = *buf;\n        while((LPC_SSP1->SR &amp; (SSP_SR_BSY_BUSY|SSP_SR_RNE_NOTEMPTY)) != SSP_SR_RNE_NOTEMPTY){}\n        Dummy = LPC_SSP1->DR;      // 把同时收回来的没用字节读掉\n    }')+'<code>SPI.c</code> 是公司老项目的代码。<b>读掉 Dummy 是例程替你做的清理</b>，否则这个字节会留在接收队列里。','📖 p.280 Table 263 SR；p.279 Table 262 DR'],
+ [2,0,'','8 拍交换一个字节','1 MHz：8 µs','芯片自己：SSP1 在 SCLK 上打 8 拍，MOSI 送出、MISO 收回（第 1 节的动画）。','📖 p.287 Figure 36'],
+ [2,1,'⑦','SSP_Receive：发 0xFF，收回答','SPI.c:403~421',P('        LPC_SSP1->DR =  EMPTY ;          // EMPTY = 0xFF（inc/Type.h:123）\n        while((LPC_SSP1->SR &amp; (SSP_SR_BSY_BUSY|SSP_SR_RNE_NOTEMPTY)) != SSP_SR_RNE_NOTEMPTY ){}\n        *buf = LPC_SSP1->DR;')+'想收就得发：发一个没用的 0xFF，换回传感器的答案。',''],
+ [2,2,'⑦','拉高片选、等一会儿','PAW3950.c:448~449',P('  PAW3950_IO_HighLevel(PAW3950_IO_NCS_PORT, PAW3950_IO_NCS_PIN);\n  PAW3950_DelayUs(3);                     // ≥ tSRR 2.5µs'),'PAW p.27 6.2；p.31 6.7'],
+ [3,2,'','初始化失败没人检查','device.c:484','<code>PAW3950_Init()</code> 返回 -1 时，<code>Device_Init()</code> 没看返回值，程序照常运行，只是光标不动 ⚠️。',''],
+ [3,2,'','Read 的 length > 1 会出错','PAW3950.c:443~446',P('  for(uint16_t i = 0; i &lt; length; i++)\n  {\n    SSP_Receive(1, pData, 1);   // 应该是 pData + i\n  }')+'现在都是 length = 1，没出问题 ⚠️。',''],
+ [3,2,'','DPI 键不改传感器 CPI','PAW3950.c:398','<code>PAW3950_SetCPI()</code> 全仓库只在初始化里调用一次（1600）。',''],
+];
+(function(){
+  const s=$('lifeSvg');let idx=0;const LX=86,CW=192,BH=48,GAP=8,TOP=34;
+  function layout(){const cnt={};const pos=B.map(b=>{const k=b[0]+'_'+b[1];cnt[k]=(cnt[k]||0)+1;return{c:b[0],l:b[1],n:cnt[k]-1}});
+    const laneH=[0,1,2].map(l=>Math.max(1,...[0,1,2,3].map(c=>cnt[c+'_'+l]||0)));const laneY=[TOP];for(let l=1;l<3;l++)laneY[l]=laneY[l-1]+laneH[l-1]*(BH+GAP)+16;
+    return{pos:pos.map(p=>({x:LX+p.c*(CW+6)+4,y:laneY[p.l]+8+p.n*(BH+GAP)})),laneY,laneH,H:laneY[2]+laneH[2]*(BH+GAP)+16}}
+  function draw(){s.textContent='';const L=layout();s.setAttribute('viewBox',`0 0 900 ${L.H}`);s.setAttribute('height',L.H);
+    PHASES.forEach((p,c)=>{const x=LX+c*(CW+6);el(s,'rect',{x,y:22,width:CW+2,height:L.H-24,rx:8,fill:V('soft'),opacity:.6});el(s,'text',{x:x+CW/2,y:16,'text-anchor':'middle','font-size':12.5,'font-weight':600,fill:V('fg')},p)});
+    LANES.forEach(([t,c],l)=>{const y=L.laneY[l],h=L.laneH[l]*(BH+GAP)+8;el(s,'rect',{x:4,y,width:LX-10,height:h,rx:6,fill:V(c),opacity:.12});t.split(' ').forEach((w,i)=>el(s,'text',{x:(LX-6)/2+2,y:y+h/2-12+i*17,'text-anchor':'middle','font-size':12,'font-weight':600,fill:V(c)},w))});
+    B.forEach((b,i)=>{const p=L.pos[i],c=LANES[b[1]][1],on=i===idx;const g=el(s,'g',{tabindex:0,role:'button','aria-label':b[3],style:'cursor:pointer'});
+      el(g,'rect',{x:p.x,y:p.y,width:CW-8,height:BH,rx:7,fill:on?V(c):V('panel'),stroke:V(c),'stroke-width':on?2.5:1.5});
+      el(g,'circle',{cx:p.x+13,cy:p.y+14,r:10,fill:on?V('bg'):V(c)});el(g,'text',{x:p.x+13,y:p.y+18,'text-anchor':'middle','font-size':11,'font-weight':700,fill:on?V(c):V('bg')},i+1);
+      const lim=b[2].length>1?9:11;const t=b[3].length>lim?[b[3].slice(0,lim),b[3].slice(lim)]:[b[3]];t.forEach((tt,k)=>el(g,'text',{x:p.x+28,y:p.y+(t.length>1?18:20)+k*15,'font-size':12.5,'font-weight':600,fill:on?V('bg'):V('fg')},tt.length>13?tt.slice(0,13)+'…':tt));
+      if(t.length===1&&b[4])el(g,'text',{x:p.x+28,y:p.y+38,'font-size':10.5,class:'m',fill:on?V('bg'):V('muted')},b[4].length>24?b[4].slice(0,24)+'…':b[4]);
+      if(b[2])el(g,'text',{x:p.x+CW-14,y:p.y+14,'text-anchor':'end','font-size':11,'font-weight':700,fill:on?V('bg'):V('gold')},b[2]);
+      const go=()=>{idx=i;draw()};g.addEventListener('click',go);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}})});
+    const b=B[idx],c=LANES[b[1]][1];const card=$('lifeInfo');card.style.borderLeftColor=V(c);
+    card.innerHTML=`<b class="t">${idx+1}. ${b[3]}</b>　<span class="note">${LANES[b[1]][0]} · ${PHASES[b[0]]}${b[2]?' · 七步 '+b[2]:''}${b[4]?' · '+b[4]:''}</span><br>${b[5]}${b[6]?`<div class="man"><div class="src" style="color:var(--per)">📖 ${b[6]}</div><div class="zh">翻到这一页，对照原文看。</div></div>`:''}`;
+    $('lfPos').textContent=`第 ${idx+1} / ${B.length} 步`}
+  $('lfNext').onclick=()=>{idx=(idx+1)%B.length;draw()};$('lfPrev').onclick=()=>{idx=(idx-1+B.length)%B.length;draw()};draw();
+})();
+/* ---------- quiz ---------- */
+const Q=[
+ ['1. SPI 的时钟由谁产生？',['传感器','单片机（主机）','两边轮流'],1,'对。所以传感器只能被动回答。','回顾第 1 节的表。'],
+ ['2. 想从传感器读 1 个字节，单片机要不要发东西？',['不用','要，发 1 个字节（比如 0xFF）才能产生 8 拍时钟','要发 2 个字节'],1,'对。SPI 是交换，收一个就要发一个。','看第 1 节的动画第 2 个字节。'],
+ ['3. PAW3950 用哪种模式？',['模式 0','模式 3（CPOL=1, CPHA=1）'],1,'对。PAW p.27：SPI mode 3。','看第 2 节。'],
+ ['4. 写寄存器 0x48，第 1 个字节发什么？',['0x48','0xC8','0x24'],1,'对。最高位置 1 表示写：0x48 | 0x80 = 0xC8。','看第 3 节的图。'],
+ ['5. 用 SSP 最容易忘的一步是？',['开时钟','PRESETCTRL 解锁','设引脚'],1,'对。13.2 第 4 条专门强调了。','翻 p.275 13.2。'],
+ ['6. 初始化时为什么先读 Product_ID？',['为了好看','它固定是 0x53，读对了说明 SPI 通了、传感器活着','为了设置 CPI'],1,'对。PAW 7.1 第 6 步。','看 PAW p.32。'],
+];
+(function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0]}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+</script>
