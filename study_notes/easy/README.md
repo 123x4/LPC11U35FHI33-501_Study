@@ -16,6 +16,7 @@
 | 第 8 课 定时器 | `08_定时器.html` | https://claude.ai/artifact/RjnBzgLW6mYK5WRAY7Xviy |
 | 第 9 课 SPI 与 PAW3950 | `09_SPI与PAW3950.html` | https://claude.ai/artifact/7HACF2oXVpWjSqS19giSyB |
 | 第 10 课 USB | `10_USB.html` | https://claude.ai/artifact/C5mHnxa8bSv88j9P2V7jvN |
+| USB 接口与端点总表（第 10 课配套速查） | `USB接口与端点总表.html` | https://claude.ai/artifact/Axd33DZ2jkDBAo9C5vSKac |
 
 完整路线见第 0 课第 5 节（24 课，第 0~23 课）。
 
