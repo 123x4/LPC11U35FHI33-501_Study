@@ -296,7 +296,7 @@ function drawSar(){
 }
 $('vin').addEventListener('input',sarReset);$('sarStep').onclick=sarStep;$('sarAll').onclick=()=>{while(sar.k<10)sarStep()};$('sarReset').onclick=sarReset;drawSar();
 /* ---------- lifecycle ---------- */
-const LANES=[['🟦 芯片自己','per'],['⬜ 现成例程','muted'],['🟩 项目代码','sw']];
+const LANES=[['🟦 芯片自己','per'],['⬜ 现成代码','muted'],['🟩 项目代码','sw']];
 const PHASES=['开机准备（只做一次）','平时工作（每 1 ms）','中断','停止 / 出错'];
 const P=c=>`<pre class="code">${c}</pre>`;
 const B=[
@@ -359,4 +359,5 @@ const Q=[
  ['6. 为什么 MyADC_Init 要清 ADMODE、设 FUNC = 2？',['为了好看','断开数字接收器，量得更准（19.6.3）','为了能用中断'],1,'对。','翻 p.388 19.6.3。'],
 ];
 (function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0]}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+
 </script>

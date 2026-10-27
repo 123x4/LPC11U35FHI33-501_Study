@@ -142,6 +142,16 @@ pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);borde
 .ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
 .bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
 .bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
+details.ans{margin:.4rem 0;border:1px dashed var(--line);border-radius:6px;padding:4px 10px;background:var(--panel)}
+details.ans summary{cursor:pointer;color:var(--per);font-size:.9rem}
+details.ans[open]{background:var(--soft)}
+.task{border-left:4px solid var(--per);background:var(--panel);border-radius:0 6px 6px 0;padding:8px 12px;margin:.6rem 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.task .pg{font-family:var(--font-m);font-size:.8rem;color:var(--per)}
+.sim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:640px){.sim{grid-template-columns:minmax(0,1fr)}}
+.sim fieldset{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:0 0 8px}
+.sim legend{font-size:.82rem;color:var(--muted);padding:0 4px}
+.sim label{display:inline-flex;align-items:center;gap:4px;margin:2px 10px 2px 0;font-size:.9rem;cursor:pointer}
 </style>
 <div class="wrap">
 <div class="eyebrow">轻松版 · 第 5 课 · 打地基（最后一课）</div>
@@ -303,17 +313,17 @@ if(window.matchMedia('(max-width:560px)').matches)$('treeBox').style.gridTemplat
   el(s,'text',{x:400,y:254,'text-anchor':'middle','font-size':12,fill:V('muted')},'④ 运行时走没走到，看调用链');})();
 /* file sizes: [obj, code bytes, who, what] who: n=NXP/芯片例程, o=老项目框架, p=本项目新代码 */
 const F=[
- ['my_protocol_mouse.c',3486,'p','新协议的参数管理、GUI 调参'],['macro.c',2852,'o','宏功能（老框架）'],['usbhw.c',2292,'n','USB 硬件层'],['custom.c',2060,'o','按键映射'],['usbcore.c',2024,'n','USB 协议层（枚举）'],['my_electromagnet.c',2020,'p','线圈'],['device.c',1804,'o','主流程（老框架，IRPT 部分是新加的）'],['pc_communicate.c',1776,'o','老 GUI 协议'],['GPIO.c',1438,'n','引脚驱动'],['button.c',1188,'o','按键扫描'],['my_misc.c',1116,'p','按键算法 AP/RT'],['PAW3950.c',912,'p','光学传感器'],['Timer.c',860,'n','定时器驱动'],['gtech_flash.c',796,'o','Flash/EEPROM 读写封装'],['SPI.c',760,'n','SPI 驱动'],['optical_3325.c',720,'o','老传感器 3325（IRPT 不用，但被链接进来了）'],['i2c.c',700,'n','I²C（IRPT 不用）'],['UART.c',644,'n','串口（IRPT 不用）'],['test.c',490,'o','灯效测试'],['operation_flash.c',448,'o','老配置系统地址'],['usb.c',368,'n','USB 发送封装'],['scroll.c',256,'o','滚轮'],['my_adc.c',248,'p','ADC'],['usbuser.c',236,'n','USB 端点回调'],['Osc.c',228,'n','时钟'],['WWDT.c',212,'n','看门狗'],['ram_malloc.c',208,'o','内存分配'],['suspend.c',144,'o','挂起'],['wnDrv_Pmu.c',140,'n','低功耗'],['IAP_CMD.c',132,'n','EEPROM（IAP）'],['hiduser.c',104,'n','HID 类请求'],['my_protocol.c',102,'p','新协议的帧解析'],['my_tick.c',48,'p','毫秒计数'],['startup_LPC11Uxx.s',28,'n','启动文件（另有 192 字节向量表）'],['Main.c',14,'o','main()'],['usbdesc.c',0,'n','USB 描述符（全是常量数据 383 字节，不是代码）'],
+ ['my_protocol_mouse.c',3486,'p','新协议的参数管理、GUI 调参'],['macro.c',2852,'o','宏功能（老框架）'],['usbhw.c',2292,'n','USB 硬件层'],['custom.c',2060,'o','按键映射'],['usbcore.c',2024,'n','USB 协议层（枚举）'],['my_electromagnet.c',2020,'p','线圈'],['device.c',1804,'o','主流程（老框架，IRPT 部分是新加的）'],['pc_communicate.c',1776,'o','老 GUI 协议'],['GPIO.c',1438,'o','引脚驱动'],['button.c',1188,'o','按键扫描'],['my_misc.c',1116,'p','按键算法 AP/RT'],['PAW3950.c',912,'p','光学传感器'],['Timer.c',860,'o','定时器驱动'],['gtech_flash.c',796,'o','Flash/EEPROM 读写封装'],['SPI.c',760,'o','SPI 驱动'],['optical_3325.c',720,'o','老传感器 3325（IRPT 不用，但被链接进来了）'],['i2c.c',700,'o','I²C（IRPT 不用）'],['UART.c',644,'o','串口（IRPT 不用）'],['test.c',490,'o','灯效测试'],['operation_flash.c',448,'o','老配置系统地址'],['usb.c',368,'n','USB 发送封装'],['scroll.c',256,'o','滚轮'],['my_adc.c',248,'p','ADC'],['usbuser.c',236,'n','USB 端点回调'],['Osc.c',228,'o','时钟'],['WWDT.c',212,'o','看门狗'],['ram_malloc.c',208,'o','内存分配'],['suspend.c',144,'o','挂起'],['wnDrv_Pmu.c',140,'n','低功耗（方案商 World Peace 提供）'],['IAP_CMD.c',132,'o','EEPROM（IAP）'],['hiduser.c',104,'n','HID 类请求'],['my_protocol.c',102,'p','新协议的帧解析'],['my_tick.c',48,'p','毫秒计数'],['startup_LPC11Uxx.s',28,'n','启动文件（另有 192 字节向量表）'],['Main.c',14,'o','main()'],['usbdesc.c',0,'n','USB 描述符（全是常量数据 383 字节，不是代码）'],
 ];
-const WHO={n:['⬜ 芯片 / NXP 例程','muted'],o:['⬜ 老项目框架','gold'],p:['🟩 本项目新代码','sw']};
+const WHO={n:['⬜ 芯片厂商 / 方案商例程','muted'],o:['⬜ 公司老项目代码','gold'],p:['🟩 本项目新代码','sw']};
 (function(){const tb=$('fTable'),fb=$('fFilter');let cur='all';const mx=Math.max(...F.map(x=>x[1]));
   function draw(){tb.innerHTML='<thead><tr><th>文件</th><th>代码字节</th><th style="width:40%"></th><th>谁写的</th><th>干什么</th></tr></thead><tbody>'+F.filter(x=>cur==='all'||x[2]===cur).map(x=>`<tr><td>${x[0]}</td><td class="mono">${x[1]}</td><td><div style="height:10px;width:${Math.max(1,x[1]/mx*100)}%;background:${V(WHO[x[2]][1])};border-radius:2px"></div></td><td style="white-space:nowrap">${WHO[x[2]][0]}</td><td>${x[3]}</td></tr>`).join('')+'</tbody>'}
-  [['all','全部'],['p','🟩 本项目新代码'],['o','⬜ 老项目框架'],['n','⬜ 芯片 / NXP 例程']].forEach(([k,t])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.setAttribute('aria-pressed',k===cur?'true':'false');b.onclick=()=>{cur=k;fb.querySelectorAll('button').forEach(o=>o.setAttribute('aria-pressed',o===b?'true':'false'));draw()};fb.appendChild(b)});
+  [['all','全部'],['p','🟩 本项目新代码'],['o','⬜ 公司老项目代码'],['n','⬜ 芯片厂商 / 方案商例程']].forEach(([k,t])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.setAttribute('aria-pressed',k===cur?'true':'false');b.onclick=()=>{cur=k;fb.querySelectorAll('button').forEach(o=>o.setAttribute('aria-pressed',o===b?'true':'false'));draw()};fb.appendChild(b)});
   draw();
   const sum=k=>F.filter(x=>x[2]===k).reduce((a,x)=>a+x[1],0);
   const used=45716,lim=0xFE00-0x4000,tot=0xC000;
   const bar=$('flashBar');bar.innerHTML=`<div style="width:${used/tot*100}%;background:${V('sw')}">已用 44.6 KB</div><div style="width:${(lim-used)/tot*100}%;background:${V('gold')}">剩</div><div style="width:${(tot-lim)/tot*100}%;background:${V('muted')}" title="Bootloader 标志页">标志</div>`;
-  $('flashNote').innerHTML=`程序放在 Flash 0x4000 起（<code>output/Sample.sct</code>：最多 0xC000 = 48 KB）。<code>List/Sample.map</code> 最后一行：Total ROM Size = <b>45716 字节</b>（44.64 KB）。但 0xFE00 起的一页是公司 Bootloader 放“程序有效”标志（0xAA）的地方（0-3 课），程序不能占用。所以实际只剩约 <b>${lim-used} 字节（约 2.9 KB）</b>。⚠️ T1A 要加新功能时，空间会很紧，这件事要和杰哥确认。<br>按谁写的统计（只算代码）：🟩 本项目新代码约 ${sum('p')} 字节，⬜ 老项目框架约 ${sum('o')} 字节，⬜ 芯片 / NXP 例程约 ${sum('n')} 字节。`;
+  $('flashNote').innerHTML=`程序放在 Flash 0x4000 起（<code>output/Sample.sct</code>：最多 0xC000 = 48 KB）。<code>List/Sample.map</code> 最后一行：Total ROM Size = <b>45716 字节</b>（44.64 KB）。但 0xFE00 起的一页是公司 Bootloader 放“程序有效”标志（0xAA）的地方（0-3 课），程序不能占用。所以实际只剩约 <b>${lim-used} 字节（约 2.9 KB）</b>。⚠️ T1A 要加新功能时，空间会很紧，这件事要和杰哥确认。<br>按谁写的统计（只算代码）：🟩 本项目新代码约 ${sum('p')} 字节，⬜ 公司老项目代码约 ${sum('o')} 字节，⬜ 芯片厂商 / 方案商例程约 ${sum('n')} 字节。<br>怎么判断谁写的：看文件开头。NXP、Keil、ARM 字样 = 芯片厂商例程；World Peace = 方案商；Writer ADAM 或没有署名、在公司老项目 M300S 里也有的 = 公司老代码；@author chengjie = 本项目新代码。注意老文件里也会夹着本项目新加的函数或 #if 分支（比如 Timer.c 里的 CT16B1_DelayUs、GPIO.c 的 IRPT_V4 分支）。`;
 })();
 /* include */
 (function(){const s=$('incSvg');

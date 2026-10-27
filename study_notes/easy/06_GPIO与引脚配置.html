@@ -351,7 +351,7 @@ function pinSim(){
 }
 document.querySelectorAll('.sim input').forEach(x=>x.addEventListener('change',pinSim));pinSim();
 /* ---------- lifecycle ---------- */
-const LANES=[['🟦 芯片自己','per'],['⬜ 现成例程','muted'],['🟩 项目代码','sw']];
+const LANES=[['🟦 芯片自己','per'],['⬜ 现成代码','muted'],['🟩 项目代码','sw']];
 const PHASES=['开机准备（只做一次）','平时工作（反复）','中断（休眠时）','停止 / 注意'];
 const P=c=>`<pre class="code">${c}</pre>`;
 const B=[
@@ -402,4 +402,5 @@ const Q=[
  ['6. 组中断的标志 INT 怎么清？',['写 0','写 1','读一下就清了'],1,'对。Table 151：写 1 清零，写 0 没用。例程 GINT0_IRQHandler 已经做了。','翻 p.161 Table 151。'],
 ];
 (function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0].replace(/</g,'&lt;')}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+
 </script>
