@@ -23,6 +23,7 @@
 | 第 13 课 时钟、电源与低功耗 | `13_时钟电源与低功耗.html` | https://claude.ai/artifact/2Kw9ZtbCBu6cax3WLFieuv |
 | 代码来源清单（整理代码用，可筛选） | `代码来源清单.html` | https://claude.ai/artifact/VPsyav56Zh3cacuF4xg6us |
 | app 文件夹四份代码（button / scroll / custom / optical_3325） | `app文件夹四份代码.html` | https://claude.ai/artifact/DQeECLZbqjbizU3wtk2zHv |
+| 函数讲解：Custom_Paramter_Init()（custom.c） | `Custom_Paramter_Init.html` | https://claude.ai/artifact/C2Pkz5eGpiTkeNkUvThqJJ |
 
 完整路线见第 0 课第 5 节（24 课，第 0~23 课）。
 

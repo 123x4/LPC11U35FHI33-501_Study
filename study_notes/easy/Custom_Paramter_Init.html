@@ -1,0 +1,297 @@
+<title>Custom_Paramter_Init 讲解</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
+.mx{border-collapse:separate;border-spacing:4px;min-width:720px}
+.mx th{text-align:center;font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.mx th.s{text-align:left;font-size:.85rem;color:var(--muted);font-family:var(--font-b);width:150px}
+.mx td{padding:0;border:0}
+.mx button{width:100%;font:inherit;font-size:.8rem;line-height:1.35;padding:6px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-align:left;min-height:46px}
+.mx button.w-sw{border-left:5px solid var(--sw)}
+.mx button.w-ex{border-left:5px solid var(--muted)}
+.mx button.w-hw{border-left:5px solid var(--per)}
+.mx button.na{color:var(--muted);background:var(--soft);border-style:dashed}
+.mx button[aria-pressed="true"]{outline:3px solid var(--pc);outline-offset:1px}
+.who{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.85rem;margin:.4rem 0}
+.who span{display:inline-flex;align-items:center;gap:6px}
+.who i{width:14px;height:14px;border-radius:3px;display:inline-block}
+pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
+details.ans{margin:.4rem 0;border:1px dashed var(--line);border-radius:6px;padding:4px 10px;background:var(--panel)}
+details.ans summary{cursor:pointer;color:var(--per);font-size:.9rem}
+details.ans[open]{background:var(--soft)}
+.task{border-left:4px solid var(--per);background:var(--panel);border-radius:0 6px 6px 0;padding:8px 12px;margin:.6rem 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.task .pg{font-family:var(--font-m);font-size:.8rem;color:var(--per)}
+.sim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:640px){.sim{grid-template-columns:minmax(0,1fr)}}
+.sim fieldset{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:0 0 8px}
+.sim legend{font-size:.82rem;color:var(--muted);padding:0 4px}
+.sim label{display:inline-flex;align-items:center;gap:4px;margin:2px 10px 2px 0;font-size:.9rem;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;margin:.4rem 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+</style>
+<style>
+.mem{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:.6rem 0}
+.mem>div{border:2px solid var(--c);border-radius:8px;padding:8px 10px;background:var(--panel)}
+.mem h4{margin:0 0 .3rem;font-family:var(--font-d);font-size:1rem;color:var(--c)}
+.slot{border:1px solid var(--line);border-radius:6px;padding:4px 8px;margin:4px 0;font-size:.86rem;transition:background .3s}
+.slot b{font-family:var(--font-m);font-size:.8rem;color:var(--muted);font-weight:500;margin-right:6px}
+.slot.chg{background:color-mix(in srgb,var(--pc) 22%,transparent);border-color:var(--pc)}
+.slot.off{opacity:.45}
+.cl{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:6px 0;margin:.5rem 0;overflow-x:auto}
+.cl div{padding:0 10px;white-space:pre}
+.cl div.cur{background:color-mix(in srgb,var(--per) 25%,transparent)}
+.cl div.cm{color:var(--muted)}
+.modes{display:flex;flex-wrap:wrap;gap:8px;margin:.3rem 0 .6rem}
+.modes button{font:inherit;font-size:.9rem;border:2px solid var(--c);border-radius:8px;padding:6px 12px;background:var(--panel);color:var(--fg);cursor:pointer}
+.modes button[aria-pressed="true"]{background:color-mix(in srgb,var(--c) 22%,transparent)}
+@media (max-width:640px){.mem{grid-template-columns:1fr}}
+</style>
+<div class="wrap">
+<div class="eyebrow">轻松版 · 读代码 · app/custom.c:196</div>
+<h1>Custom_Paramter_Init()：把设置恢复成出厂值</h1>
+<p class="lede">一句话：<b>把 RAM 里的“鼠标设置”全部填成默认值</b>。老代码里它还会顺手把默认值存进 EEPROM；本项目把“存”注释掉了，于是留下一个小毛病（第 4 节）。</p>
+
+<h2><span class="step">1/6</span>场景：什么时候会调用它</h2>
+<div class="scroll"><table>
+<thead><tr><th>什么时候</th><th>调用链</th><th>现在会不会真的发生</th></tr></thead>
+<tbody>
+<tr><td><b>每次开机</b></td><td><code>main()</code> → <code>Device_Init()</code> → <code>Custom_Init()</code>（device.c:472）→ 本函数</td><td>✅ 每次都会。老代码只在“存储里记的编译日期 <code>Code_Compile_Timer</code> 和程序里的不一样”（第一次烧录或换了版本）时才调，本项目把判断注释掉了（custom.c:258~267），变成无条件调用</td></tr>
+<tr><td><b>开机时按住右键 + 后侧键 2 秒</b></td><td><code>Device_Init()</code> → <code>Device_Manually_Enter_RestoreDefault()</code>（device.c:463）→ 本函数</td><td>⚠️ IRPT_V4 下很可能触发不了：右键靠 ADC 读，而 <code>MyADC_Init()</code> 在 <code>Device_Init()</code> 最后才调用（device.c:485）。要上板验证</td></tr>
+<tr><td><b>EEPROM 里的设置校验不对</b></td><td><code>Device_check_Profile()</code>（device.c:468）→ 本函数</td><td>❌ 不会：校验代码被注释了，<code>Check_mode_flag</code> 永远是 FALSE</td></tr>
+<tr><td><b>老 GUI 点“全部恢复默认”</b></td><td><code>PC_Communicate()</code> → <code>Custom_Restore_Default()</code> → <code>Custom_RestoreAll_Default()</code>（custom.c:304）→ 本函数</td><td>✅ 老 GUI 发命令时会</td></tr>
+</tbody></table></div>
+
+<h2><span class="step">2/6</span>它要填的东西长什么样</h2>
+<p>全局变量 <code>gloabSetting</code>（custom.c:19，类型在 <code>inc/Led_Effect_H/custom.h:155~164</code>）分两半：</p>
+<div class="scroll"><table>
+<thead><tr><th>部分</th><th>成员</th><th>意思</th></tr></thead>
+<tbody>
+<tr><td rowspan="3"><code>.setting</code><br>全局，3 字节</td><td><code>sign</code></td><td>“存过一次”标记，<code>STORE_ONCE_SIGN = 0xAA</code>。老代码开机时靠它判断 EEPROM 里有没有有效设置</td></tr>
+<tr><td><code>currentMode</code></td><td>当前用第几套配置（0 或 1）</td></tr>
+<tr><td><code>FP_ID</code></td><td>指纹 ID（Fingerprint）。指纹功能早就删了，只有老 GUI 命令还会写它（pc_communicate.c:615）</td></tr>
+<tr><td><code>.settingMode</code><br>一套配置，129 字节</td><td><code>nameID</code>、<code>name[30]</code>、<code>key_function[10]</code>、<code>dpi_class[5]</code>、回报率、DPI 档位、灯效……</td><td><b>RAM 里只有一套</b>：当前正在用的那套</td></tr>
+</tbody></table></div>
+<div class="def"><b>关键</b>：配置有 <code>MODE_NUM = 2</code> 套，但 RAM 里只放<b>一套</b>，另一套平时躺在 EEPROM 里。EEPROM 布局（第 11 课）：0x000 起 3 字节全局，0x003 起第 0 套，0x084 起第 1 套，每套 129 字节。切换配置时，从 EEPROM 把那一套读进 RAM。</div>
+
+<h2><span class="step">3/6</span>逐行看：老代码怎么跑，现在怎么跑</h2>
+<div class="box try"><div class="tag">动手 · 选一个版本，点“下一步”一行一行跑</div>
+<div class="modes" id="ver"></div>
+<div class="btns"><button type="button" id="nx">下一步</button><button type="button" id="rs">从头</button></div>
+<div class="cl" id="code"></div>
+<div class="mem">
+<div style="--c:var(--sw)"><h4>RAM：gloabSetting</h4><div id="ram"></div></div>
+<div style="--c:var(--gold)"><h4>EEPROM（老区）</h4><div id="ee"></div></div>
+</div>
+<div class="card" id="msg" aria-live="polite"></div>
+</div>
+<p><code>Custom_ModeParamter_Init(mode)</code>（custom.c:172）做的事：<code>nameID = mode</code>；名字 = “配置文件” + (mode+1)；再调 <code>Custom_DefineKey_Init()</code>（10 个键的功能）、<code>Custom_Perform_Init()</code>（4 档 DPI、回报率 1000、默认第 4 档）、<code>Custom_LefEffect_Init()</code>（灯效）。<b>它写的都是 RAM 里那唯一一套 <code>settingMode</code></b>。</p>
+<div class="card"><b class="t">名字是怎么来的</b><br><code>profileName[]</code>（custom.c:42）里存的是 UTF-8 字节：<code>233,133,141</code> = 配，<code>231,189,174</code> = 置，<code>230,150,135</code> = 文，<code>228,187,182</code> = 件，第 12 个字节 <code>49</code> = 字符 '1'。<code>profileName[12] = 49 + mode</code> 就把最后一位改成 '1' 或 '2'。</div>
+
+<h2><span class="step">4/6</span>本项目改完后留下的小毛病</h2>
+<div class="card" style="border-left-color:var(--bad)"><b class="t">⚠️ 循环白跑一遍，RAM 里留下的是“第 2 套”</b><br>老代码的循环是：填 RAM 第 0 套 → <b>存进 EEPROM 槽 0</b> → 填 RAM 第 1 套 → <b>存进槽 1</b>；之后 <code>Custom_Load_ModeSetting()</code> 再按 <code>currentMode = 0</code> 从槽 0 读回 RAM。<br>现在“存”和“读回”都注释掉了：循环把 RAM 填了两遍，第二遍盖掉第一遍，最后 RAM 里是 <code>nameID = 1</code>、名字“配置文件2”，而 <code>currentMode = 0</code>。<br><b>影响很小</b>：两套除了编号和名字完全一样（DPI、键位都是默认值），只有老 GUI 读配置名（pc_communicate.c:869）时会显示“配置文件2”。</div>
+<div class="card"><b class="t">另外两个“看着不对劲”的地方</b><br>① 第 204~207 行：<code>for</code> 和大括号被注释了，但中间那句 <code>FP_ID = 0xff;</code> 没注释，缩进还留着，看起来像在循环里，其实只执行一次。<br>② <code>sign = 0xAA</code> 现在没人读：读它的“开机判断”已被注释。</div>
+
+<h2><span class="step">5/6</span>你可以怎么改</h2>
+<div class="scroll"><table>
+<thead><tr><th>想做什么</th><th>怎么改</th><th>风险</th></tr></thead>
+<tbody>
+<tr><td>修掉“配置文件2”</td><td>循环改成只调 <code>Custom_ModeParamter_Init(gloabSetting.setting.currentMode)</code>，或者在循环后再调一次 <code>Custom_ModeParamter_Init(0)</code></td><td>低。只影响老 GUI 显示的名字</td></tr>
+<tr><td>改出厂默认值（DPI、键位）</td><td>不改这个函数，改它调用的 <code>Custom_Perform_Init()</code>、<code>Custom_DefineKey_Init()</code></td><td>注意 DPI 档位现在不影响 PAW3950（见“app 文件夹四份代码”第 6 节）</td></tr>
+<tr><td>恢复“开机读回设置”</td><td>要同时取消 <code>Custom_Init()</code>、<code>Custom_Load_ModeSetting()</code> 里的注释</td><td>高：EEPROM 里可能是旧格式或乱数据。是不是有意关掉的，<b>先问杰哥</b></td></tr>
+</tbody></table></div>
+<p class="note">按规矩：改完先编译，再上板试，再问杰哥。</p>
+
+<h2><span class="step">6/6</span>T1A</h2>
+<p>T1A 的设置走新协议（<code>my_protocol*.c</code>，EEPROM 0xF00 起，第 11 课），这套老设置只剩老 GUI 和按键翻译在用。T1A 要决定：DPI 档位、键位以后存在哪一套里。如果统一用新协议，这个函数就只剩“给按键翻译表填默认值”这一个作用。</p>
+
+<h2>小测</h2>
+<div class="box quiz" id="quiz"></div>
+<div class="sum"><b>记住：</b>这个函数把 RAM 里的设置全部填成默认值。RAM 里只有一套配置，所以现在循环跑两遍等于第二遍盖掉第一遍。老代码靠“每填一套就存一套进 EEPROM，再读回当前那套”避免了这个问题，本项目把存和读都注释了。</div>
+<h3>本页新词</h3>
+<table><tbody>
+<tr><td><b>配置档（profile / mode）</b></td><td>一整套设置；这里有 2 套，RAM 里只放当前那套</td></tr>
+<tr><td><b>出厂默认值</b></td><td>代码里写死的初始设置，恢复默认时用</td></tr>
+<tr><td><b>“存过”标记（sign）</b></td><td>写在存储里的一个固定值，开机看到它就知道存储里的数据有效</td></tr>
+</tbody></table>
+</div>
+<script>
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
+const OLD=[
+ ['void Custom_Paramter_Init(void)','h'],['{','h'],['\tUINT8 ii;','h'],
+ ['\tgloabSetting.setting.sign = STORE_ONCE_SIGN;',s=>{s.sign='0xAA';s.chg='set'},'sign = 0xAA：标记“存储里的设置有效”'],
+ ['\tgloabSetting.setting.currentMode = 0;',s=>{s.cur='0';s.chg='set'},'当前用第 0 套'],
+ ['\tfor (ii = 0;ii < MODE_NUM;ii++)','h'],['\t{','h'],
+ ['\t\tgloabSetting.setting.FP_ID = 0xff;',s=>{s.fp='0xFF';s.chg='set'},'老代码里这句在循环里，跑两遍，结果一样'],
+ ['\t}','h'],
+ ['\tOperateFlash_Store_GloabSetting();',s=>{s.eg=`sign=${s.sign} cur=${s.cur} FP=${s.fp}`;s.chg='eg'},'把全局 3 字节存进 EEPROM 0x000'],
+ ['\tfor (ii = 0;ii < MODE_NUM;ii++) {   // ii = 0','h'],
+ ['\t\tCustom_ModeParamter_Init(0);',s=>{s.ram='nameID 0 · “配置文件1” · 默认 DPI / 键位';s.chg='ram'},'RAM 里那一套填成第 0 套的默认值……'],
+ ['\t\t  └ OperateFlash_Store_ModeSetting(0);',s=>{s.e0=s.ram;s.chg='e0'},'……并存进 EEPROM 槽 0（0x003）'],
+ ['\t}  // ii = 1','h'],
+ ['\t\tCustom_ModeParamter_Init(1);',s=>{s.ram='nameID 1 · “配置文件2” · 默认 DPI / 键位';s.chg='ram'},'RAM 被第 1 套覆盖……'],
+ ['\t\t  └ OperateFlash_Store_ModeSetting(1);',s=>{s.e1=s.ram;s.chg='e1'},'……存进槽 1（0x084）。RAM 现在是第 2 套，没关系，下一步会读回'],
+ ['}','h'],
+ ['(返回后) Custom_Load_ModeSetting() → OperateFlash_Read_ModeSetting(currentMode = 0)',s=>{s.ram=s.e0;s.chg='ram'},'按 currentMode = 0 从槽 0 读回 RAM：RAM = “配置文件1”，和 currentMode 一致 ✅'],
+];
+const NOW=[
+ ['void Custom_Paramter_Init(void)','h'],['{','h'],['\tUINT8 ii;','h'],
+ ['\tgloabSetting.setting.sign = STORE_ONCE_SIGN;',s=>{s.sign='0xAA';s.chg='set'},'sign = 0xAA，但现在没人读它'],
+ ['\tgloabSetting.setting.currentMode = 0;',s=>{s.cur='0';s.chg='set'},'当前用第 0 套'],
+ ['//\tfor (ii = 0;ii < MODE_NUM;ii++)','c'],['//\t{','c'],
+ ['\t\tgloabSetting.setting.FP_ID = 0xff;',s=>{s.fp='0xFF';s.chg='set'},'循环被注释，这句只跑一次（缩进是骗人的）'],
+ ['//\t}','c'],
+ ['//\tOperateFlash_Store_GloabSetting();','c','不存 EEPROM'],
+ ['\tfor (ii = 0;ii < MODE_NUM;ii++) {   // ii = 0','h'],
+ ['\t\tCustom_ModeParamter_Init(0);',s=>{s.ram='nameID 0 · “配置文件1” · 默认 DPI / 键位';s.chg='ram'},'RAM 填成第 0 套（Custom_ModeParamter_Init 里的存储也被注释了，custom.c:192）'],
+ ['\t}  // ii = 1','h'],
+ ['\t\tCustom_ModeParamter_Init(1);',s=>{s.ram='nameID 1 · “配置文件2” · 默认 DPI / 键位';s.chg='ram'},'RAM 被第 1 套覆盖'],
+ ['}','h'],
+ ['(返回后) Custom_Load_ModeSetting()  // 里面的读取被注释了 (custom.c:298)',s=>{s.chg=''},'没读回。结果：currentMode = 0，RAM 里却是“配置文件2”（nameID = 1）⚠️'],
+];
+let ver=1,pc=-1,S;
+function init(){S={sign:'?',cur:'?',fp:'?',ram:'（上次的内容）',eg:'（不变）',e0:'（不变）',e1:'（不变）',chg:''};pc=-1}
+function steps(){return ver?NOW:OLD}
+function nextStep(){const L=steps();while(pc<L.length-1){pc++;const r=L[pc];if(typeof r[1]==='function'){S.chg='';r[1](S);draw(r[2]);return}if(r[2]){S.chg='';draw(r[2]);return}}draw('跑完了。点“从头”，或换另一个版本对比。')}
+function draw(m){const L=steps();
+ $('code').innerHTML=L.map((r,i)=>`<div class="${i===pc?'cur':''} ${r[1]==='c'?'cm':''}">${r[0].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\t/g,'    ')}</div>`).join('');
+ const sl=(k,lab,v,off)=>`<div class="slot ${S.chg===k?'chg':''} ${off?'off':''}"><b>${lab}</b>${v}</div>`;
+ $('ram').innerHTML=sl('set','.setting',`sign = ${S.sign} · currentMode = ${S.cur} · FP_ID = ${S.fp}`)+sl('ram','.settingMode',S.ram);
+ $('ee').innerHTML=sl('eg','0x000 全局',S.eg,ver)+sl('e0','0x003 槽 0',S.e0,ver)+sl('e1','0x084 槽 1',S.e1,ver);
+ $('msg').innerHTML=m||'点“下一步”。';
+ [...$('ver').children].forEach((b,i)=>b.setAttribute('aria-pressed',i===ver))}
+['老代码（M300S）','现在（本项目）'].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.style.setProperty('--c',V(i?'sw':'muted'));b.onclick=()=>{ver=i;init();draw(i?'现在的版本：EEPROM 一栏变灰，表示这次不会写它。':'老代码：每填一套就存一套。')};$('ver').appendChild(b)});
+$('nx').onclick=nextStep;$('rs').onclick=()=>{init();draw()};init();draw();
+const Q=[
+ ['1. RAM 里同时放着几套配置？',['1 套','2 套','5 套'],0,'对。另一套平时在 EEPROM 里。','看第 2 节的“关键”。'],
+ ['2. 现在每次开机会不会调用这个函数？',['会','不会','只在按住组合键时'],0,'对。Custom_Init() 里的判断被注释了，变成无条件调用。','看第 1 节第一行。'],
+ ['3. 现在跑完后，RAM 里的配置名是？',['配置文件1','配置文件2','空的'],1,'对。第二遍循环盖掉了第一遍，又没有从 EEPROM 读回。','在第 3 节选“现在”跑一遍。'],
+ ['4. 想改出厂默认的 DPI，应该改哪里？',['这个函数','Custom_Perform_Init()','EEPROM'],1,'对。这个函数只负责“调用它们”。','看第 5 节。'],
+];
+(function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0]}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+</script>
