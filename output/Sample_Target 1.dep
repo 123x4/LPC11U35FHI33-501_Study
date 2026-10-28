@@ -343,7 +343,7 @@ I (.\inc\Led_Effect_H\test.h)(0x6A704FED)
 I (.\inc\IAP_CMD.h)(0x6A704FED)
 I (.\inc\OSC.h)(0x6A704FED)
 I (.\inc\gtech_flash.h)(0x6A704FED)
-F (.\src\WWDT.c)(0x6AD56BE1)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-ID:\Keil5\Core\ARM\RV31\INC-ID:\Keil5\Core\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="537"-o .\output\wwdt.o --omf_browse .\output\wwdt.crf --depend .\output\wwdt.d)
+F (.\src\WWDT.c)(0x6ADAB5CE)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-ID:\Keil5\Core\ARM\RV31\INC-ID:\Keil5\Core\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="537"-o .\output\wwdt.o --omf_browse .\output\wwdt.crf --depend .\output\wwdt.d)
 I (src\../inc/LPC11Uxx.h)(0x6AD56BE1)
 I (src\../inc/core_cm0.h)(0x6A704FED)
 I (D:\Keil5\Core\ARM\ARMCC\include\stdint.h)(0x6025237E)
