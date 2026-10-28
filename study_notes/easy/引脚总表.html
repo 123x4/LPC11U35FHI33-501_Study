@@ -182,8 +182,9 @@ details.ans[open]{background:var(--soft)}
 const NS="http://www.w3.org/2000/svg";
 function el(p,t,a,x){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e}
 const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
-const UPDATED='第 11 课（EEPROM 与 IAP，没有用到引脚）';
+const UPDATED='第 12 课（看门狗、复位、掉电）';
 const LOG=[
+ ['第 12 课','RESET/PIO0_0 标为已学：复位脚拉低 = 外部复位（SYSRSTSTAT 的 EXTRST 位）'],
  ['第 11 课','EEPROM 和 IAP 在芯片内部，不占引脚；只提到 PIO0_1 / PIO0_3 是 ISP 入口脚（了解即可）'],
  ['第 10 课','USB 四根脚：PIO0_3（VBUS）、USB_DM、USB_DP、PIO0_6（CONNECT）标为已学'],
  ['第 9 课','SPI 三根线 PIO0_21 / PIO0_22 / PIO1_15、片选 PIO0_20、MOTION PIO0_2 标为已学'],
@@ -196,7 +197,7 @@ const CAT={btn:['按键 / 滚轮','sw'],sen:['光学传感器 / SPI','per'],adc:
 /* pin: [no, name, cat, funcs, iocon(table,page), reset, irpt, config(html), runtime(html), lessons(array or []), t1a] */
 const PINS=[
  [1,'PIO1_19','none','0=PIO1_19 · 1=DTR · 2=SSEL1','119 / p.119','输入，上拉','没用','没有代码设置，保持复位状态','—',[],'未接'],
- [2,'RESET/PIO0_0','sys','0=RESET · 1=PIO0_0','76 / p.86','RESET 功能','复位脚：拉低就复位芯片','没有改（保持 RESET 功能）','—',[],'nRESET，同时接 PAW3950 的复位 ⚠️'],
+ [2,'RESET/PIO0_0','sys','0=RESET · 1=PIO0_0','76 / p.86','RESET 功能','复位脚：拉低就复位芯片','没有改（保持 RESET 功能）','—',[12],'nRESET，同时接 PAW3950 的复位 ⚠️'],
  [3,'PIO0_1','btn','0=PIO0_1 · 1=CLKOUT · 2=CT32B0_MAT2 · 3=USB_FTOGGLE','77 / p.87','输入，上拉','前侧键 K4（按下 = 0）；复位时也是 ROM 检查的 ISP 脚','<code>GPIO.c:480</code> 设为输入（FUNC、MODE 保持复位值：GPIO、上拉）','每 1 ms 通过 <code>BUTTON_PORT0</code> 读（button.h:149）；休眠时进组中断唤醒（wnDrv_Pmu.c:66）',[1,6,11],'/CE：充电芯片使能 ⚠️'],
  [4,'XTALIN','sys','晶振输入（专用）','—','—','12 MHz 晶振','<code>OSC.c:35</code> 给晶振通电（1-2 课）','—',[3],'12 MHz 晶振（不变）'],
  [5,'XTALOUT','sys','晶振输出（专用）','—','—','12 MHz 晶振','同上','—',[3],'同上'],

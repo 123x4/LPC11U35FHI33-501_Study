@@ -1,0 +1,472 @@
+<title>看门狗、复位与掉电</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
+.mx{border-collapse:separate;border-spacing:4px;min-width:720px}
+.mx th{text-align:center;font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.mx th.s{text-align:left;font-size:.85rem;color:var(--muted);font-family:var(--font-b);width:150px}
+.mx td{padding:0;border:0}
+.mx button{width:100%;font:inherit;font-size:.8rem;line-height:1.35;padding:6px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-align:left;min-height:46px}
+.mx button.w-sw{border-left:5px solid var(--sw)}
+.mx button.w-ex{border-left:5px solid var(--muted)}
+.mx button.w-hw{border-left:5px solid var(--per)}
+.mx button.na{color:var(--muted);background:var(--soft);border-style:dashed}
+.mx button[aria-pressed="true"]{outline:3px solid var(--pc);outline-offset:1px}
+.who{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.85rem;margin:.4rem 0}
+.who span{display:inline-flex;align-items:center;gap:6px}
+.who i{width:14px;height:14px;border-radius:3px;display:inline-block}
+pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
+details.ans{margin:.4rem 0;border:1px dashed var(--line);border-radius:6px;padding:4px 10px;background:var(--panel)}
+details.ans summary{cursor:pointer;color:var(--per);font-size:.9rem}
+details.ans[open]{background:var(--soft)}
+.task{border-left:4px solid var(--per);background:var(--panel);border-radius:0 6px 6px 0;padding:8px 12px;margin:.6rem 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.task .pg{font-family:var(--font-m);font-size:.8rem;color:var(--per)}
+.sim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:640px){.sim{grid-template-columns:minmax(0,1fr)}}
+.sim fieldset{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:0 0 8px}
+.sim legend{font-size:.82rem;color:var(--muted);padding:0 4px}
+.sim label{display:inline-flex;align-items:center;gap:4px;margin:2px 10px 2px 0;font-size:.9rem;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;margin:.4rem 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+</style>
+<style>
+.rsbtns{display:flex;flex-wrap:wrap;gap:8px;margin:.3rem 0 .6rem}
+.rsbtns button{font:inherit;font-size:.9rem;border:2px solid var(--c);border-radius:8px;padding:6px 12px;background:var(--panel);color:var(--fg);cursor:pointer}
+.rsbtns button[aria-pressed="true"]{background:color-mix(in srgb,var(--c) 22%,transparent)}
+.bits{display:flex;gap:4px;margin:.4rem 0}
+.bits span{flex:1;text-align:center;border:1.5px solid var(--line);border-radius:6px;padding:5px 2px;font-size:.8rem;line-height:1.3}
+.bits span.on{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 25%,transparent);font-weight:700}
+.bits span i{display:block;font-style:normal;font-family:var(--font-m);font-size:.72rem;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--per)}
+</style>
+<div class="wrap">
+<div class="eyebrow">轻松版 · 第 12 课 · 芯片外设</div>
+<h1>看门狗、复位、掉电：程序卡死了怎么办</h1>
+<p class="lede">再小心的程序也可能卡住：比如死循环、跑飞、电压突然掉下去。这一课讲芯片的三道“保险”：<b>看门狗</b>（程序太久没报平安就重启）、<b>复位</b>（重启有哪几种原因、怎么查）、<b>掉电检测 BOD</b>（电压太低就先别跑）。照例先讲场景，再讲代码，手册放最后。</p>
+<div class="where"><span>📍</span><div>在地图上：第 ① 列 <b>WWDT</b>、<b>系统控制</b> ↔ 第 ③ 列 <b>主循环喂狗</b>、<b>进入升级</b>、<b>挂起</b>。手册：第 17 章（WWDT）、第 3 章（复位状态、BOD、看门狗振荡器）。</div></div>
+
+<h2><span class="step">1/9</span>看门狗：一个要你定时“报平安”的倒计时</h2>
+<p>看门狗是芯片里的一个倒计时器。程序要时不时去把它<b>拨回满格</b>（叫“喂狗”）。只要程序正常跑，倒计时永远到不了 0；一旦程序卡死、没人喂，倒计时归零，芯片就<b>自己重启</b>。</p>
+<div class="box try"><div class="tag">动手 · 看门狗模拟器（时间加快了 20 倍）</div>
+<div class="scroll"><svg id="wdSvg" viewBox="0 0 780 200" width="780" height="200" role="img" aria-label="看门狗倒计时"></svg></div>
+<div class="btns"><button type="button" id="wdHang">让程序卡死</button><button type="button" id="wdOk">恢复正常</button><button type="button" id="wdIsr">试试“在看门狗中断里喂”</button></div>
+<div class="card" id="wdInfo" aria-live="polite"></div>
+</div>
+<div class="def"><b>看门狗（WWDT）</b>：Windowed Watchdog Timer，带“窗口”功能的看门狗定时器。<br><b>喂狗（feed）</b>：往 FEED 寄存器先写 0xAA、再写 0x55，倒计时就重新装满。<br><b>复位</b>：芯片从头开始跑，相当于重启；RAM 里的变量要重新初始化。</div>
+<p>这个项目的设置（下一节算给你看）：<b>倒计时约 65 秒</b>，主循环每转一圈喂一次（device.c:515）。主循环一圈只要几毫秒，所以正常情况下离 0 远得很。</p>
+
+<h2><span class="step">2/9</span>先看场景：芯片什么时候会重启</h2>
+<p>芯片有 <b>5 种</b>复位原因，每一种都会在 <b>SYSRSTSTAT</b> 寄存器里留下记号。点一点：</p>
+<div class="box try"><div class="tag">动手 · 选一种复位原因</div>
+<div class="rsbtns" id="rsBtns"></div>
+<div class="bits" id="rsBits"></div>
+<div class="card" id="rsInfo" aria-live="polite"></div>
+</div>
+<p>不管哪种原因，复位以后的路都一样：<b>ROM 启动程序 → 公司 bootloader → 我们的程序</b>（见《芯片存储地址分布》）。区别只在于 bootloader 和我们的程序能不能从 SYSRSTSTAT 看出“刚才为什么重启”。</p>
+
+<h2><span class="step">3/9</span>看门狗的倒计时是怎么算出 65 秒的</h2>
+<p>原始代码（WWDT.c:51~97，<code>wwdt_config()</code>）里决定时间的几行：</p>
+<pre class="code">		LPC_SYSCON->WDTOSCCTRL  = ((0x2) << 5) | ((20 >> 1) - 1);// Uses the watchdog oscillator set at a 50KHz (1Mhz / 20) clock rate.
+		...
+		clk = ((LPC_SYSCON->WDTOSCCTRL >> 5) & 0xF);	// Get WDT oscillator settings
+		wdt_div = LPC_SYSCON->WDTOSCCTRL & 0x1F;
+		WDTLFORate = wdtOSCRate[clk] / ((wdt_div + 1) << 1);	// Compute clock rate and divided by divde value
+		wdtFreq = WDTLFORate / 4;
+		...
+		LPC_WWDT->TC = (wdtFreq / 1000) * wwdt_time;</pre>
+<p>调用链：<code>Device_Init()</code> 第一行（device.c:419）→ <code>wwdt_config(0xFFFF)</code>。一步步算：</p>
+<table>
+<thead><tr><th>步骤</th><th>算式</th><th>结果</th></tr></thead>
+<tbody>
+<tr><td>看门狗振荡器原始频率</td><td><code>(0x2) << 5</code> → FREQSEL = 2</td><td>1.05 MHz</td></tr>
+<tr><td>分频</td><td><code>(20 >> 1) - 1</code> = 9 → 除以 2 × (1 + 9) = 20</td><td>52.5 kHz</td></tr>
+<tr><td>看门狗内部固定再除以 4</td><td>52500 ÷ 4</td><td>13125 次 / 秒</td></tr>
+<tr><td>每毫秒几次（整数除法）</td><td>13125 / 1000</td><td>13（小数被丢掉）</td></tr>
+<tr><td>TC（倒计时起点）</td><td>13 × 0xFFFF = 13 × 65535</td><td>851955</td></tr>
+<tr><td><b>倒计时长度</b></td><td>851955 ÷ 13125</td><td><b>约 65 秒</b></td></tr>
+</tbody></table>
+<p class="note">⚠️ 看门狗振荡器很不准：数据手册说频率可能偏差 <b>±40%</b>，所以实际可能在 46~108 秒之间。注释里写的“50KHz”也不对，按手册算是 52.5 kHz。看门狗只求“卡死后最终能重启”，不需要准。</p>
+
+<h2><span class="step">4/9</span>掉电检测 BOD：电压太低就按住复位</h2>
+<p>电压掉得太低时，芯片可能还在跑，但读错 Flash、算错数，比直接停下来更危险。<b>BOD</b>（Brown-Out Detect，掉电检测）就是一个电压比较器：电压低于门限，就把芯片按在复位状态；电压回升到另一个门限以上，才放开。</p>
+<div class="box try"><div class="tag">动手 · 拖动电源电压</div>
+<div class="scroll"><svg id="bodSvg" viewBox="0 0 780 170" width="780" height="170" role="img" aria-label="BOD 电压"></svg></div>
+<input type="range" id="bodV" min="150" max="340" value="330" aria-label="电源电压">
+<div class="card" id="bodInfo" aria-live="polite"></div>
+</div>
+<p>原始代码（device.c:479~481，在 <code>Device_Init()</code> 后段）：</p>
+<pre class="code">  LPC_SYSCON->BODCTRL = (3 << 0)   /* BODRSTLEV = Level 3 (2.63V assert / 2.71V release) */
+                      | (0 << 2)   /* BODINTVAL = 0 (interrupt disabled) */
+                      | (1 << 4);  /* BODRSTENA = 1 (enable brown-out reset) */</pre>
+<div class="def"><b>回差</b>：往下掉要到 2.63 V 才复位，往上回要到 2.71 V 才放开。两个门限不一样，是为了电压在门限附近抖动时不会反复复位。</div>
+
+<h2><span class="step">5/9</span>看门狗和 BOD 的一生：生命周期图</h2>
+<div class="box scroll" style="padding:10px"><svg id="lifeSvg" viewBox="0 0 900 420" width="900" height="420" role="img" aria-label="看门狗生命周期"></svg></div>
+<div class="btns"><button type="button" id="lfPrev">上一步</button><button type="button" id="lfNext">下一步</button><span class="note" id="lfPos" style="align-self:center"></span></div>
+<div class="card" id="lifeInfo" aria-live="polite"></div>
+<div class="card" style="border-left-color:var(--gold)"><b class="t">一句话来龙去脉</b><br><code>Device_Init()</code> 第一件事就是 <code>wwdt_config(0xFFFF)</code>：打开看门狗振荡器、设好约 65 秒的倒计时、选“超时就复位”、启动并喂第一次。之后主循环每圈 <code>wwdt_feed()</code>。<code>Device_Init()</code> 后段打开 BOD 复位（2.63 V）。挂起睡觉时，看门狗振荡器和 BOD 都被关掉；醒来时重新 <code>wwdt_config(0xFFFF)</code>，但 <b>BOD 没有重新打开</b>（第 8 节）。进入升级时，程序往 RAM 写标志再 <code>NVIC_SystemReset()</code>，用软件复位把控制权交给 bootloader。</div>
+
+<h2><span class="step">6/9</span>七步核对 + 标志位谁来清</h2>
+<table>
+<thead><tr><th>步骤</th><th>看门狗</th><th>代码</th><th>手册（自己找）</th></tr></thead>
+<tbody>
+<tr><td>① 通电</td><td>看门狗振荡器上电（PDRUNCFG bit6）</td><td>WWDT.c:59</td><td>PDRUNCFG</td></tr>
+<tr><td>② 时钟</td><td>寄存器时钟 bit15；振荡器频率；选看门狗振荡器当时钟源</td><td>WWDT.c:58、60、76</td><td>SYSAHBCLKCTRL、WDTOSCCTRL、CLKSEL</td></tr>
+<tr><td>③ 解锁</td><td>不需要</td><td>—</td><td>—</td></tr>
+<tr><td>④ 引脚</td><td>不需要</td><td>—</td><td>—</td></tr>
+<tr><td>⑤ 配置</td><td>TC = 851955；WARNINT = 0；MOD：WDRESET = 1、WDEN = 1；喂一次才真正开始</td><td>WWDT.c:80~95</td><td>MOD、TC、WARNINT、FEED</td></tr>
+<tr><td>⑥ 中断</td><td>NVIC 开了 WDT 中断，中断函数里喂狗（但没用，见第 8 节）</td><td>WWDT.c:36~39、91~92</td><td>WARNINT</td></tr>
+<tr><td>⑦ 使用</td><td>主循环每圈喂</td><td>device.c:515</td><td>FEED</td></tr>
+</tbody></table>
+<h3>标志位清单</h3>
+<table>
+<thead><tr><th>标志</th><th>什么时候变 1</th><th>怎么清</th><th>谁清</th></tr></thead>
+<tbody>
+<tr><td><b>MOD.WDTOF</b>（bit2）超时标志</td><td>看门狗超时、喂狗顺序错</td><td><b>写 0</b> 清</td><td>⬜ <code>wwdt_config()</code> 里 <code>MOD &amp;= ~(1&lt;&lt;2)</code>（WWDT.c:87）。清掉前没人看过它</td></tr>
+<tr><td><b>MOD.WDINT</b>（bit3）警告标志</td><td>倒计时到 WARNINT</td><td><b>写 1</b> 清</td><td>⬜ <code>wwdt_config()</code> 里 <code>MOD |= (1&lt;&lt;3)</code>（WWDT.c:88）</td></tr>
+<tr><td><b>SYSRSTSTAT</b> 各位</td><td>对应的复位发生</td><td><b>写 1</b> 清</td><td>⬜ 公司 bootloader 只在“软件复位”时清（<code>|= 1&lt;&lt;4</code>）；我们的程序不读也不清</td></tr>
+</tbody></table>
+<p class="note">注意同一个 MOD 寄存器里，WDTOF 是“写 0 清”，WDINT 是“写 1 清”，正好相反。手册 17.8.1 表格下面那两段专门说了这件事。</p>
+
+<h2><span class="step">7/9</span>📖 手册导读（只给名字，先自己找）</h2>
+<div class="task"><b>任务 1：</b>第 17 章开头找 <b>Basic configuration</b> 和 <b>Applications</b>。Applications 最后一段举了一个例子，说什么样的写法会让看门狗失效？</div>
+<details class="ans"><summary>答案</summary><b>17.2、17.4，p.369~370</b>。基本配置 3 条：开 SYSAHBCLKCTRL bit15、在 PDRUNCFG 打开时钟源、要唤醒的话开 STARTERP1。<br>17.4 原文：<i>“application code could be stuck in an interrupt service that contains a watchdog feed.”</i> 如果在某个中断里喂狗，程序卡在那个中断里时还会一直喂，看门狗就救不了。用“窗口”功能可以防止这种情况。</details>
+<div class="task"><b>任务 2：</b>找 <b>Watchdog mode register</b>（MOD）。哪几位一旦写 1 就再也改不回 0？WDTOF 和 WDINT 分别怎么清？</div>
+<details class="ans"><summary>答案</summary><b>Table 337，p.373~374</b>。WDEN、WDRESET、WDPROTECT、LOCK 写 1 后软件改不回来，只有复位能清。所以 <code>wwdt_config()</code> 开头的 <code>MOD = 0</code>（WWDT.c:64）在看门狗已经开过以后<b>没有作用</b>。<br>表下面原文：WDTOF <i>“is cleared by software writing a 0”</i>；WDINT <i>“is cleared by software by writing a 1”</i>。</details>
+<div class="task"><b>任务 3：</b>找 <b>Watchdog Feed register</b>。喂狗写到一半（写了 0xAA 还没写 0x55）时去碰别的看门狗寄存器，会怎样？</div>
+<details class="ans"><summary>答案</summary><b>Table 340 上面那段，p.375</b>：<i>“access to any Watchdog register other than writing 0x55 to WDFEED causes an immediate reset”</i>。立刻复位。手册建议喂狗的两句之间关中断，防止中断里也去碰看门狗。这个项目只有看门狗自己的中断会碰它（第 8 节），影响不大。</details>
+<div class="task"><b>任务 4：</b>找 <b>Watchdog Timer Warning Interrupt register</b>。WARNINT = 0 时，警告中断什么时候来？</div>
+<details class="ans"><summary>答案</summary><b>17.8.6，Table 343，p.376~377</b>。原文：<i>“If WARNINT is 0, the interrupt will occur at the same time as the watchdog event.”</i> 警告和复位同时发生，中断函数里来不及喂。所以 <code>WDT_IRQHandler()</code> 里的喂狗实际上没起作用。</details>
+<div class="task"><b>任务 5：</b>第 3 章找 <b>WDTOSCCTRL</b>，自己验算第 3 节的 52.5 kHz。再找它前面那段 Remark，看看这个振荡器有多不准。</div>
+<details class="ans"><summary>答案</summary><b>Table 14，p.26</b>。FREQSEL = 2 → 1.05 MHz；DIVSEL = 9 → 除以 2 × (1 + 9) = 20 → 52.5 kHz。Remark（p.26）：任何 FREQSEL 设置的频率都可能偏差 40%。</details>
+<div class="task"><b>任务 6：</b>第 3 章找 <b>SYSRSTSTAT</b> 和 <b>BODCTRL</b>。项目设的 BOD Level 3 是多少伏？</div>
+<details class="ans"><summary>答案</summary><b>Table 16，p.27</b>：bit0 POR 上电、bit1 EXTRST 复位脚、bit2 WDT 看门狗、bit3 BOD 掉电、bit4 SYSRST 软件复位，都是写 1 清。<br><b>Table 36，p.37</b>：BODRSTLEV = 3 → 低于 2.63 V 复位，高于 2.71 V 放开。BODRSTENA = 1 打开复位功能（复位后默认是 0，不打开）。</details>
+<div class="task"><b>任务 7（了解）：</b>找 <b>Watchdog timing examples</b>（17.9）看几张时序图。</div>
+<details class="ans"><summary>答案</summary><b>17.9，p.377 起</b>。画的是“提前喂（窗口外）→ 复位”“按时喂 → 继续”“警告中断 → 超时复位”几种情况。这个项目没开窗口（WINDOW 保持复位值 0xFF FFFF），所以任何时候喂都算数。</details>
+
+<h2><span class="step">8/9</span>容易出错、你能改什么、T1A</h2>
+<table><tbody>
+<tr><td>看门狗中断里喂狗，没起作用 ⚠️</td><td><code>WDT_IRQHandler()</code> 调 <code>wwdt_feed()</code>（WWDT.c:36~39）。WARNINT = 0，中断和复位同时到，来不及。<b>不会造成危害</b>，但会误导人以为“中断会自动续命”。如果把 WARNINT 改大，它反而有害：程序卡死了中断还在喂，看门狗就永远不复位了（手册 17.4 说的就是这个）。</td></tr>
+<tr><td>挂起后 BOD 没有重新打开 ⚠️</td><td>挂起时 <code>wnDrv_Pmu_Init()</code>（wnDrv_Pmu.c:61）和 <code>clockinit()</code>（usbhw.c:644）把 BOD 断电（PDRUNCFG bit3 = 1），醒来时没有任何代码把它打开。所以<b>电脑睡过一次以后，掉电复位就失效了</b>，直到下次重新插线。要不要修，问杰哥。</td></tr>
+<tr><td>倒计时 65 秒偏长</td><td>程序卡死后，鼠标要将近一分钟才会自己恢复。可以改小，但要先算清楚最慢的一圈主循环：开机 <code>TimerDelayMsec(500)</code>、PAW3950 初始化、写 EEPROM 等，都不能超过倒计时。和杰哥商量再改。</td></tr>
+<tr><td>复位原因没人记</td><td>我们的程序没读 SYSRSTSTAT，<code>wwdt_config()</code> 还把 WDTOF 清了。所以鼠标“自己重启过”是查不出来的。调试时可以在开机时读一下 SYSRSTSTAT 打印出来（只读，安全）。</td></tr>
+<tr><td>bootloader 的 <code>|=</code> 会顺手清掉别的位</td><td><code>SYSRSTSTAT |= 1&lt;&lt;4</code>：读出来再写回，其他为 1 的位也被写 1 = 一起清掉。和第 10 课 DEVCMDSTAT 是同一个坑。</td></tr>
+<tr><td>注释和实际相反</td><td>WWDT.c:61 <code>STARTERP1 &amp;= ~(1 &lt;&lt; 12)</code> 注释写“Enable”，实际是<b>关掉</b>看门狗唤醒（Table 44：1 才是打开）。睡眠时看门狗振荡器本来也关了，所以没影响。</td></tr>
+</tbody></table>
+<h3>你能改什么</h3>
+<ul>
+<li><b>倒计时长度</b>：改 <code>wwdt_config(0xFFFF)</code> 的参数（单位约 1 ms）。device.c:419 和 usbhw.c:707 两处要一起改。</li>
+<li><b>BOD 门限</b>：BODCTRL 的 BODRSTLEV（device.c:479）。要和硬件同事确认板子的供电电压。</li>
+<li><b>开机打印复位原因</b>：调试时有用，只读寄存器，不会变砖。</li>
+</ul>
+<h3>T1A 上</h3>
+<p>看门狗、复位、BOD 都在芯片内部，换板子<b>不用改</b>。要注意两点：T1A 加了<b>充电芯片 BQ21128</b> 和电池，供电路径变了，BOD 门限是否合适要问硬件同事；T1A 的 RESET 脚同时接了 PAW3950 的复位（引脚总表 2 号脚），按复位键时传感器也会一起复位。</p>
+
+<h2>小测验</h2>
+<div class="box quiz" id="quiz"></div>
+<div class="sum"><b>这一课你只需要记住：</b>看门狗是一个要定时喂的倒计时，这个项目约 65 秒，主循环每圈喂一次，卡死就自动重启。芯片有 5 种复位原因（上电、复位脚、看门狗、掉电、软件），都记在 SYSRSTSTAT 里，写 1 清。BOD 在电压低于 2.63 V 时把芯片按住不跑。进入升级用的是软件复位 <code>NVIC_SystemReset()</code>。</div>
+<h3>本课新词</h3>
+<table><tbody>
+<tr><td><b>看门狗 / 喂狗</b></td><td>要定时拨回去的倒计时 / 写 0xAA、0x55 拨回去</td></tr>
+<tr><td><b>复位</b></td><td>芯片从头开始跑</td></tr>
+<tr><td><b>POR / 软件复位</b></td><td>上电引起的复位 / 程序自己要求的复位</td></tr>
+<tr><td><b>BOD</b></td><td>掉电检测：电压太低就复位</td></tr>
+<tr><td><b>回差</b></td><td>往下和往上用两个不同的门限，防止来回抖</td></tr>
+<tr><td><b>看门狗振荡器</b></td><td>芯片里一个很省电但很不准的小时钟</td></tr>
+</tbody></table>
+<p class="note">下一课：第 13 课 时钟、电源与低功耗（手册第 3、4、5 章）：48 MHz 是怎么来的，挂起时怎么省电。</p>
+</div>
+<script>
+const NS="http://www.w3.org/2000/svg";
+function el(p,t,a,x){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e}
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const P=s=>`<pre class="code">${esc(s)}</pre>`;
+
+/* ---------- 1. watchdog simulator ---------- */
+(function(){const s=$('wdSvg');const TC=65,SPEED=20;let left=TC,mode='ok',resets=0,flash=0,lastFeed=0,last=null,isrTried=false;
+ const msg={ok:'程序正常：主循环每圈都喂狗，倒计时一直被拨回满格，永远到不了 0。',hang:'程序卡死了（比如掉进一个出不来的死循环），没人喂狗，倒计时一直往下走……',isr:'试试在看门狗中断里喂：这个项目 WARNINT = 0，中断要等倒计时到 0 才来，<b>和复位同一时刻</b>，来不及喂。'};
+ function draw(){s.textContent='';const X=40,W=700;
+  el(s,'text',{x:X,y:24,'font-size':13,'font-weight':700,fill:V('fg')},'看门狗倒计时（TC 约 65 秒）');
+  el(s,'rect',{x:X,y:40,width:W,height:34,rx:6,fill:V('soft'),stroke:V('line')});
+  const f=Math.max(0,left/TC),c=f>0.3?'sw':f>0.1?'gold':'bad';
+  el(s,'rect',{x:X,y:40,width:W*f,height:34,rx:6,fill:V(c),opacity:.75});
+  el(s,'text',{x:X+W/2,y:63,'text-anchor':'middle','font-size':14,'font-weight':700,fill:V('fg')},`还剩约 ${left.toFixed(1)} 秒`);
+  el(s,'text',{x:X,y:94,'font-size':11,fill:V('muted')},'0：复位');el(s,'text',{x:X+W,y:94,'text-anchor':'end','font-size':11,fill:V('muted')},'满格');
+  const st=mode==='ok'?['🟩 主循环：每圈 wwdt_feed()','sw']:['🟥 主循环：卡住了，不喂','bad'];
+  el(s,'text',{x:X,y:126,'font-size':13,'font-weight':600,fill:V(st[1])},st[0]);
+  el(s,'text',{x:X,y:150,'font-size':12.5,fill:V('fg')},`已经自动复位了 ${resets} 次`);
+  if(flash>0){el(s,'rect',{x:0,y:0,width:780,height:200,fill:V('bad'),opacity:Math.min(.35,flash/3)});el(s,'text',{x:390,y:185,'text-anchor':'middle','font-size':18,'font-weight':700,fill:V('bad')},'倒计时到 0 → 看门狗复位！芯片重启');}
+ }
+ function tick(t){if(last==null)last=t;const dt=Math.min(.1,(t-last)/1000);last=t;
+  left-=dt*SPEED;
+  if(mode==='ok'&&t-lastFeed>250){left=TC;lastFeed=t}
+  if(left<=0){resets++;flash=3;left=TC;
+   const isr=mode==='isr';mode='ok';
+   $('wdInfo').innerHTML=(isr?'中断和复位同时到了，<b>复位赢了</b>：中断函数里的 <code>wwdt_feed()</code> 根本来不及执行。<br>':'')+'芯片重启后从头跑：ROM → bootloader → 我们的程序，<code>Device_Init()</code> 重新打开看门狗，主循环又开始喂。对用户来说就是鼠标断开、重新连上。SYSRSTSTAT 的 WDT 位会被置 1。';$('wdInfo').style.borderLeftColor=V('bad')}
+  if(flash>0)flash-=dt*3;
+  draw();requestAnimationFrame(tick)}
+ $('wdHang').onclick=()=>{mode='hang';$('wdInfo').innerHTML=msg.hang;$('wdInfo').style.borderLeftColor=V('gold')};
+ $('wdOk').onclick=()=>{mode='ok';$('wdInfo').innerHTML=msg.ok;$('wdInfo').style.borderLeftColor=V('sw')};
+ $('wdIsr').onclick=()=>{mode='isr';$('wdInfo').innerHTML=msg.isr;$('wdInfo').style.borderLeftColor=V('gold')};
+ $('wdInfo').innerHTML=msg.ok;$('wdInfo').style.borderLeftColor=V('sw');draw();requestAnimationFrame(tick);
+})();
+
+/* ---------- 2. reset sources ---------- */
+const RS=[
+ ['POR','上电复位',0,'per','插上 USB 线、或者电压从 0 升上来。','RAM 里是随机值。bootloader 看到不是软件复位，就算 0x1000 1F00 碰巧是 0xAA 也不进升级，直接跳到我们的程序。<br>小细节：手册 Table 16 里 POR 和 EXTRST 两位的复位值都是 1，所以刚上电时这两位都是 1。'],
+ ['EXTRST','复位脚',1,'hw','RESET/PIO0_0（2 号脚）被拉低。调试器下载完程序后，常常也是拉这个脚让芯片重启。','和上电复位走同样的路。'],
+ ['WDT','看门狗复位',2,'bad','约 65 秒没人喂狗（程序卡死）。','芯片重启，MOD.WDTOF 也会被置 1。但我们的程序一开机 <code>wwdt_config()</code> 就把 WDTOF 清了，也不读 SYSRSTSTAT，所以事后查不出来。'],
+ ['BOD','掉电复位',3,'gold','电源电压低于 2.63 V（前提是 BOD 打开着，第 8 节说了挂起后它会被关掉）。','电压回到 2.71 V 以上才放开，然后从头跑。'],
+ ['SYSRST','软件复位',4,'sw','程序自己调 <code>NVIC_SystemReset()</code>。这个项目只有一处：GUI 发“进入升级”命令 → <code>Bootloadable_Load()</code>（app/custom.c:76）。','bootloader 读 SYSRSTSTAT：bit4 = 1，而且 RAM 0x1000 1F00 = 0xAA → 留在升级模式等新程序。随后用 <code>SYSRSTSTAT |= 1&lt;&lt;4</code> 清这一位（0-3 笔记）。'],
+];
+(function(){const bb=$('rsBtns');let cur=0;
+ RS.forEach((r,i)=>{const b=document.createElement('button');b.type='button';b.style.setProperty('--c',V(r[3]));b.textContent=r[1];b.onclick=()=>{cur=i;draw()};bb.appendChild(b)});
+ function draw(){const r=RS[cur];bb.querySelectorAll('button').forEach((b,i)=>b.setAttribute('aria-pressed',i===cur?'true':'false'));
+  $('rsBits').innerHTML=[4,3,2,1,0].map(k=>`<span class="${k===r[2]||(r[0]==='POR'&&k===1)?'on':''}"><i>bit${k}</i>${RS[k][0]}</span>`).join('');
+  $('rsInfo').innerHTML=`<b class="t">${r[1]}（SYSRSTSTAT bit${r[2]} ${r[0]}）</b><br><b>什么时候发生：</b>${r[4]}<br><b>之后：</b>${r[5]}`;$('rsInfo').style.borderLeftColor=V(r[3])}
+ draw()})();
+
+/* ---------- 4. BOD ---------- */
+(function(){const s=$('bodSvg'),sl=$('bodV');let held=false;
+ function draw(){const v=sl.value/100;if(!held&&v<2.63)held=true;else if(held&&v>2.71)held=false;
+  s.textContent='';const X=40,W=700,vx=u=>X+(u-1.5)/(3.4-1.5)*W;
+  el(s,'line',{x1:X,y1:80,x2:X+W,y2:80,stroke:V('line'),'stroke-width':6,'stroke-linecap':'round'});
+  [[2.63,'2.63 V 掉到这里 → 复位','bad',40],[2.71,'2.71 V 回到这里 → 放开','good',122]].forEach(([u,t,c,y])=>{el(s,'line',{x1:vx(u),y1:56,x2:vx(u),y2:104,stroke:V(c),'stroke-width':2,'stroke-dasharray':'4 3'});el(s,'text',{x:vx(u)+(c==='bad'?-6:6),y,'text-anchor':c==='bad'?'end':'start','font-size':12,fill:V(c)},t)});
+  [1.8,3.3].forEach(u=>{el(s,'text',{x:vx(u),y:150,'text-anchor':'middle','font-size':11,fill:V('muted')},u.toFixed(1)+' V')});
+  el(s,'text',{x:vx(3.3),y:164,'text-anchor':'middle','font-size':10.5,fill:V('muted')},'板子正常供电');
+  el(s,'circle',{cx:vx(v),cy:80,r:11,fill:held?V('bad'):V('sw')});
+  el(s,'text',{x:X,y:20,'font-size':13,'font-weight':700,fill:V('fg')},`现在：${v.toFixed(2)} V · ${held?'芯片被 BOD 按住（复位中）':'芯片正常运行'}`);
+  $('bodInfo').innerHTML=held?(v<1.8?'电压太低了，芯片本身也工作不了（数据手册：VDD 最低 1.8 V）。':'BOD 正把芯片按在复位状态。<b>要回到 2.71 V 以上才会放开</b>：试试拖到 2.65 V 附近，芯片仍然不会动，这就是回差。'):(v<2.71&&v>=2.63?'在 2.63~2.71 V 之间：如果是从上面掉下来的，芯片还在跑；如果是从下面升上来的，芯片还被按着。同一个电压，状态取决于之前的方向。':'电压正常，芯片在跑。往左拖到 2.63 V 以下看看。');
+  $('bodInfo').style.borderLeftColor=V(held?'bad':'sw')}
+ sl.oninput=draw;draw()})();
+
+/* ---------- 5. lifecycle ---------- */
+const LANES=[['🟦 芯片自己','per'],['⬜ 现成代码','muted'],['🟩 项目代码','sw']];
+const PHASES=['开机（一次）','平时（主循环）','超时 / 掉电','挂起 / 升级'];
+const B=[
+ [0,1,'','开机第一件事：开看门狗','device.c:415~419',P(String.raw`void Device_Init(void)
+{
+//	TimerDelayMsec(100);
+//	nsAPI_System_Init();
+	wwdt_config(0xFFFF);
+	InitSystemOSC( MAIN_SEL , PSEL , MSEL , SYS_AHB_DIV_VAL) ;`)+'调用链：<code>main()</code> → <code>Device_Init()</code>（device.c:415）→ <code>wwdt_config(0xFFFF)</code>（WWDT.c:51）。放在最前面，是为了开机过程中卡住也能被救回来。<code>WWDT.c</code> 是公司老项目代码（Writer ADAM）。',''],
+ [0,1,'①②','开时钟、振荡器','WWDT.c:58~61',P(String.raw`		LPC_SYSCON->SYSAHBCLKCTRL |= (1 << 15);	// Clock to WWDT
+		LPC_SYSCON->PDRUNCFG &= ~(1 << 6);			// Enable the WWDT clock source
+		LPC_SYSCON->WDTOSCCTRL  = ((0x2) << 5) | ((20 >> 1) - 1);// Uses the watchdog oscillator set at a 50KHz (1Mhz / 20) clock rate.
+		LPC_SYSCON->STARTERP1 &= ~(1 << 12);		// Enable the watchdog interrupt`)+'最后一行注释写 Enable，实际是写 0 = <b>关掉</b>看门狗唤醒（第 8 节）。','找：SYSAHBCLKCTRL、PDRUNCFG、WDTOSCCTRL、STARTERP1'],
+ [0,1,'⑤','算 TC，选“超时就复位”','WWDT.c:64~88',P(String.raw`		LPC_WWDT->MOD = 0;
+		...
+		LPC_WWDT->CLKSEL = 0x00000001;
+		LPC_WWDT->TC = (wdtFreq / 1000) * wwdt_time;
+		LPC_WWDT->WARNINT = 0;
+
+		/* Configure WWDT to reset on timeout */
+		LPC_WWDT->MOD |= 1 << 1;
+
+		/* Clear watchdog warning and timeout interrupts */
+		LPC_WWDT->MOD &= (~((uint32_t) (1 << 2))) & ((uint32_t) 0x1F);
+		LPC_WWDT->MOD |= ((uint32_t) (1 << 3));`)+'TC = 13 × 65535 = 851955 → 约 65 秒（第 3 节）。MOD bit1 = WDRESET：超时就复位。后两行清 WDTOF（写 0）和 WDINT（写 1）。','找：MOD、TC、CLKSEL、WARNINT'],
+ [0,1,'⑤⑥','开中断、启动、喂第一下','WWDT.c:91~96',P(String.raw`		NVIC_ClearPendingIRQ(WDT_IRQn);
+		NVIC_EnableIRQ(WDT_IRQn);
+
+		/* Start watchdog */
+		LPC_WWDT->MOD |= ((uint32_t) (1 << 0));
+		wwdt_feed();`)+'MOD bit0 = WDEN。手册说只设 WDEN 不够，<b>要喂一次才真正开始</b>（Table 340 上面那段）。从此 WDEN、WDRESET 软件再也关不掉。','找：FEED'],
+ [0,1,'','打开 BOD 复位','device.c:479~481',P(String.raw`  LPC_SYSCON->BODCTRL = (3 << 0)   /* BODRSTLEV = Level 3 (2.63V assert / 2.71V release) */
+                      | (0 << 2)   /* BODINTVAL = 0 (interrupt disabled) */
+                      | (1 << 4);  /* BODRSTENA = 1 (enable brown-out reset) */`)+'在 <code>Device_Init()</code> 后段。复位后 BODRSTENA 默认是 0（不复位），这里才打开。','找：BODCTRL'],
+ [1,0,'','每秒倒数约 13125 下','—','看门狗振荡器 52.5 kHz ÷ 4。从 TC 往下数，数到 0 就复位。',''],
+ [1,1,'⑦','主循环每圈喂一次','device.c:502~515',P(String.raw`	while (1)
+	{
+		...
+		Device_Scan();
+		Device_Pack();
+		Device_Report();
+
+		wwdt_feed();
+
+		PC_Communicate();
+		Suspend_Check();
+
+/* WWDT.c:43 */
+void wwdt_feed(void)
+{
+		LPC_WWDT->FEED = 0xAA;
+		LPC_WWDT->FEED = 0x55;
+}`)+'一圈只要几毫秒，离 65 秒很远。<code>Device_Check_UsbActive()</code>（device.c:926）里 USB 正常时也会喂一次。','找：FEED'],
+ [2,0,'','数到 0 → 看门狗复位','—','WDTOF 置 1、SYSRSTSTAT 的 WDT 位置 1，芯片从头跑（ROM → bootloader → 我们的程序）。',''],
+ [2,1,'⑥','中断里的喂狗来不及','WWDT.c:36~39',P(String.raw`void WDT_IRQHandler(void)
+{
+		wwdt_feed();
+}`)+'WARNINT = 0：中断和复位同一时刻到，复位赢。手册 17.8.6 原文：<i>“If WARNINT is 0, the interrupt will occur at the same time as the watchdog event.”</i>','找：WARNINT'],
+ [2,0,'','电压 < 2.63 V → BOD 复位','—','BOD 把芯片按在复位状态，电压回到 2.71 V 以上才放开。SYSRSTSTAT 的 BOD 位置 1。',''],
+ [3,1,'','挂起：关看门狗振荡器和 BOD','wnDrv_Pmu.c:61',P(String.raw`        LPC_SYSCON->PDRUNCFG |= (IRC_OUT_PD|IRC_PD|ADC_PD|BOD_PD|WDT_OSC_PD);`)+'调用链：<code>wnApi_Events_Suspend_Handler()</code>（usbhw.c:650）→ <code>wnDrv_Pmu_Init()</code>。看门狗的时钟停了，所以睡多久都不会被看门狗复位；BOD 也断电了，省电。','找：PDRUNCFG'],
+ [3,1,'','醒来：重开看门狗，BOD 没开 ⚠️','usbhw.c:707',P(String.raw`		wwdt_config(0xFFFF);
+		InitSystemOSC( MAIN_SEL , PSEL , MSEL , SYS_AHB_DIV_VAL ) ;`)+'在 <code>wnApi_Events_Resume_Handler()</code> 里。<code>wwdt_config()</code> 会重新给看门狗振荡器上电；但没有代码把 PDRUNCFG 的 BOD_PD 清回 0，所以醒来以后 BOD 一直是关的。',''],
+ [3,1,'','升级：写标志 + 软件复位','app/custom.c:76~98',P(String.raw`void Bootloadable_Load(void)
+{
+	memcpy((uint8_t *)VecDst, &FlashData,1);
+	...
+	NVIC_SystemReset();
+}`)+'宏展开：<code>VecDst</code> = 0x10001F00，<code>FlashData</code> = 0xAA（app/custom.c:26、29）。<code>NVIC_SystemReset()</code> 是 CMSIS 函数（inc/core_cm0.h:605），往内核的 AIRCR 寄存器写“请求复位”。调用链：<code>PC_Communicate()</code> → <code>case PC_CMD_BOOTLOADER</code>（pc_communicate.c:951）。',''],
+ [3,1,'','bootloader 读复位原因','0-3 笔记','公司 bootloader 开头读 SYSRSTSTAT：bit4（软件复位）= 1 且 RAM 0x10001F00 = 0xAA，才留在升级模式。随后 <code>SYSRSTSTAT |= 1&lt;&lt;4</code> 清掉（这个 <code>|=</code> 会把其他为 1 的位也清了）。','找：SYSRSTSTAT'],
+];
+(function(){
+  const s=$('lifeSvg');let idx=0;const LX=86,CW=192,BH=48,GAP=8,TOP=34;
+  function layout(){const cnt={};const pos=B.map(b=>{const k=b[0]+'_'+b[1];cnt[k]=(cnt[k]||0)+1;return{c:b[0],l:b[1],n:cnt[k]-1}});
+    const laneH=[0,1,2].map(l=>Math.max(1,...[0,1,2,3].map(c=>cnt[c+'_'+l]||0)));const laneY=[TOP];for(let l=1;l<3;l++)laneY[l]=laneY[l-1]+laneH[l-1]*(BH+GAP)+16;
+    return{pos:pos.map(p=>({x:LX+p.c*(CW+6)+4,y:laneY[p.l]+8+p.n*(BH+GAP)})),laneY,laneH,H:laneY[2]+laneH[2]*(BH+GAP)+16}}
+  function draw(){s.textContent='';const L=layout();s.setAttribute('viewBox',`0 0 900 ${L.H}`);s.setAttribute('height',L.H);s.setAttribute('style','width:100%;height:auto;min-width:720px');
+    PHASES.forEach((p,c)=>{const x=LX+c*(CW+6);el(s,'rect',{x,y:22,width:CW+2,height:L.H-24,rx:8,fill:V('soft'),opacity:.6});el(s,'text',{x:x+CW/2,y:16,'text-anchor':'middle','font-size':12.5,'font-weight':600,fill:V('fg')},p)});
+    LANES.forEach(([t,c],l)=>{const y=L.laneY[l],h=L.laneH[l]*(BH+GAP)+8;el(s,'rect',{x:4,y,width:LX-10,height:h,rx:6,fill:V(c),opacity:.12});t.split(' ').forEach((w,i)=>el(s,'text',{x:(LX-6)/2+2,y:y+h/2-12+i*17,'text-anchor':'middle','font-size':12,'font-weight':600,fill:V(c)},w))});
+    B.forEach((b,i)=>{const p=L.pos[i],c=LANES[b[1]][1],on=i===idx;const g=el(s,'g',{tabindex:0,role:'button','aria-label':b[3],style:'cursor:pointer'});
+      el(g,'rect',{x:p.x,y:p.y,width:CW-8,height:BH,rx:7,fill:on?V(c):V('panel'),stroke:V(c),'stroke-width':on?2.5:1.5});
+      el(g,'circle',{cx:p.x+13,cy:p.y+14,r:10,fill:on?V('bg'):V(c)});el(g,'text',{x:p.x+13,y:p.y+18,'text-anchor':'middle','font-size':11,'font-weight':700,fill:on?V(c):V('bg')},i+1);
+      const lim=b[2].length>1?9:11;const t=b[3].length>lim?[b[3].slice(0,lim),b[3].slice(lim)]:[b[3]];t.forEach((tt,k)=>el(g,'text',{x:p.x+28,y:p.y+(t.length>1?18:20)+k*15,'font-size':12.5,'font-weight':600,fill:on?V('bg'):V('fg')},tt.length>13?tt.slice(0,13)+'…':tt));
+      if(t.length===1&&b[4])el(g,'text',{x:p.x+28,y:p.y+38,'font-size':10.5,class:'m',fill:on?V('bg'):V('muted')},b[4].length>24?b[4].slice(0,24)+'…':b[4]);
+      if(b[2])el(g,'text',{x:p.x+CW-14,y:p.y+14,'text-anchor':'end','font-size':11,'font-weight':700,fill:on?V('bg'):V('gold')},b[2]);
+      const go=()=>{idx=i;draw()};g.addEventListener('click',go);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}})});
+    const b=B[idx],c=LANES[b[1]][1];const card=$('lifeInfo');card.style.borderLeftColor=V(c);
+    card.innerHTML=`<b class="t">${idx+1}. ${b[3]}</b>　<span class="note">${LANES[b[1]][0]} · ${PHASES[b[0]]}${b[2]?' · 七步 '+b[2]:''}${b[4]&&b[4]!=='—'?' · '+b[4]:''}</span><br>${b[5]}${b[6]?`<div class="man"><div class="src" style="color:var(--per)">📖 ${b[6]}</div><div class="zh">先自己在手册里搜到这张表，再对照代码看（答案在第 7 节）。</div></div>`:''}`;
+    $('lfPos').textContent=`第 ${idx+1} / ${B.length} 步`}
+  $('lfNext').onclick=()=>{idx=(idx+1)%B.length;draw()};$('lfPrev').onclick=()=>{idx=(idx-1+B.length)%B.length;draw()};draw();
+})();
+
+/* ---------- quiz ---------- */
+const Q=[
+ ['1. 这个项目的看门狗多久不喂就会复位？',['约 65 毫秒','约 65 秒','永远不会'],1,'对。13 × 65535 ÷ 13125 ≈ 65 秒（振荡器不准，可能 46~108 秒）。','看第 3 节的表。'],
+ ['2. 喂狗要往 FEED 写什么？',['0x55 再 0xAA','0xAA 再 0x55','写 1'],1,'对。顺序错了会立刻复位。','看 wwdt_feed()。'],
+ ['3. WDT_IRQHandler() 里的喂狗有没有用？',['有用，能防止复位','没用，WARNINT = 0 时中断和复位同时到'],1,'对。手册 17.8.6。','看第 1 节模拟器的第三个按钮。'],
+ ['4. GUI 发“进入升级”后，芯片是怎么回到 bootloader 的？',['看门狗复位','往 RAM 0x10001F00 写 0xAA，再软件复位','断电再上电'],1,'对。bootloader 看到“软件复位 + 0xAA”才留下。','看第 2 节，选“软件复位”。'],
+ ['5. 电压从 3.3 V 掉到 2.65 V，芯片会怎样？',['已经复位了','还在跑，要掉到 2.63 V 以下才复位'],1,'对。2.63 V 是往下的门限。','看第 4 节，拖滑块。'],
+ ['6. 电脑睡过一次再醒来，BOD 还在保护吗？',['在','不在，挂起时关了，醒来没人打开'],1,'对。这是这一课发现的问题。','看第 8 节。'],
+];
+(function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0]}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+</script>
