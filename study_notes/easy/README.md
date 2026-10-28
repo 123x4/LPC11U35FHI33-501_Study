@@ -18,6 +18,7 @@
 | 第 10 课 USB | `10_USB.html` | https://claude.ai/artifact/C5mHnxa8bSv88j9P2V7jvN |
 | USB 接口与端点总表（第 10 课配套速查） | `USB接口与端点总表.html` | https://claude.ai/artifact/Axd33DZ2jkDBAo9C5vSKac |
 | 第 11 课 EEPROM 与 IAP | `11_EEPROM与IAP.html` | https://claude.ai/artifact/Q5ub7uZ9fE8dAmVVgaJvoy |
+| 芯片存储地址分布（ROM / Flash / RAM / USB RAM，第 11 课配套） | `芯片存储地址分布.html` | https://claude.ai/artifact/JoG6GLLsaj4RPKbny4Ea4i |
 
 完整路线见第 0 课第 5 节（24 课，第 0~23 课）。
 
@@ -73,6 +74,7 @@
 - 讲法：中文、大白话、多图、可动手；一课只讲一件事；新词第一次出现就解释；每课有小测验和“本课新词”；外设课按“生命周期图 + 七步 + 标志由谁清 + 手册整章导读”成体系讲；区分 🟦 芯片自动 / ⬜ 现成例程 / 🟩 项目代码；手册引用写清章、表、页和原文。
 - 约束：不和 STM32 比较；不做有变砖风险的操作；不单独讲 C 语言基础；不创建 CLAUDE.md。
 - 进度：第 0~11 课已完成。**下一课：第 12 课 看门狗 / 复位 / 掉电（手册第 17、3 章）。手册练习方式仍是“只给名字，先自己找”（第 10~13 课）。**
+- 更正：Flash 余量约 13.6 KB，不是 2.9 KB（代码到 0xC513，0xC514~0xEFFF 是链接器 PAD）。已改第 5 课、03_T1A适配清单.md、0-3 笔记和全景图。另证实：公司 bootloader 把 0x4000 起 0x200 字节拷到 RAM 0x10000000 并设 SYSMEMREMAP=1，所以工程 RAM 从 0x10000100 开始。
 - 讲法调整（第 10 课答疑后）：先讲**场景**（什么时候发生、谁发谁收、谁解析），再讲芯片和代码；手册里的图表要先说清“它为什么出现、和课上哪个比喻对应”，不要突然甩出来。
 - 第 11 课发现的问题：EEPROM 写入返回值没人检查；旧协议设置开机读回的代码被注释（app/custom.c:220~272）；Flash 擦写只关了 7 个中断（gtech_flash.c:135~141）；Chip_IAP_ReadUID 调试时越界。EEPROM 布局：旧代码 0x000~0xB84，新协议 0xF00~0xF5D，无重叠。
 - 第 10 课发现的问题（待问杰哥 / 以后改）：`EP_3_CUSTION_OUT` / `EP_4_CUSTION_IN` 名字和 USB 方向相反；`Device_Report()` 等 600 µs 后柜子不空也照样写；`EPInOutReq` 的 EP4_OUT 标志没人读；`usb.c` 里 `Usb_Init()`、`check_usb_and_endpoint()` 没人调用；DEVCMDSTAT 的 _C 位靠 `|=` 顺手清。

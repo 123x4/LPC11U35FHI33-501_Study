@@ -1,0 +1,289 @@
+<title>芯片存储地址分布</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
+.mx{border-collapse:separate;border-spacing:4px;min-width:720px}
+.mx th{text-align:center;font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.mx th.s{text-align:left;font-size:.85rem;color:var(--muted);font-family:var(--font-b);width:150px}
+.mx td{padding:0;border:0}
+.mx button{width:100%;font:inherit;font-size:.8rem;line-height:1.35;padding:6px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-align:left;min-height:46px}
+.mx button.w-sw{border-left:5px solid var(--sw)}
+.mx button.w-ex{border-left:5px solid var(--muted)}
+.mx button.w-hw{border-left:5px solid var(--per)}
+.mx button.na{color:var(--muted);background:var(--soft);border-style:dashed}
+.mx button[aria-pressed="true"]{outline:3px solid var(--pc);outline-offset:1px}
+.who{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.85rem;margin:.4rem 0}
+.who span{display:inline-flex;align-items:center;gap:6px}
+.who i{width:14px;height:14px;border-radius:3px;display:inline-block}
+pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
+details.ans{margin:.4rem 0;border:1px dashed var(--line);border-radius:6px;padding:4px 10px;background:var(--panel)}
+details.ans summary{cursor:pointer;color:var(--per);font-size:.9rem}
+details.ans[open]{background:var(--soft)}
+.task{border-left:4px solid var(--per);background:var(--panel);border-radius:0 6px 6px 0;padding:8px 12px;margin:.6rem 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.task .pg{font-family:var(--font-m);font-size:.8rem;color:var(--per)}
+.sim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:640px){.sim{grid-template-columns:minmax(0,1fr)}}
+.sim fieldset{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:0 0 8px}
+.sim legend{font-size:.82rem;color:var(--muted);padding:0 4px}
+.sim label{display:inline-flex;align-items:center;gap:4px;margin:2px 10px 2px 0;font-size:.9rem;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;margin:.4rem 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+</style>
+<style>
+.maps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:.6rem 0}
+.mapbox{border:1px solid var(--line);border-radius:12px;padding:10px 10px 6px;background:var(--panel)}
+.mapbox h3{margin:.1rem 0 .2rem;font-size:1.02rem}
+.mapbox .sub{font-size:.82rem;color:var(--muted);margin-bottom:.3rem}
+.mapbox svg{width:100%;height:auto;display:block}
+.own{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.85rem;margin:.4rem 0}
+.own span{display:inline-flex;align-items:center;gap:6px}
+.own i{width:14px;height:14px;border-radius:3px;display:inline-block}
+@media (max-width:760px){.maps{grid-template-columns:1fr}}
+</style>
+<div class="wrap">
+<div class="eyebrow">轻松版 · 速查图 · 第 11 课配套</div>
+<h1>芯片存储地址分布</h1>
+<p class="lede">LPC11U35 里有四块存储：<b>ROM、Flash、RAM、USB RAM</b>。下面每一块画成一根竖条，<b>地址从下往上增大</b>（和手册 Figure 6 的画法一样）。点任意一段，下面会显示它是什么、谁用、证据在哪。</p>
+
+<h2>先看全局：四块存储在 4 GB 地址空间的哪里</h2>
+<div class="box scroll"><svg id="allSvg" viewBox="0 0 780 250" width="780" height="250" role="img" aria-label="全局地址图"></svg></div>
+<p class="note">来源：用户手册第 2 章 <b>Fig 6. LPC11U3x memory map</b>（p.18）。芯片里还有一块 2 KB 的 SRAM1（0x2000 0000），这个项目没打开它的时钟，也没用。外设寄存器（0x4000 0000 起）、GPIO（0x5000 0000）也在同一张图里，前几课已经用过。</p>
+
+<div class="own" id="ownLeg"></div>
+
+<div class="maps">
+ <div class="mapbox"><h3>① ROM · 16 KB</h3><div class="sub">0x1FFF 0000 ~ 0x1FFF 3FFF · 芯片出厂固化，不能改</div><svg id="romSvg" role="img" aria-label="ROM 地址分布"></svg></div>
+ <div class="mapbox"><h3>② Flash · 64 KB</h3><div class="sub">0x0000 0000 ~ 0x0000 FFFF · 放程序，断电不丢</div><svg id="flashSvg" role="img" aria-label="Flash 地址分布"></svg></div>
+ <div class="mapbox"><h3>③ RAM（SRAM0）· 8 KB</h3><div class="sub">0x1000 0000 ~ 0x1000 1FFF · 放变量和栈，断电就清</div><svg id="ramSvg" role="img" aria-label="RAM 地址分布"></svg></div>
+ <div class="mapbox"><h3>④ USB RAM · 2 KB</h3><div class="sub">0x2000 4000 ~ 0x2000 47FF · USB 专用：柜子表和柜子</div><svg id="usbSvg" role="img" aria-label="USB RAM 地址分布"></svg></div>
+</div>
+<div class="card" id="segInfo" aria-live="polite" style="border-left-color:var(--gold)">点上面任意一段。</div>
+
+<h2>四块之间怎么配合：上电到程序跑起来</h2>
+<table>
+<thead><tr><th>顺序</th><th>发生什么</th><th>用到哪块</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>上电。芯片先跑 <b>ROM</b> 里的启动程序：看 PIO0_1 要不要进 ISP，不进就去 Flash 找程序</td><td>ROM</td></tr>
+<tr><td>2</td><td>跑 Flash 0x0000 的<b>公司 bootloader</b>：看 Flash 0xFE00 和 RAM 0x1000 1F00 两个标志，决定升级还是跳到我们的程序</td><td>Flash、RAM</td></tr>
+<tr><td>3</td><td>bootloader 把 Flash 0x4000 起的 512 字节（我们程序的<b>向量表</b>）拷到 RAM 0x1000 0000，把 SYSMEMREMAP 设成 1（“中断向量从 RAM 找”），再跳到 0x4004 里写的地址</td><td>Flash → RAM</td></tr>
+<tr><td>4</td><td>我们的启动代码把 Flash 0xF100 起的<b>变量初值</b>解压拷到 RAM 0x1000 0100，其余变量清 0，然后进 <code>main()</code></td><td>Flash → RAM</td></tr>
+<tr><td>5</td><td><code>nsAPI_USB_Init()</code> 在 <b>USB RAM</b> 里画柜子表；之后 USB 数据都在这里进出</td><td>USB RAM</td></tr>
+<tr><td>6</td><td>要存设置时，调 <b>ROM</b> 里的 IAP，写 EEPROM（EEPROM 不在地址空间里，只能通过 IAP 读写）</td><td>ROM、EEPROM</td></tr>
+</tbody></table>
+<div class="card" style="border-left-color:var(--per)"><b class="t">为什么第 3 步要把向量表拷到 RAM？</b><br>Cortex-M0 发生中断时，固定去地址 0x0000 0000 附近找中断函数的地址。可是 0x0000 放的是 bootloader 自己的向量表，不是我们的。LPC11U35 有一个寄存器 <b>SYSMEMREMAP</b>（手册 Table 7，p.23）：设成 1 后，CPU 去 0x0 找向量时会改去 RAM 0x1000 0000 找。所以 bootloader 先把我们的向量表搬过去，再打开这个开关。<br>这也是为什么工程设置里 RAM 从 <b>0x1000 0100</b> 才开始放变量（Sample.uvproj），前面 256 字节留给向量表。<br>证据：bootloader 二进制里 0x2478 那段代码：关中断 → 从 0x4000 拷 0x200 字节到 0x1000 0000 → 往 0x4004 8000 写 1 → 开中断 → 读 0x4000 设栈 → 跳到 0x4004 里的地址。</div>
+
+<h2>顺带发现：Flash 余量比之前说的多</h2>
+<div class="card" style="border-left-color:var(--bad)"><b class="t">⚠️ 更正</b><br>之前第 5 课和 T1A 清单里说“Flash 只剩约 2.9 KB”，<b>这是错的</b>。我当时用 <code>Total ROM Size = 45716</code> 当成了“程序真正占用”。仔细看 <code>List/Sample.map</code> 才发现：代码和常量其实在 <b>0xC514</b> 就结束了，0xC514~0xEFFF 那 10988 字节是链接器为了把 0xF000 那一页放到固定位置而<b>补的空白</b>（map 里标的是 PAD），也算进了 45716。<br>所以真正还能用的大约是：0xC514~0xEFFF 约 <b>10.7 KB</b> + 0xF28C~0xFDFF 约 2.9 KB ≈ <b>13.6 KB</b>。代码继续变大时，最先碰到的界线是 0xF000 那一页。第 5 课页面和 T1A 清单已经一起改正。</div>
+
+<div class="sum"><b>一句话：</b>ROM 是芯片自带的启动程序和 IAP；Flash 下 16 KB 是公司 bootloader、0x4000 起是我们的程序；RAM 前 256 字节是向量表、然后是变量、再上面是 512 字节的栈；USB RAM 前面是柜子表、后面是每个柜子 64 字节的数据区。</div>
+</div>
+<script>
+const NS="http://www.w3.org/2000/svg";
+function el(p,t,a,x){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e}
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
+const OWN={chip:['🟦 芯片自带','per'],boot:['⬜ 公司 bootloader','hw'],app:['🟩 我们的程序','sw'],usb:['⬜ USB 例程画的','gold'],free:['空着','line'],note:['手册没公开','muted']};
+$('ownLeg').innerHTML=Object.values(OWN).map(([t,c])=>`<span><i style="background:color-mix(in srgb,var(--${c}) ${c==='line'?100:45}%,transparent)"></i>${t}</span>`).join('');
+const hx=(n,w)=>{const h=n.toString(16).toUpperCase().padStart(w,'0');return '0x'+(w>4?h.slice(0,4)+' '+h.slice(4):h)};
+
+/* [start, end, owner, title, detail] */
+const MAPS={
+ rom:{w:8,min:22,H:420,seg:[
+  [0x1FFF0000,0x1FFF01FF,'chip','ROM 自己的向量表','复位那一刻，这 512 字节同时出现在地址 0x0000 0000（手册 20.5：“the bottom 512 bytes of the boot block are also visible … starting from the address 0x0000 0000”）。所以芯片上电最先跑的是 ROM，不是我们的程序。'],
+  [0x1FFF0200,0x1FFF1FEF,'note','启动程序 + ISP','上电后先跑这里：检查 PIO0_1 要不要进 ISP（串口或 USB 烧程序），不进就去 Flash 找有效程序（手册 20.4、Figure 69）。<b>内部怎么排布手册没公开</b>，我们也不需要知道。'],
+  [0x1FFF1FF0,0x1FFF1FF7,'chip','IAP 入口 0x1FFF 1FF1','第 11 课调的就是这里。手册 20.14：“The IAP routine resides at 0x1FFF 1FF0 location and it is thumb code”，所以调用地址写成 …1FF1（末位 1 表示 Thumb）。代码：IAP_CMD.c:37、gtech_flash.h:88。'],
+  [0x1FFF1FF8,0x1FFF1FFB,'chip','ROM 驱动表指针 0x1FFF 1FF8','这 4 个字节存着一个地址，指向一张“ROM 驱动表”，表里再指向 USB ROM 驱动（第 10 章）、电源配置（第 5 章）、整数除法（第 22 章）。<b>这个项目都没用</b>：USB 用的是自己的 usbhw.c，没调 ROM 里的 USB 驱动。手册 10.4、Figure 19。'],
+  [0x1FFF1FFC,0x1FFF3FFF,'note','其余：各种 ROM 驱动的代码','USB ROM 驱动、电源配置、整数除法等函数的本体在 ROM 里，具体地址手册没给，只能通过上面那个指针表找到。'],
+ ]},
+ flash:{w:4,min:20,H:620,seg:[
+  [0x0000,0x02FB,'boot','公司 bootloader（前段）','0x0000~0x3FFF 共 16 KB 是公司自己的 bootloader（study_notes/0-3_公司Bootloader.md）。0x0000 是它的向量表：上电 ROM 检查完，就跳到这里。'],
+  [0x02FC,0x02FF,'boot','CRP 字 0x02FC','代码读保护设置（手册 20.12）。0xFFFFFFFF = 不保护。⚠️ 我们的程序里也放了这 4 个字节（startup_LPC11Uxx.s:117~119，map 里的 ER$$.ARM.__at_0x02FC），落在 bootloader 的地盘上。第 20 课细讲，<b>不要改这个值</b>。'],
+  [0x0300,0x3EFF,'boot','公司 bootloader（主体）','USB 升级的逻辑都在这里：检查标志、擦应用区、接收新程序、写 0xFE00 标志页。'],
+  [0x3F00,0x3FFF,'boot','0x3F00：程序带的 2 字节','<code>BootLoader_Flash[2] = {0xAA,0xAA}</code>（gtech_flash.c:24），也落在 bootloader 的扇区里。用途待问杰哥（0-3 笔记“待确认”）。'],
+  [0x4000,0x40BF,'app','我们程序的向量表','48 个地址：栈顶、Reset_Handler、各个中断函数（第 4 课）。map：<code>__Vectors 0x00004000</code>。bootloader 会把从这里开始的 512 字节拷到 RAM 0x1000 0000。'],
+  [0x40C0,0xC513,'app','代码 + 常量','所有函数、const 数组（描述符、按键表……）。到 0xC513 结束（map：最后一项 Region$$Table 在 0xC4F4，长 0x20）。约 33.4 KB。'],
+  [0xC514,0xEFFF,'free','链接器补的空白（约 10.7 KB）','map 里写的是 <code>PAD 0x00002aec</code>（10988 字节）。因为下一页 0xF000 被固定了位置，链接器只能把中间填空。<b>代码再变大就从这里长</b>，最多长到 0xF000。'],
+  [0xF000,0xF0FF,'app','0xF000：配置校验码页','<code>MCU_inside_Flash[256]</code>（gtech_flash.c:34，<code>__attribute__((at(0x0000F000)))</code>）。旧代码把每个配置的校验码存在这里，用 IAP 擦页再写（第 11 课）。'],
+  [0xF100,0xF28B,'app','变量初值（压缩）','有初值的全局变量，比如 <code>uint8_t FlashData = 0xAA;</code>，初值存在这里（396 字节，压缩过）。开机时启动代码把它解压拷到 RAM 0x1000 0100 起。map：RW_IRAM1 的 Load base 0x0000F100。'],
+  [0xF28C,0xFDFF,'free','空着（约 2.9 KB）','之前误以为“只剩这么多”，其实上面还有 10.7 KB 的空白。'],
+  [0xFE00,0xFFFF,'boot','bootloader 标志页','升级完成后 bootloader 在 0xFE00 写 0xAA 等标志。每次开机 bootloader 先看这里是不是 0xAA，不是就认为程序不完整，擦掉应用区留在升级模式（0-3 笔记）。<b>程序不能长到这里</b>。'],
+ ]},
+ ram:{w:8,min:20,H:560,seg:[
+  [0x10000000,0x100000BF,'boot','向量表的拷贝','bootloader 从 Flash 0x4000 拷来的（实际拷了 0x200 字节，前 0xC0 = 48 个地址才是向量表）。SYSMEMREMAP = 1 后，CPU 发生中断时到这里找中断函数地址。'],
+  [0x100000C0,0x100000FF,'free','留空','工程设置（Sample.uvproj：IRAM 起始 0x1000 0100）故意不放变量，给向量表留出 256 字节。'],
+  [0x10000100,0x10000457,'app','有初值的变量（.data）','856 字节。开机从 Flash 0xF100 解压拷过来。例：my_electromagnet.o 0x126 字节、device.o、wwdt.o……（map 1576 行起）。'],
+  [0x10000458,0x1000062B,'app','没初值的变量（.bss）·前段','开机清 0。main.o、i2c.o（0x80）、uart.o（0x100 接收缓冲）。'],
+  [0x1000062C,0x1000164F,'app','flash_emptyData[4096] 等','gtech_flash.c:28（这一段是 gtech_flash.c 的全部无初值变量，4096 字节都是它）。<b>一个变量就占了半个 RAM</b>（4 KB）。它是改 Flash 时用的临时缓冲，但实际每次只用 256 字节（一页）。T1A 缺 RAM 时，这是最先能省的地方（T1A 清单已记）。'],
+  [0x10001650,0x100019D7,'app','没初值的变量（.bss）·后段','pc_communicate.o（含 64 字节收命令缓冲）、my_protocol_mouse.o（<code>xgAllParam</code> 88 字节）、usbhw.o、usbcore.o、custom.o、ram_malloc.o（0x110）……'],
+  [0x100019D8,0x10001BD7,'app','栈 512 字节','startup_LPC11Uxx.s:31 <code>Stack_Size EQU 0x200</code>。从 0x1000 1BD8 往<b>下</b>长。函数里的局部变量、中断时保存的现场都放这里。调 IAP 最多还要用 128 字节。'],
+  [0x10001BD8,0x10001EFF,'free','空着（808 字节）','变量和栈都没用到。'],
+  [0x10001F00,0x10001F00,'boot','升级标志 0x1000 1F00','GUI 发“进入升级”命令 → <code>Bootloadable_Load()</code>（app/custom.c:76）往这里写 0xAA → 软件复位 → bootloader 看到它就留下来等新程序。复位不清 RAM，所以这个字节能“带过”复位。'],
+  [0x10001F01,0x10001FDF,'free','空着','工程设置的 RAM 上限是 0x1000 1F60（Size 0x1E60），再往上不放东西。'],
+  [0x10001FE0,0x10001FFF,'chip','IAP 专用 32 字节','手册 20.8.9：IAP 写 Flash 时要用 RAM 最顶上 32 字节。程序没用这里，所以安全（第 11 课任务 4）。'],
+ ]},
+ usb:{w:8,min:18,H:620,seg:[
+  [0x20004000,0x2000400F,'usb','柜子表：EP0 的 4 格','0x00 EP0 OUT · 0x04 SETUP · 0x08 EP0 IN · 0x0C 保留。就是第 10 课的 Figure 22 前 4 行。EPLISTSTART = 0x2000 4000（usbhw.c:214）。'],
+  [0x20004010,0x2000404F,'usb','柜子表：EP1~EP4 的 16 格','每个端点、每个方向各 2 格（缓冲 0、缓冲 1）。鼠标用的 EP1 IN 缓冲 0 在 0x2000 4018；GUI 命令 EP4 OUT 在 0x2000 4040。'],
+  [0x20004050,0x200040FF,'free','空着','柜子表只要 80 字节，数据区从 0x2000 4100 才开始（<code>USB_EPDATA_ADDR</code>，inc/usbhw.h:65）。'],
+  [0x20004100,0x2000413F,'usb','EP0 OUT 数据','电脑在端点 0 发来的数据（比如 SET_REPORT）。每格都分配 64 字节。'],
+  [0x20004140,0x2000417F,'usb','SETUP 包','电脑提的问题，8 字节（分配了 64）。'],
+  [0x20004180,0x200041BF,'usb','EP0 IN 数据','鼠标回答电脑：描述符等。'],
+  [0x200041C0,0x2000427F,'free','分配了没用：EP0 保留格、EP1 OUT ×2','<code>NDrv_USB_EPInit()</code> 不管用不用，按顺序给每格都分了 64 字节。EP1 没有 OUT 方向。'],
+  [0x20004280,0x200042BF,'usb','EP1 IN · 鼠标包','<b>最常用的一格</b>。<code>USB_LoadInEP_Data(EP_1_MOUSE, …)</code> 把 8 字节鼠标包复制到这里，再把柜子表 0x2000 4018 的 A 位置 1。'],
+  [0x200042C0,0x2000437F,'free','分配了没用：EP1 IN 缓冲1、EP2 OUT ×2','没开双缓冲（<code>USE_DOUBLE_BUFFER</code> = 0），缓冲 1 都用不到。'],
+  [0x20004380,0x200043BF,'usb','EP2 IN · 键盘包','宏按键发的 8 字节键盘包。'],
+  [0x200043C0,0x2000447F,'free','分配了没用：EP2 IN 缓冲1、EP3 OUT ×2',''],
+  [0x20004480,0x200044BF,'usb','EP3 IN · 回给 GUI','64 字节。<code>USB_AutoDelay_LoadInEP_Data(EP_3_CUSTION_OUT, …)</code>。'],
+  [0x200044C0,0x200044FF,'free','分配了没用：EP3 IN 缓冲1',''],
+  [0x20004500,0x2000453F,'usb','EP4 OUT · GUI 命令','64 字节。电脑放进来后，<code>Usb_Read_Bytes()</code> 从这里拷到 <code>receive_buff</code>。'],
+  [0x20004540,0x200045FF,'free','分配了没用：EP4 OUT 缓冲1、EP4 IN ×2',''],
+  [0x20004600,0x200047FF,'free','空着（512 字节）','10 个物理端点 × 2 × 64 = 1280 字节，加上前面 256，到 0x2000 45FF 为止。'],
+ ]},
+};
+function drawMap(id,key){const M=MAPS[key],s=$(id+'Svg');const tot=M.seg[M.seg.length-1][1]+1-M.seg[0][0];
+  const hs=M.seg.map(g=>Math.max(M.min,(g[1]+1-g[0])/tot*M.H));const H=hs.reduce((a,b)=>a+b,0)+20;
+  s.setAttribute('viewBox',`0 0 380 ${H}`);let y=H-10;const X=112,W=86;
+  M.seg.forEach((g,i)=>{const h=hs[i];y-=h;const c=OWN[g[2]][1];const r=el(s,'rect',{x:X,y,width:W,height:h-1,rx:3,fill:c==='line'?V('soft'):`color-mix(in srgb,var(--${c}) 45%,transparent)`,stroke:V(c==='line'?'line':c),'stroke-width':1,style:'cursor:pointer',tabindex:0,role:'button','aria-label':g[3]});
+    const go=()=>{document.querySelectorAll('.mapbox rect[data-on]').forEach(o=>{o.removeAttribute('data-on');o.setAttribute('stroke-width',1)});r.setAttribute('data-on','1');r.setAttribute('stroke-width',3);
+      $('segInfo').innerHTML=`<b class="t">${g[3]}</b>　<span class="note">${hx(g[0],M.w)} ~ ${hx(g[1],M.w)} · ${g[1]-g[0]+1} 字节 · ${OWN[g[2]][0]}</span><br>${g[4]||'没用到。'}`;$('segInfo').style.borderLeftColor=V(c==='line'?'muted':c)};
+    r.addEventListener('click',go);r.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}});
+    el(s,'text',{x:X-6,y:y+h-3,'text-anchor':'end','font-size':10,class:'m',fill:V('muted')},hx(g[0],M.w));
+    const t=g[3].length>16?g[3].slice(0,16)+'…':g[3];el(s,'text',{x:X+W+8,y:y+h/2+4,'font-size':11.5,fill:V('fg'),style:'pointer-events:none'},t)});
+  el(s,'text',{x:X-6,y:12,'text-anchor':'end','font-size':10,class:'m',fill:V('muted')},hx(M.seg[M.seg.length-1][1],M.w))}
+drawMap('rom','rom');drawMap('flash','flash');drawMap('ram','ram');drawMap('usb','usb');
+
+/* overall 4 GB strip */
+(function(){const s=$('allSvg');const B=[
+  ['0x0000 0000','Flash 64 KB','sw',true],['0x1000 0000','RAM 8 KB','sw',true],['0x1FFF 0000','ROM 16 KB','per',true],['0x2000 0000','SRAM1 2 KB（没用）','line',false],['0x2000 4000','USB RAM 2 KB','gold',true],['0x4000 0000','外设寄存器','muted',false],['0x5000 0000','GPIO','muted',false],['0xE000 0000','内核（NVIC 等）','muted',false]];
+ const w=92,gap=4;B.forEach(([a,t,c,hl],i)=>{const x=6+i*(w+gap);el(s,'rect',{x,y:60,width:w,height:90,rx:8,fill:c==='line'?V('soft'):`color-mix(in srgb,var(--${c}) ${hl?40:18}%,transparent)`,stroke:V(c==='line'?'line':c),'stroke-width':hl?2.5:1});
+  const parts=t.split(' ');el(s,'text',{x:x+w/2,y:100,'text-anchor':'middle','font-size':12.5,'font-weight':hl?700:500,fill:V('fg')},parts[0]);if(parts[1])el(s,'text',{x:x+w/2,y:118,'text-anchor':'middle','font-size':11,fill:V('muted')},parts.slice(1).join(' '));
+  el(s,'text',{x:x+w/2,y:50,'text-anchor':'middle','font-size':10,class:'m',fill:V('muted')},a)});
+ el(s,'text',{x:6,y:22,'font-size':12,fill:V('fg')},'地址从左到右变大（为了看得清，各块宽度不按比例）。粗框 = 这一页画出来的四块。');
+ el(s,'text',{x:6,y:185,'font-size':12,fill:V('muted')},'EEPROM（4 KB）不在这张图里：它没有地址，只能通过 ROM 里的 IAP 命令读写（第 11 课）。');
+ el(s,'text',{x:6,y:207,'font-size':12,fill:V('muted')},'“0x1000 0000 ~ 0x1FFF 0000 之间”这类空隙都是 reserved：没有东西，读写会出错。');})();
+</script>

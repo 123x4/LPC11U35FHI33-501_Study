@@ -152,6 +152,8 @@ details.ans[open]{background:var(--soft)}
 .sim fieldset{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:0 0 8px}
 .sim legend{font-size:.82rem;color:var(--muted);padding:0 4px}
 .sim label{display:inline-flex;align-items:center;gap:4px;margin:2px 10px 2px 0;font-size:.9rem;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;margin:.4rem 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
 </style>
 <div class="wrap">
 <div class="eyebrow">轻松版 · 第 5 课 · 打地基（最后一课）</div>
@@ -321,9 +323,9 @@ const WHO={n:['⬜ 芯片厂商 / 方案商例程','muted'],o:['⬜ 公司老项
   [['all','全部'],['p','🟩 本项目新代码'],['o','⬜ 公司老项目代码'],['n','⬜ 芯片厂商 / 方案商例程']].forEach(([k,t])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.setAttribute('aria-pressed',k===cur?'true':'false');b.onclick=()=>{cur=k;fb.querySelectorAll('button').forEach(o=>o.setAttribute('aria-pressed',o===b?'true':'false'));draw()};fb.appendChild(b)});
   draw();
   const sum=k=>F.filter(x=>x[2]===k).reduce((a,x)=>a+x[1],0);
-  const used=45716,lim=0xFE00-0x4000,tot=0xC000;
-  const bar=$('flashBar');bar.innerHTML=`<div style="width:${used/tot*100}%;background:${V('sw')}">已用 44.6 KB</div><div style="width:${(lim-used)/tot*100}%;background:${V('gold')}">剩</div><div style="width:${(tot-lim)/tot*100}%;background:${V('muted')}" title="Bootloader 标志页">标志</div>`;
-  $('flashNote').innerHTML=`程序放在 Flash 0x4000 起（<code>output/Sample.sct</code>：最多 0xC000 = 48 KB）。<code>List/Sample.map</code> 最后一行：Total ROM Size = <b>45716 字节</b>（44.64 KB）。但 0xFE00 起的一页是公司 Bootloader 放“程序有效”标志（0xAA）的地方（0-3 课），程序不能占用。所以实际只剩约 <b>${lim-used} 字节（约 2.9 KB）</b>。⚠️ T1A 要加新功能时，空间会很紧，这件事要和杰哥确认。<br>按谁写的统计（只算代码）：🟩 本项目新代码约 ${sum('p')} 字节，⬜ 公司老项目代码约 ${sum('o')} 字节，⬜ 芯片厂商 / 方案商例程约 ${sum('n')} 字节。<br>怎么判断谁写的：看文件开头。NXP、Keil、ARM 字样 = 芯片厂商例程；World Peace = 方案商；Writer ADAM 或没有署名、在公司老项目 M300S 里也有的 = 公司老代码；@author chengjie = 本项目新代码。注意老文件里也会夹着本项目新加的函数或 #if 分支（比如 Timer.c 里的 CT16B1_DelayUs、GPIO.c 的 IRPT_V4 分支）。`;
+  const tot=0xC000,code=0xC514-0x4000,pad=0xF000-0xC514,fix=0xF28C-0xF000,free2=0xFE00-0xF28C,flag=0x10000-0xFE00;
+  const bar=$('flashBar');bar.innerHTML=`<div style="width:${code/tot*100}%;background:${V('sw')}">代码 33 KB</div><div style="width:${pad/tot*100}%;background:${V('gold')}">空 10.7 KB</div><div style="width:${fix/tot*100}%;background:${V('sw')}" title="0xF000 页 + 变量初值"></div><div style="width:${free2/tot*100}%;background:${V('gold')}">2.9</div><div style="width:${flag/tot*100}%;background:${V('muted')}" title="Bootloader 标志页"></div>`;
+  $('flashNote').innerHTML=`程序放在 Flash 0x4000 起（<code>output/Sample.sct</code>：最多 0xC000 = 48 KB）。<code>List/Sample.map</code> 最后一行写 Total ROM Size = 45716 字节，但<b>这个数里有 10988 字节是链接器补的空白</b>：代码和常量在 0xC514 就结束了，因为 0xF000 那一页被固定了位置，中间只能填空（map 里标为 PAD）。0xFE00 起的一页是公司 Bootloader 的标志页，程序不能占用。所以真正还能用的是 0xC514~0xEFFF 约 <b>10.7 KB</b>，加上 0xF28C~0xFDFF 约 2.9 KB，一共约 <b>13.6 KB</b>。（这一页最早写的是“只剩 2.9 KB”，是我看错了 map，已改正。详见《芯片存储地址分布》。）<br>按谁写的统计（只算代码）：🟩 本项目新代码约 ${sum('p')} 字节，⬜ 公司老项目代码约 ${sum('o')} 字节，⬜ 芯片厂商 / 方案商例程约 ${sum('n')} 字节。<br>怎么判断谁写的：看文件开头。NXP、Keil、ARM 字样 = 芯片厂商例程；World Peace = 方案商；Writer ADAM 或没有署名、在公司老项目 M300S 里也有的 = 公司老代码；@author chengjie = 本项目新代码。注意老文件里也会夹着本项目新加的函数或 #if 分支（比如 Timer.c 里的 CT16B1_DelayUs、GPIO.c 的 IRPT_V4 分支）。`;
 })();
 /* include */
 (function(){const s=$('incSvg');
@@ -356,8 +358,7 @@ const Q=[
  ['2. #if (defined(IRPT_V4)) 是什么时候判断的？',['芯片运行时','电脑上编译时'],1,'对。被排除的行根本不会进芯片。','#if 和普通的 if 不一样。'],
  ['3. 想确认 MyADC_GetValue 真的被编译进芯片，最直接的办法是？',['在 List/Sample.map 里搜它','看它在不在 src 文件夹里','看 .h 里有没有声明'],0,'对。map 里有地址就是进去了（第 1051 行：0x00008AC5，112 字节）。','文件在、有声明，都不能保证它进了芯片。'],
  ['4. LPC_ADC->INTEN 在哪个地址？',['0x4001C000','0x4001C00C','0x4001C010'],1,'对。基地址 0x4001C000 + 偏移 0x00C（手册 Table 351）。','对照手册 Table 351 的 Offset 列。'],
- ['5. 现在 Flash 还剩多少空间？',['十几 KB','大约 3 KB','用满了'],1,'对。约 2.9 KB，T1A 加功能时要注意。','看第 2 步最后的 Flash 条。'],
+ ['5. 现在 Flash 还剩多少空间？',['十几 KB','大约 3 KB','用满了'],0,'对。约 13.6 KB：0xC514~0xEFFF 的空白约 10.7 KB，加上 0xF28C~0xFDFF 约 2.9 KB。','看第 2 步最后的 Flash 条和下面的说明。'],
 ];
 (function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0].replace(/</g,'&lt;')}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
-
 </script>
