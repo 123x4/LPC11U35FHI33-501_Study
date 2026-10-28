@@ -22,6 +22,7 @@
 | 第 12 课 看门狗、复位与掉电 | `12_看门狗复位与掉电.html` | https://claude.ai/artifact/NhatmnbFU8ZA6ZF1UzLvws |
 | 第 13 课 时钟、电源与低功耗 | `13_时钟电源与低功耗.html` | https://claude.ai/artifact/2Kw9ZtbCBu6cax3WLFieuv |
 | 代码来源清单（整理代码用，可筛选） | `代码来源清单.html` | https://claude.ai/artifact/VPsyav56Zh3cacuF4xg6us |
+| app 文件夹四份代码（button / scroll / custom / optical_3325） | `app文件夹四份代码.html` | https://claude.ai/artifact/DQeECLZbqjbizU3wtk2zHv |
 
 完整路线见第 0 课第 5 节（24 课，第 0~23 课）。
 
@@ -88,3 +89,5 @@
 - 页面源文件就是本目录下的 .html；旧讲义（0-x、1-x、L1、L2）在上一级目录，作为字典。
 
 **2026-10-28 删除了 21 个没用的 .c 和 11 个 .h**：都不在 Keil 工程里，也没有被任何文件 `#include`。删完后，工程里的 48 个 .c 全部预处理通过（没有缺头文件）。清单见“代码来源清单”页面的“已删除的文件”一节。`src/my_hallkey_func.c`、`src/my_i2c.c` 没删（T1A 可能用得上）。
+
+**读 app 文件夹时发现的问题**（详见“app 文件夹四份代码”页面）：① DPI 键不改 PAW3950（`optical_set_dpi()` 被 `#if` 关掉），但每按一次写一次 EEPROM、给 GUI 发一包；② `Main_Mouse_SCROLL_UP/DN()` 写的 `g_Main_Setting.MouseInReport` 在 IRPT_V4 下没人发送；③ scroll.c 第 15 行注释的 up / down 和代码相反；④ optical_3325.c 只剩 `TimerDelayMsec()` 在用，却让整段约 720 字节留在 Flash 里；⑤ button.c 的 `Hall_*` 函数（霍尔芯片菊花链）对 T1A 的 GTRY164 有参考价值，先别删。

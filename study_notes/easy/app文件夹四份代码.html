@@ -1,0 +1,461 @@
+<title>app 文件夹四份代码</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
+.mx{border-collapse:separate;border-spacing:4px;min-width:720px}
+.mx th{text-align:center;font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.mx th.s{text-align:left;font-size:.85rem;color:var(--muted);font-family:var(--font-b);width:150px}
+.mx td{padding:0;border:0}
+.mx button{width:100%;font:inherit;font-size:.8rem;line-height:1.35;padding:6px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-align:left;min-height:46px}
+.mx button.w-sw{border-left:5px solid var(--sw)}
+.mx button.w-ex{border-left:5px solid var(--muted)}
+.mx button.w-hw{border-left:5px solid var(--per)}
+.mx button.na{color:var(--muted);background:var(--soft);border-style:dashed}
+.mx button[aria-pressed="true"]{outline:3px solid var(--pc);outline-offset:1px}
+.who{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.85rem;margin:.4rem 0}
+.who span{display:inline-flex;align-items:center;gap:6px}
+.who i{width:14px;height:14px;border-radius:3px;display:inline-block}
+pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
+details.ans{margin:.4rem 0;border:1px dashed var(--line);border-radius:6px;padding:4px 10px;background:var(--panel)}
+details.ans summary{cursor:pointer;color:var(--per);font-size:.9rem}
+details.ans[open]{background:var(--soft)}
+.task{border-left:4px solid var(--per);background:var(--panel);border-radius:0 6px 6px 0;padding:8px 12px;margin:.6rem 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.task .pg{font-family:var(--font-m);font-size:.8rem;color:var(--per)}
+.sim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:640px){.sim{grid-template-columns:minmax(0,1fr)}}
+.sim fieldset{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:0 0 8px}
+.sim legend{font-size:.82rem;color:var(--muted);padding:0 4px}
+.sim label{display:inline-flex;align-items:center;gap:4px;margin:2px 10px 2px 0;font-size:.9rem;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;margin:.4rem 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+</style>
+<style>
+.fcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:.8rem 0}
+.fcard{border:2px solid var(--c);border-radius:8px;background:var(--panel);padding:10px 12px;cursor:pointer;text-align:left;font:inherit;color:var(--fg)}
+.fcard[aria-pressed="true"]{background:color-mix(in srgb,var(--c) 16%,var(--panel))}
+.fcard b{font-family:var(--font-m);font-size:1rem;display:block}
+.fcard span{display:block;font-size:.84rem;color:var(--muted)}
+.fcard .chip{display:inline-block;white-space:normal;color:var(--fg);margin:3px 0}
+.chip{display:inline-block;border-radius:6px;padding:0 7px;font-size:.78rem;font-weight:600;border:1.5px solid var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);white-space:nowrap}
+.keys{display:flex;flex-wrap:wrap;gap:6px;margin:.4rem 0 .8rem}
+.keys button{font:inherit;font-size:.9rem;padding:6px 11px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--fg);cursor:pointer}
+.keys button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.pipe{list-style:none;padding:0;margin:0;display:grid;gap:0}
+.pipe li{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;padding:8px 0;border-left:3px solid var(--line);margin-left:16px;padding-left:0;position:relative;opacity:.35;transition:opacity .25s}
+.pipe li.on{opacity:1;border-left-color:var(--c,var(--per))}
+.pipe li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--c,var(--muted));color:var(--bg);margin-left:-15px}
+.pipe .h{font-weight:600}
+.pipe .d{font-size:.9rem}
+.bitrow{display:flex;flex-wrap:wrap;gap:3px;margin:.3rem 0}
+.bitrow span{width:52px;text-align:center;border:1px solid var(--line);border-radius:5px;font-size:.7rem;line-height:1.2;padding:3px 0;background:var(--panel)}
+.bitrow span b{display:block;font-family:var(--font-m);font-size:.9rem}
+.bitrow span.hit{background:var(--sw);color:var(--bg);border-color:var(--sw)}
+.rep{display:flex;flex-wrap:wrap;gap:3px;margin:.3rem 0}
+.rep span{min-width:58px;text-align:center;border:1px solid var(--line);border-radius:5px;font-size:.7rem;line-height:1.2;padding:3px 2px;background:var(--panel)}
+.rep span b{display:block;font-family:var(--font-m);font-size:.95rem}
+.rep span.hit{background:var(--pc);color:var(--bg);border-color:var(--pc)}
+.enc{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:start}
+.lamp{display:flex;gap:8px}
+.lamp div{width:58px;height:58px;border-radius:10px;border:2px solid var(--line);display:grid;place-items:center;font-family:var(--font-m);font-size:.85rem;line-height:1.2;text-align:center}
+.lamp div.hi{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+.hist{display:flex;gap:4px;font-family:var(--font-m);margin:.3rem 0}
+.hist span{border:1px solid var(--line);border-radius:4px;padding:2px 7px;background:var(--panel)}
+.hist span.new{border-color:var(--per);color:var(--per);font-weight:700}
+.pat td.hit{background:color-mix(in srgb,var(--sw) 25%,transparent);font-weight:700}
+.log{font-family:var(--font-m);font-size:.85rem;min-height:3.2em;background:var(--soft);border-radius:6px;padding:6px 10px;margin-top:.5rem;white-space:pre-wrap}
+.db{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:.5rem 0}
+.db div{background:var(--soft);border-radius:6px;padding:6px 8px;text-align:center}
+.db div span{display:block;font-size:.76rem;color:var(--muted)}
+.db div b{font-family:var(--font-m);font-size:1.2rem}
+.db div.flash{outline:2px solid var(--pc)}
+.wave{display:flex;gap:2px;align-items:flex-end;height:44px;margin:.4rem 0;overflow-x:auto}
+.wave i{display:block;width:10px;flex:none;background:var(--line);border-radius:2px 2px 0 0}
+.wave i.p{background:var(--per)}
+.wave i.r{outline:2px solid var(--pc)}
+.qs details{border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:8px 12px;margin:.5rem 0}
+.qs summary{cursor:pointer;font-weight:600}
+.qs details p{max-width:none}
+.ask{border:2px dashed var(--per);border-radius:8px;padding:10px 14px;background:var(--panel)}
+.ask code{white-space:normal}
+.fdet .card{margin-top:0}
+@media (max-width:600px){.enc{grid-template-columns:1fr}.db{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+<div class="wrap">
+<div class="eyebrow">轻松版 · 读代码 · app 文件夹</div>
+<h1>app 文件夹的四份代码</h1>
+<p class="lede"><code>button.c</code>、<code>scroll.c</code>、<code>custom.c</code>、<code>optical_3325.c</code>：它们是谁写的，现在在项目里管什么，你按下一个键时它们按什么顺序接力，哪里有坑，T1A 要改哪里。最后一节帮你把“不知道怎么问”的问题列好了，点开就有答案。</p>
+<div class="where"><span>📍</span><div>一句话：<b>button.c 和 scroll.c 负责“看”</b>（读按键、读滚轮），<b>custom.c 负责“翻译”</b>（这个键代表什么功能），翻译完交给 <code>src/device.c</code> 发给电脑。<b>optical_3325.c 是上一代传感器的驱动</b>，现在只剩一个延时函数在用。</div></div>
+
+<h2><span class="step">1/8</span>先看场景：你用鼠标时，它们什么时候干活</h2>
+<div class="scroll"><table>
+<thead><tr><th>你在做什么</th><th>谁在干活</th><th>多久一次</th></tr></thead>
+<tbody>
+<tr><td><b>插上 USB</b></td><td><code>custom.c</code> 的 <code>Custom_Init()</code> 把“每个键代表什么”“4 档 DPI”这些默认设置填好</td><td>开机一次</td></tr>
+<tr><td><b>按键、松键</b></td><td><code>button.c</code> 读引脚 → <code>custom.c</code> 翻译成鼠标报告</td><td>每 1 ms 读一次；状态变了才翻译</td></tr>
+<tr><td><b>转滚轮</b></td><td><code>scroll.c</code> 读编码器两根线 → <code>custom.c</code> 翻译</td><td>每 1 ms 读一次</td></tr>
+<tr><td><b>按 DPI 键</b></td><td><code>custom.c</code> 换档、存设置、通知 GUI（第 6 节有坑）</td><td>按一下一次</td></tr>
+<tr><td><b>老 GUI 点“恢复默认”或“升级”</b></td><td><code>custom.c</code> 的 <code>Custom_Restore_Default()</code>、<code>Bootloadable_Load()</code></td><td>GUI 发命令时</td></tr>
+<tr><td><b>移动鼠标</b></td><td><b>都不参与</b>。现在走 <code>src/PAW3950.c</code>；<code>optical_3325.c</code> 是老传感器的，不用了</td><td>—</td></tr>
+</tbody></table></div>
+
+<h2><span class="step">2/8</span>四份代码的前世今生（点一张卡片看详情）</h2>
+<div class="fcards" id="fcards"></div>
+<div class="fdet" id="fdet" aria-live="polite"></div>
+<p class="note">颜色同“代码来源清单”：🟦 原厂底子、⬜ 历任开发者、🟩 本项目。“在用 / 没人调用”按 2026-10-20 那次编译的程序统计。</p>
+
+<h2><span class="step">3/8</span>按下一个键，四份代码怎么接力（点一个键）</h2>
+<div class="box try"><div class="tag">动手 · 选一个键，看它从引脚走到 USB 的每一步</div>
+<div class="keys" id="keys"></div>
+<ol class="pipe" id="pipe"></ol>
+</div>
+<div class="def"><b>wheel_button_status</b>：一个 32 位变量（定义在 device.c），<code>button.c</code> 和 <code>scroll.c</code> 把“哪个键按着、滚轮往哪转”写成 0/1 放进去，一共用了 10 位。<code>custom.c</code> 只看这个变量，不直接读引脚。<br><b>key_function[10]</b>：10 个“键位”各自对应一个功能编号（id），比如 <code>0xB0</code> = 鼠标左键、<code>0xC1</code> = DPI 循环。改这个表就能“改键”。</div>
+
+<h2><span class="step">4/8</span>scroll.c：滚轮是怎么读出方向的</h2>
+<p><b>场景</b>：滚轮里有个<span class="term">正交编码器</span>，转动时两根线 ZA、ZB 轮流变高变低。<b>谁先变</b>决定方向。IRPT_V4 板子上 ZA = PIO0_17、ZB = PIO0_18（<code>my_board.h:252~256</code>），内部上拉。</p>
+<div class="box try"><div class="tag">动手 · 一步一步转滚轮，看代码怎么判断</div>
+<div class="btns"><button type="button" id="encA">往“ZA 先变”的方向转一步</button><button type="button" id="encB">往“ZB 先变”的方向转一步</button><button type="button" id="encR">重来</button></div>
+<div class="enc">
+<div class="lamp"><div id="lzA">ZA<br>1</div><div id="lzB">ZB<br>1</div></div>
+<div>
+<div class="note">ShiftWheel 记住最近 3 个状态（每个 2 位，ZA 在高位）：</div>
+<div class="hist" id="hist"></div>
+<table class="pat"><thead><tr><th>ScrollData</th><th>三个状态</th><th>代码判成</th></tr></thead><tbody id="patT"></tbody></table>
+</div></div>
+<div class="log" id="encLog" aria-live="polite"></div>
+</div>
+<p>原始代码（scroll.c:23~66，删掉了注释行）：</p>
+<pre class="code" id="cScroll"></pre>
+<p><b>结论</b>：每走<b>两次跳变</b>（半个周期，从 00 到 11 或从 11 到 00）报一次。滚轮“一格”有几次跳变要看编码器手册，所以一格报 1 次还是 2 次，要上板实测。哪个方向算“上”取决于接线，<b>代码第 15 行的注释写反了</b>（注释说 0x34 是 down，代码却调用 UP），以实际效果为准。</p>
+<div class="card"><b class="t">⚠️ 两处看着像有用、其实没用的</b><br>① <code>Main_Mouse_SCROLL_UP/DN()</code> 往 <code>g_Main_Setting.MouseInReport[6]</code> 写 ±1，但这个数组只在 <code>nsAPI_SensorEventMointor()</code> 里发送，那个函数在 IRPT_V4 下<b>没编译</b>。真正生效的是下面写进 <code>wheel_status</code> 的第 3 / 4 位。<br>② <code>wheel1_time_delay &gt; 0</code> 永远成立（注释写着“3 4ms”，原来大概是延时几毫秒）：滚轮位只亮 1 ms 就清掉。这正好让 custom.c 看到一次“按下”，所以没出问题。</div>
+
+<h2><span class="step">5/8</span>button.c：六个键分三种读法</h2>
+<div class="scroll"><table>
+<thead><tr><th>键</th><th>IRPT_V4 引脚</th><th>怎么读</th><th>消抖</th><th>状态变了时额外做</th><th>位</th></tr></thead>
+<tbody>
+<tr><td>左键</td><td>PIO0_13（AD2）</td><td>红外对管 → ADC 电压 → <code>my_misc.c</code> 比阈值</td><td>不用（ADC 值有滤波）</td><td>按下、松开各让线圈震一下：<code>Ele_LeftKeyPressProcess()</code> / <code>…ReleaseProcess()</code></td><td>0</td></tr>
+<tr><td>右键</td><td>PIO0_14（AD3）</td><td>同上</td><td>不用</td><td>同上：<code>Ele_RightKey…Process()</code></td><td>1</td></tr>
+<tr><td>中键</td><td>PIO0_12</td><td>GPIO，按下 = 0</td><td>按 5 ms、松 8 ms</td><td>—</td><td>2</td></tr>
+<tr><td>前侧键 K4</td><td>PIO0_1</td><td>GPIO</td><td>5 / 8 ms</td><td>按下时震：<code>Ele_K4KeyPressProcess()</code></td><td>5</td></tr>
+<tr><td>后侧键 K5</td><td>PIO0_23</td><td>GPIO</td><td>5 / 8 ms</td><td>按下时震：<code>Ele_K5KeyPressProcess()</code></td><td>6</td></tr>
+<tr><td>DPI 键</td><td>PIO0_11</td><td>GPIO</td><td>5 / 8 ms</td><td>—</td><td>9</td></tr>
+</tbody></table></div>
+<p><span class="term">消抖</span>：机械开关按下的瞬间会“弹”几下，电平来回跳。代码的做法：电平一变就<b>重新倒计时</b>，倒计时走完电平还没变，才算真的按下 / 松开。</p>
+<div class="box try"><div class="tag">动手 · 中键消抖：每点一次“过 1 ms”，代码跑一遍</div>
+<div class="btns"><button type="button" id="dbPress" aria-pressed="false">手指：松开</button><button type="button" id="dbTick">过 1 ms</button><button type="button" id="dbBounce">自动演示：带抖动的一次按下</button><button type="button" id="dbReset">重来</button></div>
+<div class="wave" id="dbWave" aria-label="引脚电平历史"></div>
+<div class="db"><div id="dbRaw"><span>引脚读到</span><b>松</b></div><div id="dbCur"><span>scan_result_cur</span><b>松</b></div><div id="dbCnt"><span>debounce 倒计时</span><b>0</b></div><div id="dbPre"><span>scan_result_pre（报给电脑）</span><b>松</b></div></div>
+<div class="log" id="dbLog" aria-live="polite"></div>
+</div>
+<p>原始代码（button.c:653~691，中键那一段）：</p>
+<pre class="code" id="cBtn"></pre>
+<div class="card"><b class="t">button.c 里的“霍尔”</b><br>变量叫 <code>hall_spi_rx</code>，但 IRPT_V4 的左右键是<b>红外</b>：<code>LR_GetState()</code> 把两路 ADC 值塞进这个数组，再交给 <code>ProcessRecvSampleRawData()</code>（my_misc.c:418）。名字是从别的板型（霍尔版）沿用来的。<br>文件末尾 9 个 <code>Hall_*</code> 函数（787~917 行）是给霍尔板型写的：两颗霍尔芯片<b>菊花链</b>接在 SSP 上、没有片选，靠在 SCLK 脚上打一个特殊脉冲（<code>Hall_CLK_Command_SET()</code>）发命令。IRPT_V4 下编进去了但没人调用。<b>T1A 的 GTRY164 也是菊花链、没片选</b>，这些函数是很好的参考，先别删。</div>
+
+<h2><span class="step">6/8</span>custom.c：“改键 + DPI + 配置档”的翻译官</h2>
+<p><b>前世</b>：这是老 GUI 时代的“自定义设置”引擎。全局变量 <code>gloabSetting</code>（拼写原样）里存着 2 套配置档（<code>MODE_NUM = 2</code>），每套有：10 个键的功能、4 档 DPI、回报率、灯效。老 GUI 能改这些，改完存进 EEPROM（第 11 课的老区域 0x000~0xB84）。</p>
+<p><b>今生</b>：本项目把“开机从 EEPROM 读回设置”“灯效”“产线测试”都注释掉了（和 M300S 比，改了 12 个函数），所以<b>每次开机都是默认值</b>。但<b>翻译引擎还在每次按键时运行</b>：<code>Custom_HandleKey()</code> 是热路径。</p>
+<div class="box try"><div class="tag">动手 · 功能编号（id）分类：拖一拖，看 ClassKeyfunction() 怎么分</div>
+<input type="range" id="idR" min="0" max="255" value="176" aria-label="功能编号">
+<div class="card" id="idInfo" aria-live="polite"></div>
+</div>
+<p>默认键位表（<code>Custom_DefineKey_Init()</code>，custom.c:102~119）：</p>
+<div class="scroll"><table><thead><tr><th>键位 [i]</th><th>物理键</th><th>id</th><th>功能</th><th>写进报告</th></tr></thead><tbody id="kfT"></tbody></table></div>
+<div class="card" style="border-left-color:var(--bad)"><b class="t">⚠️ 坑：DPI 键现在“只存不改”</b><br>按 DPI 键 → <code>DealSpecialFunctionKey()</code> → <code>Custom_Dpi_Deal(CYCLE_DPI)</code> → <code>Custom_Set_DPI(档位, 存=TRUE, 发=TRUE, …)</code>：<br>① 真正改传感器的那句 <code>optical_set_dpi()</code> 被 <code>#if ((!defined(IRPT_V4)) …)</code> 关掉了（custom.c:396~398）。PAW3950 一直是开机设的 1600（PAW3950.c:398）。<br>② 但<b>每按一次都写一次 EEPROM</b>（<code>OperateFlash_Store_ModeSetting()</code> → <code>GtechFlash_WriteBytes()</code> → <code>Chip_EEPROM_Write()</code>），写的时候会关中断（第 11 课）。<br>③ 还会从 EP3 给 GUI 发一包“DPI 变了”。<br>也就是说：按 DPI 键<b>手感上没变化</b>，却在悄悄写 EEPROM。整理代码或做 T1A 的 DPI 功能时要处理这里。</div>
+<div class="card"><b class="t">另一个要知道的：升级入口</b><br>老 GUI 发“升级”命令时，<code>PC_Communicate()</code> 调 <code>Bootloadable_Load()</code>（custom.c:76）：往 RAM 0x10001F00 写一个 0xAA，再软件复位。公司 bootloader 开机看到“软件复位 + 0xAA”，就留在升级模式（见 0-3 课“公司 Bootloader”）。这个函数<b>不能删</b>。</div>
+
+<h2><span class="step">7/8</span>optical_3325.c：上一代传感器的驱动，只剩一个延时</h2>
+<p><b>前世</b>：文件头写着 “Copyright 2003-2006, Cypress Semiconductor”“interface to the Avago optical chip using an SPI port on the PSoC”：Cypress 给 PSoC 芯片做的光学鼠标参考代码，后来被开发者改成驱动 PixArt 3325 / 3327 传感器。和 M300S 比只改了两行空白和注释。</p>
+<p><b>今生</b>：IRPT_V4 用 PAW3950（<code>src/PAW3950.c</code>），这个文件里的传感器函数全没人调用。还在用的只有：</p>
+<pre class="code">void TimerDelayMsec(uint32_t t_count)
+{
+	DrvDelay(t_count *10);//delay *10 = 1ms
+}</pre>
+<p>和一个变量 <code>optical_double_flag</code>（custom.c 写它，但也没人读）。<code>TimerDelayMsec()</code> 被 <code>device.c</code>、<code>usb.c</code>、<code>test.c</code> 调用，是个“忙等 N 毫秒”的延时。</p>
+<div class="card"><b class="t">为什么死代码也占 Flash</b><br>Keil 的链接器以“段”为单位取舍。这个文件的所有函数在同一个代码段里，只要 <code>TimerDelayMsec</code>（12 字节）被用到，<b>整段 720 字节都留下</b>，还顺带拉进几个浮点运算库函数（<code>optical_get_report()</code> 里用了 float / double）。以后整理时，可以把 <code>TimerDelayMsec</code> 挪到 <code>Timer.c</code>，再把这个文件移出工程。这一步要改工程，按规矩先编译、实测、问杰哥。</div>
+
+<h2><span class="step">8/8</span>T1A 要改这四个文件的哪里</h2>
+<div class="scroll"><table>
+<thead><tr><th>文件</th><th>要改什么</th><th>为什么</th></tr></thead>
+<tbody>
+<tr><td><code>scroll.c</code></td><td>引脚改到 SCROLL_UP / SCROLL_DOWN = PIO0_18 / PIO0_19；新增 SCROLL_EN（PIO0_17）输出，点亮编码器发光管；解码表可能要按 R-DIP 手册调</td><td>T1A 换成 R-DIP 光学编码器，要先点灯才能读</td></tr>
+<tr><td><code>button.c</code></td><td><code>LR_GetState()</code> 换成读两颗 GTRY164（SSP1 菊花链）；中键 / 侧键 / DPI 引脚全换（改 <code>my_board.h</code> 和 <code>button.h</code> 的掩码）</td><td>左右键从红外换成霍尔；按键引脚重新分配</td></tr>
+<tr><td><code>custom.c</code></td><td>决定 DPI 键怎么做：接到 <code>PAW3950_SetCPI()</code>，并决定要不要存、存到新协议区（0xF00）还是老区</td><td>现在 DPI 键不改传感器但写 EEPROM</td></tr>
+<tr><td><code>optical_3325.c</code></td><td>不用改；整理时可移出工程</td><td>—</td></tr>
+</tbody></table></div>
+<p class="note">引脚细节见“引脚总表”和 <code>study_notes/03_T1A适配清单.md</code> 第 2、4、5 节。注意 T1A 的 DPI 键（PIO0_23）同时连着充电芯片的 /QON。</p>
+
+<h2>不知道怎么问？先点开这些</h2>
+<div class="qs" id="qs"></div>
+<div class="ask"><b>以后想问的时候，套这个格式就行：</b><br>“我在看 <code>文件名:行号</code>，<b>这一行 / 这个变量 / 这个函数</b>，我不懂的是：<b>它什么时候执行</b> / <b>谁调用它</b> / <b>为什么这么写</b> / <b>删了会怎样</b> / <b>T1A 要不要改</b>。”<br>只说“没看懂”加一张截图也可以，我会从场景讲起。</div>
+
+<h2>小测</h2>
+<div class="box quiz" id="quiz"></div>
+<div class="sum"><b>记住这几句就够了：</b>button.c、scroll.c 每 1 ms 读一次键和滚轮，把结果写成 <code>wheel_button_status</code> 里的 10 个位；custom.c 按 <code>key_function[]</code> 表把每一位翻译成鼠标报告的字节；device.c 把报告发给电脑。optical_3325.c 只剩 <code>TimerDelayMsec()</code> 在用。DPI 键现在不改传感器，却每按一次写一次 EEPROM。</div>
+<h3>本页新词</h3>
+<table><tbody>
+<tr><td><b>正交编码器</b></td><td>两根线轮流变化，看谁先变来判断方向（滚轮用）</td></tr>
+<tr><td><b>消抖</b></td><td>开关按下时电平会抖几下，要等它稳定一段时间再认</td></tr>
+<tr><td><b>键位 / 功能编号（id）</b></td><td>物理键的序号 / 这个键代表的功能，查表把前者翻译成后者</td></tr>
+<tr><td><b>配置档（profile）</b></td><td>一整套设置（键位、DPI、灯效），可以存好几套切换</td></tr>
+<tr><td><b>菊花链</b></td><td>几颗芯片串成一串：上一颗的输出接下一颗的输入，共用一套 SPI，没有片选</td></tr>
+<tr><td><b>热路径</b></td><td>每次按键都会走到的代码，改它要格外小心</td></tr>
+</tbody></table>
+</div>
+<script>
+const CODE_SCROLL="  wheel_value_ZA = DrvGPIORead(ZA_PORT, ZA_PIN);\n    wheel_value_ZB = DrvGPIORead(ZB_PORT, ZB_PIN);\n  wheelInput = (((uint8_t)wheel_value_ZA << 1) | wheel_value_ZB);\n    if((wheelInput^PreWheelInput)&0x03)\n    {\n        PreWheelInput =(wheelInput&0x03);\n        ShiftWheel <<= 2;\n        ShiftWheel |=PreWheelInput;\n        for(i=0;i<4;i++)\n        {\n            if(ScrollData[i]==(ShiftWheel&0x3f))\n            {     \n            if((i==0)||(i==1))\n                {\n                 Main_Mouse_SCROLL_UP();\n                    wheel_up = TRUE;\n                }\n            else\n                {\n                    Main_Mouse_SCROLL_DN();\n                    wheel_down = TRUE;\n                }\n            break;  \n            }\n        }";
+const CODE_BTN="    for(i = 2; i <= 2; i++) //middle\n    {\n        if((button ^ buttonScan_stru.scan_result_cur) & (0x01 << i))\n        {\n            if(button & (0x01 << i))\n            {\n                buttonScan_stru.scan_result_cur |= (0x01 << i);\n                buttonScan_stru.debounce[i] = 5;\n            }\n            else\n            {\n                buttonScan_stru.scan_result_cur &= ~(0x01 << i);\n                buttonScan_stru.debounce[i] = 8;\n            }\n        }\n        else\n        {\n            if(buttonScan_stru.debounce[i])\n            {\n                buttonScan_stru.debounce[i]--;\n                if(buttonScan_stru.debounce[i] == 0)\n                {\n                    if((buttonScan_stru.scan_result_pre ^ buttonScan_stru.scan_result_cur) & (0x01 << i))\n                    {\n                        if(buttonScan_stru.scan_result_cur & (0x01 << i))\n                        {\n                            buttonScan_stru.scan_result_pre |= (0x01 << i);\n                            buttonScan_stru.button_changed = TRUE;\n                        }\n                        else\n                        {\n                            buttonScan_stru.scan_result_pre &= ~(0x01 << i);\n                            buttonScan_stru.button_changed = TRUE;\n                        }   \n                    }\n                }\n            }\n        }\n    }";
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+$('cScroll').textContent=CODE_SCROLL;$('cBtn').textContent=CODE_BTN;
+
+/* ---------- file cards ---------- */
+const FILES=[
+ {f:'button.c',c:'muted',chip:'⬜ 历任开发者 → 🟩 本项目大改',lines:'204 → 917 行',
+  sum:'读 6 个键',
+  life:'没有版权头。老项目 M300S 里只有约 200 行，读几个 GPIO 键。本项目（chengjie）加到 900 多行：左右键改成读红外 ADC、按下时触发线圈震动，还加了一套给霍尔板型用的 SPI 函数。',
+  now:'每 1 ms 被 <code>Device_Button_Scan()</code>（device.c:949）调用一次，返回“有没有键变了”。',
+  used:'在用 4 个：<code>Button_Scan</code>、<code>Button_GetState</code>、<code>LR_GetState</code>、<code>Button_Location_Data</code>。没人调用 9 个：<code>Hall_*</code>、<code>hall_get_sample</code>、<code>HallSensor_INIT</code> 等（霍尔板型用，T1A 可参考）。'},
+ {f:'scroll.c',c:'muted',chip:'⬜ 历任开发者',lines:'119 → 119 行',
+  sum:'读滚轮',
+  life:'没有版权头，开头还留着一行注释 <code>//void nsAPI_WheelEventMointor(void)</code>，和 usbhw.c 里的 nsAPI_ 是同一批改名。和 M300S 比，本项目只改了一处：引脚从写死的 <code>(0,5)</code>、<code>(0,4)</code> 改成 <code>my_board.h</code> 里的 <code>ZA_PORT / ZA_PIN</code>。',
+  now:'每 1 ms 被 <code>Device_Wheel_Scan()</code>（device.c:983）调用一次。',
+  used:'3 个函数全在用：<code>Scroll_Scan</code>、<code>Main_Mouse_SCROLL_UP/DN</code>（后两个写的数组没人发，见第 4 节）。'},
+ {f:'custom.c',c:'muted',chip:'⬜ 历任开发者 → 🟩 本项目改过',lines:'1198 → 1171 行',
+  sum:'键位翻译、DPI、配置档',
+  life:'没有版权头。老 GUI 时代的“自定义设置”：改键、4 档 DPI、2 套配置档、灯效，设置存 EEPROM。本项目改了 12 个函数，主要是注释掉开机读设置、灯效和产线测试。',
+  now:'开机 <code>Custom_Init()</code> 一次；每次键 / 滚轮变化 <code>Custom_HandleKey()</code> 一次（device.c:566）；老 GUI 命令来时 <code>Custom_Restore_Default()</code>、<code>Bootloadable_Load()</code>。',
+  used:'在用 26 个；没人调用 2 个：<code>Custom_Profile</code>、<code>Custom_Select_Profile</code>（切换配置档，没有键绑这个功能）。'},
+ {f:'optical_3325.c',c:'hw',chip:'🟦 原厂底子（Cypress 2003–06）+ 开发者改过',lines:'519 → 519 行',
+  sum:'老传感器驱动',
+  life:'Cypress 给 PSoC 写的光学鼠标参考代码，开发者改成驱动 PixArt 3325 / 3327。M300S 时代在用。',
+  now:'IRPT_V4 换了 PAW3950，这里的传感器函数都不用了；只有 <code>TimerDelayMsec()</code> 被 device.c、usb.c、test.c 当延时用。',
+  used:'在用 1 个（12 字节）；没人调用 7 个（约 700 字节，因为同一段被整段留下）。'},
+];
+let curF=null;
+(function(){const box=$('fcards');FILES.forEach((F,i)=>{const b=document.createElement('button');b.type='button';b.className='fcard';b.style.setProperty('--c',V(F.c));b.setAttribute('aria-pressed','false');
+ b.innerHTML=`<b>${F.f}</b><span>${F.sum}</span><span class="chip" style="--c:${V(F.c)}">${F.chip}</span><span>${F.lines}（M300S → 现在）</span>`;
+ b.onclick=()=>{curF=curF===i?null:i;drawF()};box.appendChild(b)});drawF()})();
+function drawF(){[...$('fcards').children].forEach((b,i)=>b.setAttribute('aria-pressed',curF===i));
+ if(curF==null){$('fdet').innerHTML='<p class="note">↑ 点一张卡片。</p>';return}
+ const F=FILES[curF];$('fdet').innerHTML=`<div class="card" style="border-left-color:${V(F.c)}"><b class="t">${F.f}</b><br><b>前世：</b>${F.life}<br><b>今生：</b>${F.now}<br><b>函数：</b>${F.used}</div>`}
+
+/* ---------- key path ---------- */
+const BITS=[[0,'左键'],[1,'右键'],[2,'中键'],[3,'滚上'],[4,'滚下'],[5,'K4'],[6,'K5'],[7,'音量+'],[8,'音量-'],[9,'DPI']];
+const KEYS=[
+ {n:'左键',pin:'PIO0_13（AD2，红外对管的电压）',rd:'<code>LR_GetState()</code>：<code>MyADC_GetValue()</code> 读两路 ADC → <code>ProcessRecvSampleRawData()</code>（my_misc.c:418）和阈值比较',deb:'不消抖；变了立刻算数，并调用 <code>Ele_LeftKeyPressProcess()</code> 让线圈震一下',file:'button.c',bit:0,id:'0xB0',cls:'MOUSE_KEY',h:'Custom_Deal_MouseKey()',rep:[1],rv:'buttons |= 0x01'},
+ {n:'右键',pin:'PIO0_14（AD3）',rd:'同左键',deb:'不消抖；<code>Ele_RightKeyPressProcess()</code>',file:'button.c',bit:1,id:'0xB1',cls:'MOUSE_KEY',h:'Custom_Deal_MouseKey()',rep:[1],rv:'buttons |= 0x02'},
+ {n:'中键',pin:'PIO0_12（GPIO，按下 = 0）',rd:'<code>Button_GetState()</code> 一次读整个 PORT0，<code>Button_Location_Data()</code> 把第 12 位挪到第 2 位',deb:'消抖：按下等 5 ms、松开等 8 ms（第 5 节可以玩）',file:'button.c',bit:2,id:'0xB2',cls:'MOUSE_KEY',h:'Custom_Deal_MouseKey()',rep:[1],rv:'buttons |= 0x04'},
+ {n:'前侧键 K4',pin:'PIO0_1',rd:'同中键，第 1 位挪到第 5 位',deb:'消抖 5 / 8 ms；确认按下后 <code>Ele_K4KeyPressProcess()</code> 震一下',file:'button.c',bit:5,id:'0xB3',cls:'MOUSE_KEY',h:'Custom_Deal_MouseKey()',rep:[1],rv:'buttons |= 0x10（第 5 键，浏览器“前进”）'},
+ {n:'后侧键 K5',pin:'PIO0_23',rd:'同中键，第 23 位挪到第 6 位',deb:'消抖 5 / 8 ms；<code>Ele_K5KeyPressProcess()</code>',file:'button.c',bit:6,id:'0xB4',cls:'MOUSE_KEY',h:'Custom_Deal_MouseKey()',rep:[1],rv:'buttons |= 0x08（第 4 键，浏览器“后退”）'},
+ {n:'DPI 键',pin:'PIO0_11',rd:'同中键，第 11 位挪到第 9 位',deb:'消抖 5 / 8 ms',file:'button.c',bit:9,id:'0xC1',cls:'SPECIAL_FUNCTION_KEY',h:'DealSpecialFunctionKey() → Custom_Dpi_Deal(CYCLE_DPI) → Custom_Set_DPI()',rep:[],rv:'<b>不发鼠标报告</b>：档位 +1、写 EEPROM、从 EP3 给 GUI 发一包；传感器 DPI 不变（第 6 节）'},
+ {n:'滚轮往上',pin:'PIO0_17 / PIO0_18（ZA / ZB）',rd:'<code>Scroll_Scan()</code>：记最近 3 个状态，和 ScrollData 表比',deb:'不用消抖：查表本身就要求连续 3 个状态对得上',file:'scroll.c',bit:3,id:'0xB5',cls:'MOUSE_KEY',h:'Custom_Deal_MouseKey()',rep:[6],rv:'wheel = 0x01（+1）'},
+ {n:'滚轮往下',pin:'PIO0_17 / PIO0_18',rd:'同上，匹配另外两种状态',deb:'同上',file:'scroll.c',bit:4,id:'0xB6',cls:'MOUSE_KEY',h:'Custom_Deal_MouseKey()',rep:[6],rv:'wheel = 0xFF（−1）'},
+];
+const RB=['ID','按键','X 低','X 高','Y 低','Y 高','滚轮','横滚'];
+let curK=0;
+(function(){const box=$('keys');KEYS.forEach((k,i)=>{const b=document.createElement('button');b.type='button';b.textContent=k.n;b.onclick=()=>{curK=i;drawK()};box.appendChild(b)});drawK()})();
+function drawK(){[...$('keys').children].forEach((b,i)=>b.setAttribute('aria-pressed',i===curK));
+ const k=KEYS[curK],fc=k.file==='scroll.c'?'gold':'per';
+ const bits=BITS.slice().reverse().map(([b,n])=>`<span class="${b===k.bit?'hit':''}"><b>${b===k.bit?1:0}</b>bit${b} ${n}</span>`).join('');
+ const rep=RB.map((n,i)=>{let v=i===0?'01':'00';if(k.rep.includes(i)){v=i===6?(k.id==='0xB5'?'01':'FF'):({'0xB0':'01','0xB1':'02','0xB2':'04','0xB3':'10','0xB4':'08'}[k.id])}return `<span class="${k.rep.includes(i)?'hit':''}"><b>${v}</b>[${i}] ${n}</span>`}).join('');
+ const S=[
+  [fc,'引脚',`${k.pin}`],
+  [fc,`${k.file} 读取`,`${k.rd}<br>${k.deb}`],
+  ['sw','写进 wheel_button_status',`device.c 的 <code>${k.file==='scroll.c'?'Device_Wheel_Scan()':'Device_Button_Scan()'}</code> 把结果并进去，发出 <code>${k.file==='scroll.c'?'SCROLL_EVENT':'BUTTON_EVENT'}</code><div class="bitrow">${bits}</div>`],
+  ['muted','custom.c 查表翻译',`<code>Device_Pack()</code> → <code>Custom_HandleKey()</code> 逐位检查哪一位变了。第 ${k.bit} 位 → <code>key_function[${k.bit}].id = ${k.id}</code> → <code>ClassKeyfunction()</code> 判成 <b>${k.cls}</b> → <code>${k.h}</code>`],
+  ['pc','结果',`${k.rv}${k.rep.length?`<div class="rep">${rep}</div>`:''}`],
+  ['pc','发给电脑',k.rep.length?'<code>Device_Report()</code> 等 EP1 空了，把 8 字节报告交给 USB；电脑下次来问（1 ms 一次）就拿走（第 10 课）':'这个键不产生鼠标报告']];
+ $('pipe').innerHTML=S.map((s,i)=>`<li style="--c:${V(s[0])}"><i>${i+1}</i><div><div class="h">${s[1]}</div><div class="d">${s[2]}</div></div></li>`).join('');
+ [...$('pipe').children].forEach((li,i)=>setTimeout(()=>li.classList.add('on'),matchMedia('(prefers-reduced-motion:reduce)').matches?0:i*180))}
+
+/* ---------- encoder ---------- */
+const PAT=[[0x34,'11 → 01 → 00','UP（i = 0）'],[0x0b,'00 → 10 → 11','UP（i = 1）'],[0x38,'11 → 10 → 00','DN（i = 2）'],[0x07,'00 → 01 → 11','DN（i = 3）']];
+const SEQ_A=[3,1,0,2],SEQ_B=[3,2,0,1];
+let st,pre,shift,log,hit;
+const b2=v=>v.toString(2).padStart(2,'0');
+function encReset(){st=3;pre=3;shift=0x3f;log=[];hit=-1;encDraw('现在停在一格上：ZA = 1、ZB = 1（上拉，没被挡住）。')}
+function encStep(seq){const i=seq.indexOf(st);st=seq[(i+1)%4];
+ const wheelInput=st;let msg=`读到 ZA=${st>>1} ZB=${st&1} → wheelInput = ${b2(st)}`;hit=-1;
+ if((wheelInput^pre)&3){pre=wheelInput&3;shift=((shift<<2)|pre)&0xff;msg+=`，和上次不同 → ShiftWheel 左移 2 位、塞进 ${b2(pre)}`;
+  for(let k=0;k<4;k++)if(PAT[k][0]===(shift&0x3f)){hit=k;break}
+  msg+=hit>=0?`\n最近 3 个状态 = 0x${(shift&0x3f).toString(16).padStart(2,'0')}，对上表里第 ${hit} 行 → ${hit<2?'Main_Mouse_SCROLL_UP()，wheel_up = TRUE → 第 3 位置 1':'Main_Mouse_SCROLL_DN()，wheel_down = TRUE → 第 4 位置 1'}`:`\n最近 3 个状态 = 0x${(shift&0x3f).toString(16).padStart(2,'0')}，表里没有 → 这一步不报`}
+ encDraw(msg)}
+function encDraw(msg){$('lzA').className=st>>1?'hi':'';$('lzB').className=st&1?'hi':'';$('lzA').innerHTML=`ZA<br>${st>>1}`;$('lzB').innerHTML=`ZB<br>${st&1}`;
+ const h=[(shift>>4)&3,(shift>>2)&3,shift&3];$('hist').innerHTML=h.map((v,i)=>`<span class="${i===2?'new':''}">${b2(v)}</span>`).join('<span style="border:none">→</span>');
+ $('patT').innerHTML=PAT.map((p,i)=>`<tr><td class="${i===hit?'hit':''}"><code>0x${p[0].toString(16).padStart(2,'0')}</code></td><td class="${i===hit?'hit':''}">${p[1]}</td><td class="${i===hit?'hit':''}">${p[2]}</td></tr>`).join('');
+ $('encLog').textContent=msg}
+$('encA').onclick=()=>encStep(SEQ_A);$('encB').onclick=()=>encStep(SEQ_B);$('encR').onclick=encReset;encReset();
+
+/* ---------- debounce ---------- */
+let raw=0,cur=0,cnt=0,rep=0,hist=[],timer=null;
+const T=v=>v?'按':'松';
+function dbTick(silent){let m='';if(raw!==cur){cur=raw;cnt=raw?5:8;m=`电平变了 → cur = ${T(cur)}，倒计时重新设成 ${cnt}`}
+ else if(cnt){cnt--;m=`电平没变 → 倒计时减到 ${cnt}`;if(cnt===0&&rep!==cur){rep=cur;m+=`\n倒计时走完，cur 和 pre 不同 → pre = ${T(rep)}，button_changed = TRUE，custom.c 这才知道“中键${rep?'按下':'松开'}了”`}}
+ else m='电平没变、倒计时是 0 → 什么也不做';
+ hist.push([raw,rep]);if(hist.length>40)hist.shift();dbDraw(m)}
+function dbDraw(m){$('dbPress').textContent='手指：'+(raw?'按着':'松开');$('dbPress').setAttribute('aria-pressed',!!raw);
+ $('dbRaw').querySelector('b').textContent=T(raw);$('dbCur').querySelector('b').textContent=T(cur);$('dbCnt').querySelector('b').textContent=cnt;$('dbPre').querySelector('b').textContent=T(rep);
+ $('dbWave').innerHTML=hist.map((h,i)=>`<i class="${h[0]?'p':''}${i>0&&h[1]!==hist[i-1][1]?' r':''}" style="height:${h[0]?40:8}px"></i>`).join('');
+ if(m!=null)$('dbLog').textContent=m}
+function dbReset(){clearInterval(timer);timer=null;raw=cur=cnt=rep=0;hist=[];dbDraw('松着。点“手指”切换按 / 松，再点“过 1 ms”。蓝色柱 = 引脚是“按下”，红框 = 报告变了的那一毫秒。')}
+$('dbPress').onclick=()=>{raw^=1;dbDraw('手指'+(raw?'按下':'松开')+'了，但代码还没看到：点“过 1 ms”让它跑一遍')};
+$('dbTick').onclick=()=>dbTick();$('dbReset').onclick=dbReset;
+$('dbBounce').onclick=()=>{dbReset();const seq=[1,0,1,1,0,1,1,1,1,1,1,1,1,1,1];let i=0;timer=setInterval(()=>{if(i>=seq.length){clearInterval(timer);timer=null;$('dbLog').textContent+='\n（演示完：前 6 ms 在抖，倒计时一直被重置；稳定 5 ms 后才算按下）';return}raw=seq[i++];dbTick()},350)};
+dbReset();
+
+/* ---------- id classifier ---------- */
+const CLS=[[v=>v===0||v===1,'NO_RELATIONSHIP','不做任何事（默认音量 +/− 两个键位用的是 0 和 1，所以这两个键没功能）'],[v=>v>0xEF&&v<0xF4,'MACRO_KEY','宏：按一个键发一串预先录好的按键（macro.c）'],[v=>v===0xFE,'ONE_KEYBOARD_KEY','模拟键盘上的一个键'],[v=>v===0xFD,'SHORT_KEY','模拟键盘组合键（Ctrl+C 这类）'],[v=>v>0x7F&&v<0x90,'ENABLE_KEY','开关类（代码里这个分支是空的）'],[v=>v>0x8F&&v<0xA0,'MULTIMEDIA_KEY','多媒体键（音量、播放），走报告 ID 5'],[v=>v>0x9F&&v<0xB0,'HOT_KEY','热键（打开计算器、浏览器……），也走报告 ID 5'],[v=>v>0xAF&&v<0xC0,'MOUSE_KEY','鼠标键：左 B0、右 B1、中 B2、K4 B3、K5 B4、滚上 B5、滚下 B6、横滚 B7/B8、双击 B9…'],[v=>v>0xBF&&v<0xD0,'SPECIAL_FUNCTION_KEY','特殊功能：DPI 循环 C1、DPI 加减、锁 X/Y……']];
+function idDraw(){const v=+$('idR').value;const c=CLS.find(x=>x[0](v));$('idInfo').innerHTML=`<b class="t">id = 0x${v.toString(16).toUpperCase().padStart(2,'0')}</b> → ${c?`<b>${c[1]}</b>：${c[2]}`:'<b>0</b>（不在任何范围里）：switch 走 default，什么也不做'}`}
+$('idR').oninput=idDraw;idDraw();
+const KF=[[0,'左键','0xB0','鼠标左键','[1] |= 0x01'],[1,'右键','0xB1','鼠标右键','[1] |= 0x02'],[2,'中键','0xB2','鼠标中键','[1] |= 0x04'],[3,'滚轮上','0xB5','滚轮 +1','[6] = 0x01'],[4,'滚轮下','0xB6','滚轮 −1','[6] = 0xFF'],[5,'前侧键 K4','0xB3','第 5 键（前进）','[1] |= 0x10'],[6,'后侧键 K5','0xB4','第 4 键（后退）','[1] |= 0x08'],[7,'（音量+，这块板没有）','0','无','—'],[8,'（音量−，没有）','1','无','—'],[9,'DPI 键','0xC1','DPI 循环','不发报告']];
+$('kfT').innerHTML=KF.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td><code>${r[2]}</code></td><td>${r[3]}</td><td>${r[4]}</td></tr>`).join('');
+
+/* ---------- questions ---------- */
+const QS=[
+ ['app 和 src 有什么区别？为什么 PAW3950.c 在 src 里？','老工程的习惯：<code>src</code> 放芯片驱动、USB、系统流程，<code>app</code> 放“鼠标功能”（按键、滚轮、传感器、设置）。但没有严格执行：本项目新写的 <code>PAW3950.c</code>、<code>my_*.c</code> 都放在了 src。分在哪个文件夹不影响编译，Keil 只认 <code>Sample.uvproj</code> 里列的文件。'],
+ ['按一下左键，电脑多久能收到？','大约 1~2 ms。左右键不消抖，button.c 每 1 ms 读一次；读到后同一轮主循环里 custom.c 翻译、device.c 放进 EP1；电脑每 1 ms 来取一次（回报率 1000 Hz）。中键 / 侧键多 5 ms 消抖。'],
+ ['滚轮转一格，电脑收到几次？','代码每走两次跳变（00↔11 半个周期）报一次。一格对应几次跳变由编码器决定：如果一格正好是半个周期就是 1 次，一个整周期就是 2 次。要看编码器手册或上板数。'],
+ ['我想把侧键改成别的功能，改哪里？','改 <code>Custom_DefineKey_Init()</code>（custom.c:102）里对应键位的 id。比如把 <code>key_function[5]</code>（K4）从 <code>0xB3</code> 改成 <code>0xC1</code>，它就变成 DPI 循环。id 的分类见第 6 节的滑块。改完要编译、上板试。'],
+ ['DPI 键到底有没有用？','对用户来说没用：传感器 DPI 一直是开机设的 1600。对芯片来说有副作用：每按一次写一次 EEPROM、给 GUI 发一包。新协议（my_protocol_mouse.c）里也没有改 DPI 的命令。T1A 要做 DPI 时，需要把这条路接到 <code>PAW3950_SetCPI()</code>。'],
+ ['为什么变量叫 hall_，这块板却是红外？','同一份代码要支持好几种板型（<code>my_board.h</code> 里的 HAPTIC_V2/V3/V4、P723_POC、GEN_2_H_V1、IRPT_V4、V4_HALL_HPTIC_V4）。霍尔板型先写的，红外板型（IRPT_V4）沿用了同一个数组和处理函数，只是把数据来源换成 ADC。'],
+ ['optical_3325.c 能直接删吗？','不能直接删：<code>TimerDelayMsec()</code> 还在用，删了会链接失败。正确顺序：先把 <code>TimerDelayMsec()</code> 挪到 Timer.c（或 device.c），从 Keil 工程移除 optical_3325.c，编译 0 错误、程序大小变小约 0.7 KB，再上板试按键、USB 都正常，最后问杰哥。'],
+ ['custom.c 里的“配置档”现在还有用吗？','基本没用。<code>MODE_NUM = 2</code> 套配置档还在内存里，但开机不再从 EEPROM 读，也没有键绑定“切换配置档”。新 GUI 用的是 my_protocol 那套参数（EEPROM 0xF00 起，第 11 课）。老 GUI 的命令（<code>PC_Communicate()</code>）还在响应，所以这些代码不能随便删。'],
+ ['线圈震动是在哪里触发的？','button.c 在左键 / 右键按下和松开、K4 / K5 按下的那一刻调用 <code>Ele_*Process()</code>（定义在本项目写的 <code>src/my_electromagnet.c</code>），这些函数只是“登记要震”；主循环里的 <code>Ele_PollingTask()</code>（device.c 的 <code>Device_Active()</code> 每圈调用）按状态机真正输出脉冲。这是下一步值得单独讲的一课。'],
+];
+$('qs').innerHTML=QS.map(q=>`<details><summary>${q[0]}</summary><p>${q[1]}</p></details>`).join('');
+
+/* ---------- quiz ---------- */
+const Q=[
+ ['1. custom.c 是直接读引脚的吗？',['是','不是，它只看 wheel_button_status'],1,'对。读引脚是 button.c、scroll.c 的事。','看第 3 节第 2~4 步。'],
+ ['2. 滚轮往上，最后改的是鼠标报告的哪个字节？',['[1] 按键','[6] 滚轮','[7] 横滚'],1,'对。0x01 = +1，0xFF = −1。','看第 3 节，点“滚轮往上”。'],
+ ['3. 中键按下后，最快多久才报给电脑？',['马上','约 5 ms','约 8 ms'],1,'对。按下 5 ms、松开 8 ms。','看第 5 节的消抖演示。'],
+ ['4. 现在按 DPI 键会发生什么？',['传感器 DPI 变了','DPI 不变，但写了一次 EEPROM','什么都不发生'],1,'对。optical_set_dpi() 被 #if 关掉了，但存设置和通知 GUI 还在。','看第 6 节的红框。'],
+ ['5. optical_3325.c 里还在用的是什么？',['optical_init()','TimerDelayMsec()','OP_3325_Packet()'],1,'对。一个 ms 延时函数。','看第 7 节。'],
+];
+(function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0]}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+</script>
