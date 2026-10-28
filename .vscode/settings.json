@@ -1,4 +1,9 @@
 {
+    "C_Cpp.files.exclude": {
+        "**/.vscode": true,
+        "**/.vs": true,
+        "**/M300S/**": true
+    },
     "todo-tree.ripgrep.ripgrep": "C:/Users/GT028625/.vscode/extensions/openai.chatgpt-26.1007.21434-win32-x64/bin/windows-x86_64/rg.exe",
     "todo-tree.highlights.enabled": true,
     "todo-tree.general.tags": [
