@@ -1,0 +1,480 @@
+<title>时钟、电源与低功耗</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
+.mx{border-collapse:separate;border-spacing:4px;min-width:720px}
+.mx th{text-align:center;font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.mx th.s{text-align:left;font-size:.85rem;color:var(--muted);font-family:var(--font-b);width:150px}
+.mx td{padding:0;border:0}
+.mx button{width:100%;font:inherit;font-size:.8rem;line-height:1.35;padding:6px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-align:left;min-height:46px}
+.mx button.w-sw{border-left:5px solid var(--sw)}
+.mx button.w-ex{border-left:5px solid var(--muted)}
+.mx button.w-hw{border-left:5px solid var(--per)}
+.mx button.na{color:var(--muted);background:var(--soft);border-style:dashed}
+.mx button[aria-pressed="true"]{outline:3px solid var(--pc);outline-offset:1px}
+.who{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.85rem;margin:.4rem 0}
+.who span{display:inline-flex;align-items:center;gap:6px}
+.who i{width:14px;height:14px;border-radius:3px;display:inline-block}
+pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
+details.ans{margin:.4rem 0;border:1px dashed var(--line);border-radius:6px;padding:4px 10px;background:var(--panel)}
+details.ans summary{cursor:pointer;color:var(--per);font-size:.9rem}
+details.ans[open]{background:var(--soft)}
+.task{border-left:4px solid var(--per);background:var(--panel);border-radius:0 6px 6px 0;padding:8px 12px;margin:.6rem 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.task .pg{font-family:var(--font-m);font-size:.8rem;color:var(--per)}
+.sim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:640px){.sim{grid-template-columns:minmax(0,1fr)}}
+.sim fieldset{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:0 0 8px}
+.sim legend{font-size:.82rem;color:var(--muted);padding:0 4px}
+.sim label{display:inline-flex;align-items:center;gap:4px;margin:2px 10px 2px 0;font-size:.9rem;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;margin:.4rem 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+</style>
+<style>
+.pll{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px;margin:.4rem 0}
+.pll label{font-size:.9rem}
+.pll output{font-family:var(--font-m);font-weight:700}
+input[type=range]{width:100%;accent-color:var(--per)}
+.modes{display:flex;flex-wrap:wrap;gap:8px;margin:.3rem 0 .6rem}
+.modes button{font:inherit;font-size:.9rem;border:2px solid var(--c);border-radius:8px;padding:6px 12px;background:var(--panel);color:var(--fg);cursor:pointer}
+.modes button[aria-pressed="true"]{background:color-mix(in srgb,var(--c) 22%,transparent)}
+.ok{color:var(--good);font-weight:700}.bad{color:var(--bad);font-weight:700}
+@media (max-width:720px){.pll{grid-template-columns:1fr}}
+</style>
+<div class="wrap">
+<div class="eyebrow">轻松版 · 第 13 课 · 芯片外设</div>
+<h1>时钟、电源与低功耗</h1>
+<p class="lede">前面每一课的“② 时钟”都只说了“开时钟”，这一课讲时钟<b>从哪来</b>：芯片怎么从一颗 12 MHz 晶振变出 CPU 和 USB 要的 48 MHz。后半课讲<b>省电</b>：电脑睡觉时，鼠标怎么把自己降到几百微安。照例先场景、再代码、手册最后。</p>
+<div class="where"><span>📍</span><div>在地图上：第 ① 列 <b>时钟</b>、<b>电源管理</b> ↔ 第 ③ 列 <b>开机</b>、<b>挂起 / 唤醒</b>。手册：第 3 章（系统控制：时钟、PLL、电源配置）、第 4 章（PMU）、第 5 章（ROM 里的电源 / 时钟函数，这个项目没用）。</div></div>
+
+<h2><span class="step">1/9</span>时钟是什么：芯片的心跳</h2>
+<p>芯片里所有东西都按一个“节拍”干活：CPU 每拍执行一点指令，定时器每拍加一，SPI 每拍移一位。节拍越快，干活越快，也越费电。这个节拍就是<b>时钟</b>。芯片里有好几个“心脏”，再经过倍频、分频，分给不同的人：</p>
+<div class="box try"><div class="tag">动手 · 时钟树：点左边的选择开关，看 CPU 和 USB 拿到多少</div>
+<div class="scroll"><svg id="treeSvg" viewBox="0 0 780 380" width="780" height="380" role="img" aria-label="时钟树"></svg></div>
+<div class="modes" id="mainSel"></div>
+<div class="card" id="treeInfo" aria-live="polite"></div>
+</div>
+<div class="def"><b>IRC</b>：芯片内部的 12 MHz 振荡器，不用外接零件，但不够准（±1%）。上电后默认用它。<br><b>晶振（系统振荡器）</b>：板子上外接的 12 MHz 晶体（XTALIN / XTALOUT 两个脚），很准。<b>USB 必须用它</b>（第 10 课手册 11.4.7）。<br><b>PLL</b>：锁相环，把输入频率<b>乘</b>上去（12 × 4 = 48 MHz）。<br><b>分频器</b>：把频率<b>除</b>下来，给各个外设。</div>
+
+<h2><span class="step">2/9</span>先看场景：时钟和电源在什么时候变</h2>
+<table>
+<thead><tr><th>场景</th><th>发生什么</th><th>代码</th></tr></thead>
+<tbody>
+<tr><td><b>A 刚上电</b></td><td>芯片用 IRC 12 MHz 跑：ROM 启动程序、公司 bootloader、我们程序的开头，都在 12 MHz 下运行</td><td>芯片默认</td></tr>
+<tr><td><b>B 开机设时钟</b></td><td>打开晶振 → 系统 PLL × 4 → CPU 切到 48 MHz；再打开 USB PLL，给 USB 单独一路 48 MHz</td><td><code>InitSystemOSC()</code>、<code>InitUSBOSC()</code>（device.c:420、429）</td></tr>
+<tr><td><b>C 各外设开时钟</b></td><td>每个外设自己开 SYSAHBCLKCTRL 对应位，有的再设分频（SSP1、USB、ADC……）</td><td>前面各课的“② 时钟”</td></tr>
+<tr><td><b>D 电脑睡了（挂起）</b></td><td>关掉不用的模拟电路 → 设置“醒来后怎么上电” → 进<b>深度睡眠</b>，CPU 和几乎所有时钟都停，约 300 µA</td><td><code>wnDrv_Pmu_Init()</code>、<code>wnDrv_Pmu_Sleep()</code></td></tr>
+<tr><td><b>E 按键唤醒</b></td><td>GINT0 中断把芯片叫醒 → 重新设看门狗、重新 <code>InitSystemOSC()</code> 回到 48 MHz → 叫醒电脑</td><td><code>wnApi_Events_Resume_Handler()</code>（usbhw.c:694）</td></tr>
+</tbody></table>
+
+<h2><span class="step">3/9</span>PLL：12 MHz 怎么变成 48 MHz</h2>
+<p>原始代码（OSC.c:29~56，<code>InitSystemOSC()</code>）：</p>
+<pre class="code">	LPC_SYSCON->SYSOSCCTRL |= (OSC_Freqrange<<1) ;					//Frequency Range
+	LPC_SYSCON->PDRUNCFG &= ~(0x1<<5) ;								//Crystal oscillator powered
+	for( OSCI = 0; OSCI < 0x100; OSCI++ ) ;
+	//-----
+	LPC_SYSCON->SYSPLLCLKSEL = SysOSC ;								//Select System PLL clock source
+	LPC_SYSCON->SYSPLLCLKUEN = 0x01 ;
+	LPC_SYSCON->SYSPLLCLKUEN = 0x00 ;
+	LPC_SYSCON->SYSPLLCLKUEN = 0x01 ;
+	while ( !(LPC_SYSCON->SYSPLLCLKUEN & 0x01) ) ;
+	//-----
+	LPC_SYSCON->SYSPLLCTRL = ((SysPSEL<<5) | SysMSEL) ;				//Feedback divider value
+	LPC_SYSCON->PDRUNCFG &= ~(0x1<<7) ;								//System PLL powered
+	while ( !(LPC_SYSCON->SYSPLLSTAT & 0x01) ) ;
+	//-----
+	LPC_SYSCON->MAINCLKSEL = 0x03 ;									//Select Clock source for main clock(0:IRC 1:PLL In 2:WDT 3:PLL Out)
+	LPC_SYSCON->MAINCLKUEN = 0x01 ;
+	LPC_SYSCON->MAINCLKUEN = 0x00 ;
+	LPC_SYSCON->MAINCLKUEN = 0x01 ;
+	while ( !(LPC_SYSCON->MAINCLKUEN & 0x01) ) ;
+	//-----
+	LPC_SYSCON->SYSAHBCLKDIV = AHBDiv ;								//System AHB clock divider values</pre>
+<p>调用链：<code>Device_Init()</code>（device.c:420）→ <code>InitSystemOSC( MAIN_SEL , PSEL , MSEL , SYS_AHB_DIV_VAL)</code>。宏展开（inc/OSC.h:15~18）：<code>InitSystemOSC(1, 1, 3, 1)</code>。四段分别是：①给晶振通电 ②PLL 的输入选晶振 ③设倍数、给 PLL 通电、<b>等它锁定</b> ④主时钟切到 PLL 输出。</p>
+<div class="def"><b>“写 1、写 0、再写 1”</b>（UEN 寄存器）：改时钟来源后，必须这样“拨一下”开关新设置才生效，是芯片规定的（手册 MAINCLKUEN 表）。<br><b>锁定</b>：PLL 刚通电时频率不稳，要等 SYSPLLSTAT 的 LOCK 位变 1 才能用。</div>
+<div class="box try"><div class="tag">动手 · 自己调 MSEL、PSEL，看结果合不合法</div>
+<div class="pll">
+ <label>MSEL（倍数 M = MSEL + 1）：<output id="mO"></output><input type="range" id="mS" min="0" max="31" value="3"></label>
+ <label>PSEL（P = 2 的 PSEL 次方）：<output id="pO"></output><input type="range" id="pS" min="0" max="3" value="1"></label>
+</div>
+<div class="card" id="pllInfo" aria-live="polite"></div>
+</div>
+<p class="note">规则来自手册 3.10.4：输出 = M × 12 MHz；内部振荡器 FCCO = 2 × P × 输出，必须在 156~320 MHz 之间；CPU 最高 50 MHz。项目选 M = 4、P = 2：输出 48 MHz，FCCO = 192 MHz，合法。</p>
+
+<h2><span class="step">4/9</span>谁用哪个时钟、多快</h2>
+<table>
+<thead><tr><th>谁</th><th>时钟从哪来</th><th>多快</th><th>在哪设</th></tr></thead>
+<tbody>
+<tr><td>CPU、内存、GPIO、大部分外设寄存器</td><td>主时钟 = 系统 PLL ÷ SYSAHBCLKDIV(1)</td><td><b>48 MHz</b></td><td>OSC.c:48~54</td></tr>
+<tr><td>Flash 读取</td><td>同上，每次读要等 3 拍</td><td>48 MHz</td><td>FLASHCFG 复位值就是 3 拍，够 50 MHz 用，没改</td></tr>
+<tr><td>USB</td><td>USB PLL（晶振 × 4）÷ USBCLKDIV(1)</td><td><b>48 MHz</b>（必须）</td><td>OSC.c:58~74（第 10 课）</td></tr>
+<tr><td>SSP1（PAW3950）</td><td>主时钟 ÷ SSP1CLKDIV(1) ÷ CPSR(24) ÷ (SCR+1)(2)</td><td>1 MHz</td><td>PAW3950.c:286~300（第 9 课）</td></tr>
+<tr><td>ADC</td><td>主时钟 ÷ (CLKDIV+1)(16)</td><td>3 MHz</td><td>my_adc.c:54（第 7 课）</td></tr>
+<tr><td>CT16B0（1 ms 节拍）</td><td>主时钟 ÷ (PR+1)(48)</td><td>每微秒加 1</td><td>Timer.c（第 8 课）</td></tr>
+<tr><td>看门狗</td><td>看门狗振荡器 1.05 MHz ÷ 20 ÷ 4</td><td>13125 Hz</td><td>WWDT.c:60（第 12 课）</td></tr>
+</tbody></table>
+<p class="note">前面课里算的 1 MHz、3 MHz、1 ms，全都建立在“主时钟 = 48 MHz”上。<b>如果改了 PLL，这些全部要重算。</b></p>
+
+<h2><span class="step">5/9</span>省电：芯片的 5 种状态</h2>
+<div class="box try"><div class="tag">动手 · 选一种状态，看哪些东西还开着、耗多少电</div>
+<div class="modes" id="pwrBtns"></div>
+<div class="scroll"><svg id="pwrSvg" viewBox="0 0 780 250" width="780" height="250" role="img" aria-label="功耗模式"></svg></div>
+<div class="card" id="pwrInfo" aria-live="polite"></div>
+</div>
+<p class="note">电流是数据手册里芯片自己的典型值（3.3 V、25 °C），不含传感器、线圈、LED。USB 规定挂起时<b>整个鼠标</b>最多 500 µA（第 10 课手册 11.4.5），芯片深度睡眠就用掉约 300 µA，余量不大。</p>
+<div class="def"><b>WFI</b>（Wait For Interrupt）：一条 CPU 指令，执行后 CPU 停下，等中断来了再继续。<br><b>SLEEPDEEP</b>：内核 SCR 寄存器里的一位，决定 WFI 是浅睡还是深睡。<br><b>PDSLEEPCFG / PDAWAKECFG</b>：深度睡眠时哪些模拟电路保持通电 / 醒来后哪些自动通电。</div>
+
+<h2><span class="step">6/9</span>时钟和电源的一生：生命周期图</h2>
+<div class="box scroll" style="padding:10px"><svg id="lifeSvg" viewBox="0 0 900 420" width="900" height="420" role="img" aria-label="时钟电源生命周期"></svg></div>
+<div class="btns"><button type="button" id="lfPrev">上一步</button><button type="button" id="lfNext">下一步</button><span class="note" id="lfPos" style="align-self:center"></span></div>
+<div class="card" id="lifeInfo" aria-live="polite"></div>
+<div class="card" style="border-left-color:var(--gold)"><b class="t">一句话来龙去脉</b><br>上电后芯片用内部 12 MHz（IRC）。<code>Device_Init()</code> 先开看门狗，然后 <code>InitSystemOSC()</code>：开晶振 → 系统 PLL × 4 → 主时钟切到 48 MHz；再 <code>InitUSBOSC()</code> 给 USB 单独一路 48 MHz。之后各外设自己开时钟、设分频。电脑挂起时，<code>wnDrv_Pmu_Init()</code> 关掉 IRC、ADC、BOD、看门狗振荡器，设按键为唤醒源；<code>wnDrv_Pmu_Sleep()</code> 设好醒来后的上电配置，进深度睡眠。按键把它叫醒后，重新 <code>InitSystemOSC()</code> 回到 48 MHz。</div>
+
+<h2><span class="step">7/9</span>对照手册检查：进深度睡眠的 8 步，代码做了几步</h2>
+<p>手册 3.9.4.2 <b>Programming Deep-sleep mode</b> 列了 8 步。这次换个练法：<b>拿手册的步骤去核对代码</b>。</p>
+<table>
+<thead><tr><th>手册步骤</th><th>代码</th><th>结果</th></tr></thead>
+<tbody>
+<tr><td>1. PCON 的 PD 位设成 0x1</td><td><code>LPC_PMU->PCON = BIT0;</code>（wnDrv_Pmu.c:131）</td><td class="ok">✓</td></tr>
+<tr><td>2. 设 PDSLEEPCFG：睡眠时哪些电路保持</td><td><code>PDSLEEPCFG |= BIT3|BIT6;</code>（:112）：BOD、看门狗振荡器都关</td><td class="ok">✓</td></tr>
+<tr><td>3. 看门狗时钟要不要锁</td><td>没锁（MOD.LOCK = 0）</td><td class="ok">✓ 不需要</td></tr>
+<tr><td>4. <b>如果主时钟不是 IRC，先打开 IRC 并把主时钟切到 IRC</b></td><td><b>没做。</b>反而在 wnDrv_Pmu.c:61 把 IRC 关了。现成的 <code>clockinit()</code>（usbhw.c:628）正好做这件事，但<b>全仓库没人调用</b></td><td class="bad">✗ ⚠️</td></tr>
+<tr><td>5. 设 PDAWAKECFG：醒来后怎么上电</td><td><code>PDAWAKECFG = PDRUNCFG;</code>（:110）</td><td class="ok">✓</td></tr>
+<tr><td>6. 打开唤醒源（STARTERP + NVIC）</td><td><code>STARTERP1 = (GPIOINT0|USB_WAKEUP);</code>（:93）</td><td class="ok">✓</td></tr>
+<tr><td>7. SCR 的 SLEEPDEEP 置 1</td><td><code>SCB->SCR |= NVIC_LP_SLEEPDEEP;</code>（:130）</td><td class="ok">✓</td></tr>
+<tr><td>8. 执行 WFI</td><td><code>__WFI();</code>（:134）</td><td class="ok">✓</td></tr>
+</tbody></table>
+<p>第 4 步手册给的理由：<i>“This ensures that the system clock is shut down glitch-free.”</i> 保证时钟停下来时不出“毛刺”（不规则的短脉冲）。现在产品看起来工作正常，但这属于“手册说要做而代码没做”，<b>问杰哥是有意的还是漏了</b>。</p>
+
+<h2><span class="step">8/9</span>📖 手册导读（只给名字，先自己找）</h2>
+<div class="task"><b>任务 1：</b>第 3 章找 <b>CGU block diagram</b>（时钟生成单元框图），和第 1 节的时钟树对照。</div>
+<details class="ans"><summary>答案</summary><b>Fig 7，p.20</b>。左边是 IRC、系统振荡器、看门狗振荡器；中间是系统 PLL、USB PLL 和 MAINCLKSEL 选择器；右边是 SYSAHBCLKDIV 和各外设的分频器。和第 1 节的图一样，只是多了 CLKOUT 等这个项目没用的路。</details>
+<div class="task"><b>任务 2：</b>找 <b>SYSPLLCTRL</b> 和 3.10 节的 <b>Frequency selection</b>，自己验算 48 MHz 和 FCCO。</div>
+<details class="ans"><summary>答案</summary><b>Table 9，p.24</b>：MSEL（4:0）、PSEL（6:5）。<b>3.10.4，p.53~54</b>：公式 Fclkout = M × Fclkin = FCCO ÷ (2 × P)；FCCO 156~320 MHz。M = 3 + 1 = 4，P = 2：48 MHz，FCCO = 2 × 2 × 48 = 192 MHz。</details>
+<div class="task"><b>任务 3：</b>找 <b>MAINCLKSEL</b>，看 0~3 四个值分别选什么。</div>
+<details class="ans"><summary>答案</summary><b>Table 21，p.30</b>：0 = IRC；1 = PLL 的输入；2 = 看门狗振荡器；3 = PLL 的输出。代码写 3。紧跟着的 MAINCLKUEN 表说明了为什么要“写 1、写 0、写 1”。</details>
+<div class="task"><b>任务 4：</b>找 <b>Peripheral configuration in reduced power modes</b>，看深度睡眠时哪些东西一定是关的。</div>
+<details class="ans"><summary>答案</summary><b>Table 50，p.47</b>。深度睡眠：PLL、晶振、ADC、所有数字外设、USB 都关；IRC 开着但不输出；Flash 待机；BOD 和看门狗振荡器可以自己选（由 PDSLEEPCFG 决定）。</details>
+<div class="task"><b>任务 5：</b>找 3.9.4.2 <b>Programming Deep-sleep mode</b> 和 3.9.4.3 <b>Wake-up from Deep-sleep mode</b>。</div>
+<details class="ans"><summary>答案</summary><b>p.49~50</b>。8 步就是第 7 节那张表。唤醒方式：引脚中断、BOD、看门狗、USB 唤醒、GPIO 组中断（这个项目用的是组中断 GINT0，第 6 课）。最后一段 Remark：醒来后如果主时钟不是 IRC，要重新设 MAINCLKSEL。项目醒来后调 <code>InitSystemOSC()</code> 重新设了。</details>
+<div class="task"><b>任务 6：</b>第 4 章找 <b>Power control register</b>（PCON）。PD 位写 0、1、2、3 分别是什么？</div>
+<details class="ans"><summary>答案</summary><b>Table 54，p.56</b>：0x0 = 睡眠或深度睡眠（看 SLEEPDEEP）；0x1 = 深度睡眠；0x2 = 掉电（Power-down）；0x3 = 深度掉电。项目写 1（BIT0）。</details>
+<div class="task"><b>任务 7：</b>数据手册里找各模式的 <b>supply current</b>（IDD），对照第 5 节。</div>
+<details class="ans"><summary>答案</summary>数据手册 <b>Static characteristics</b> 表的 IDD 行：运行 12 MHz 约 2 mA、50 MHz 约 7 mA；睡眠约 1 mA；深度睡眠约 300 µA；掉电约 2 µA；深度掉电约 220 nA（都是典型值）。</details>
+<div class="task"><b>任务 8（了解）：</b>第 5 章 <b>Power profiles</b>（ROM 里的电源 / 时钟函数）。</div>
+<details class="ans"><summary>答案</summary>ROM 里有现成的函数，能一次帮你设好 PLL（5.6 Clocking routine）和按性能 / 省电调电源（5.7 Power routine），入口在 0x1FFF 1FF8 那张驱动表里。这个项目没用，自己写寄存器。第 11 课 IAP 手册里那句“用 IAP 时 power profile 要设成 Default”指的就是它。</details>
+
+<h2><span class="step">9/9</span>容易出错、你能改什么、T1A</h2>
+<table><tbody>
+<tr><td>进深度睡眠前没切到 IRC ⚠️</td><td>见第 7 节。问杰哥。</td></tr>
+<tr><td>晶振等待时间很短</td><td>OSC.c:36 只空转 256 次（在 12 MHz IRC 下约几十微秒）就去用晶振。晶振起振通常要更久，不过后面还要等 PLL 锁定（OSC.c:46），PLL 没锁上不会往下走，实际有保护。</td></tr>
+<tr><td>改主频会牵一发动全身</td><td>SSP、ADC、定时器、IAP 的 <code>MCU_OSC/1000</code>、USB 以外的所有分频都按 48 MHz 算的（第 4 节）。</td></tr>
+<tr><td>USB 时钟必须准</td><td>USB PLL 输入必须是晶振（USBPLLCLKSEL = 1，OSC.c:63），不能换成 IRC。</td></tr>
+<tr><td>挂起后 BOD 不再打开 ⚠️</td><td>第 12 课说过：wnDrv_Pmu.c:61 关掉以后，醒来没人打开。</td></tr>
+<tr><td>挂起时外部器件还在耗电</td><td>芯片约 300 µA，加上 PAW3950 休眠电流（它自己会进 Rest 模式，最低约 6 µA）、霍尔 / 红外电源（IR_EN 挂起时仍是高电平，第 7 课）……整机能不能压在 500 µA 以内，要实测。</td></tr>
+</tbody></table>
+<h3>你能改什么</h3>
+<ul>
+<li><b>挂起时多关点东西</b>：在 <code>wnApi_Events_Suspend_Handler()</code> 里关传感器、关红外电源（IR_EN 拉低）、关 ADC，醒来再打开。</li>
+<li><b>补上手册第 4 步</b>：睡前调用现成的 <code>clockinit()</code>（要和杰哥确认后再改，并测试唤醒）。</li>
+</ul>
+<h3>T1A 上</h3>
+<p>晶振还是 12 MHz，时钟部分<b>不用改</b>。要注意：T1A 有<b>电池和充电芯片 BQ21128</b>，如果以后做无线或者“不插 USB 也要待机”，低功耗就从“USB 规定的 500 µA”变成“电池能撑多久”，深度睡眠甚至掉电模式（2 µA）都要认真设计。新增的霍尔芯片 GTRY164、R-DIP 编码器睡眠时怎么关，也要在挂起函数里加。</p>
+
+<h2>小测验</h2>
+<div class="box quiz" id="quiz"></div>
+<div class="sum"><b>这一课你只需要记住：</b>上电默认用内部 12 MHz（IRC）；<code>InitSystemOSC()</code> 打开外接 12 MHz 晶振，用系统 PLL 乘 4 得到 48 MHz 给 CPU；USB 另有一个 PLL，也是 48 MHz。所有外设的频率都从 48 MHz 分出来。挂起时进深度睡眠（PCON = 1、SLEEPDEEP = 1、WFI），芯片约 300 µA，按键（GINT0）唤醒后重新设时钟。</div>
+<h3>本课新词</h3>
+<table><tbody>
+<tr><td><b>时钟 / 主时钟</b></td><td>芯片的节拍 / CPU 用的那一路</td></tr>
+<tr><td><b>IRC / 晶振</b></td><td>内部振荡器（不准） / 外接晶体（准）</td></tr>
+<tr><td><b>PLL / 锁定</b></td><td>把频率乘上去 / PLL 稳定可用了</td></tr>
+<tr><td><b>分频</b></td><td>把频率除下来</td></tr>
+<tr><td><b>睡眠 / 深度睡眠 / 掉电</b></td><td>CPU 停 / 几乎所有时钟都停 / 连 Flash 都停</td></tr>
+<tr><td><b>WFI</b></td><td>“停下等中断”的指令</td></tr>
+<tr><td><b>唤醒源</b></td><td>能把芯片从睡眠叫醒的信号</td></tr>
+</tbody></table>
+<p class="note">下一课：第 14 课 一次点击（把前面所有外设串起来）。从第 14 课起，手册练习改为“先看手册，猜代码怎么写，再看代码”。</p>
+</div>
+<script>
+const NS="http://www.w3.org/2000/svg";
+function el(p,t,a,x){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e}
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const P=s=>`<pre class="code">${esc(s)}</pre>`;
+const arrowDefs=s=>{el(s,'defs',{}).innerHTML=['per','sw','gold','muted','pc'].map(c=>`<marker id="t_${c}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--${c})"/></marker>`).join('')};
+const fmt=hz=>hz>=1e6?(hz/1e6).toFixed(hz%1e6?2:0).replace(/\.?0+$/,'')+' MHz':hz>=1e3?(hz/1e3).toFixed(1).replace(/\.0$/,'')+' kHz':hz.toFixed(0)+' Hz';
+
+/* ---------- 1. clock tree ---------- */
+(function(){const s=$('treeSvg');let sel=3;
+ const SRC=[['IRC 12 MHz',12e6],['PLL 输入（晶振）12 MHz',12e6],['看门狗振荡器 52.5 kHz',52500],['PLL 输出 48 MHz',48e6]];
+ const bb=$('mainSel');['0 = IRC','1 = PLL 输入','2 = 看门狗振荡器','3 = PLL 输出（项目用的）'].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.style.setProperty('--c',V(i===3?'sw':'per'));b.textContent='MAINCLKSEL '+t;b.onclick=()=>{sel=i;draw()};bb.appendChild(b)});
+ function box(x,y,w,h,c,t1,t2,on=true){el(s,'rect',{x,y,width:w,height:h,rx:8,fill:on?V('panel'):V('soft'),stroke:V(c),'stroke-width':on?2:1,opacity:on?1:.55});el(s,'text',{x:x+w/2,y:y+(t2?19:h/2+5),'text-anchor':'middle','font-size':12,'font-weight':700,fill:V(c)},t1);if(t2)el(s,'text',{x:x+w/2,y:y+36,'text-anchor':'middle','font-size':11,fill:V('muted')},t2)}
+ function ln(x1,y1,x2,y2,c,on=true,mx){const m=mx==null?(x1+x2)/2:mx;el(s,'path',{d:`M${x1} ${y1} H${m} V${y2} H${x2-3}`,fill:'none',stroke:V(c),'stroke-width':on?2.2:1,opacity:on?1:.35,'marker-end':`url(#t_${c})`})}
+ function draw(){s.textContent='';arrowDefs(s);const f=SRC[sel][1];
+  bb.querySelectorAll('button').forEach((b,i)=>b.setAttribute('aria-pressed',i===sel?'true':'false'));
+  box(10,20,130,46,'per','IRC','内部 12 MHz',sel===0);
+  box(10,90,130,46,'pc','晶振','外接 12 MHz');
+  box(10,300,130,46,'per','看门狗振荡器','52.5 kHz',sel===2);
+  box(190,90,140,46,'sw','系统 PLL','× 4 = 48 MHz',sel>=1&&sel!==2);
+  box(190,190,140,46,'gold','USB PLL','× 4 = 48 MHz');
+  box(380,90,120,46,'sw','MAINCLKSEL',`选 ${sel}`);
+  box(540,20,230,46,'sw','CPU / 内存 / GPIO',fmt(f));
+  box(540,76,230,46,'sw','SSP1 → PAW3950',fmt(f/48));
+  box(540,132,230,46,'sw','ADC',fmt(f/16));
+  box(540,188,230,46,'sw','CT16B0（1 ms 节拍）',f===48e6?'每 1 ms 中断一次':`每 ${(48e6/f).toFixed(f<1e6?0:0)} ms 才中断一次`);
+  box(540,250,230,46,'gold','USB','48 MHz（不受影响）');
+  box(540,306,230,46,'per','看门狗','13125 Hz（不受影响）');
+  ln(140,113,190,113,'pc');ln(140,113,190,213,'gold');
+  ln(330,113,380,113,'sw',sel===3);ln(140,43,380,103,'per',sel===0,355);ln(140,323,380,123,'per',sel===2,366);
+  if(sel===1)el(s,'path',{d:'M140 113 H160 V76 H344 V113 H377',fill:'none',stroke:V('pc'),'stroke-width':2.2,'marker-end':'url(#t_pc)'});
+  [43,99,155,211].forEach(y=>ln(500,113,540,y,'sw'));ln(330,213,540,273,'gold');ln(140,323,540,329,'per');
+  const info=['<b>IRC：</b>上电后默认就是这个。CPU 只有 12 MHz，是现在的 1/4：SPI、ADC 都慢 4 倍，<b>1 ms 节拍变成 4 ms</b>，鼠标的所有时间都会错。','<b>PLL 输入：</b>直接用晶振 12 MHz，不经过 PLL 倍频。准，但和 IRC 一样只有 12 MHz。','<b>看门狗振荡器：</b>只有几十 kHz，慢了将近 1000 倍，只适合极省电的场合。这个项目不用。','<b>PLL 输出（项目选的）：</b>晶振 12 MHz × 4 = 48 MHz。前面各课算的 1 MHz、3 MHz、1 ms 全都基于它。USB 走另一个 PLL，不受这个选择影响。'][sel];
+  $('treeInfo').innerHTML=info;$('treeInfo').style.borderLeftColor=V(sel===3?'sw':'gold')}
+ draw()})();
+
+/* ---------- 3. PLL ---------- */
+(function(){const m=$('mS'),p=$('pS');function up(){const M=+m.value+1,Pv=1<<+p.value,out=12*M,fcco=2*Pv*out;$('mO').textContent=`${m.value} → M = ${M}`;$('pO').textContent=`${p.value} → P = ${Pv}`;
+  const okC=fcco>=156&&fcco<=320,okO=out<=50,usb=out===48;
+  $('pllInfo').innerHTML=`输出 = ${M} × 12 MHz = <b>${out} MHz</b>　·　FCCO = 2 × ${Pv} × ${out} = <b>${fcco} MHz</b><br>`+
+   `FCCO 在 156~320 MHz 之间？<span class="${okC?'ok':'bad'}">${okC?'✓':'✗ 不合法，PLL 锁不住'}</span>　·　CPU ≤ 50 MHz？<span class="${okO?'ok':'bad'}">${okO?'✓':'✗ 超频'}</span>　·　能给 USB 用（正好 48 MHz）？<span class="${usb?'ok':'bad'}">${usb?'✓':'✗'}</span>`+
+   (okC&&okO&&usb?'<br>这就是项目的设置：<code>MSEL = 3</code>、<code>PSEL = 1</code>（inc/OSC.h:16~17）。':'');
+  $('pllInfo').style.borderLeftColor=V(okC&&okO?'sw':'bad')}
+ m.oninput=up;p.oninput=up;up()})();
+
+/* ---------- 5. power modes ---------- */
+(function(){const s=$('pwrSvg'),bb=$('pwrBtns');let cur=2;
+ const PARTS=['CPU','Flash','IRC','晶振 + PLL','USB','外设（SPI、定时器…）','BOD','看门狗振荡器'];
+ const M=[
+  ['运行（48 MHz）','sw',7000,[1,1,1,1,1,1,1,1],'平时就是这个状态。数据手册：50 MHz 约 7 mA（12 MHz 约 2 mA）。'],
+  ['睡眠','per',1000,[0,1,1,1,1,1,1,1],'只停 CPU，其他照常。中断一来马上继续。约 1 mA（12 MHz）。这个项目没用。'],
+  ['深度睡眠（项目用的）','gold',300,[0,0.5,0.5,0,0,0,0,0],'CPU 和几乎所有时钟都停，Flash 待机，IRC 开着但不输出。BOD 和看门狗振荡器可选，项目选了都关（PDSLEEPCFG |= BIT3|BIT6）。约 300 µA。按键（GINT0）或 USB 唤醒。'],
+  ['掉电','hw',2,[0,0,0,0,0,0,0,0],'连 Flash、IRC 都关了，约 2 µA。醒来更慢。项目没用。'],
+  ['深度掉电','muted',0.22,[0,0,0,0,0,0,0,0],'几乎全关，RAM 也不保持，醒来等于重新上电。约 220 nA。项目没用。'],
+ ];
+ M.forEach((m,i)=>{const b=document.createElement('button');b.type='button';b.style.setProperty('--c',V(m[1]));b.textContent=m[0];b.onclick=()=>{cur=i;draw()};bb.appendChild(b)});
+ function draw(){const m=M[cur];bb.querySelectorAll('button').forEach((b,i)=>b.setAttribute('aria-pressed',i===cur?'true':'false'));s.textContent='';
+  PARTS.forEach((t,i)=>{const x=10+(i%4)*190,y=10+Math.floor(i/4)*52,on=m[3][i];el(s,'rect',{x,y,width:180,height:42,rx:7,fill:on===1?`color-mix(in srgb,var(--sw) 30%,transparent)`:on?`color-mix(in srgb,var(--gold) 25%,transparent)`:V('soft'),stroke:V(on===1?'sw':on?'gold':'line')});
+   el(s,'text',{x:x+90,y:y+26,'text-anchor':'middle','font-size':12.5,'font-weight':600,fill:V(on?'fg':'muted')},t+(on===1?' · 开':on?' · 半开':' · 关'))});
+  const lg=v=>Math.log10(v/0.1)/Math.log10(10000/0.1);const X=10,W=760,y=150;
+  el(s,'rect',{x:X,y,width:W,height:26,rx:6,fill:V('soft')});el(s,'rect',{x:X,y,width:Math.max(4,W*lg(m[2])),height:26,rx:6,fill:V(m[1]),opacity:.75});
+  [[0.22,'220 nA'],[2,'2 µA'],[300,'300 µA'],[500,'USB 挂起上限 500 µA'],[7000,'7 mA']].forEach(([v,t],k)=>{const x=X+W*lg(v);el(s,'line',{x1:x,y1:y-4,x2:x,y2:y+30,stroke:V(v===500?'bad':'line'),'stroke-width':v===500?2:1});el(s,'text',{x,y:y+46+(k%2)*16,'text-anchor':'middle','font-size':11,fill:V(v===500?'bad':'muted')},t)});
+  el(s,'text',{x:X,y:y-10,'font-size':12,'font-weight':700,fill:V('fg')},`芯片电流（对数刻度）：${m[2]>=1000?(m[2]/1000)+' mA':m[2]>=1?m[2]+' µA':m[2]*1000+' nA'}`);
+  $('pwrInfo').innerHTML=`<b class="t">${m[0]}</b><br>${m[4]}`;$('pwrInfo').style.borderLeftColor=V(m[1])}
+ draw()})();
+
+/* ---------- 6. lifecycle ---------- */
+const LANES=[['🟦 芯片自己','per'],['⬜ 现成代码','muted'],['🟩 项目代码','sw']];
+const PHASES=['上电 / 开机','平时','挂起（深度睡眠）','唤醒'];
+const B=[
+ [0,0,'','上电默认 IRC 12 MHz','—','复位后 MAINCLKSEL = 0（IRC）。ROM、bootloader、我们程序的开头都跑在 12 MHz。',''],
+ [0,1,'①','开晶振','OSC.c:34~36',P(String.raw`	LPC_SYSCON->SYSOSCCTRL |= (OSC_Freqrange<<1) ;					//Frequency Range
+	LPC_SYSCON->PDRUNCFG &= ~(0x1<<5) ;								//Crystal oscillator powered
+	for( OSCI = 0; OSCI < 0x100; OSCI++ ) ;`)+'调用链：<code>Device_Init()</code>（device.c:420）→ <code>InitSystemOSC(1, 1, 3, 1)</code>。宏展开：<code>OSC_Freqrange</code> = 0（1~20 MHz 档）。<code>OSC.c</code> 是公司老项目代码（Writer ADAM）。','找：SYSOSCCTRL、PDRUNCFG'],
+ [0,1,'②','PLL 选晶振、乘 4、等锁定','OSC.c:38~46',P(String.raw`	LPC_SYSCON->SYSPLLCLKSEL = SysOSC ;								//Select System PLL clock source
+	LPC_SYSCON->SYSPLLCLKUEN = 0x01 ;
+	LPC_SYSCON->SYSPLLCLKUEN = 0x00 ;
+	LPC_SYSCON->SYSPLLCLKUEN = 0x01 ;
+	while ( !(LPC_SYSCON->SYSPLLCLKUEN & 0x01) ) ;
+	//-----
+	LPC_SYSCON->SYSPLLCTRL = ((SysPSEL<<5) | SysMSEL) ;				//Feedback divider value
+	LPC_SYSCON->PDRUNCFG &= ~(0x1<<7) ;								//System PLL powered
+	while ( !(LPC_SYSCON->SYSPLLSTAT & 0x01) ) ;`)+'SysOSC = 1（晶振）；SYSPLLCTRL = (1&lt;&lt;5) | 3 = 0x23。最后一行一直等到 LOCK 位 = 1。','找：SYSPLLCLKSEL、SYSPLLCTRL、SYSPLLSTAT'],
+ [0,1,'②','主时钟切到 48 MHz','OSC.c:48~55',P(String.raw`	LPC_SYSCON->MAINCLKSEL = 0x03 ;									//Select Clock source for main clock(0:IRC 1:PLL In 2:WDT 3:PLL Out)
+	LPC_SYSCON->MAINCLKUEN = 0x01 ;
+	LPC_SYSCON->MAINCLKUEN = 0x00 ;
+	LPC_SYSCON->MAINCLKUEN = 0x01 ;
+	while ( !(LPC_SYSCON->MAINCLKUEN & 0x01) ) ;
+	//-----
+	LPC_SYSCON->SYSAHBCLKDIV = AHBDiv ;								//System AHB clock divider values
+	LPC_SYSCON->SYSAHBCLKCTRL |= (1<<16) ;							//Setup AHB Clock To The IOCON Domain`)+'从这一行起 CPU 跑 48 MHz。最后顺手开了 IOCON 的时钟（第 6 课用到）。','找：MAINCLKSEL、MAINCLKUEN、SYSAHBCLKDIV'],
+ [0,1,'②','USB 单独一路 48 MHz','OSC.c:58~74','第 10 课讲过：USB PLL 只能用晶振，× 4 = 48 MHz。调用链 device.c:429。','找：USBPLLCTRL'],
+ [1,0,'','各外设按 48 MHz 分频','—','CPU 48 MHz；SSP1 1 MHz；ADC 3 MHz；CT16B0 每微秒加 1；USB 48 MHz；看门狗 13125 Hz（第 4 节的表）。',''],
+ [1,1,'','各外设自己开时钟','SYSAHBCLKCTRL','前面每课的“② 时钟”：GPIO bit6、CT16B0 bit7、CT16B1 bit8、CT32B0 bit9、SSP1 bit18、ADC bit13、USB bit14/27、WWDT bit15、IOCON bit16、GINT bit19/23……','找：SYSAHBCLKCTRL'],
+ [2,1,'','关模拟电路、设唤醒源','wnDrv_Pmu.c:50~94',P(String.raw`        LPC_SYSCON->PDRUNCFG &= ~SYS_PLL_PD;
+        LPC_SYSCON->PDRUNCFG |= (IRC_OUT_PD|IRC_PD|ADC_PD|BOD_PD|WDT_OSC_PD);
+    ...
+    InitGPIOGroupedInterrupt(GPIO_PORT0,&ENA[0],FALSE,0,&POL[0]);
+    /* GINT0_INT as wakeup source */
+    LPC_SYSCON->STARTERP1 = (GPIOINT0|USB_WAKEUP); `)+'调用链：<code>Suspend_Check()</code> → <code>wnApi_Events_Suspend_Handler()</code>（usbhw.c:650）→ <code>wnDrv_Pmu_Init()</code>。⚠️ 这里把 IRC 关了，和手册第 4 步相反（第 7 节）。<code>wnDrv_Pmu.c</code> 是方案商代码。','找：PDRUNCFG、STARTERP1'],
+ [2,1,'','设醒来配置，进深度睡眠','wnDrv_Pmu.c:108~135',P(String.raw`void wnDrv_Pmu_Sleep(U8 SleepMode)
+{
+    LPC_SYSCON->PDAWAKECFG = LPC_SYSCON->PDRUNCFG;
+    LPC_SYSCON->PDSLEEPCFG |= BIT3|BIT6;
+    switch(SleepMode)
+    {
+        ...
+        case MCU_DEEP_SLEEP:
+        default:
+        SCB->SCR |= NVIC_LP_SLEEPDEEP;
+        LPC_PMU->PCON = BIT0;
+        break;
+    }
+   __WFI();
+}`)+'调用链：<code>wnApi_Events_Suspend_Handler()</code> 最后一行（usbhw.c:688）和 <code>Suspend_Check()</code> 的 while 循环（suspend.c:46~50）。执行 <code>__WFI()</code> 后 CPU 停在这一行。','找：PDAWAKECFG、PDSLEEPCFG、PCON'],
+ [2,0,'','深度睡眠约 300 µA','—','CPU、PLL、晶振、外设都停，RAM 和寄存器保持。按键一按，GINT0 信号经 STARTERP1 把芯片叫醒。',''],
+ [3,0,'','按 PDAWAKECFG 上电','—','醒来时芯片自动按 PDAWAKECFG 给模拟电路上电（就是睡前的 PDRUNCFG），然后进 GINT0 中断。',''],
+ [3,1,'','GINT0 中断：标记“醒了”','GPIO.c:239~260','<code>GINT0_IRQHandler()</code> 设 <code>USB_DEVICE_STATUS_RESUME</code>、<code>suspendFlag = 0</code>，于是 <code>Suspend_Check()</code> 的 while 循环退出（第 6 课讲过组中断）。',''],
+ [3,1,'','重新设时钟回到 48 MHz','usbhw.c:707~712',P(String.raw`		wwdt_config(0xFFFF);
+		InitSystemOSC( MAIN_SEL , PSEL , MSEL , SYS_AHB_DIV_VAL ) ;
+	#if 1
+
+		Usb_Start();`)+'在 <code>wnApi_Events_Resume_Handler()</code> 里。手册 3.9.4.3 最后的 Remark 要求醒来后重新设主时钟，这里做了。之后如果电脑允许，再写 DSUS = 0 叫醒电脑（第 10 课）。','找：Wake-up from Deep-sleep mode'],
+];
+(function(){
+  const s=$('lifeSvg');let idx=0;const LX=86,CW=192,BH=48,GAP=8,TOP=34;
+  function layout(){const cnt={};const pos=B.map(b=>{const k=b[0]+'_'+b[1];cnt[k]=(cnt[k]||0)+1;return{c:b[0],l:b[1],n:cnt[k]-1}});
+    const laneH=[0,1,2].map(l=>Math.max(1,...[0,1,2,3].map(c=>cnt[c+'_'+l]||0)));const laneY=[TOP];for(let l=1;l<3;l++)laneY[l]=laneY[l-1]+laneH[l-1]*(BH+GAP)+16;
+    return{pos:pos.map(p=>({x:LX+p.c*(CW+6)+4,y:laneY[p.l]+8+p.n*(BH+GAP)})),laneY,laneH,H:laneY[2]+laneH[2]*(BH+GAP)+16}}
+  function draw(){s.textContent='';const L=layout();s.setAttribute('viewBox',`0 0 900 ${L.H}`);s.setAttribute('height',L.H);s.setAttribute('style','width:100%;height:auto;min-width:720px');
+    PHASES.forEach((p,c)=>{const x=LX+c*(CW+6);el(s,'rect',{x,y:22,width:CW+2,height:L.H-24,rx:8,fill:V('soft'),opacity:.6});el(s,'text',{x:x+CW/2,y:16,'text-anchor':'middle','font-size':12.5,'font-weight':600,fill:V('fg')},p)});
+    LANES.forEach(([t,c],l)=>{const y=L.laneY[l],h=L.laneH[l]*(BH+GAP)+8;el(s,'rect',{x:4,y,width:LX-10,height:h,rx:6,fill:V(c),opacity:.12});t.split(' ').forEach((w,i)=>el(s,'text',{x:(LX-6)/2+2,y:y+h/2-12+i*17,'text-anchor':'middle','font-size':12,'font-weight':600,fill:V(c)},w))});
+    B.forEach((b,i)=>{const p=L.pos[i],c=LANES[b[1]][1],on=i===idx;const g=el(s,'g',{tabindex:0,role:'button','aria-label':b[3],style:'cursor:pointer'});
+      el(g,'rect',{x:p.x,y:p.y,width:CW-8,height:BH,rx:7,fill:on?V(c):V('panel'),stroke:V(c),'stroke-width':on?2.5:1.5});
+      el(g,'circle',{cx:p.x+13,cy:p.y+14,r:10,fill:on?V('bg'):V(c)});el(g,'text',{x:p.x+13,y:p.y+18,'text-anchor':'middle','font-size':11,'font-weight':700,fill:on?V(c):V('bg')},i+1);
+      const lim=b[2].length>1?9:11;const t=b[3].length>lim?[b[3].slice(0,lim),b[3].slice(lim)]:[b[3]];t.forEach((tt,k)=>el(g,'text',{x:p.x+28,y:p.y+(t.length>1?18:20)+k*15,'font-size':12.5,'font-weight':600,fill:on?V('bg'):V('fg')},tt.length>13?tt.slice(0,13)+'…':tt));
+      if(t.length===1&&b[4])el(g,'text',{x:p.x+28,y:p.y+38,'font-size':10.5,class:'m',fill:on?V('bg'):V('muted')},b[4].length>24?b[4].slice(0,24)+'…':b[4]);
+      if(b[2])el(g,'text',{x:p.x+CW-14,y:p.y+14,'text-anchor':'end','font-size':11,'font-weight':700,fill:on?V('bg'):V('gold')},b[2]);
+      const go=()=>{idx=i;draw()};g.addEventListener('click',go);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}})});
+    const b=B[idx],c=LANES[b[1]][1];const card=$('lifeInfo');card.style.borderLeftColor=V(c);
+    card.innerHTML=`<b class="t">${idx+1}. ${b[3]}</b>　<span class="note">${LANES[b[1]][0]} · ${PHASES[b[0]]}${b[2]?' · 七步 '+b[2]:''}${b[4]&&b[4]!=='—'?' · '+b[4]:''}</span><br>${b[5]}${b[6]?`<div class="man"><div class="src" style="color:var(--per)">📖 ${b[6]}</div><div class="zh">先自己在手册里搜到这张表，再对照代码看（答案在第 8 节）。</div></div>`:''}`;
+    $('lfPos').textContent=`第 ${idx+1} / ${B.length} 步`}
+  $('lfNext').onclick=()=>{idx=(idx+1)%B.length;draw()};$('lfPrev').onclick=()=>{idx=(idx-1+B.length)%B.length;draw()};draw();
+})();
+
+/* ---------- quiz ---------- */
+const Q=[
+ ['1. 芯片刚上电时，CPU 用哪个时钟？',['外接晶振 12 MHz','内部 IRC 12 MHz','PLL 48 MHz'],1,'对。InitSystemOSC() 之后才切到 48 MHz。','看第 2 节场景 A。'],
+ ['2. 48 MHz 是怎么来的？',['12 MHz × 4','12 MHz ÷ 4','IRC 自己就是 48 MHz'],0,'对。系统 PLL，M = MSEL + 1 = 4。','看第 3 节，拖一拖 MSEL。'],
+ ['3. 为什么 USB 不能用 IRC？',['IRC 太快','IRC 不够准，USB 要求 48 MHz ± 0.05%'],1,'对。所以 USB PLL 只接晶振。','看第 10 课手册 11.4.7。'],
+ ['4. 如果把主时钟改回 12 MHz，1 ms 节拍会变成多少？',['还是 1 ms','4 ms','0.25 ms'],1,'对。CT16B0 的分频是按 48 MHz 算的。','看第 1 节，把 MAINCLKSEL 选成 0。'],
+ ['5. 挂起时项目让芯片进入哪种状态？',['睡眠','深度睡眠','深度掉电'],1,'对。PCON = 1、SLEEPDEEP = 1、WFI。约 300 µA。','看第 5 节。'],
+ ['6. 手册进深度睡眠的 8 步里，代码漏了哪一步？',['设 PCON','先把主时钟切到 IRC','执行 WFI'],1,'对。现成的 clockinit() 能做，但没人调用。','看第 7 节。'],
+];
+(function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0]}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+</script>
