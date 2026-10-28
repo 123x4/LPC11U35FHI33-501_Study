@@ -86,3 +86,5 @@
 - 第 10 课发现的问题（待问杰哥 / 以后改）：`EP_3_CUSTION_OUT` / `EP_4_CUSTION_IN` 名字和 USB 方向相反；`Device_Report()` 等 600 µs 后柜子不空也照样写；`EPInOutReq` 的 EP4_OUT 标志没人读；`usb.c` 里 `Usb_Init()`、`check_usb_and_endpoint()` 没人调用；DEVCMDSTAT 的 _C 位靠 `|=` 顺手清。
 - 页面贴代码一律用源代码原文，需要时另写“宏展开”和“调用链”。
 - 页面源文件就是本目录下的 .html；旧讲义（0-x、1-x、L1、L2）在上一级目录，作为字典。
+
+**2026-10-28 删除了 21 个没用的 .c 和 11 个 .h**：都不在 Keil 工程里，也没有被任何文件 `#include`。删完后，工程里的 48 个 .c 全部预处理通过（没有缺头文件）。清单见“代码来源清单”页面的“已删除的文件”一节。`src/my_hallkey_func.c`、`src/my_i2c.c` 没删（T1A 可能用得上）。
