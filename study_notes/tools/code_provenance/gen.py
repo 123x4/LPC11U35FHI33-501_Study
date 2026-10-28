@@ -1,4 +1,4 @@
-"""Write the Markdown list and the data file for the page."""
+"""Write the data file for the page (study_notes/easy/代码来源清单.html)."""
 import json, os, re, sys
 repo, prov = sys.argv[1], sys.argv[2]
 I = json.load(open(f'{prov}/inventory.json'))
@@ -60,6 +60,5 @@ for F in I:
         call = '、'.join(x['callers'][:5]) or ('、'.join(x['root']) if x['root'] else '')
         md.append(f"| {x['line']} | `{x['name']}` | {ST[x['status']]} | {who} | {x['size'] or ''} | {call} |")
     md.append('')
-open(f'{repo}/study_notes/代码来源清单.md', 'w', encoding='utf-8').write('\n'.join(md))
 json.dump(dict(files=I, notin=notin, tot=tot), open(f'{prov}/page_data.json', 'w'), ensure_ascii=False)
 print(tot, len(md))

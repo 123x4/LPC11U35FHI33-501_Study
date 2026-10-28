@@ -186,7 +186,7 @@ details.ans[open]{background:var(--soft)}
 ① “编没编译”：按 <code>inc/my_board.h</code> 里的 IRPT_V4 把每个 .c 预处理一遍，看函数还在不在。<br>
 ② “会不会跑到”：拿 2026-10-20 编译的 <code>output/Sample.axf</code> 反汇编，从复位入口和中断向量表出发，顺着每一条函数调用、每一个存在 Flash 里的函数指针往下走，走得到的就是“在用”。<br>
 ③ “谁写的”：看文件开头的署名，再和 <code>M300S/MG380U_V1.0</code> 里的同名文件逐个函数比（不算注释和空白）。<br>
-⚠️ 这是工具算的，删任何函数前都要先编译、再在板子上实测。仓库里同一份内容的 Markdown 版：<code>study_notes/代码来源清单.md</code>（在 VS Code 里看方便）。</div>
+⚠️ 这是工具算的，删任何函数前都要先编译、再在板子上实测。</div>
 
 <h2>按来源看</h2>
 <div id="byOrigin"></div>
