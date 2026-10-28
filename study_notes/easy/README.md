@@ -21,6 +21,7 @@
 | 芯片存储地址分布（ROM / Flash / RAM / USB RAM，第 11 课配套） | `芯片存储地址分布.html` | https://claude.ai/artifact/JoG6GLLsaj4RPKbny4Ea4i |
 | 第 12 课 看门狗、复位与掉电 | `12_看门狗复位与掉电.html` | https://claude.ai/artifact/NhatmnbFU8ZA6ZF1UzLvws |
 | 第 13 课 时钟、电源与低功耗 | `13_时钟电源与低功耗.html` | https://claude.ai/artifact/2Kw9ZtbCBu6cax3WLFieuv |
+| 代码来源清单（整理代码用，可筛选；Markdown 版 `study_notes/代码来源清单.md`） | `代码来源清单.html` | https://claude.ai/artifact/VPsyav56Zh3cacuF4xg6us |
 
 完整路线见第 0 课第 5 节（24 课，第 0~23 课）。
 
