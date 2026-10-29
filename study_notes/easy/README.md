@@ -24,7 +24,7 @@
 | 代码来源清单（整理代码用，可筛选） | `代码来源清单.html` | https://claude.ai/artifact/VPsyav56Zh3cacuF4xg6us |
 | app 文件夹四份代码（button / scroll / custom / optical_3325） | `app文件夹四份代码.html` | https://claude.ai/artifact/DQeECLZbqjbizU3wtk2zHv |
 | 函数讲解：Custom_Paramter_Init()（custom.c） | `Custom_Paramter_Init.html` | https://claude.ai/artifact/C2Pkz5eGpiTkeNkUvThqJJ |
-| custom.c 完全讲透（数据布局、四条线、26 个函数、问题清单） | `custom.c完全讲透.html` | https://claude.ai/artifact/VZVKafNhxDA6watP5e6RMT |
+| custom.c 完全讲透（本质、先猜设计、四条线、想法上、自测；26 个函数在附录） | `custom.c完全讲透.html` | https://claude.ai/artifact/VZVKafNhxDA6watP5e6RMT |
 
 完整路线见第 0 课第 5 节（24 课，第 0~23 课）。
 
