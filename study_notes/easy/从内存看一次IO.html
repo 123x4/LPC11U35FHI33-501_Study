@@ -1,0 +1,295 @@
+<title>从内存看一次 IO</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
+.mx{border-collapse:separate;border-spacing:4px;min-width:720px}
+.mx th{text-align:center;font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.mx th.s{text-align:left;font-size:.85rem;color:var(--muted);font-family:var(--font-b);width:150px}
+.mx td{padding:0;border:0}
+.mx button{width:100%;font:inherit;font-size:.8rem;line-height:1.35;padding:6px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-align:left;min-height:46px}
+.mx button.w-sw{border-left:5px solid var(--sw)}
+.mx button.w-ex{border-left:5px solid var(--muted)}
+.mx button.w-hw{border-left:5px solid var(--per)}
+.mx button.na{color:var(--muted);background:var(--soft);border-style:dashed}
+.mx button[aria-pressed="true"]{outline:3px solid var(--pc);outline-offset:1px}
+.who{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.85rem;margin:.4rem 0}
+.who span{display:inline-flex;align-items:center;gap:6px}
+.who i{width:14px;height:14px;border-radius:3px;display:inline-block}
+pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
+details.ans{margin:.4rem 0;border:1px dashed var(--line);border-radius:6px;padding:4px 10px;background:var(--panel)}
+details.ans summary{cursor:pointer;color:var(--per);font-size:.9rem}
+details.ans[open]{background:var(--soft)}
+.task{border-left:4px solid var(--per);background:var(--panel);border-radius:0 6px 6px 0;padding:8px 12px;margin:.6rem 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.task .pg{font-family:var(--font-m);font-size:.8rem;color:var(--per)}
+.sim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:640px){.sim{grid-template-columns:minmax(0,1fr)}}
+.sim fieldset{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:0 0 8px}
+.sim legend{font-size:.82rem;color:var(--muted);padding:0 4px}
+.sim label{display:inline-flex;align-items:center;gap:4px;margin:2px 10px 2px 0;font-size:.9rem;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;margin:.4rem 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+</style>
+<style>
+.modes{display:flex;flex-wrap:wrap;gap:8px;margin:.3rem 0 .6rem}
+.modes button{font:inherit;font-size:.9rem;border:2px solid var(--c);border-radius:8px;padding:6px 12px;background:var(--panel);color:var(--fg);cursor:pointer}
+.modes button[aria-pressed="true"]{background:color-mix(in srgb,var(--c) 22%,transparent)}
+.stepinfo{font-size:.95rem}
+.stepinfo pre{margin:.4rem 0 0}
+#ioSvg .bx rect{transition:stroke-width .2s,fill .2s}
+#ioSvg .bx.on rect.f{stroke-width:3.5}
+#ioSvg .arrow{transition:opacity .25s}
+.prog{font-family:var(--font-m);font-size:.8rem;color:var(--muted)}
+</style>
+<div class="wrap">
+<div class="eyebrow">轻松版 · 读代码 · Custom_Pointer_Init() 与 GUI 收发</div>
+<h1>从内存看一次 IO</h1>
+<p class="lede">从 <code>Custom_Pointer_Init()</code> 这一行出发，看“和电脑收发数据”在内存里到底是什么样：数据住在哪几块内存、谁把它从一块搬到另一块。地址全部来自 <code>List/Sample.map</code> 和第 11 课的存储地址分布。</p>
+
+<h2><span class="step">1/5</span>🧭 本质</h2>
+<p class="big">在单片机里，IO 的本质就是<b>数据在几块内存之间被复制</b>：USB 硬件负责“电线 ↔ USB RAM”这一段，CPU 负责“USB RAM ↔ 普通 RAM”这一段。</p>
+<div class="scroll"><table>
+<thead><tr><th>内存</th><th>地址</th><th>谁能读写</th><th>这次用到的</th></tr></thead>
+<tbody>
+<tr><td><b>USB RAM</b>（2 KB）</td><td>0x2000 4000 起</td><td>USB 硬件 + CPU</td><td>EP4 OUT 缓冲 0x2000 4500（收 GUI 命令）、EP3 IN 缓冲 0x2000 4480（回给 GUI），各 64 字节</td></tr>
+<tr><td><b>SRAM0</b>（8 KB）</td><td>0x1000 0000 起</td><td>只有 CPU</td><td><code>receive_buff</code> 0x1000 1650（64 字节）、<code>usb_sendBuffer_p</code> 0x1000 0410（4 字节）、<code>gloabSetting</code> 0x1000 1833（132 字节）</td></tr>
+</tbody></table></div>
+<div class="def"><b>指针</b>：一个存“地址”的变量。<code>usb_sendBuffer_p</code> 自己住在 0x1000 0410，占 4 字节，里面存的数是 0x1000 1650，也就是 <code>receive_buff</code> 的地址。通过它写数据，就是“先读出这个地址，再往那个地址写”。</div>
+
+<h2><span class="step">2/5</span>动手：选一个场景，一步一步看</h2>
+<div class="box try"><div class="tag">动手 · 选场景，点“下一步”。高亮的是这一步动到的内存，箭头是数据流向</div>
+<div class="modes" id="scn"></div>
+<div class="btns"><button type="button" id="ioPrev">上一步</button><button type="button" id="ioNext">下一步</button><span class="prog" id="ioProg"></span></div>
+<p class="note" style="margin:.2rem 0">手机上可以左右滑动这张图。</p>
+<div class="scroll"><svg id="ioSvg" viewBox="0 0 800 420" width="800" height="420" role="img" aria-label="内存与数据流向图"></svg></div>
+<div class="card stepinfo" id="ioInfo" aria-live="polite"></div>
+</div>
+
+<h2><span class="step">3/5</span>Custom_Pointer_Init() 这一行到底做了什么</h2>
+<pre class="code">void Custom_Pointer_Init(void)
+{
+	usb_sendBuffer_p = receive_buff;
+
+}</pre>
+<p>编译后是 4 条指令（反汇编 <code>output/Sample.axf</code>）：</p>
+<pre class="code">a244: ldr r1, [pc, #0x3dc]   ; r1 = 0x1000040C（custom.c 的 .data 区开头）
+a246: ldr r0, [pc, #0x3d8]   ; r0 = 0x10001650（receive_buff 的地址）
+a248: str r0, [r1, #0x4]     ; 把 0x10001650 写进 0x1000040C + 4 = 0x10000410
+a24a: bx  lr                 ; 返回</pre>
+<p>custom.c 里有初值的全局变量被编译器排在一起（.data 区，从 0x1000040C 开始）：<code>SaveDPIflag</code> 0x40C、<code>FlashData</code> 0x40D、<code>Check_mode_flag</code> 0x40E，空 1 字节对齐，<code>usb_sendBuffer_p</code> 0x410、<code>VecDst</code> 0x414……（map 文件 1415~1420 行）。所以编译器用“.data 开头 + 4”来找它。<b>没有复制任何缓冲区内容</b>，只是让一个指针“指过去”。之后谁通过 <code>usb_sendBuffer_p</code> 写东西，写进去的都是 <code>receive_buff</code> 那 64 个字节。</p>
+<p>为什么要这样：SRAM 只有 8 KB，收（GUI 命令）和发（DPI 通知）共用一块 64 字节，省下 64 字节。</p>
+
+<h2><span class="step">4/5</span>💡 想法上：共用缓冲区为什么现在没出事</h2>
+<div class="card"><b class="t">安全的前提是“同一时刻只有一件事在用它”</b><br>收命令（<code>PC_Communicate()</code>）和发 DPI 通知（<code>Custom_Set_DPI()</code>）都在主循环里，一件做完才做下一件，所以它们不会同时用这 64 字节。<br>这个前提<b>没有写在任何地方</b>。哪天有人把收命令挪进 USB 中断里（为了响应更快，这很常见），中断可能在 <code>Custom_Set_DPI()</code> 写到一半时进来，把 <code>receive_buff</code> 改掉，GUI 就会收到一包拼坏的数据。<br>以后你看到“两个用途共用一块内存”，先找出它安全的前提，再想这个前提会不会被打破；能写进注释的，就写进注释。</div>
+<div class="card"><b class="t">另一个藏着的坑：发不出去也说“成功”</b><br><code>USB_AutoDelay_LoadInEP_Data()</code>（usb.c:302）最多等 60 × 10 µs = 0.6 ms 让 EP3 空出来；等不到就<b>直接放弃这包</b>，但仍然返回 TRUE。电脑如果一直不来取 EP3（比如 GUI 没开），这些包都会悄悄丢掉。现在问题不大，因为没有 GUI 时本来就不需要通知；但你写自己的协议时要知道这一点。</div>
+
+<h2><span class="step">5/5</span>小测</h2>
+<div class="box quiz" id="quiz"></div>
+<div class="sum"><b>记住：</b>GUI 命令先由 USB 硬件放进 USB RAM 的 EP4 缓冲（0x2000 4500），CPU 在主循环里把它复制到 SRAM 的 <code>receive_buff</code>（0x1000 1650）处理；回复写在同一块 <code>receive_buff</code> 里，再由 CPU 复制到 EP3 缓冲（0x2000 4480），等电脑来取。<code>usb_sendBuffer_p</code> 只是一个指向 <code>receive_buff</code> 的指针。</div>
+<h3>本页新词</h3>
+<table><tbody>
+<tr><td><b>指针</b></td><td>存地址的变量；通过它读写，就是读写它指向的那块内存</td></tr>
+<tr><td><b>USB RAM</b></td><td>USB 硬件和 CPU 共用的 2 KB 内存，每个端点在里面有自己的收发格子</td></tr>
+<tr><td><b>.data / .bss</b></td><td>有初值的全局变量 / 初值为 0 的全局变量，开机时由启动代码填好</td></tr>
+</tbody></table>
+</div>
+<script>
+const NS="http://www.w3.org/2000/svg";
+function el(p,t,a,x){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e}
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+const BOX={
+ pc:{x:20,y:150,w:150,h:120,c:'muted',t:'电脑上的 GUI',a:'USB 线另一头'},
+ ep4:{x:230,y:50,w:230,h:110,c:'per',t:'EP4 OUT 缓冲（收）',a:'0x2000 4500 · 64 字节'},
+ ep3:{x:230,y:260,w:230,h:110,c:'per',t:'EP3 IN 缓冲（发）',a:'0x2000 4480 · 64 字节'},
+ sp:{x:520,y:20,w:260,h:76,c:'gold',t:'usb_sendBuffer_p（指针）',a:'0x1000 0410 · 4 字节'},
+ rb:{x:520,y:126,w:260,h:116,c:'sw',t:'receive_buff[64]',a:'0x1000 1650 · 64 字节'},
+ gs:{x:520,y:282,w:260,h:110,c:'pc',t:'gloabSetting（节选）',a:'0x1000 1833 · 132 字节'},
+};
+const ARW={
+ 'pc>ep4':[[170,185],[230,110]],'ep4>rb':[[460,110],[520,170]],'rb>gs':[[630,242],[630,282]],'gs>rb':[[690,282],[690,242]],
+ 'rb>ep3':[[520,215],[460,305]],'ep3>pc':[[230,320],[170,240]],'sp>rb':[[600,96],[600,126]],
+};
+const Z='00 00 00 00 00 00 00 00 …';
+const INIT={pc:'',ep4:'（空）',ep3:'（空）',sp:'= 0x1000 1650（指向 receive_buff）',rb:Z,gs:'dpi_gear = 3 · dpi_class[0].dpi_x = 0x0004'};
+const SC=[
+ {n:'A 开机：指针指过去',c:'gold',steps:[
+  {on:['sp','rb'],set:{sp:'= 0x0000 0000（NULL）'},t:'上电后，启动代码先把 .data 区的初值复制进 RAM、把 .bss 区清 0：<code>usb_sendBuffer_p</code> 得到初值 NULL（0），<code>receive_buff</code> 是 64 个 0。这时指针还不能用。',code:'UINT8 *usb_sendBuffer_p = NULL;      // custom.c:20\nUINT8 receive_buff[TRANSFER_LENGTH]; // pc_communicate.c:19'},
+  {on:['sp','rb'],arr:'sp>rb',lab:'指向',set:{sp:'= 0x1000 1650（指向 receive_buff）'},t:'<code>Device_Init()</code> 第 453 行调用 <code>Custom_Pointer_Init()</code>：把 <code>receive_buff</code> 的<b>地址</b> 0x1000 1650 写进 <code>usb_sendBuffer_p</code> 那 4 个字节。<code>receive_buff</code> 的内容一个字节都没动。',code:'usb_sendBuffer_p = receive_buff;     // custom.c:71'},
+ ]},
+ {n:'B GUI 发命令：恢复性能默认值',c:'per',steps:[
+  {on:['pc','ep4'],arr:'pc>ep4',lab:'USB 硬件写入',set:{pc:'发出 64 字节',ep4:'07 02 00 00 00 00 00 00 …'},t:'GUI 发 64 字节：第 0 字节 <code>0x07</code> = <code>FW_RESTORE_DEFAULT</code>，第 1 字节 <code>0x02</code> = 恢复“性能”。<b>CPU 没参与</b>：USB 硬件自己把这 64 字节写进 USB RAM 的 EP4 缓冲，再置一个“有数据”的标志（第 10 课的 ACTIVE 位清 0）。',code:'（硬件完成，没有代码）'},
+  {on:['ep4','rb'],arr:'ep4>rb',lab:'CPU 复制 64 字节',set:{rb:'07 02 00 00 00 00 00 00 …',ep4:'（已取走）'},t:'主循环跑到 <code>PC_Communicate()</code>：先把 <code>receive_buff</code> 清 0，再 <code>Usb_Read_Bytes(EP_4_CUSTION_IN, receive_buff, 64)</code>，由 CPU 把 0x2000 4500 的 64 字节<b>复制</b>到 0x1000 1650，并重新打开 EP4 接收下一包。',code:'Tool_Clear_ArrayData(receive_buff,0,(TRANSFER_LENGTH-1));\nif (Usb_Read_Bytes(EP_4_CUSTION_IN,receive_buff,TRANSFER_LENGTH))   // pc_communicate.c:887'},
+  {on:['rb','gs'],arr:'rb>gs',lab:'读命令、改设置',set:{gs:'dpi_gear = 3 · dpi_class[0].dpi_x = 0x0004（重填）'},t:'<code>switch(receive_buff[0])</code> 是 0x07 → <code>Custom_Restore_Default(receive_buff)</code>，取 <code>buffer[1] = 2</code> → <code>Custom_Perform_Init()</code> 把 <code>gloabSetting</code> 的 DPI、回报率填回默认；再存 EEPROM、应用 DPI 和回报率（这次 <code>send = FALSE</code>，不另外发通知）。',code:'case FW_RESTORE_DEFAULT:\n\tCustom_Restore_Default(receive_buff);   // pc_communicate.c:941'},
+  {on:['rb'],set:{rb:'07 02 00 01 00 00 00 00 …'},t:'<b>回复直接写在同一块缓冲里</b>：<code>buffer[2] = currentMode</code>（0）、<code>buffer[3] = TRUE</code>（1）。第 0、1 字节还是原来的命令，GUI 就知道这是对哪条命令的回复。',code:'buffer[2] = gloabSetting.setting.currentMode;\nbuffer[3] = TRUE;                         // custom.c:364~365'},
+  {on:['rb','ep3'],arr:'rb>ep3',lab:'CPU 复制 64 字节',set:{ep3:'07 02 00 01 00 00 00 00 …'},t:'<code>USB_AutoDelay_LoadInEP_Data(EP_3_CUSTION_OUT, buffer, 64)</code>：最多等 0.6 ms 让 EP3 空出来，然后 CPU 把 64 字节复制进 0x2000 4480，并把 EP3 标成“有数据待发”（ACTIVE = 1）。',code:'USB_AutoDelay_LoadInEP_Data(EP_3_CUSTION_OUT, buffer, TRANSFER_LENGTH);   // custom.c:367'},
+  {on:['ep3','pc'],arr:'ep3>pc',lab:'USB 硬件发出',set:{ep3:'（已发走）',pc:'收到回复 07 02 00 01 …'},t:'电脑每隔一段时间来问 EP3 有没有数据（IN 事务，第 10 课）。USB 硬件看到 ACTIVE = 1，就把 0x2000 4480 的 64 字节发出去，<b>CPU 又没参与</b>。GUI 收到回复，显示“恢复成功”。',code:'（硬件完成，没有代码）'},
+ ]},
+ {n:'C 按 DPI 键：通过指针发通知',c:'pc',steps:[
+  {on:['gs'],set:{gs:'dpi_gear = 0 · dpi_class[0].dpi_x = 0x0004'},t:'按下 DPI 键 → <code>Custom_Dpi_Deal(CYCLE_DPI)</code>：档位 3 + 1 超过最大档，回到 0。然后 <code>Custom_Set_DPI(0, 存, 发, 灯)</code>（存 EEPROM 那段这里略过）。',code:'gloabSetting.settingMode.dpi_gear++;   // 超过 dpi_max 回到 DPI_GEAR_1\nCustom_Set_DPI(gloabSetting.settingMode.dpi_gear,TRUE,TRUE,TRUE);'},
+  {on:['sp','rb'],arr:'sp>rb',lab:'先读指针，再清 64 字节',set:{rb:Z},t:'<code>Tool_Clear_ArrayData(usb_sendBuffer_p,0,63)</code>：CPU 先从 0x1000 0410 读出地址 0x1000 1650，再把那里的 64 字节清 0。<b>这就是“通过指针写”</b>：多一步“取地址”。',code:'Tool_Clear_ArrayData(usb_sendBuffer_p,0,63);   // custom.c:415'},
+  {on:['gs','rb'],arr:'gs>rb',lab:'拼通知',set:{rb:'04 00 00 00 04 00 00 00 …'},t:'往同一块缓冲里拼一包：<code>[0] = 0x04</code>（<code>PERFORMANCE_REALIVE_SETTING</code>）、<code>[1] = 0x00</code>（<code>DPI_FW_INITIATIVE</code>，鼠标主动通知）、<code>[2]</code> 当前配置 0、<code>[3]</code> 档位 0、<code>[4~5]</code> 这一档的 dpi_x = 0x0004（小端：04 00）。',code:'usb_sendBuffer_p[0] = PERFORMANCE_REALIVE_SETTING;\nusb_sendBuffer_p[1] = DPI_FW_INITIATIVE;\nusb_sendBuffer_p[2] = gloabSetting.setting.currentMode;\nusb_sendBuffer_p[3] = gear;\n*(UINT16 *)(usb_sendBuffer_p + 4) = gloabSetting.settingMode.dpi_class[gear].dpi_x;'},
+  {on:['rb','ep3'],arr:'rb>ep3',lab:'CPU 复制 64 字节',set:{ep3:'04 00 00 00 04 00 00 00 …'},t:'和场景 B 一样，复制进 EP3 缓冲，标成待发。',code:'USB_AutoDelay_LoadInEP_Data(EP_3_CUSTION_OUT, usb_sendBuffer_p, TRANSFER_LENGTH);'},
+  {on:['rb'],set:{rb:Z},t:'马上把 <code>receive_buff</code> 清 0。数据已经复制到 USB RAM 了，清掉不影响发送；清掉是为了不让下一轮 <code>PC_Communicate()</code> 误以为这是一条 GUI 命令（其实那里一开头也会清一次）。',code:'Tool_Clear_ArrayData(receive_buff,0,(TRANSFER_LENGTH-1));   // custom.c:434'},
+  {on:['ep3','pc'],arr:'ep3>pc',lab:'USB 硬件发出',set:{ep3:'（已发走）',pc:'收到 04 00 00 00 04 00 …'},t:'电脑来取 EP3，GUI 收到“DPI 变成第 0 档”的通知。<b>注意</b>：传感器的 DPI 其实没变（custom.c 那节讲过）。',code:'（硬件完成，没有代码）'},
+ ]},
+];
+let si=1,st=0;
+function stateAt(s,k){const o=Object.assign({},INIT);for(let i=0;i<=k;i++)Object.assign(o,SC[s].steps[i].set);return o}
+function draw(){const svg=$('ioSvg');svg.innerHTML='';
+ el(svg,'defs',{}).innerHTML=['per','sw','gold','pc','muted'].map(c=>`<marker id="m_${c}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--${c})"/></marker>`).join('');
+ el(svg,'rect',{x:215,y:28,width:260,height:362,rx:10,fill:'none',stroke:'var(--per)','stroke-dasharray':'6 5'});
+ el(svg,'text',{x:225,y:22,'font-size':13,fill:'var(--per)'},'USB RAM（USB 硬件 + CPU 都能读写）');
+ el(svg,'rect',{x:505,y:6,width:290,height:400,rx:10,fill:'none',stroke:'var(--sw)','stroke-dasharray':'6 5'});
+ el(svg,'text',{x:512,y:418,'font-size':13,fill:'var(--sw)'},'SRAM0（只有 CPU 读写）');
+ const step=SC[si].steps[st],S=stateAt(si,st);
+ for(const k in BOX){const b=BOX[k],on=step.on.includes(k);const g=el(svg,'g',{class:'bx'+(on?' on':'')});
+  el(g,'rect',{class:'f',x:b.x,y:b.y,width:b.w,height:b.h,rx:8,fill:on?`color-mix(in srgb,var(--${b.c}) 20%,var(--panel))`:'var(--panel)',stroke:`var(--${b.c})`,'stroke-width':on?3.5:1.5});
+  el(g,'text',{x:b.x+10,y:b.y+22,'font-size':14,'font-weight':600,fill:'var(--fg)'},b.t);
+  el(g,'text',{x:b.x+10,y:b.y+40,'font-size':11.5,fill:'var(--muted)',class:'m'},b.a);
+  const v=S[k]||'';const lines=v.length>30?[v.slice(0,v.indexOf('·')>0?v.indexOf('·'):30),v.slice(v.indexOf('·')>0?v.indexOf('·'):30)]:[v];
+  lines.forEach((ln,i)=>el(g,'text',{x:b.x+10,y:b.y+64+i*18,'font-size':12.5,fill:'var(--fg)',class:'m'},ln.replace(/^\s*·\s*/,'').trim()))}
+ if(step.arr){const [p,q]=ARW[step.arr],c=BOX[step.arr.split('>')[0]].c;
+  el(svg,'line',{x1:p[0],y1:p[1],x2:q[0],y2:q[1],stroke:`var(--${c})`,'stroke-width':3,'marker-end':`url(#m_${c})`,class:'arrow'});
+  const mx=(p[0]+q[0])/2,my=(p[1]+q[1])/2;const t=el(svg,'text',{x:mx+(Math.abs(p[1]-q[1])>35&&Math.abs(p[0]-q[0])<10?8:0),y:my-6,'font-size':12,'font-weight':600,fill:`var(--${c})`,'text-anchor':Math.abs(p[0]-q[0])<10?'start':'middle','paint-order':'stroke',stroke:'var(--bg)','stroke-width':4},step.lab)}
+ $('ioInfo').innerHTML=`<b class="t">第 ${st+1} 步</b><br>${step.t}<pre class="code">${esc(step.code)}</pre>`;
+ $('ioProg').textContent=`${SC[si].n} · ${st+1} / ${SC[si].steps.length}`;
+ [...$('scn').children].forEach((b,i)=>b.setAttribute('aria-pressed',i===si));
+ $('ioPrev').disabled=st===0;$('ioNext').disabled=st===SC[si].steps.length-1}
+SC.forEach((s,i)=>{const b=document.createElement('button');b.type='button';b.textContent=s.n;b.style.setProperty('--c',V(s.c));b.onclick=()=>{si=i;st=0;draw()};$('scn').appendChild(b)});
+$('ioNext').onclick=()=>{st++;draw()};$('ioPrev').onclick=()=>{st--;draw()};draw();
+
+const Q=[
+ ['1. Custom_Pointer_Init() 复制了 receive_buff 的内容吗？',['复制了 64 字节','没有，只把它的地址写进了指针'],1,'对。4 条指令，只写了 4 个字节（一个地址）。','看第 3 节的反汇编。'],
+ ['2. GUI 命令从 USB 线进到 USB RAM，是谁搬的？',['CPU','USB 硬件'],1,'对。CPU 只负责 USB RAM ↔ SRAM 那一段。','看场景 B 第 1 步。'],
+ ['3. 回复 GUI 的数据写在哪？',['新开一块缓冲','同一块 receive_buff'],1,'对。收和发共用 64 字节。','看场景 B 第 4 步。'],
+ ['4. 共用缓冲区现在安全的前提是？',['缓冲区够大','收命令和发通知都在主循环里，不会同时发生'],1,'对。挪进中断就可能出事。','看第 4 节。'],
+];
+(function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0]}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+</script>
