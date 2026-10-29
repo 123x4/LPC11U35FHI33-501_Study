@@ -1,0 +1,243 @@
+<title>按下 DPI 键的完整流程</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
+.mx{border-collapse:separate;border-spacing:4px;min-width:720px}
+.mx th{text-align:center;font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.mx th.s{text-align:left;font-size:.85rem;color:var(--muted);font-family:var(--font-b);width:150px}
+.mx td{padding:0;border:0}
+.mx button{width:100%;font:inherit;font-size:.8rem;line-height:1.35;padding:6px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-align:left;min-height:46px}
+.mx button.w-sw{border-left:5px solid var(--sw)}
+.mx button.w-ex{border-left:5px solid var(--muted)}
+.mx button.w-hw{border-left:5px solid var(--per)}
+.mx button.na{color:var(--muted);background:var(--soft);border-style:dashed}
+.mx button[aria-pressed="true"]{outline:3px solid var(--pc);outline-offset:1px}
+.who{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.85rem;margin:.4rem 0}
+.who span{display:inline-flex;align-items:center;gap:6px}
+.who i{width:14px;height:14px;border-radius:3px;display:inline-block}
+pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
+details.ans{margin:.4rem 0;border:1px dashed var(--line);border-radius:6px;padding:4px 10px;background:var(--panel)}
+details.ans summary{cursor:pointer;color:var(--per);font-size:.9rem}
+details.ans[open]{background:var(--soft)}
+.task{border-left:4px solid var(--per);background:var(--panel);border-radius:0 6px 6px 0;padding:8px 12px;margin:.6rem 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.task .pg{font-family:var(--font-m);font-size:.8rem;color:var(--per)}
+.sim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:640px){.sim{grid-template-columns:minmax(0,1fr)}}
+.sim fieldset{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:0 0 8px}
+.sim legend{font-size:.82rem;color:var(--muted);padding:0 4px}
+.sim label{display:inline-flex;align-items:center;gap:4px;margin:2px 10px 2px 0;font-size:.9rem;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;margin:.4rem 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+</style>
+<style>
+.tl2{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.tl2 li{border:1.5px solid var(--line);border-left:5px solid var(--c);border-radius:6px;background:var(--panel);padding:6px 10px;cursor:pointer;opacity:.55;transition:opacity .2s}
+.tl2 li.done{opacity:.8}
+.tl2 li.cur{opacity:1;border-color:var(--c);box-shadow:0 0 0 2px color-mix(in srgb,var(--c) 35%,transparent)}
+.tl2 .hd{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline}
+.tl2 .t{font-family:var(--font-m);font-size:.78rem;color:var(--muted);min-width:64px}
+.tl2 .ly{font-size:.74rem;border-radius:999px;padding:0 7px;border:1px solid var(--c);color:var(--c)}
+.tl2 .ti{font-weight:600}
+.tl2 .det{display:none;margin-top:6px;font-size:.92rem}
+.tl2 li.cur .det{display:block}
+.tl2 .det pre{margin:.4rem 0 0;max-width:100%}
+.tl2 li,.tl2 .det{min-width:0}
+.tl2 .det p code{overflow-wrap:anywhere}
+.panel{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:.6rem 0;position:sticky;top:0;z-index:2;background:var(--bg);padding:6px 0}
+.panel div{background:var(--soft);border-radius:6px;padding:5px 8px;border:1.5px solid transparent;transition:border-color .2s}
+.panel div.chg{border-color:var(--pc)}
+.panel span{display:block;font-size:.72rem;color:var(--muted);line-height:1.2}
+.panel b{font-family:var(--font-m);font-size:.95rem}
+.lyrs{display:flex;flex-wrap:wrap;gap:6px;margin:.4rem 0}
+.lyrs span{font-size:.8rem;border-radius:999px;padding:1px 9px;border:1.5px solid var(--c);background:color-mix(in srgb,var(--c) 12%,transparent)}
+@media (max-width:640px){.panel{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+<div class="wrap">
+<div class="eyebrow">轻松版 · 读代码 · 一次按键走全程</div>
+<h1>按下 DPI 键后的完整流程</h1>
+<p class="lede">从手指按下去，到电脑上的 GUI 收到通知、再到松手，一共 17 步，经过 9 个文件、3 种存储（SRAM、USB RAM、EEPROM），还有 ROM 里的 IAP 程序。先把全程走一遍，之前讲的指针、缓冲区、EEPROM 都能在这条线上找到自己的位置。</p>
+
+<h2><span class="step">1/4</span>🧭 本质</h2>
+<p class="big">一次按键，就是一个“电平变化”被一层层翻译：<b>电平 → 位 → 事件 → 功能 → 动作</b>。</p>
+<div class="lyrs" id="lyrs"></div>
+<p>每一层只做一件事，只跟上下两层打交道：引脚电路只管电平，button.c 只管“第几位按下了”，custom.c 只管“这一位代表什么功能”，EEPROM 和 USB 只管“存”和“发”。这条线上任何一处出问题，按下 DPI 键的效果就不对。</p>
+
+<h2><span class="step">2/4</span>动手：一步一步走全程</h2>
+<p>点“下一步”，或者直接点下面任意一步。上方的面板显示几个关键变量此刻的值，变了的会亮框。</p>
+<div class="btns"><button type="button" id="dPrev">上一步</button><button type="button" id="dNext">下一步</button><button type="button" id="dPlay">自动播放</button><button type="button" id="dReset">从头</button></div>
+<div class="panel" id="panel"></div>
+<ol class="tl2" id="tl"></ol>
+
+<h2><span class="step">3/4</span>一句话回顾</h2>
+<div class="sum"><b>按下 DPI 键：</b>引脚变 0 → 每 1 ms 的定时器让主循环扫一次按键 → button.c 消抖 5 ms 后把第 9 位置 1 → device.c 发出按键事件 → custom.c 查表得知第 9 位是 0xC1“DPI 循环” → 档位 3 变 0 → 129 字节写进 EEPROM（关中断）→ 借指针在 receive_buff 拼一包通知、复制进 EP3 → 电脑 1 ms 内来取 → GUI 收到。<b>传感器 DPI 始终是 1600，光标速度不变。</b>松手再消抖 8 ms，什么也不做。</div>
+
+<h2><span class="step">4/4</span>💡 想法上</h2>
+<div class="card"><b class="t">先走全程，再放大局部</b><br>你这次的要求是对的：前面我先讲了指针、缓冲区这些局部，你没有全程做参照，就容易看不懂“它在整件事里起什么作用”。学任何机制都可以这样：<b>先挑一个具体事件，从头到尾走一遍</b>（按一次键、收一包数据、开一次机），把每一步落在哪个文件、哪块内存记下来；然后再挑其中一步放大。以后讲新东西，我也会先给你全程这张图。</div>
+<div class="card"><b class="t">全程走一遍，问题自己会冒出来</b><br>走完这 17 步，你会自然地问：传感器为什么没变（第 11 步）？写 EEPROM 时关中断，那 1 ms 的定时器会不会被耽误（第 12 步）？GUI 没开时那包通知去哪了（第 15 步）？这些都是只看局部时问不出来的。</div>
+</div>
+<script>
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const LY={f:['手指 / 电路','muted'],hw:['芯片硬件','gold'],irq:['定时器中断','hw'],dev:['主循环 device.c','per'],btn:['button.c','sw'],cus:['custom.c','pc'],ee:['EEPROM / ROM','gold'],usb:['USB','per'],pc:['电脑','muted']};
+$('lyrs').innerHTML=['f:电平','btn:位','dev:事件','cus:功能','ee:动作：存','usb:动作：发'].map(x=>{const[k,t]=x.split(':');return `<span style="--c:${V(LY[k][1])}">${t}（${LY[k][0]}）</span>`}).join('<span style="border:none;background:none">→</span>');
+const P0={pin:'1（松）',deb:'0',bit9:'0',gear:'3',ee:'0 次',ep3:'空',cpi:'1600',rep:'—'};
+const PN=[['pin','PIO0_11 电平'],['deb','debounce 倒计时'],['bit9','wheel_button_status 第 9 位'],['gear','dpi_gear 档位'],['ee','EEPROM 写入'],['ep3','EP3 缓冲'],['cpi','PAW3950 实际 CPI'],['rep','发给电脑的鼠标报告']];
+const S=[
+ {t:'0 ms',l:'f',ti:'手指按下 DPI 键',d:'DPI 键接在 PIO0_11 上，平时芯片内部上拉成高电平（1）；按下后开关把它接地，变成 0 V。芯片的 GPIO 输入电路自动把电平记进 <code>LPC_GPIO-&gt;PIN[0]</code> 的第 11 位。<b>CPU 此刻还不知道。</b>',c:'（硬件完成，没有代码）',set:{pin:'0（按）'}},
+ {t:'≤1 ms',l:'irq',ti:'1 ms 定时器中断：该扫按键了',d:'CT16B0 每 1 ms 进一次中断（第 8 课），把 <code>one_ms_cycle</code> 从 1 减到 0，相当于举手说“又过了 1 ms”。',c:'void TIMER16_0_IRQHandler(void)          // Timer.c:65\n\t...\n\tif(one_ms_cycle)one_ms_cycle--;      // Timer.c:78'},
+ {t:'≤1 ms',l:'dev',ti:'主循环看到举手，去扫按键',d:'主循环 <code>Device_Active()</code> 每圈都调 <code>Device_Scan()</code>。它发现 <code>one_ms_cycle == 0</code>，先改回 1，再调 <code>Device_Button_Scan()</code> → <code>Button_Scan()</code>。所以按键<b>每 1 ms 扫一次</b>。',c:'if (!one_ms_cycle)                       // device.c:880\n{\n\tone_ms_cycle = 1;\n\tSend_Button_F = TRUE;\n\tDevice_Button_Scan();'},
+ {t:'≤1 ms',l:'btn',ti:'读引脚，把第 11 脚挪成第 9 位',d:'<code>Button_GetState()</code> 一次读整个 PORT0，取反（按下 = 1），只留 4 个键的位；再用 <code>Button_Location_Data()</code> 把引脚第 11 位挪到报告第 9 位（<code>DPI_CYCLE_BUTTON_REPORT_BIT = 9</code>）。<b>从这里开始，上面的代码只认“第 9 位”，不再关心是哪个脚。</b>',c:'#define BUTTON_PORT0 (U32)((~LPC_GPIO->PIN[0])& (MIDDLE_BUTTON_MASK | DPI_CYCLE_BUTTON_MASK | K5_BUTTON_MASK | K4_BUTTON_MASK))   // button.h:149\nbutton_port_state |= Button_Location_Data(button_port0_state,DPI_CYCLE_BUTTON_MASK,DPI_CYCLE_BUTTON_POSITION,DPI_CYCLE_BUTTON_REPORT_BIT);   // button.c:559'},
+ {t:'≤1 ms',l:'btn',ti:'消抖开始：先记下，不算数',d:'<code>Button_Scan()</code> 第 9 位那一段（button.c:743）：发现和上次不一样，<code>scan_result_cur</code> 第 9 位置 1，倒计时设成 5。<b>还没算“按下”</b>，因为开关刚接触时会抖。',c:'if((button ^ buttonScan_stru.scan_result_cur) & (0x01 << i))\n{\n\tif(button & (0x01 << i))\n\t{\n\t\tbuttonScan_stru.scan_result_cur |= (0x01 << i);\n\t\tbuttonScan_stru.debounce[i - 4] = 5;',set:{deb:'5'}},
+ {t:'≈6 ms',l:'btn',ti:'连续 5 ms 没变：确认按下',d:'之后每 1 ms 再看一次，电平没变就倒计时减 1。减到 0 时，<code>scan_result_pre</code> 第 9 位置 1，<code>button_changed = TRUE</code>，<code>Button_Scan()</code> 返回 TRUE。这时离手指按下大约 6 ms。',c:'buttonScan_stru.debounce[i - 4]--;\nif(buttonScan_stru.debounce[i - 4] == 0)\n{\n\t...\n\tbuttonScan_stru.scan_result_pre |= (0x01 << i);\n\tbuttonScan_stru.button_changed = TRUE;',set:{deb:'0'}},
+ {t:'≈6 ms',l:'dev',ti:'写进 wheel_button_status，发出按键事件',d:'<code>Device_Button_Scan()</code> 把 10 个按键位并进 <code>wheel_button_status</code>，并在 <code>deviceEvent</code> 里置上 <code>BUTTON_EVENT</code>。“事件”就是一个标志位，告诉后面的代码“有按键变了，请处理”。',c:'if(Button_Scan())                               // device.c:958\n{\n\twheel_button_status &= ~ALL_BUTTON_REPORT_BIT;\n\twheel_button_status |= buttonScan_stru.scan_result_pre;\n\tDEVICE_POST_EVENT(BUTTON_EVENT);',set:{bit9:'1'}},
+ {t:'≈6 ms',l:'dev',ti:'同一圈主循环：Device_Pack() 接手',d:'主循环接着跑 <code>Device_Pack()</code>：看到 <code>BUTTON_EVENT</code>，清掉它，然后把 <code>wheel_button_status</code> 交给 custom.c 翻译。',c:'if(DEVICE_GET_EVENT((SCROLL_EVENT | BUTTON_EVENT)))      // device.c:562\n{\n\tDEVICE_CLEAR_EVENT((SCROLL_EVENT | BUTTON_EVENT));\n\tdata_type |= Custom_HandleKey(wheel_button_status,&report_pointerTmp);'},
+ {t:'≈6 ms',l:'cus',ti:'查表：第 9 位 = 0xC1 = DPI 循环',d:'<code>Custom_HandleKey()</code> 发现第 9 位变了、现在按着；查 <code>key_function[9].id</code> 是 <code>0xC1</code>，<code>ClassKeyfunction()</code> 判成“特殊功能”，交给 <code>DealSpecialFunctionKey()</code>。<b>这就是“改键层”起作用的地方</b>：如果 GUI 把这个 id 改成 0xB0，同一个键就变成左键。',c:'key_fun = &gloabSetting.settingMode.key_function[ii];   // custom.c:1095\nid = ClassKeyfunction((*key_fun).usb_registration.id);\n...\ncase SPECIAL_FUNCTION_KEY:\n\tkey_event_type = DealSpecialFunctionKey(*key_fun,key_changed,key_status,mouse_temp,keyboard_temp,ii);'},
+ {t:'≈6 ms',l:'cus',ti:'换档：3 → 0',d:'按下且刚变化 → <code>case CYCLE_DPI</code> → <code>Custom_Dpi_Deal(CYCLE_DPI)</code>：档位 +1 变成 4，超过最大档 3，回到第 1 档（0）。',c:'case CYCLE_DPI:                                     // custom.c:856\n\tCustom_Dpi_Deal(CYCLE_DPI);\n...\ngloabSetting.settingMode.dpi_gear++;               // custom.c:456\nif (gloabSetting.settingMode.dpi_gear > gloabSetting.settingMode.dpi_max)\n\tgloabSetting.settingMode.dpi_gear = DPI_GEAR_1;',set:{gear:'0'}},
+ {t:'≈6 ms',l:'cus',ti:'本该改传感器，但这句被关掉了',d:'<code>Custom_Set_DPI(0, 存, 发, 灯)</code> 取出这一档的 <code>dpi_x = 0x04</code>，然后本该调 <code>optical_set_dpi()</code> 改传感器，但这句被 <code>#if</code> 关掉了（它是老传感器 3325 的）。<b>PAW3950 仍是开机设的 1600。</b>',c:'dpi_x = gloabSetting.settingMode.dpi_class[gear].dpi_x;   // custom.c:381\n...\n#if ((!defined(IRPT_V4)) && (!defined(V4_HALL_HPTIC_V4)))\n\toptical_set_dpi(dpi_x);                                // custom.c:396~398\n#endif'},
+ {t:'≈6 ms',l:'ee',ti:'存档：129 字节写进 EEPROM（关中断）',d:'<code>save = TRUE</code> → <code>OperateFlash_Store_ModeSetting(0)</code> → <code>GtechFlash_WriteBytes()</code> → <code>Chip_EEPROM_Write(0x003, …, 129)</code> → 关中断 → 跳到 ROM 里 0x1FFF1FF1 的 IAP 程序 → 写 EEPROM 0x003~0x083 → 开中断。<b>这段时间主循环停住，1 ms 定时器中断也被推迟</b>（耗时要上板实测）。',c:'OperateFlash_Store_ModeSetting(gloabSetting.setting.currentMode);   // custom.c:408\n  → GtechFlash_WriteBytes(writeAddress,0,modeSetting_p, OPERATE_MODE_SETTING_SIZE);   // operation_flash.c:301\n    → Chip_EEPROM_Write(flashPtr + offSet_adder, data, sum_byte);   // gtech_flash.c:303\n      → __disable_irq(); ((LPC_IAP_ENTRY_T) 0x1FFF1FF1)(cmd, result); __enable_irq();   // IAP_CMD.c:45~50',set:{ee:'1 次'}},
+ {t:'≈6 ms',l:'usb',ti:'借指针拼通知，复制进 EP3',d:'<code>send = TRUE</code>：借 <code>usb_sendBuffer_p</code> 找到 <code>receive_buff</code>（0x1000 1650），拼 <code>[04 00 00 00 04 00 …]</code>；<code>USB_AutoDelay_LoadInEP_Data()</code> 等 EP3 空出来，把 64 字节复制到 USB RAM 0x2000 4480，标成待发；然后清空 <code>receive_buff</code>。（“从内存看一次 IO”那页的场景 C 就是这一步的放大。）',c:'usb_sendBuffer_p[0] = PERFORMANCE_REALIVE_SETTING;    // custom.c:419\n...\nUSB_AutoDelay_LoadInEP_Data(EP_3_CUSTION_OUT, usb_sendBuffer_p, TRANSFER_LENGTH);\nTool_Clear_ArrayData(receive_buff,0,(TRANSFER_LENGTH-1));',set:{ep3:'04 00 00 00 04 00…'}},
+ {t:'≈6 ms',l:'dev',ti:'没有鼠标报告要发',d:'<code>DealSpecialFunctionKey()</code> 永远返回 0，所以 <code>Custom_HandleKey()</code> 这次返回 0，<code>data_type</code> 不变；<code>Device_Report()</code> 看到没有要发的报告，直接返回。<b>电脑那边不会收到任何“按键”</b>，DPI 键对电脑来说是隐形的。',c:'void Device_Report(void)            // device.c:668\n{\n\tif (!data_type)\n\t{\n\t\treturn;\n\t}',set:{rep:'不发'}},
+ {t:'≤7 ms',l:'pc',ti:'电脑来取 EP3：GUI 收到通知',d:'EP3 的轮询间隔是 1 ms（usbdesc.c:343，<code>bInterval = 0x01</code>）。电脑下一次来问时，USB 硬件把 0x2000 4480 的 64 字节发出去。GUI 开着就会显示“当前第 1 档”；GUI 没开，电脑的驱动也会收下，但没人看。',c:'USB_ENDPOINT_IN(HID_EP3_IN),\t/* bEndpointAddress */   // usbdesc.c:340\n...\n0x01,\t/* 1ms *//* bInterval */              // usbdesc.c:343',set:{ep3:'已发走'}},
+ {t:'松手 +8 ms',l:'btn',ti:'松手：再消抖 8 ms',d:'手指离开，PIO0_11 回到 1。同样每 1 ms 扫一次，倒计时这次是 8，走完后第 9 位清 0，再发一次 <code>BUTTON_EVENT</code>。',c:'buttonScan_stru.scan_result_cur &= ~(0x01 << i);\nbuttonScan_stru.debounce[i - 4] = 8;',set:{pin:'1（松）',bit9:'0',deb:'8 → 0'}},
+ {t:'松手 +8 ms',l:'cus',ti:'松开时什么也不做',d:'<code>DealSpecialFunctionKey()</code> 的“松开”分支里，<code>CYCLE_DPI</code> 是空的。整件事结束：<b>档位 0、EEPROM 写了 1 次、GUI 收到 1 包通知、传感器 1600 没变、光标速度没变。</b>',c:'}else // if the key up                      // custom.c:927\n{\n\tif (key_changed)\n\t{\n\t\tswitch (enable_function)\n\t\t{\n\t\t...\n\t\tcase CYCLE_DPI:\n\t\t\tbreak;'},
+];
+let cur=-1,timer=null;
+function stAt(k){const o=Object.assign({},P0);for(let i=0;i<=k;i++)Object.assign(o,S[i].set||{});return o}
+function draw(){const st=stAt(cur),prev=stAt(cur-1);
+ $('panel').innerHTML=PN.map(([k,n])=>`<div class="${cur>=0&&st[k]!==prev[k]?'chg':''}"><span>${n}</span><b>${st[k]}</b></div>`).join('');
+ $('tl').innerHTML=S.map((s,i)=>`<li data-i="${i}" class="${i===cur?'cur':i<cur?'done':''}" style="--c:${V(LY[s.l][1])}"><div class="hd"><span class="t">${i+1}. ${s.t}</span><span class="ly">${LY[s.l][0]}</span><span class="ti">${s.ti}</span></div><div class="det"><p>${s.d}</p><pre class="code">${esc(s.c)}</pre></div></li>`).join('');
+ $('tl').querySelectorAll('li').forEach(li=>li.onclick=()=>{stop();cur=+li.dataset.i;draw()});
+ $('dPrev').disabled=cur<=0;$('dNext').disabled=cur>=S.length-1}
+function stop(){clearInterval(timer);timer=null;$('dPlay').textContent='自动播放'}
+$('dNext').onclick=()=>{stop();cur=Math.min(S.length-1,cur+1);draw()};
+$('dPrev').onclick=()=>{stop();cur=Math.max(0,cur-1);draw()};
+$('dReset').onclick=()=>{stop();cur=-1;draw()};
+$('dPlay').onclick=()=>{if(timer){stop();return}$('dPlay').textContent='暂停';if(cur>=S.length-1)cur=-1;timer=setInterval(()=>{cur++;draw();if(cur>=S.length-1)stop()},2600)};
+draw();
+</script>

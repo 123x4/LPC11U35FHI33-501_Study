@@ -26,6 +26,7 @@
 | 函数讲解：Custom_Paramter_Init()（custom.c） | `Custom_Paramter_Init.html` | https://claude.ai/artifact/C2Pkz5eGpiTkeNkUvThqJJ |
 | custom.c 完全讲透（本质、先猜设计、四条线、想法上、自测；26 个函数在附录） | `custom.c完全讲透.html` | https://claude.ai/artifact/VZVKafNhxDA6watP5e6RMT |
 | 从内存看一次 IO（Custom_Pointer_Init 与 GUI 收发） | `从内存看一次IO.html` | https://claude.ai/artifact/6Z4TjTfoJmmkLUsBX27KDm |
+| 按下 DPI 键的完整流程（17 步全程） | `按下DPI键的完整流程.html` | https://claude.ai/artifact/7yhiDgMLCiZYLqHzKXnRVy |
 
 完整路线见第 0 课第 5 节（24 课，第 0~23 课）。
 
