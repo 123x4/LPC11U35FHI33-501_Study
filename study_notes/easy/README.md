@@ -57,7 +57,7 @@
 
 `L1_USB报文解剖`（https://claude.ai/artifact/Qvima6yiNCJCzXs62oqyEC）、`study_notes/` 下的 `L1_*.md`、`L2_*.md`、`0-3`、`0-4`、`1-1`~`1-14` 逐行精读、`03_T1A适配清单.md`、`02_芯片状态总表.md`。
 
-**新增讲解页时**：同时更新 `学习目录.html`（scratchpad 里的 `hub.js`）和上面对应分组的表格。
+**新增讲解页时**：同时更新 `学习目录.html`（页面脚本里的 `G` 数组）和上面对应分组的表格。
 
 ## 讲代码时的固定规则
 
