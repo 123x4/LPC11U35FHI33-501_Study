@@ -1,0 +1,359 @@
+<title>Button_GetState 讲解</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
+.mx{border-collapse:separate;border-spacing:4px;min-width:720px}
+.mx th{text-align:center;font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.mx th.s{text-align:left;font-size:.85rem;color:var(--muted);font-family:var(--font-b);width:150px}
+.mx td{padding:0;border:0}
+.mx button{width:100%;font:inherit;font-size:.8rem;line-height:1.35;padding:6px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-align:left;min-height:46px}
+.mx button.w-sw{border-left:5px solid var(--sw)}
+.mx button.w-ex{border-left:5px solid var(--muted)}
+.mx button.w-hw{border-left:5px solid var(--per)}
+.mx button.na{color:var(--muted);background:var(--soft);border-style:dashed}
+.mx button[aria-pressed="true"]{outline:3px solid var(--pc);outline-offset:1px}
+.who{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.85rem;margin:.4rem 0}
+.who span{display:inline-flex;align-items:center;gap:6px}
+.who i{width:14px;height:14px;border-radius:3px;display:inline-block}
+pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
+details.ans{margin:.4rem 0;border:1px dashed var(--line);border-radius:6px;padding:4px 10px;background:var(--panel)}
+details.ans summary{cursor:pointer;color:var(--per);font-size:.9rem}
+details.ans[open]{background:var(--soft)}
+.task{border-left:4px solid var(--per);background:var(--panel);border-radius:0 6px 6px 0;padding:8px 12px;margin:.6rem 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.task .pg{font-family:var(--font-m);font-size:.8rem;color:var(--per)}
+.sim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:640px){.sim{grid-template-columns:minmax(0,1fr)}}
+.sim fieldset{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:0 0 8px}
+.sim legend{font-size:.82rem;color:var(--muted);padding:0 4px}
+.sim label{display:inline-flex;align-items:center;gap:4px;margin:2px 10px 2px 0;font-size:.9rem;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;margin:.4rem 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+</style>
+<style>
+.ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px 14px;margin:.4rem 0 .8rem}
+.ctl label{font-size:.9rem;display:flex;gap:6px;align-items:center}
+.ctl input[type=checkbox]{width:18px;height:18px;accent-color:var(--pc)}
+.ctl .sl{grid-column:span 2}
+.ctl .sl output{font-family:var(--font-m);font-weight:700}
+.rg{font-family:var(--font-m);font-size:.78rem;margin:.3rem 0}
+.rg .rr{display:grid;grid-template-columns:150px minmax(0,1fr);gap:8px;align-items:center;margin:3px 0}
+.rg .rr>span{color:var(--muted);font-family:var(--font-b);font-size:.8rem}
+.bits32{display:grid;grid-template-columns:repeat(32,minmax(0,1fr));gap:1px}
+.bits32 i{font-style:normal;text-align:center;border:1px solid var(--line);border-radius:2px;padding:1px 0;line-height:1.3;background:var(--panel)}
+.bits32 i.k{border-color:var(--per)}
+.bits32 i.one{background:var(--per);color:var(--bg)}
+.bits32 i.dim{opacity:.35}
+.bits32 i.out{border-color:var(--pc)}
+.bits32 i.out.one{background:var(--pc)}
+.bitnum{display:grid;grid-template-columns:repeat(32,minmax(0,1fr));gap:1px;font-size:.6rem;color:var(--muted);text-align:center}
+.mv{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px;margin:.5rem 0}
+.mv div{border:1.5px solid var(--c);border-radius:6px;padding:5px 8px;background:var(--panel);font-size:.84rem}
+.mv div b{font-family:var(--font-m)}
+.mv div.on{background:color-mix(in srgb,var(--c) 18%,var(--panel))}
+.res{font-family:var(--font-m);font-size:1rem;padding:6px 10px;border:2px solid var(--pc);border-radius:6px;background:var(--panel);margin:.4rem 0}
+@media (max-width:700px){.rg .rr{grid-template-columns:1fr}.bits32,.bitnum{font-size:.5rem}.ctl .sl{grid-column:auto}}
+</style>
+<div class="wrap">
+<div class="eyebrow">轻松版 · 读代码 · app/button.c:551 Button_GetState()</div>
+<h1>Button_GetState()：给 6 个键拍一张快照</h1>
+<p class="lede">截图里选中的这一句 <code>button = Button_GetState();</code> 是 <code>Button_Scan()</code> 的第一步。这一页只讲它：它从哪里读、怎么把分散在各个引脚和 ADC 上的状态，整理成一个 32 位的数。</p>
+
+<h2><span class="step">1/7</span>🧭 本质</h2>
+<p class="big"><code>Button_GetState()</code> 是<b>采样层</b>：把“此刻每个键按没按”拍成一张快照，<b>1 个位代表 1 个键，1 = 按着</b>。</p>
+<p>它和外面的 <code>Button_Scan()</code> 分工很清楚：</p>
+<div class="scroll"><table>
+<thead><tr><th>函数</th><th>回答的问题</th><th>记不记得过去</th></tr></thead>
+<tbody>
+<tr><td><code>Button_GetState()</code></td><td>“<b>现在</b>哪些键按着？”</td><td>GPIO 键不记；左右键会记（滤波、基线，第 5 节）</td></tr>
+<tr><td><code>Button_Scan()</code></td><td>“<b>什么时候</b>算真的按下 / 松开？”（消抖、找变化）</td><td>记（<code>scan_result_cur</code>、<code>scan_result_pre</code>、倒计时）</td></tr>
+</tbody></table></div>
+<p>它也是一道<b>抽象边界</b>：在它下面，代码要关心第几个引脚、低电平有效、ADC 通道；从它往上，大家只认“第 9 位 = DPI 键”。所以 T1A 换引脚，只要改它下面这层。</p>
+<p class="note">在“按下 DPI 键的完整流程”里，它就是第 4 步。</p>
+
+<h2><span class="step">2/7</span>场景：谁调用它、多久一次</h2>
+<div class="scroll"><table>
+<thead><tr><th>调用者</th><th>什么时候</th></tr></thead>
+<tbody>
+<tr><td><code>Button_Scan()</code>（button.c:599）</td><td>主循环里每 1 ms 一次（定时器举手 → <code>Device_Button_Scan()</code> → <code>Button_Scan()</code>）</td></tr>
+<tr><td><code>Device_Manually_Enter_RestoreDefault()</code>（device.c:365）</td><td>开机时一次（看右键 + 后侧键是不是同时按着），这时 ADC 还没初始化（第 6 节）</td></tr>
+</tbody></table></div>
+
+<h2><span class="step">3/7</span>动手：拍一次快照</h2>
+<div class="box try"><div class="tag">动手 · 按键勾“按着”，左右键拖滑块（红外 ADC 原始值，按下时电压会降低）</div>
+<div class="ctl" id="ctl"></div>
+<div class="rg" id="reg"></div>
+<div class="mv" id="mv"></div>
+<div class="res" id="res" aria-live="polite"></div>
+<p class="note">左右键这里做了简化：真实代码先滤波、算出 0~100 的“按下程度”，再用触发点 + 回弹的状态机判断（L2“一次点击”讲过）。这里只用“按下程度 ≥ 50”示意。</p>
+</div>
+
+<h2><span class="step">4/7</span>逐段看：GPIO 的 4 个键</h2>
+<p>原始代码（button.c:551~590，IRPT_V4 走第一个分支）：</p>
+<pre class="code">UINT32 Button_GetState(void)
+{
+	UINT32 button_port_state = 0;
+	UINT32 button_port0_state=0;
+
+  #if (defined(HAPTIC_V2) || defined (HAPTIC_V3) || defined (HAPTIC_V4) || defined (IRPT_V4) || defined(V4_HALL_HPTIC_V4))
+  button_port0_state = BUTTON_PORT0;
+  button_port_state |= Button_Location_Data(button_port0_state,MIDDLE_BUTTON_MASK,MIDDLE_BUTTON_POSITION,MIDDLE_BUTTON_REPORT_BIT);
+  button_port_state |= Button_Location_Data(button_port0_state,DPI_CYCLE_BUTTON_MASK,DPI_CYCLE_BUTTON_POSITION,DPI_CYCLE_BUTTON_REPORT_BIT);
+  button_port_state |= Button_Location_Data(button_port0_state,K4_BUTTON_MASK,K4_BUTTON_POSITION,K4_BUTTON_REPORT_BIT);
+  button_port_state |= Button_Location_Data(button_port0_state,K5_BUTTON_MASK,K5_BUTTON_POSITION,K5_BUTTON_REPORT_BIT);
+  #elif ...（其他板型）
+  #endif
+
+	button_port_state |= LR_GetState();
+	return button_port_state;
+}</pre>
+<h3>① <code>BUTTON_PORT0</code> 宏展开</h3>
+<pre class="code">#define BUTTON_PORT0 (U32)((~LPC_GPIO->PIN[0])& (MIDDLE_BUTTON_MASK | DPI_CYCLE_BUTTON_MASK | K5_BUTTON_MASK | K4_BUTTON_MASK))   // button.h:149
+
+展开后：
+(U32)((~(*(volatile uint32_t*)0x50002100)) & ((1u<<12) | (1u<<11) | (1u<<23) | (1u<<1)))
+                     ↑ GPIO 端口 0 的 PIN 寄存器                ↑ = 0x00801802</pre>
+<ul>
+<li><b>一次读 32 个引脚</b>：<code>LPC_GPIO-&gt;PIN[0]</code> 在 0x5000 2100（LPC11Uxx.h:592，<code>LPC_GPIO_BASE = 0x50000000</code> + 偏移 0x2100），读一次就拿到 PIO0_0~PIO0_31 全部电平（第 6 课）。</li>
+<li><b>取反 <code>~</code></b>：这 4 个键都是内部上拉、按下接地，按下 = 0。取反后变成“按下 = 1”。</li>
+<li><b>与掩码 <code>&amp;</code></b>：只留第 1、11、12、23 位，其余 28 个引脚（USB、SPI、线圈……）清 0。</li>
+</ul>
+<h3>② <code>Button_Location_Data()</code>：把引脚位挪到键位位</h3>
+<pre class="code">UINT32 Button_Location_Data(UINT32 port,UINT32 mask,UINT32 position,UINT32 reportPosition)   // button.c:277
+{
+	reportMask = port & mask;            // 只看这一个键的那一位
+	if (reportPosition > position)
+		reportMask <<= (reportPosition - position);   // 往高位挪
+	else
+		reportMask >>= (position - reportPosition);   // 往低位挪
+	return reportMask;
+}</pre>
+<div class="scroll"><table>
+<thead><tr><th>键</th><th>引脚（position）</th><th>键位（reportPosition）</th><th>怎么挪</th></tr></thead>
+<tbody>
+<tr><td>中键</td><td>PIO0_12 → 第 12 位</td><td>第 2 位</td><td>右移 10</td></tr>
+<tr><td>DPI 键</td><td>PIO0_11 → 第 11 位</td><td>第 9 位</td><td>右移 2</td></tr>
+<tr><td>前侧 K4</td><td>PIO0_1 → 第 1 位</td><td>第 5 位</td><td>左移 4</td></tr>
+<tr><td>后侧 K5</td><td>PIO0_23 → 第 23 位</td><td>第 6 位</td><td>右移 17</td></tr>
+</tbody></table></div>
+<p>引脚号来自 <code>my_board.h</code>（IRPT_V4 那段，<code>MIDDLE_BUTTON_PIN 12</code> 等），键位号来自 <code>button.h:100~107</code>。<b>这个函数的好处</b>：引脚换了，只改 <code>my_board.h</code> 里的数字，挪多少位它自己算。</p>
+
+<h2><span class="step">5/7</span>逐段看：左右键（红外 + ADC）</h2>
+<p>左右键不是开关，是<b>红外对管</b>：按下时挡光多少，电压就变多少（第 7 课）。所以它们走另一条路：<code>LR_GetState()</code>（button.c:298）。</p>
+<pre class="code">#if (defined(IRPT_V4))
+  ret = MyADC_GetValue(pLeftAdcHandle, &amp;leftVal);      // AD2 = PIO0_13，左键
+  ret |= MyADC_GetValue(pRightAdcHandle, &amp;rightVal);   // AD3 = PIO0_14，右键
+  if(ret) return result;                               // 任何一路失败 → 返回 0（两个键都当“松着”）
+
+  hall_spi_rx[0] = (uint8_t)(rightVal >> 8);           // 名字叫 hall / spi，其实装的是 ADC 值
+  hall_spi_rx[1] = (uint8_t)(rightVal);
+  hall_spi_rx[2] = (uint8_t)(leftVal >> 8);
+  hall_spi_rx[3] = (uint8_t)(leftVal);
+#endif
+  result = ProcessRecvSampleRawData((uint8_t *)(&amp;hall_spi_rx), 4);   // my_misc.c:418
+  return result;</pre>
+<ol class="flowlist">
+<li><i style="background:var(--gold)">1</i><div><b>两次 ADC 转换</b>（my_adc.c:79）：选通道 → 启动 → 每 2 µs 看一次 DONE 位，最多看 10 次（约 20 µs）；拿到 10 位结果（0~1023）。超时返回 −2。</div></li>
+<li><i style="background:var(--gold)">2</i><div><b>装进 4 字节数组</b>：先右后左，各占 2 字节（高字节在前）。这个数组和格式是从霍尔板型沿用来的：霍尔芯片走 SPI，一次读回的就是这 4 个字节。</div></li>
+<li><i style="background:var(--gold)">3</i><div><b><code>ProcessRecvSampleRawData()</code></b>（本项目 chengjie 写的）：<br>• 取反：<code>1023 − 原始值</code>（IRPT_V4 按下时电压降低，翻过来变成“按得越深数越大”）；<br>• 滤波：变化小于 10 时做滑动平均，变化大就直接跟上；<br>• 算出 0~100 的“按下程度”（<code>Hall_CalculateNode()</code>，用顶部 / 底部基线）；<br>• 触发点 + 回弹状态机得出 <code>gbKeyState[0]</code>（右）、<code>[1]</code>（左）；<br>• 顺手校准基线、把数值存给 GUI 查询（<code>Hall_SyncParam()</code>）、告诉线圈当前段位（<code>Ele_UpadteSegment()</code>）；<br>• 线圈正在震的那一侧，<b>沿用上一次的状态</b>（震动会干扰读数）。</div></li>
+<li><i style="background:var(--gold)">4</i><div><b>返回</b>：右键 → 第 1 位，左键 → 第 0 位（注意 <code>k = 0</code> 是右键，顺序是交叉的）。</div></li>
+</ol>
+
+<h2><span class="step">6/7</span>坑和要注意的地方</h2>
+<div class="scroll"><table class="iss">
+<thead><tr><th>问题</th><th>后果</th></tr></thead>
+<tbody>
+<tr><td>任何一路 ADC 超时，<code>LR_GetState()</code> 直接返回 0</td><td>左右键在这 1 ms 里被当成“松开”；左右键不消抖，可能报出一次误松开。概率低（20 µs 一般够），没实测过</td></tr>
+<tr><td>开机时 <code>Device_Manually_Enter_RestoreDefault()</code> 调它，ADC 还没初始化</td><td>ADC 读不出来 → 右键永远是 0 → “右键 + 后侧键恢复默认”大概率失效（待上板验证）</td></tr>
+<tr><td>变量名 <code>hall_spi_rx</code>、函数名 <code>Hall_*</code></td><td>IRPT_V4 用的是红外 + ADC，名字是霍尔板型留下的，读的时候别被骗</td></tr>
+<tr><td>右键在数组前面、却放到第 1 位</td><td>左右交叉，改代码时容易弄反</td></tr>
+<tr><td>名字叫 Get，却每 1 ms 做 2 次 ADC 转换 + 滤波 + 校准</td><td>不是“只读一下寄存器”那么便宜；而且有副作用（见下面 💡）</td></tr>
+</tbody></table></div>
+<div class="card"><b class="t">💡 想法上：名字叫 Get 的函数，也要查它有没有“副作用”</b><br>按常理，<code>GetXxx()</code> 应该只读、不改任何东西，调几次都一样。可 <code>LR_GetState()</code> 每调一次都会更新滤波值、校准基线、改按键状态机。<br>所以“多调一次”不是没代价：开机那次额外调用，就会推动滤波器和状态机走一步。<br>读别人的代码时，看到 Get 不要默认它是“干净”的，进去看一眼它改了哪些全局变量；自己写代码时，把“读数”和“处理”分成两个函数，名字就不会骗人。</div>
+
+<h2><span class="step">7/7</span>T1A 要改什么</h2>
+<ul>
+<li><b>GPIO 键</b>：T1A 的中键、侧键、DPI 换了引脚（中键 PIO0_7、前侧 PIO0_11、后侧 PIO0_12、DPI PIO0_23）。改 <code>my_board.h</code> 的引脚号，<code>Button_Location_Data()</code> 自动算挪多少位；<code>BUTTON_PORT0</code> 的掩码跟着宏变。外部已有 47k 上拉，仍是按下 = 0。</li>
+<li><b>左右键</b>：<code>LR_GetState()</code> 的数据来源从“两次 ADC”换成“SSP1 菊花链读两颗 GTRY164”，正好回到这个 4 字节数组本来的设计（霍尔 SPI）。<code>ProcessRecvSampleRawData()</code> 的 <code>#else</code> 分支（14 位、带校验）就是给霍尔用的，可作参考。</li>
+<li><b>不用改</b>：<code>Button_Scan()</code> 和上面所有层，因为它们只认键位号。</li>
+</ul>
+
+<h2>小测</h2>
+<div class="box quiz" id="quiz"></div>
+<div class="sum"><b>记住：</b><code>Button_GetState()</code> 一次读 <code>LPC_GPIO-&gt;PIN[0]</code>（0x5000 2100）拿到 4 个 GPIO 键，取反、掩码、挪到键位号（2、5、6、9）；再调 <code>LR_GetState()</code> 做两次 ADC 转换并经过滤波和状态机，得到左右键（第 0、1 位）。它只回答“现在哪些键按着”，消抖和找变化交给 <code>Button_Scan()</code>。</div>
+<h3>本页新词</h3>
+<table><tbody>
+<tr><td><b>快照</b></td><td>某一时刻所有键状态的一次性记录，这里是一个 32 位数</td></tr>
+<tr><td><b>掩码（mask）</b></td><td>一个只有关心的位是 1 的数，和它“与”一下，就只留下关心的位</td></tr>
+<tr><td><b>低电平有效</b></td><td>按下 = 0、松开 = 1，所以要取反</td></tr>
+<tr><td><b>副作用</b></td><td>函数除了返回结果，还改了别的全局状态</td></tr>
+</tbody></table>
+</div>
+<script>
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
+const hx=(v,n=8)=>'0x'+(v>>>0).toString(16).toUpperCase().padStart(n,'0');
+const GK=[['mid','中键',12,2],['dpi','DPI 键',11,9],['k4','前侧 K4',1,5],['k5','后侧 K5',23,6]];
+const MASK=GK.reduce((a,k)=>a|(1<<k[2]),0)>>>0;
+const st={mid:false,dpi:false,k4:false,k5:false,L:900,R:900,fail:false};
+(function(){const c=$('ctl');
+ GK.forEach(k=>{const l=document.createElement('label');l.innerHTML=`<input type="checkbox" data-k="${k[0]}"> ${k[1]}（PIO0_${k[2]}）按着`;c.appendChild(l)});
+ [['L','左键红外 ADC（AD2）'],['R','右键红外 ADC（AD3）']].forEach(([k,t])=>{const d=document.createElement('label');d.className='sl';d.innerHTML=`${t}：<output id="o${k}">900</output><input type="range" min="250" max="1000" value="900" data-s="${k}" aria-label="${t}">`;d.style.flexWrap='wrap';c.appendChild(d)});
+ const f=document.createElement('label');f.innerHTML='<input type="checkbox" data-f="1"> 模拟一次 ADC 超时';c.appendChild(f);
+ c.querySelectorAll('input[data-k]').forEach(i=>i.onchange=()=>{st[i.dataset.k]=i.checked;draw()});
+ c.querySelectorAll('input[data-s]').forEach(i=>i.oninput=()=>{st[i.dataset.s]=+i.value;draw()});
+ c.querySelector('input[data-f]').onchange=e=>{st.fail=e.target.checked;draw()};draw()})();
+function bits(v,cls){let h='';for(let b=31;b>=0;b--){const one=(v>>>b)&1;const c=cls(b);h+=`<i class="${c}${one&&!c.includes('dim')?' one':''}">${c.includes('dim')?'·':one}</i>`}return `<div class="bits32">${h}</div>`}
+function node(raw){const t=1023-raw;return Math.max(0,Math.min(100,Math.round((t-123)/600*100)))}
+function draw(){
+ let pin=0;GK.forEach(k=>{if(!st[k[0]])pin|=1<<k[2]});pin>>>=0;
+ const inv=(~pin)>>>0,and=(inv&MASK)>>>0;
+ const isK=b=>GK.some(k=>k[2]===b);
+ let out=0;const mv=GK.map(k=>{const on=(and>>>k[2])&1;const d=k[3]-k[2];if(on)out|=1<<k[3];return `<div style="--c:${V('per')}" class="${on?'on':''}">${k[1]}：第 ${k[2]} 位 → 第 ${k[3]} 位（${d>0?'左移 '+d:'右移 '+(-d)}）= <b>${on}</b></div>`});
+ $('oL').textContent=st.L;$('oR').textContent=st.R;
+ const nL=node(st.L),nR=node(st.R);let lr=0,lrTxt;
+ if(st.fail){lrTxt='MyADC_GetValue() 超时返回 −2 → <b>LR_GetState() 直接返回 0</b>：左右键都当“松着”'}
+ else{const pl=nL>=50,pr=nR>=50;if(pl)lr|=1;if(pr)lr|=2;lrTxt=`左：1023 − ${st.L} = ${1023-st.L} → 按下程度 ${nL} → <b>${pl?'按着':'松着'}</b>（第 0 位）　右：1023 − ${st.R} = ${1023-st.R} → 程度 ${nR} → <b>${pr?'按着':'松着'}</b>（第 1 位）`}
+ out=(out|lr)>>>0;
+ mv.push(`<div style="--c:${V('gold')}" class="${lr?'on':''}">LR_GetState()：${lrTxt}</div>`);
+ $('reg').innerHTML=`<div class="rr"><span>位号</span><div class="bitnum">${[...Array(32)].map((_,i)=>`<span>${31-i}</span>`).join('')}</div></div>
+ <div class="rr"><span>① 读 PIN[0]（0x5000 2100）<br>= ${hx(pin)}<br>（其他脚用 · 表示）</span>${bits(pin,b=>isK(b)?'k':'dim')}</div>
+ <div class="rr"><span>② 取反 ~PIN[0]</span>${bits(inv,b=>isK(b)?'k':'dim')}</div>
+ <div class="rr"><span>③ &amp; 0x00801802<br>= ${hx(and)}</span>${bits(and,b=>isK(b)?'k':'')}</div>`;
+ $('mv').innerHTML=mv.join('');
+ const names={0:'左',1:'右',2:'中',5:'K4',6:'K5',9:'DPI'};
+ $('res').innerHTML=`返回 button_port_state = ${hx(out)}　（${Object.entries(names).filter(([b])=>(out>>>b)&1).map(([b,n])=>`第 ${b} 位 ${n}`).join('、')||'没有键按着'}）`+`<div style="margin-top:4px">${bits(out,b=>names[b]!==undefined?'out':'dim')}</div>`;
+}
+const Q=[
+ ['1. 4 个 GPIO 键为什么要先取反？',['因为寄存器是反的','按下接地 = 0，取反后变成按下 = 1','为了清掉别的引脚'],1,'对。上拉 + 按下接地 = 低电平有效。','看第 4 节 ①。'],
+ ['2. & 0x00801802 的作用？',['只留下第 1、11、12、23 位','把数字变小','消抖'],0,'对。其余 28 个引脚清 0。','看第 4 节 ①。'],
+ ['3. DPI 键从第 11 位挪到第 9 位，是怎么挪的？',['左移 2','右移 2'],1,'对。reportPosition 9 < position 11，右移 11 − 9 = 2。','看第 4 节 ②。'],
+ ['4. 左右键的 ADC 有一路超时，会怎样？',['沿用上一次的值','左右键都当成松着','鼠标复位'],1,'对。LR_GetState() 直接 return 0。','看第 6 节。'],
+ ['5. Button_GetState() 和 Button_Scan() 谁负责消抖？',['Button_GetState()','Button_Scan()'],1,'对。GetState 只拍快照。','看第 1 节。'],
+];
+(function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0]}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+</script>

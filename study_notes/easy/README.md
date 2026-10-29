@@ -42,6 +42,7 @@
 | 全程：按下 DPI 键的完整流程（17 步） | https://claude.ai/artifact/7yhiDgMLCiZYLqHzKXnRVy |
 | 文件夹：app 文件夹四份代码 | https://claude.ai/artifact/DQeECLZbqjbizU3wtk2zHv |
 | 文件：custom.c 完全讲透 | https://claude.ai/artifact/VZVKafNhxDA6watP5e6RMT |
+| 函数：Button_GetState()（6 个键的快照） | https://claude.ai/artifact/BMsC1ca4aV6Wh5QRUoTySZ |
 | 专题：从内存看一次 IO | https://claude.ai/artifact/6Z4TjTfoJmmkLUsBX27KDm |
 | 早期版：函数讲解 Custom_Paramter_Init()（已并入 custom.c 完全讲透） | https://claude.ai/artifact/C2Pkz5eGpiTkeNkUvThqJJ |
 
