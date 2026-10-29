@@ -349,7 +349,7 @@ const FILES=[
   sum:'键位翻译、DPI、配置档',
   life:'没有版权头。老 GUI 时代的“自定义设置”：改键、4 档 DPI、2 套配置档、灯效，设置存 EEPROM。本项目改了 12 个函数，主要是注释掉开机读设置、灯效和产线测试。',
   now:'开机 <code>Custom_Init()</code> 一次；每次键 / 滚轮变化 <code>Custom_HandleKey()</code> 一次（device.c:566）；老 GUI 命令来时 <code>Custom_Restore_Default()</code>、<code>Bootloadable_Load()</code>。',
-  used:'在用 26 个；没人调用 2 个：<code>Custom_Profile</code>、<code>Custom_Select_Profile</code>（切换配置档，没有键绑这个功能）。'},
+  used:'在用 24 个；没人调用 2 个：<code>Custom_Profile</code>、<code>Custom_Select_Profile</code>（切换配置档，没有键绑这个功能）。'},
  {f:'optical_3325.c',c:'hw',chip:'🟦 原厂底子（Cypress 2003–06）+ 开发者改过',lines:'519 → 519 行',
   sum:'老传感器驱动',
   life:'Cypress 给 PSoC 写的光学鼠标参考代码，开发者改成驱动 PixArt 3325 / 3327。M300S 时代在用。',

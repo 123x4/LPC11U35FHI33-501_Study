@@ -24,6 +24,7 @@
 | 代码来源清单（整理代码用，可筛选） | `代码来源清单.html` | https://claude.ai/artifact/VPsyav56Zh3cacuF4xg6us |
 | app 文件夹四份代码（button / scroll / custom / optical_3325） | `app文件夹四份代码.html` | https://claude.ai/artifact/DQeECLZbqjbizU3wtk2zHv |
 | 函数讲解：Custom_Paramter_Init()（custom.c） | `Custom_Paramter_Init.html` | https://claude.ai/artifact/C2Pkz5eGpiTkeNkUvThqJJ |
+| custom.c 完全讲透（数据布局、四条线、26 个函数、问题清单） | `custom.c完全讲透.html` | https://claude.ai/artifact/VZVKafNhxDA6watP5e6RMT |
 
 完整路线见第 0 课第 5 节（24 课，第 0~23 课）。
 
@@ -92,3 +93,5 @@
 **删除了 21 个没用的 .c 和 11 个 .h**（10-28 删除，10-29 曾恢复，同日按要求再次删除）：都不在 Keil 工程里，也没有被任何文件 `#include`。删后 Keil 编译 0 错误 0 警告，程序大小和 hex 与删除前完全一致。清单见“代码来源清单”页面的“已删除的文件”一节，需要时可从 git 历史找回。`src/my_hallkey_func.c`、`src/my_i2c.c` 没删（T1A 可能用得上）。
 
 **读 app 文件夹时发现的问题**（详见“app 文件夹四份代码”页面）：① DPI 键不改 PAW3950（`optical_set_dpi()` 被 `#if` 关掉），但每按一次写一次 EEPROM、给 GUI 发一包；② `Main_Mouse_SCROLL_UP/DN()` 写的 `g_Main_Setting.MouseInReport` 在 IRPT_V4 下没人发送；③ scroll.c 第 15 行注释的 up / down 和代码相反；④ optical_3325.c 只剩 `TimerDelayMsec()` 在用，却让整段约 720 字节留在 Flash 里；⑤ button.c 的 `Hall_*` 函数（霍尔芯片菊花链）对 T1A 的 GTRY164 有参考价值，先别删。
+
+**读 custom.c 时新发现的问题**（详见“custom.c 完全讲透”页面）：① 老 GUI 切配置（0x05）、整体同步（0x01）后 RAM 不更新（`Custom_Load_ModeSetting()` 的读取被注释）；② 多媒体 / 热键 id 低 4 位直接当表下标，`consumer_a_table` 7 项、`consumer_b_table` 11 项，会越界；③ `inc/gloab.h:20` 的 `#pragma pack(1)` 没恢复，影响所有 include 它的文件；④ 开机组合键（右键 + 后侧键）在 IRPT_V4 下可能因 ADC 未初始化而失效，待上板验证。

@@ -1,0 +1,566 @@
+<title>custom.c 完全讲透</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
+.mx{border-collapse:separate;border-spacing:4px;min-width:720px}
+.mx th{text-align:center;font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.mx th.s{text-align:left;font-size:.85rem;color:var(--muted);font-family:var(--font-b);width:150px}
+.mx td{padding:0;border:0}
+.mx button{width:100%;font:inherit;font-size:.8rem;line-height:1.35;padding:6px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-align:left;min-height:46px}
+.mx button.w-sw{border-left:5px solid var(--sw)}
+.mx button.w-ex{border-left:5px solid var(--muted)}
+.mx button.w-hw{border-left:5px solid var(--per)}
+.mx button.na{color:var(--muted);background:var(--soft);border-style:dashed}
+.mx button[aria-pressed="true"]{outline:3px solid var(--pc);outline-offset:1px}
+.who{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.85rem;margin:.4rem 0}
+.who span{display:inline-flex;align-items:center;gap:6px}
+.who i{width:14px;height:14px;border-radius:3px;display:inline-block}
+pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
+details.ans{margin:.4rem 0;border:1px dashed var(--line);border-radius:6px;padding:4px 10px;background:var(--panel)}
+details.ans summary{cursor:pointer;color:var(--per);font-size:.9rem}
+details.ans[open]{background:var(--soft)}
+.task{border-left:4px solid var(--per);background:var(--panel);border-radius:0 6px 6px 0;padding:8px 12px;margin:.6rem 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.task .pg{font-family:var(--font-m);font-size:.8rem;color:var(--per)}
+.sim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:640px){.sim{grid-template-columns:minmax(0,1fr)}}
+.sim fieldset{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:0 0 8px}
+.sim legend{font-size:.82rem;color:var(--muted);padding:0 4px}
+.sim label{display:inline-flex;align-items:center;gap:4px;margin:2px 10px 2px 0;font-size:.9rem;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;margin:.4rem 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+</style>
+<style>
+.lanes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:.8rem 0}
+.lane{border:2px solid var(--c);border-radius:8px;background:var(--panel);padding:8px 10px}
+.lane h4{margin:0 0 .3rem;font-family:var(--font-d);color:var(--c);font-size:1rem}
+.lane .w{font-size:.82rem;color:var(--muted);margin-bottom:.3rem}
+.fnb{display:block;width:100%;text-align:left;font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:5px;background:var(--bg);color:var(--fg);padding:3px 6px;margin:3px 0;cursor:pointer;overflow-wrap:anywhere}
+.fnb:hover,.fnb[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,var(--bg))}
+.fnb.dead{opacity:.55;text-decoration:line-through}
+.fnb i{font-style:normal;color:var(--muted)}
+.fcard2{border:2px solid var(--per);border-radius:8px;background:var(--panel);padding:10px 14px;margin:.6rem 0}
+.fcard2 h3{margin:0;font-family:var(--font-m);font-size:1.05rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin:.4rem 0}
+.meta span{font-size:.8rem;border:1px solid var(--line);border-radius:999px;padding:0 8px;background:var(--soft)}
+.bytes{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:2px;margin:.6rem 0}
+.bytes button{font:inherit;font-family:var(--font-m);font-size:.62rem;line-height:1.1;padding:4px 0;border:1px solid var(--line);border-radius:3px;background:color-mix(in srgb,var(--c) 22%,var(--panel));color:var(--fg);cursor:pointer;min-width:0}
+.bytes button.sel{outline:2px solid var(--fg);outline-offset:-1px;background:color-mix(in srgb,var(--c) 55%,var(--panel))}
+.bytes button b{display:block;font-size:.58rem;color:var(--muted);font-weight:400}
+.flegend{display:flex;flex-wrap:wrap;gap:6px;margin:.3rem 0}
+.flegend button{font:inherit;font-size:.78rem;border:2px solid var(--c);border-radius:6px;background:var(--panel);color:var(--fg);padding:1px 7px;cursor:pointer}
+.flegend button[aria-pressed="true"]{background:color-mix(in srgb,var(--c) 30%,var(--panel))}
+.k5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:.5rem 0}
+.k5 div{border:2px solid var(--c);border-radius:6px;padding:6px;text-align:center;background:var(--panel)}
+.k5 div b{display:block;font-family:var(--font-m);font-size:1.1rem}
+.k5 div span{display:block;font-size:.74rem;color:var(--muted);line-height:1.3}
+.ksim td,.ksim th{padding:4px 6px;font-size:.84rem}
+.ksim select{font:inherit;font-size:.82rem;max-width:100%;padding:2px 4px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--fg)}
+.ksim input[type=checkbox]{width:18px;height:18px;accent-color:var(--pc)}
+.rep3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:.6rem 0}
+.rep3>div{border:2px solid var(--c);border-radius:8px;padding:6px 8px;background:var(--panel)}
+.rep3 h5{margin:0 0 4px;font-size:.88rem;color:var(--c)}
+.rep3 .bb{display:flex;flex-wrap:wrap;gap:2px}
+.rep3 .bb span{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:3px;padding:1px 4px;min-width:26px;text-align:center}
+.rep3 .bb span.nz{background:var(--c);color:var(--bg);border-color:var(--c)}
+.rep3 .st{font-size:.8rem;margin-top:4px}
+.trace{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:6px 10px;white-space:pre-wrap;margin:.5rem 0}
+.mem{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:.6rem 0}
+.mem>div{border:2px solid var(--c);border-radius:8px;padding:8px 10px;background:var(--panel)}
+.mem h4{margin:0 0 .3rem;font-family:var(--font-d);font-size:1rem;color:var(--c)}
+.slot{border:1px solid var(--line);border-radius:6px;padding:4px 8px;margin:4px 0;font-size:.86rem}
+.slot b{font-family:var(--font-m);font-size:.8rem;color:var(--muted);font-weight:500;margin-right:6px}
+.slot.chg{background:color-mix(in srgb,var(--pc) 22%,transparent);border-color:var(--pc)}
+.slot.off{opacity:.45}
+.cl{font-family:var(--font-m);font-size:.82rem;background:var(--soft);border-radius:6px;padding:6px 0;margin:.5rem 0;overflow-x:auto}
+.cl div{padding:0 10px;white-space:pre}
+.cl div.cur{background:color-mix(in srgb,var(--per) 25%,transparent)}
+.cl div.cm{color:var(--muted)}
+.modes{display:flex;flex-wrap:wrap;gap:8px;margin:.3rem 0 .6rem}
+.modes button{font:inherit;font-size:.9rem;border:2px solid var(--c);border-radius:8px;padding:6px 12px;background:var(--panel);color:var(--fg);cursor:pointer}
+.modes button[aria-pressed="true"]{background:color-mix(in srgb,var(--c) 22%,transparent)}
+.toc{columns:2;gap:24px;font-size:.92rem;margin:.6rem 0;padding-left:1.2rem}
+.toc a{color:var(--per)}
+.iss td:first-child{white-space:nowrap}
+.boot td:nth-child(3) code,.gui td:nth-child(-n+2) code{white-space:nowrap}
+.wrap p code,.wrap td code,.card code,.def code{overflow-wrap:anywhere}
+@media (max-width:720px){.lanes,.mem,.rep3{grid-template-columns:1fr}.toc{columns:1}.k5{grid-template-columns:repeat(5,minmax(0,1fr))}.bytes{grid-template-columns:repeat(8,minmax(0,1fr))}}
+</style>
+<div class="wrap">
+<div class="eyebrow">轻松版 · 读代码 · app/custom.c（1171 行，26 个函数）</div>
+<h1>custom.c 完全讲透</h1>
+<p class="lede">这一页把 custom.c 从头讲到尾：它管哪些数据、什么时候被调用、每个函数在干什么、按一个键时怎么翻译成 USB 报告、老 GUI 怎么改它、哪里有坑。讲的顺序：<b>先看它在什么场景下干活，再看它管的那块数据，然后按“开机 → 按键 → GUI 命令”三条线把 26 个函数全部过一遍</b>，最后列问题和 T1A。</p>
+<div class="where"><span>📍</span><div>一句话：custom.c 是<b>鼠标设置的管家</b>（改键、DPI、回报率、灯效、配置档），外加一个<b>按键翻译官</b>（把“第几个键按下了”翻译成鼠标 / 键盘 / 多媒体报告）。来源：老 GUI 时代的历任开发者代码，本项目改了 12 个函数（和 M300S 比）。</div></div>
+
+<ol class="toc">
+<li><a href="#s1">三个场景：它什么时候干活</a></li>
+<li><a href="#s2">它管的数据：gloabSetting 的 132 个字节</a></li>
+<li><a href="#s3">一个键位 = 5 个字节</a></li>
+<li><a href="#s4">开机线：设置怎么被初始化</a></li>
+<li><a href="#s5">按键线：Custom_HandleKey() 翻译模拟器</a></li>
+<li><a href="#s6">DPI 线：按 DPI 键时发生什么</a></li>
+<li><a href="#s7">GUI 线：老 GUI 命令怎么改设置</a></li>
+<li><a href="#s8">26 个函数逐个看（含原始代码）</a></li>
+<li><a href="#s9">全局变量逐个看</a></li>
+<li><a href="#s10">问题清单</a></li>
+<li><a href="#s11">你可以怎么改、T1A</a></li>
+</ol>
+
+<h2 id="s1"><span class="step">1/11</span>三个场景：它什么时候干活</h2>
+<p>custom.c 没有自己的“主循环”，全靠别人调用。调用它的只有三类场景，下面三列就是三条线，<b>点任何一个函数名</b>，下方显示它的卡片（原始代码 + 讲解）。划线的是“编译了但没人调用”。</p>
+<div class="lanes" id="lanes"></div>
+<div id="fcard"></div>
+
+<h2 id="s2"><span class="step">2/11</span>它管的数据：gloabSetting 的 132 个字节</h2>
+<p><b>场景</b>：鼠标要记住“每个键干什么、DPI 几档、回报率多少、灯怎么亮”。这些都放在一个全局变量里：<code>GLOAB_SETTING_MODE_TYPE gloabSetting;</code>（custom.c:19）。类型定义在 <code>inc/Led_Effect_H/custom.h:84~164</code>。</p>
+<p>它分两半：前 3 个字节是<b>全局</b>（<code>.setting</code>），后 129 个字节是<b>一套配置</b>（<code>.settingMode</code>）。点下面的格子或色块看每个成员：</p>
+<div class="box try"><div class="tag">动手 · gloabSetting 在 RAM 里的样子（每格 1 字节，格子里是开机后的默认值）</div>
+<div class="flegend" id="flegend"></div>
+<div class="bytes" id="bytes"></div>
+<div class="card" id="finfo" aria-live="polite"></div>
+</div>
+<div class="def"><b>为什么正好 129 字节、成员之间没有空隙？</b>因为 <code>inc/gloab.h:20</code> 写了 <code>#pragma pack(1)</code>：让编译器把结构体成员<b>一个挨一个排，不补空字节</b>。正常情况下 <code>UINT16</code> 要放在偶数地址，编译器会在前面补空字节。<br>证据：反汇编 <code>OperateFlash_Store_ModeSetting()</code>，算地址时是“第几套 × 0x81”（0x81 = 129）。<br><b>好处</b>：RAM 里的样子和 EEPROM 里的样子一模一样，可以整块复制。<b>代价</b>：Cortex-M0 不能读写没对齐的 2 字节 / 4 字节数据，编译器只好拆成一个字节一个字节地读写（map 文件里 custom.o 用到了 <code>__aeabi_uread4</code>，就是干这个的）。而且这个 <code>#pragma</code> 一直没有恢复，<b>所有 include 了 gloab.h 的文件里的结构体都被压紧了</b>。</div>
+<div class="def"><b>RAM 里只放一套</b>：配置有 <code>MODE_NUM = 2</code> 套，EEPROM 里两套都有（0x003 起第 0 套，0x084 起第 1 套，第 11 课），但 RAM 里的 <code>.settingMode</code> 只有一份，就是“当前那套”。切换配置 = 从 EEPROM 把另一套读进来。</div>
+
+<h2 id="s3"><span class="step">3/11</span>一个键位 = 5 个字节</h2>
+<p><code>key_function[10]</code> 每一项是 <code>KEY_REGIST_T</code>，5 个字节：第 1 个字节 <b>id</b> 说明“这是哪一类功能”，后面 4 个字节是两个 <code>CONTENT_T</code>。<code>CONTENT_T</code> 是一个 <span class="term">联合体（union）</span>：同样 2 个字节，按 id 的类别换着解释。选一个例子看：</p>
+<div class="box try"><div class="tag">动手 · 选一种键位设置，看 5 个字节怎么解释</div>
+<div class="modes" id="k5sel"></div>
+<div class="k5" id="k5"></div>
+<div class="card" id="k5info" aria-live="polite"></div>
+</div>
+<div class="def"><b>联合体（union）</b>：几种结构共用同一块内存，写的人和读的人约定好“这次按哪种结构读”。这里的约定就是 id：id 是 0xFD，就按 <code>shortcut</code>（修饰键 + 普通键）读；id 是 0xFE，就按 <code>key</code>（键码）读。</div>
+
+<h2 id="s4"><span class="step">4/11</span>开机线：设置怎么被初始化</h2>
+<p><code>main()</code> → <code>Device_Init()</code>（device.c:415）里和 custom.c 有关的 5 步，按执行顺序：</p>
+<div class="scroll"><table class="boot">
+<thead><tr><th>#</th><th>device.c 行</th><th>调用</th><th>做什么</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>453</td><td><code>Custom_Pointer_Init()</code></td><td><code>usb_sendBuffer_p = receive_buff</code>：发给 GUI 的数据借用 USB 接收缓冲区（pc_communicate.c:19，64 字节）</td></tr>
+<tr><td>2</td><td>463</td><td><code>Device_Manually_Enter_RestoreDefault()</code></td><td>开机时如果右键 + 后侧键同时按着 2 秒（10 次 × 200 ms），调用 <code>Custom_Paramter_Init()</code>。IRPT_V4 下右键靠 ADC，而 ADC 在第 485 行才初始化，所以<b>很可能永远判不到右键按下</b>（待上板验证）</td></tr>
+<tr><td>3</td><td>468</td><td><code>Device_check_Profile()</code></td><td>校验 EEPROM 里的配置，坏了就恢复默认。校验代码被注释，<code>Check_mode_flag</code> 永远 FALSE，<b>什么也不做</b></td></tr>
+<tr><td>4</td><td>472</td><td><code>Custom_Init()</code></td><td>老代码：比较 EEPROM 里存的编译日期，不一样才恢复默认。现在：<b>无条件</b>调用 <code>Custom_Paramter_Init()</code>，RAM 填成默认值</td></tr>
+<tr><td>5</td><td>474</td><td><code>Custom_Load_ModeSetting()</code></td><td>老代码：从 EEPROM 读当前那套配置进 RAM。现在读取被注释，只剩 <code>Custom_GloabSetting_Init()</code>：把 DPI 档位交给 <code>Custom_Set_DPI()</code>（IRPT_V4 下不改传感器），把回报率交给 <code>Device_Set_ReportRate()</code>（<b>这一项真的生效</b>，见第 2 节 report_rate）</td></tr>
+</tbody></table></div>
+<p>第 4 步里 <code>Custom_Paramter_Init()</code> 具体怎么填，选老代码 / 现在对比着跑一遍：</p>
+<div class="box try"><div class="tag">动手 · 逐行跑 Custom_Paramter_Init()（选版本，点“下一步”）</div>
+<div class="modes" id="ver"></div>
+<div class="btns"><button type="button" id="nx">下一步</button><button type="button" id="rs">从头</button></div>
+<div class="cl" id="code"></div>
+<div class="mem">
+<div style="--c:var(--sw)"><h4>RAM：gloabSetting</h4><div id="ram"></div></div>
+<div style="--c:var(--gold)"><h4>EEPROM（老区）</h4><div id="ee"></div></div>
+</div>
+<div class="card" id="msg" aria-live="polite"></div>
+</div>
+<p class="note">结论：现在开机后 RAM 里是“第 1 套的默认值”（nameID = 1、名字“配置文件2”），而 <code>currentMode = 0</code>。两套默认值除了编号和名字完全一样，所以按键、DPI 都不受影响，只有老 GUI 读配置名时会看到“配置文件2”。</p>
+
+<h2 id="s5"><span class="step">5/11</span>按键线：Custom_HandleKey() 翻译模拟器</h2>
+<p><b>场景</b>：你按下或松开任何一个键、转一下滚轮，button.c / scroll.c 就把 10 个位写进 <code>wheel_button_status</code>，<code>Device_Pack()</code>（device.c:566）调用 <code>Custom_HandleKey(wheel_button_status, &报告指针)</code>。它做 4 件事：</p>
+<ol class="flowlist">
+<li><i style="background:var(--per)">1</i><div>和上次比，算出哪些位变了：<code>button_wheel_changed = button_wheel ^ last_button_wheel_status</code></div></li>
+<li><i style="background:var(--per)">2</i><div>10 个键位挨个看：变没变（<code>key_changed</code>）、现在是按着还是松着（<code>key_status</code>）、它的 id 属于哪一类（<code>ClassKeyfunction()</code>）</div></li>
+<li><i style="background:var(--per)">3</i><div>按类别交给对应的处理函数，往三张<b>临时报告</b>里填字节：鼠标 8 字节、键盘 8 字节、多媒体 3 字节。<b>每次调用都从全 0 开始重新填</b>，所以“松开”不用专门处理：松开的键这次不填就行</div></li>
+<li><i style="background:var(--per)">4</i><div>只有“这一类里有键变了”，才把那张临时报告复制出去，并在返回值里置位（<code>MOUSE_KEY_REPORT = 1</code>、<code>KEYBOARD_KEY_REPORT = 2</code>、<code>MULTIMEDIA_KEY_REPORT = 4</code>），之后 <code>Device_Report()</code> 按这些位发送</div></li>
+</ol>
+<div class="box try"><div class="tag">动手 · 给 10 个键位配功能、勾“按着”，点“跑一次”</div>
+<div class="scroll"><table class="ksim"><thead><tr><th>键位</th><th>物理键</th><th>功能（id）</th><th>按着</th></tr></thead><tbody id="simT"></tbody></table></div>
+<div class="btns"><button type="button" id="simRun">跑一次 Custom_HandleKey()</button><button type="button" id="simDef">恢复默认键位</button><button type="button" id="simDemo">示例：把后侧键改成 Ctrl+C</button></div>
+<div class="rep3" id="simRep"></div>
+<div class="trace" id="simTrace" aria-live="polite"></div>
+</div>
+<div class="scroll"><table>
+<thead><tr><th>返回值里的位</th><th>Device_Report() 怎么发（device.c:668~727）</th></tr></thead>
+<tbody>
+<tr><td>MULTIMEDIA（4）</td><td>3 字节 <code>[05, 用法低, 用法高]</code> 从 <b>EP1</b> 发（报告 ID 5），再等 1 ms</td></tr>
+<tr><td>MOUSE（1）</td><td>8 字节 <code>[01, 按键, X低, X高, Y低, Y高, 滚轮, 横滚]</code> 从 <b>EP1</b> 发；如果电脑要的是“开机协议”（BIOS 里），只发 3 字节</td></tr>
+<tr><td>KEYBOARD（2）</td><td>8 字节 <code>[修饰键, 0, 键1…键6]</code> 从 <b>EP2</b>（键盘接口）发</td></tr>
+</tbody></table></div>
+
+<h2 id="s6"><span class="step">6/11</span>DPI 线：按 DPI 键时发生什么</h2>
+<p>默认第 9 个键位（DPI 键，PIO0_11）的 id 是 <code>0xC1</code>（<code>CYCLE_DPI</code>），属于“特殊功能”。完整调用链：</p>
+<pre class="code">Custom_HandleKey()
+ └ DealSpecialFunctionKey()        按下且变了 → case CYCLE_DPI
+    └ Custom_Dpi_Deal(CYCLE_DPI)   dpi_gear++，超过 dpi_max 回到 0
+       └ Custom_Set_DPI(gear, save=TRUE, send=TRUE, led=TRUE)
+          ├ dpi_x = dpi_class[gear].dpi_x            取这一档的值
+          ├ optical_double_flag = (dpi_x > 0x3E)     老传感器的“翻倍”标志
+          ├ dpi_x = dpi_value_array[dpi_x - 2]       查老传感器的寄存器值表
+          ├ optical_set_dpi(dpi_x)   ← 被 #if 关掉（custom.c:396~398）：IRPT_V4 不改传感器
+          ├ save → OperateFlash_Store_ModeSetting()   ← 写 EEPROM 129 字节，每按一次写一次
+          └ send → 64 字节 [04, 00, 当前配置, 档位, dpi_x 低, dpi_x 高, 0…] 从 EP3 发给 GUI</pre>
+<div class="card" style="border-left-color:var(--bad)"><b class="t">结论</b><br>按 DPI 键：档位变了、EEPROM 写了、GUI 收到通知了，<b>只有传感器没变</b>，一直是 <code>PAW3950_Init()</code> 设的 1600（PAW3950.c:398）。<br>默认 4 档的 dpi_x 是 0x04 / 0x08 / 0x10 / 0x18；按 <code>dpi_value_array</code>（optical_3325.c）从 RESOLUTION_200 开始每格 +100 推算，分别对应 400 / 800 / 1600 / 2400，<b>和代码旁注释写的 800 / 1600 / 2400 / 2400 对不上</b>。这张表是老传感器 3325 的，对 PAW3950 没意义。</div>
+
+<h2 id="s7"><span class="step">7/11</span>GUI 线：老 GUI 命令怎么改设置</h2>
+<p><b>场景</b>：电脑上的 GUI 从厂商接口的 EP4 发 64 字节过来，主循环里的 <code>PC_Communicate()</code>（pc_communicate.c:882）按第 0 个字节分发。回复从 EP3 发回去（名字 <code>EP_3_CUSTION_OUT</code> 是反的，其实是 IN，第 10 课）。<b>新协议也走这里</b>：第 0 个字节是 0x55（<code>TEST_CMD</code>）的包，交给 <code>Protocol_ProcessReceiveData()</code>（my_protocol_mouse.c）。</p>
+<div class="scroll"><table class="gui">
+<thead><tr><th>命令</th><th>处理函数</th><th>和 custom.c 的关系</th><th>现在的效果</th></tr></thead>
+<tbody>
+<tr><td><code>0x01</code></td><td><code>PC_Sync_To_Device()</code></td><td>GUI 把整块设置原样写进 EEPROM；最后一包时调 <code>Custom_Load_ModeSetting()</code></td><td>EEPROM 写了，但 <code>Custom_Load_ModeSetting()</code> 不再读，<b>RAM 不变</b></td></tr>
+<tr><td><code>0x02</code></td><td><code>PC_ModeSetting_To_Device()</code></td><td>改一个键位：从 EEPROM 读第 N 套进 RAM → 改 <code>key_function[i]</code>（5 字节）→ 存回</td><td><b>生效</b>：RAM 被换成 EEPROM 里的第 N 套 + 新键位</td></tr>
+<tr><td><code>0x04</code></td><td>（<code>Performance_Setting()</code> 被注释）</td><td>本来是 GUI 改 DPI / 回报率</td><td>只记一个 <code>test_mode</code>，不改设置</td></tr>
+<tr><td><code>0x05</code></td><td><code>PC_Select_WorkingMode()</code></td><td>改 <code>currentMode</code>，存全局，调 <code>Custom_Load_ModeSetting()</code></td><td><b>切不过去</b>：编号改了，RAM 里还是原来那套</td></tr>
+<tr><td><code>0x07</code></td><td><code>Custom_Restore_Default()</code></td><td>直接在 custom.c 里，按 buffer[1] 恢复：1 键位 / 2 性能 / 3 灯效 / 4 当前配置 / 5 全部</td><td>生效（RAM 改成默认；1~3 还会存 EEPROM）</td></tr>
+<tr><td><code>0x09</code></td><td><code>Profile_Modify_Name()</code></td><td>改 <code>settingMode.name</code> 并存</td><td>生效</td></tr>
+<tr><td><code>0x11</code></td><td><code>Bootloadable_Load()</code></td><td>在 custom.c 里：RAM 0x10001F00 写 0xAA → 软件复位 → 公司 bootloader 进升级模式</td><td>生效，<b>升级入口，不能删</b></td></tr>
+<tr><td><code>0x55</code></td><td><code>Protocol_ProcessReceiveData()</code></td><td>新协议，和 custom.c 无关</td><td>生效</td></tr>
+</tbody></table></div>
+
+<h2 id="s8"><span class="step">8/11</span>26 个函数逐个看</h2>
+<p>按文件里的顺序排。每张卡片：行号、状态、和 M300S 比有没有改、谁调用它、什么时候跑、逐段讲解、原始代码。</p>
+<div class="modes" id="allfn"></div>
+<div id="fcard2"></div>
+
+<h2 id="s9"><span class="step">9/11</span>全局变量逐个看（custom.c:19~57）</h2>
+<div class="scroll"><table>
+<thead><tr><th>变量</th><th>干什么</th><th>现在谁在用</th></tr></thead>
+<tbody>
+<tr><td><code>gloabSetting</code></td><td>所有设置，第 2 节</td><td>custom.c、pc_communicate.c、operation_flash.c、device.c</td></tr>
+<tr><td><code>usb_sendBuffer_p</code></td><td>指向 <code>receive_buff</code>，<code>Custom_Set_DPI()</code> 往 GUI 发包时用</td><td>只有 custom.c</td></tr>
+<tr><td><code>SaveDPIflag</code></td><td>“刚存过 DPI”标志，让老传感器路径延时几毫秒</td><td>只在 device.c 的非 IRPT_V4 分支读（device.c:846），<b>IRPT_V4 下没用</b></td></tr>
+<tr><td><code>Code_Compile_Timer[9]</code></td><td>ASCII “202204010”：老代码开机拿它和 EEPROM 里存的比，不一样就恢复默认（注释还写着 202205070）</td><td>operation_flash.c 读写；老 GUI 命令 Code_Compile_Timer_D 会发给 GUI</td></tr>
+<tr><td><code>profileName[30]</code></td><td>UTF-8 的“配置文件1”，第 12 字节改成 '1' / '2'</td><td>只有 custom.c</td></tr>
+<tr><td><code>VecDst</code>、<code>FlashData</code></td><td>0x10001F00 和 0xAA：升级标志的地址和值</td><td><code>Bootloadable_Load()</code></td></tr>
+<tr><td><code>profile_keyflag</code>、<code>profile_timer</code></td><td>切配置档键的计时</td><td>Timer.c 声明了 extern，实际没用到</td></tr>
+<tr><td><code>LED_Test_Flag</code></td><td>灯测试模式（<code>LED_Test_ByKey()</code> 已注释）</td><td>Timer.c 声明了 extern</td></tr>
+<tr><td><code>layer_message</code>、<code>cu_manualLedMode</code>、<code>Check_mode_flag</code>、<code>rgb_test_value[7]</code></td><td>灯效分层、手动灯模式、配置校验失败标志、测试颜色</td><td><b>没人用</b>（<code>Check_mode_flag</code> 只被读，永远 FALSE）</td></tr>
+</tbody></table></div>
+
+<h2 id="s10"><span class="step">10/11</span>问题清单</h2>
+<div class="scroll"><table class="iss">
+<thead><tr><th>严重程度</th><th>问题</th><th>位置</th></tr></thead>
+<tbody>
+<tr><td>⚠️ 要处理</td><td>DPI 键不改传感器，却每按一次写一次 EEPROM（129 字节，期间关中断）</td><td>custom.c:396~398、401~412</td></tr>
+<tr><td>⚠️ 要处理</td><td>老 GUI 切配置（0x05）、整体同步（0x01）后 RAM 不更新：读取被注释了</td><td>custom.c:298</td></tr>
+<tr><td>⚠️ 要处理</td><td>多媒体 / 热键 id 的低 4 位直接当下标：<code>consumer_a_table</code> 只有 7 项、<code>consumer_b_table</code> 只有 11 项，id 0x97~0x9F、0xAB~0xAF 会读到表外</td><td>custom.c:680、706</td></tr>
+<tr><td>⚠️ 待验证</td><td>开机“右键 + 后侧键”恢复默认在 IRPT_V4 下可能触发不了（ADC 还没初始化）</td><td>device.c:463 vs 485</td></tr>
+<tr><td>小</td><td>开机后 RAM 里是“配置文件2”（nameID = 1），而 currentMode = 0</td><td>custom.c:212~215</td></tr>
+<tr><td>小</td><td><code>#pragma pack(1)</code> 没恢复，影响所有 include gloab.h 的文件；对没对齐的成员取地址再按 2 / 4 字节读写，在 M0 上会出错</td><td>gloab.h:20</td></tr>
+<tr><td>小</td><td>横滚（B7/B8）、双击（B9）、缩放（CE/CF）只能“开始”，对应的扫描函数在 <code>Device_Scan()</code> 里被注释，不会产生后续事件。默认键位没用到它们</td><td>device.c:892~898</td></tr>
+<tr><td>小</td><td>注释和代码不符：DPI 注释、Custom_HandleKey 里“L button not define”、Code_Compile_Timer 日期、FP_ID 那行的缩进</td><td>多处</td></tr>
+<tr><td>小</td><td>没实际用处的全局变量 8 个、没人调用的函数 2 个（<code>Custom_Profile</code>、<code>Custom_Select_Profile</code>）</td><td>第 9 节、第 8 节</td></tr>
+</tbody></table></div>
+
+<h2 id="s11"><span class="step">11/11</span>你可以怎么改、T1A</h2>
+<div class="scroll"><table>
+<thead><tr><th>想做什么</th><th>改哪里</th><th>注意</th></tr></thead>
+<tbody>
+<tr><td>改某个键的默认功能</td><td><code>Custom_DefineKey_Init()</code> 里那一行的 id（第 3 节的格式）</td><td>键盘类还要填 content 字节，直接改 id 只够鼠标类、特殊功能类</td></tr>
+<tr><td>改默认 DPI 档 / 回报率</td><td><code>Custom_Perform_Init()</code></td><td>回报率会生效；DPI 现在不生效</td></tr>
+<tr><td>让 DPI 键真的改 PAW3950</td><td><code>Custom_Set_DPI()</code> 的 <code>#if</code> 里改成调用 <code>PAW3950_SetCPI()</code>，并定一个“档位 → CPI”的换算</td><td>同时决定要不要每次存 EEPROM。先问杰哥</td></tr>
+<tr><td>修“配置文件2”</td><td><code>Custom_Paramter_Init()</code> 循环后再调一次 <code>Custom_ModeParamter_Init(0)</code></td><td>风险低</td></tr>
+<tr><td>修多媒体表越界</td><td>两个处理函数里先判断下标小于表长</td><td>风险低</td></tr>
+</tbody></table></div>
+<p><b>T1A</b>：T1A 的按键数量和物理位置会变（中键、侧键、DPI 换脚），但 custom.c 只认“第几个键位”，<b>不认引脚</b>，所以只要 button.c 仍然把键写到同样的位上，custom.c 不用改。真正要定的是：DPI 键怎么接到 PAW3950；设置以后放在老结构（这里）还是新协议（EEPROM 0xF00）；老 GUI 命令要不要保留。</p>
+
+<h2>小测</h2>
+<div class="box quiz" id="quiz"></div>
+<div class="sum"><b>记住这几句：</b>custom.c 管一块 132 字节的设置 <code>gloabSetting</code>（3 字节全局 + 1 套 129 字节配置，<code>#pragma pack(1)</code> 压紧，和 EEPROM 格式一样）。开机无条件填默认值。每次按键 <code>Custom_HandleKey()</code> 按 <code>key_function[i].id</code> 把 10 个键位翻译成鼠标 / 键盘 / 多媒体报告。老 GUI 通过 <code>PC_Communicate()</code> 改它，其中“切配置”“整体同步”现在不生效。DPI 键不改传感器但写 EEPROM。</div>
+<h3>本页新词</h3>
+<table><tbody>
+<tr><td><b>联合体（union）</b></td><td>几种结构共用一块内存，按约定（这里是 id）决定怎么解释</td></tr>
+<tr><td><b>#pragma pack(1)</b></td><td>让编译器不补空字节、成员紧挨着排</td></tr>
+<tr><td><b>对齐</b></td><td>2 字节数据放在偶数地址、4 字节放在 4 的倍数地址；M0 只能直接读写对齐的数据</td></tr>
+<tr><td><b>修饰键</b></td><td>Ctrl、Shift、Alt、Win，键盘报告第 0 字节的 8 个位</td></tr>
+<tr><td><b>用法码（Usage）</b></td><td>HID 规定的按键编号：键盘 A = 0x04，多媒体音量 + = 0x00E9……</td></tr>
+<tr><td><b>开机协议（Boot Protocol）</b></td><td>BIOS 用的简化鼠标 / 键盘格式，鼠标只发 3 字节</td></tr>
+</tbody></table>
+</div>
+<script>
+const FN={"Code_Compile_Timer_Len": {"a": 60, "b": 67, "code": "UINT8 Code_Compile_Timer_Len(void)\n{\n    UINT8 len;\n\n    len = (sizeof(Code_Compile_Timer));\n\n    return len;\n}", "st": "used", "who": "same", "callers": ["OperateFlash_CodeCompileTimer_Init", "OperateFlash_CodeCompileTimer_Read"], "size": 4}, "Custom_Pointer_Init": {"a": 69, "b": 73, "code": "void Custom_Pointer_Init(void)\n{\n    usb_sendBuffer_p = receive_buff;\n\n}", "st": "used", "who": "same", "callers": ["Device_Init"], "size": 8}, "Bootloadable_Load": {"a": 76, "b": 99, "code": "void Bootloadable_Load(void)\n{\n    //RGB_STRU none_rgb = {0,0,0};\n//  const UINT8 BootLoader_Flash[2]__attribute__((at(0X0000FE00)))={0xAA,0x01} ;\n//  int ebx;\n    memcpy((uint8_t *)VecDst, &FlashData,1);\n// int *p=(int*)0x10001F00;\n// *p=0xAA; \n// *p=&0xAA;\n//  __ASM\n//  {\n//  mov ebx , 0xAA\n//  mov *p, ebx\n//  }\n// int *p = (int*)0x0030; \n//  *p = 0x31;\n//  LedEffect_Put_StaticColor(none_rgb,FALSE,LED_ALL_SEND);\n//U8 P[2]={0xAA,0x01};\n//const UINT8 BootLoader_Flash[2]__attribute__((at(0X0000FF00)));//={0xAA,0x01} ;\n//const  UINT8 *flash_gloabSetting_B = NULL;    \n//flash_gloabSetting_B =BootLoader_Flash;\n//GtechFlash_WriteBytes(BootLoader_Flash,0,P,0x02);     \n    NVIC_SystemReset();\n}", "st": "used", "who": "changed", "callers": ["PC_Communicate"], "size": 26}, "Custom_DefineKey_Init": {"a": 102, "b": 119, "code": "void Custom_DefineKey_Init(void)\n{\n    /// DPI,K5,K4,WHEEL_DOWN,WHEEL_UP,MB,   RB, LB;\n    ///7 , 6  ,5 ,   4        3,     2,     1,  0; \n    gloabSetting.settingMode.key_function[0].usb_registration.id = 0xb0;//l\n    gloabSetting.settingMode.key_function[1].usb_registration.id = 0xb1;//r //have changed temporary\n    gloabSetting.settingMode.key_function[2].usb_registration.id = 0xb2;//m  //have changed temporary\n    gloabSetting.settingMode.key_function[3].usb_registration.id = 0XB5;//WHEEL_UP\n    gloabSetting.settingMode.key_function[4].usb_registration.id = 0xB6;//WHEEL_DOWN\n\n    gloabSetting.settingMode.key_function[5].usb_registration.id = 0xb3;//k4\n    gloabSetting.settingMode.key_function[6].usb_registration.id = 0xb4;//k5\n\n\n    gloabSetting.settingMode.key_function[7].usb_registration.id = 0;//VOLUME_UP\n    gloabSetting.settingMode.key_function[8].usb_registration.id = 1;//VOLUME_DOWN\n    gloabSetting.settingMode.key_function[9].usb_registration.id = 0xC1;//DPI_CYCLE\n}", "st": "used", "who": "same", "callers": ["Custom_ModeParamter_Init", "Custom_Restore_Default"], "size": 46}, "Custom_Perform_Init": {"a": 121, "b": 151, "code": "void Custom_Perform_Init(UINT8 mode)\n{\n//  if(mode == 0)\n//  {\n        gloabSetting.settingMode.dpi_class[0].dpi_x = 0x04;     //DPI_800;//DPI_800;\n        gloabSetting.settingMode.dpi_class[0].dpi_y = 0x04;     //DPI_800;//DPI_800;\n\n        gloabSetting.settingMode.dpi_class[1].dpi_x = 0x08;//DPI_1600;//DPI_1600;\n        gloabSetting.settingMode.dpi_class[1].dpi_y = 0x08;//DPI_1600;//DPI_1600;\n\n        gloabSetting.settingMode.dpi_class[2].dpi_x = 0x10;//DPI_2400;//DPI_2400;\n        gloabSetting.settingMode.dpi_class[2].dpi_y = 0x10;//DPI_2400;//DPI_2400;\n    \n        gloabSetting.settingMode.dpi_class[3].dpi_x = 0x18;//DPI_2400;//DPI_2400;\n        gloabSetting.settingMode.dpi_class[3].dpi_y = 0x18;//DPI_2400;//DPI_2400;\n\n        gloabSetting.settingMode.report_rate = REPORT_RATE_1000; //REPORT_RATE_1000\n\n        gloabSetting.settingMode.dpi_gear = DPI_GEAR_4;//DPI_GEAR_2;\n\n        gloabSetting.settingMode.dpi_default = DPI_GEAR_4; //DPI_GEAR_3;\n\n        gloabSetting.settingMode.dpi_max = DPI_GEAR_4;\n\n//      gloabSetting.settingMode.aloneXY = FALSE;\n//      Tool_Clear_ArrayData(gloabSetting.settingMode.aloneXY,0,5);\n        Tool_Clear_ArrayData(gloabSetting.settingMode.aloneXY,0,5);\n     \n        gloabSetting.settingMode.acceleration = 0;\n//  }\n}", "st": "used", "who": "changed", "callers": ["Custom_ModeParamter_Init", "Custom_Restore_Default"], "size": 98}, "Custom_LefEffect_Init": {"a": 153, "b": 170, "code": "void Custom_LefEffect_Init(void)\n{\n    UINT8 ii;\n\n    gloabSetting.settingMode.brightness = 0XCC;//80%\n    ///LED Effect !!!!!\n//  gloabSetting.settingMode.LE_value.mul_interface = FALSE;\n\n    for (ii = 0;ii < LE_Group_Num;ii++)\n    {\n    \n        gloabSetting.settingMode.LE_value.type = LED_MODE_COLORFUL;\n        gloabSetting.settingMode.LE_value.typeValue.colorCycle.transparency = 100;\n        gloabSetting.settingMode.LE_value.typeValue.colorCycle.speed = 1;\n\n    }\n\n}", "st": "used", "who": "same", "callers": ["Custom_ModeParamter_Init", "Custom_Restore_Default"], "size": 30}, "Custom_ModeParamter_Init": {"a": 172, "b": 194, "code": "void Custom_ModeParamter_Init(UINT8 mode)\n{\n \n    gloabSetting.settingMode.nameID = mode;\n\n    //Tool_Clear_ArrayData(gloabSetting.settingMode.name,0,29);\n    profileName[Profile_Name_ModefyIndex] = 49 + mode;\n\n    Tool_Assigned_BufferToBuffer(profileName,gloabSetting.settingMode.name,Profile_Name_Len);\n\n    Custom_DefineKey_Init();\n\n    Custom_Perform_Init(mode);\n\n    ///this value is bigger  the hight is low\n    gloabSetting.settingMode.pixThresh = OP_PixThresh_Init;\n    gloabSetting.settingMode.min_sq = OP_Min_Sq_Init;   \n    gloabSetting.settingMode.enter_LefOff = 0X00;//3 min\n\n    Custom_LefEffect_Init();\n\n//  OperateFlash_Store_ModeSetting(mode);\n}", "st": "used", "who": "changed", "callers": ["Custom_Paramter_Init", "Custom_Restore_Default"], "size": 70}, "Custom_Paramter_Init": {"a": 196, "b": 216, "code": "void Custom_Paramter_Init(void)\n{\n    UINT8 ii;\n\n    ///gloab init\n    gloabSetting.setting.sign = STORE_ONCE_SIGN;\n    gloabSetting.setting.currentMode = 0;\n\n//  for (ii = 0;ii < MODE_NUM;ii++)\n//  {\n        gloabSetting.setting.FP_ID = 0xff;\n//  }\n\n//  OperateFlash_Store_GloabSetting();\n\n    ///mode init\n    for (ii = 0;ii < MODE_NUM;ii++)\n    {\n        Custom_ModeParamter_Init(ii);\n    }\n}", "st": "used", "who": "changed", "callers": ["Custom_Init", "Custom_RestoreAll_Default", "Device_Manually_Enter_RestoreDefault", "Device_check_Profile"], "size": 36}, "Device_check_Profile": {"a": 220, "b": 244, "code": "void Device_check_Profile(void)\n{\n//  uint8_t mode=0, CRC_buffer[5]={0,0,0,0,0},CRC_back_buffer[5]={0,0,0,0,0};\n    //UINT8 readBuf[OPERATE_MODE_SETTING_SIZE]; //i,FF_count=0,Zero_count=0\n    //RGB_STRU none_rgb = {0,0,0};\n//  OperateFlash_Read_value(0,CRC_back_buffer,4);   //Read the last restored checksum\n//  for(mode=0;mode<MODE_NUM;mode++)\n//  {\n//      OperateFlash_Modedata_Read(mode,readBuf);  //Read current profile\n\n//      CRC_buffer[mode]=CRC_Calculate(readBuf,0,OPERATE_MODE_SETTING_SIZE-1);  //calculate profile checksum.\n//      \n//      if(CRC_buffer[mode]!=CRC_back_buffer[mode])   \n//      {\n//           Check_mode_flag=TRUE;\n\n//           TimerDelayMsec(200);\n//           break;\n//      }\n//  }\n    if(Check_mode_flag)\n    {\n        Custom_Paramter_Init();\n    }\n}", "st": "used", "who": "changed", "callers": ["Device_Init"], "size": 12}, "Custom_Init": {"a": 251, "b": 276, "code": "void Custom_Init(void)\n{\n//  UINT8 readBuf[Code_Compile_Timer_LEN];\n    //UINT8 readBuf[sizeof(Code_Compile_Timer)]; \n\n//  OperateFlash_Read_GloabSetting();\n\n//  OperateFlash_CodeCompileTimer_Read(readBuf);\n//  \n//  if (!Check_Buffer_If_String(readBuf,Code_Compile_Timer,Code_Compile_Timer_LEN))//Code_Compile_Timer_LEN))\n//  {\n//      OperateFlash_CodeCompileTimer_Init();\n\n        Custom_Paramter_Init();\n\n//      Macro_Init_Head();\n//  }       \n\n    ///if last cnt in temporary profile,change to 0 profile \n//  if (gloabSetting.setting.currentMode >= MODE_NUM - 1)\n//  {\n//      gloabSetting.setting.currentMode = 0;\n\n//      OperateFlash_Store_GloabSetting(); //\n//  }\n}", "st": "used", "who": "changed", "callers": ["Device_Init"], "size": 2}, "Custom_GloabSetting_Init": {"a": 280, "b": 294, "code": "void Custom_GloabSetting_Init(void)\n{\n//  Device_Set_LEDOff(gloabSetting.settingMode.enter_LefOff);\n\n    Custom_Set_DPI(gloabSetting.settingMode.dpi_gear,FALSE,FALSE,TRUE);// this function in after optical init \n\n    Device_Set_ReportRate(gloabSetting.settingMode.report_rate);\n\n//  Led_Enter_LefOff_Set(gloabSetting.settingMode.enter_LefOff);\n\n//  Led_Adjust_Brightness(gloabSetting.settingMode.brightness);\n\n//  LedEffect_Start();\n//  Led_Update_Mode();\n}", "st": "used", "who": "changed", "callers": ["Custom_Load_ModeSetting"], "size": 26}, "Custom_Load_ModeSetting": {"a": 296, "b": 301, "code": "void Custom_Load_ModeSetting(void)\n{\n//  OperateFlash_Read_ModeSetting(gloabSetting.setting.currentMode);\n\n    Custom_GloabSetting_Init();\n}", "st": "used", "who": "changed", "callers": ["Custom_Profile", "Custom_RestoreAll_Default", "Custom_Restore_Default", "Device_Init", "PC_Select_WorkingMode", "PC_Sync_To_Device"], "size": 2}, "Custom_RestoreAll_Default": {"a": 304, "b": 313, "code": "void Custom_RestoreAll_Default(void)\n{\n    ProductionLine_Start_Clear();\n    \n    Macro_Init_Head();\n    \n    Custom_Paramter_Init();\n\n    Custom_Load_ModeSetting();\n}", "st": "used", "who": "same", "callers": ["Custom_Restore_Default"], "size": 20}, "Custom_Restore_Default": {"a": 315, "b": 368, "code": "void Custom_Restore_Default(UINT8*buffer)\n{\n\n    UINT8 type = buffer[1];\n\n    switch(type)\n    {\n    case Restore_DefineKey:\n        Custom_DefineKey_Init();\n\n        OperateFlash_Store_ModeSetting(gloabSetting.setting.currentMode);\n\n        break;\n    case Restore_Perform:\n        Custom_Perform_Init(gloabSetting.setting.currentMode);\n\n        OperateFlash_Store_ModeSetting(gloabSetting.setting.currentMode);\n\n        Custom_Set_DPI(gloabSetting.settingMode.dpi_gear,FALSE,FALSE,TRUE);// this function in after optical init \n\n        Device_Set_ReportRate(gloabSetting.settingMode.report_rate);\n\n        break;\n    case Restore_LedEffect:\n        Custom_LefEffect_Init();\n\n        OperateFlash_Store_ModeSetting(gloabSetting.setting.currentMode);\n\n//      Led_Adjust_Brightness(gloabSetting.settingMode.brightness);\n\n        //LedEffect_Start();\n\n        break;\n    case Restore_Profile:\n        ProductionLine_Start_Clear();\n    \n        Custom_ModeParamter_Init(gloabSetting.setting.currentMode);\n\n        Custom_Load_ModeSetting();\n        break;\n    case Restore_AllProfile:\n        Custom_RestoreAll_Default();\n        break;\n    default:\n        break;\n\n    }\n\n\n    buffer[2] = gloabSetting.setting.currentMode;\n    buffer[3] = TRUE;\n\n    USB_AutoDelay_LoadInEP_Data(EP_3_CUSTION_OUT, buffer, TRANSFER_LENGTH); \n}", "st": "used", "who": "changed", "callers": ["PC_Communicate"], "size": 124}, "Custom_Set_DPI": {"a": 371, "b": 449, "code": "void Custom_Set_DPI(UINT8 gear,BOOL save,BOOL send,BOOL ledAction)\n{\n    UINT16 dpi_x;// pid;\n//  UINT8 buffer[5]={0,0,0,0,0};\n    \n    if (gear > DPI_GEAR_4)\n    {\n        return;\n    }\n  \n    dpi_x = gloabSetting.settingMode.dpi_class[gear].dpi_x;\n    \n    optical_double_flag = 0;\n    \n    if(dpi_x > 0x3e)\n    {\n        optical_double_flag = 1;\n    }\n    \n    if(dpi_x > 80)\n    {\n        dpi_x = 80;\n    }\n    \n    dpi_x = dpi_value_array[dpi_x - 2];\n#if ((!defined(IRPT_V4)) && (!defined(V4_HALL_HPTIC_V4)))\n    optical_set_dpi(dpi_x);\n#endif\n  \n#if 1\n    if (save)\n    {\n        if(!ProductionLine_Start_Get())\n        {\n            SaveDPIflag= TRUE;\n//          OperateFlash_Set_CycleSave();\n//          DrvGPIOOutput(0,23,0);\n            OperateFlash_Store_ModeSetting(gloabSetting.setting.currentMode);\n//          DrvGPIOOutput(0,23,1);\n        }\n    }\n\n    if (send)\n    {\n        Tool_Clear_ArrayData(usb_sendBuffer_p,0,63);\n        \n//      pid = SPI_Flash_ReadID();\n\n        usb_sendBuffer_p[0] = PERFORMANCE_REALIVE_SETTING;\n        usb_sendBuffer_p[1] = DPI_FW_INITIATIVE;\n        usb_sendBuffer_p[2] = gloabSetting.setting.currentMode;\n        usb_sendBuffer_p[3] = gear;\n        *(UINT16 *)(usb_sendBuffer_p + 4) = gloabSetting.settingMode.dpi_class[gear].dpi_x;\n//      *(UINT16 *)(usb_sendBuffer_p + 6) = pid; \n\n//      OperateFlash_Read_value(0,buffer,4);\n//      usb_sendBuffer_p[10] = buffer[0];\n//      usb_sendBuffer_p[11] = buffer[1];\n//      usb_sendBuffer_p[12] = buffer[2];\n//      usb_sendBuffer_p[13] = buffer[3];\n        \n        USB_AutoDelay_LoadInEP_Data(EP_3_CUSTION_OUT, usb_sendBuffer_p, TRANSFER_LENGTH);\n\n        Tool_Clear_ArrayData(receive_buff,0,(TRANSFER_LENGTH-1));\n    }\n#endif\n//  if (ledAction)\n//  {\n//      if(!ProductionLine_Start_Get())\n//      {\n//          LedEffect_Dpi_Start(gear);\n//      }\n//      if (Device_Check_UsbActive())\n//      {\n//          LedEffect_Dpi_Start(gear);\n//          LedEffect_Profile_Start(gear);\n//      }   \n//  }\n}", "st": "used", "who": "changed", "callers": ["Custom_Dpi_Deal", "Custom_GloabSetting_Init", "Custom_Restore_Default", "Performance_Setting"], "size": 130}, "Custom_Dpi_Deal": {"a": 451, "b": 490, "code": "void Custom_Dpi_Deal(UINT8 type)\n{\n    switch(type)\n    {\n        case CYCLE_DPI:\n       gloabSetting.settingMode.dpi_gear++; \n            if (gloabSetting.settingMode.dpi_gear > gloabSetting.settingMode.dpi_max)\n            {\n                gloabSetting.settingMode.dpi_gear = DPI_GEAR_1;\n            }\n            break;\n        case CU_DPI_Default:\n            gloabSetting.settingMode.dpi_gear = gloabSetting.settingMode.dpi_default;\n            break;\n        case DPI_INCREASE:\n            gloabSetting.settingMode.dpi_gear++; \n\n            if (gloabSetting.settingMode.dpi_gear > gloabSetting.settingMode.dpi_max)\n            {\n                gloabSetting.settingMode.dpi_gear = gloabSetting.settingMode.dpi_max;\n            }\n            break;\n        case DPI_REDUCE:\n            if (gloabSetting.settingMode.dpi_gear)\n            {\n                gloabSetting.settingMode.dpi_gear--;\n            }\n\n            if (gloabSetting.settingMode.dpi_gear > gloabSetting.settingMode.dpi_max)\n            {\n                gloabSetting.settingMode.dpi_gear = gloabSetting.settingMode.dpi_max;\n            }\n\n            break;\n        default:\n            break;\n    }\n\n    Custom_Set_DPI(gloabSetting.settingMode.dpi_gear,TRUE,TRUE,TRUE);\n}", "st": "used", "who": "same", "callers": ["DealSpecialFunctionKey"], "size": 88}, "Custom_Profile": {"a": 492, "b": 508, "code": "void Custom_Profile(BOOL sendFlag)\n{\n    OperateFlash_Store_GloabSetting();\n\n    Custom_Load_ModeSetting();\n\n    if (sendFlag)\n    {\n        Tool_Clear_ArrayData(receive_buff,0,63);\n\n        receive_buff[0] = SELECT_WORKING_MODE;\n        receive_buff[1] = WM_FW_Report;\n        receive_buff[2] = gloabSetting.setting.currentMode;\n\n        USB_AutoDelay_LoadInEP_Data(EP_3_CUSTION_OUT, receive_buff, TRANSFER_LENGTH);   \n    }\n}", "st": "dead", "who": "same", "callers": ["Custom_Select_Profile"], "size": 56}, "Custom_Select_Profile": {"a": 510, "b": 525, "code": "void Custom_Select_Profile(void)\n{\n    gloabSetting.setting.currentMode++;\n\n    if (gloabSetting.setting.currentMode > (MODE_NUM-1 ))// the 5 profile is  temporary\n    {\n        gloabSetting.setting.currentMode = 0;\n    }\n    Custom_Profile(TRUE);\n    \n    if (Device_Check_UsbActive())\n    {\n//      LedEffect_Profile_Start(gloabSetting.setting.currentMode);\n\n    }   \n}", "st": "dead", "who": "same", "callers": ["Onboard_And_Inline_ProfileCnt"], "size": 34}, "ClassKeyfunction": {"a": 527, "b": 560, "code": "UINT8 ClassKeyfunction(UINT8 id)\n{\n    UINT8 result = 0;\n    if ((id == 0) || (id == 1))\n    {\n        result = NO_RELATIONSHIP;\n    }else if ((id > 0xEF) && (id < 0xF4))\n    {\n        result = MACRO_KEY;\n    }else if (id == 0xFE)\n    {\n        result = ONE_KEYBOARD_KEY;\n    }else if (id == 0xFD)\n    {\n        result = SHORT_KEY;\n    }else if ( (id > 0X7F) && (id < 0X90) )\n    {\n        result = ENABLE_KEY;\n    }else if ((id > 0X8F) && (id < 0XA0))\n    {\n        result = MULTIMEDIA_KEY;\n    }else if ((id > 0X9F) && (id < 0XB0))\n    {\n        result = HOT_KEY;\n    }else if ((id > 0XAF) && (id < 0XC0))\n    {\n        result = MOUSE_KEY;\n    }else if ((id > 0XBF) && (id < 0XD0))\n    {\n        result = SPECIAL_FUNCTION_KEY;\n    }\n\n    return result;  \n}", "st": "used", "who": "same", "callers": ["Custom_HandleKey"], "size": 98}, "Custom_Deal_KeyboardOneKey": {"a": 562, "b": 619, "code": "UINT8 Custom_Deal_KeyboardOneKey(KEY_REGIST_T key_function,BOOL key_changed,BOOL key_status,UINT8 * p_buffer)\n{\n    UINT8 result= 0;\n    UINT8 ii;\n    UINT8 key_index;\n    BOOL key_type;\n    UINT8 key_code;\n    UINT8 * keyboard_temp = p_buffer;\n\n\n    key_index = key_function.usb_registration.content.key.key_index;\n\n    key_code = key_index;\n\n    if ((key_code & 0xF0) == 0xB0) // if the key is modifer key,\n    {\n        key_index = key_code - 0xB0;\n        key_code = multifuction_table[key_index];\n        key_type = SPEC_KEY;        \n    }else        //STD key\n    {\n        key_type = STD_KEY;     \n    }   \n\n    if (key_changed) // if the key changed\n    {\n        result = ONE_KEYBOARD_KEY;\n    }\n\n    if (key_status == KEY_STATUS_DOWN)  // if key down\n    {\n        if (key_type == STD_KEY)\n        {\n            for (ii = 2;ii < 8;ii++)\n            {\n                if(!keyboard_temp[ii])\n                {\n                    keyboard_temp[ii] = key_code;\n\n                    break;\n                }else\n                {\n                    if(keyboard_temp[ii] == key_code)\n                    {\n                        break;\n                    }\n                }\n            }\n        }else if (key_type == SPEC_KEY)\n        {\n            keyboard_temp[0] |= key_code;\n        }\n    }else   // key up\n    {\n\n    }\n    return result;          \n}", "st": "used", "who": "same", "callers": ["Custom_HandleKey"], "size": 110}, "Custom_Deal_KeyboardShortKey": {"a": 622, "b": 666, "code": "UINT8 Custom_Deal_KeyboardShortKey(KEY_REGIST_T key_function,BOOL key_changed,BOOL key_status,UINT8 * p_buffer)\n{\n    UINT8 result= 0;\n    UINT8 ii,nn;\n    UINT8 modify_key;\n    UINT8 std_key[3];\n    UINT8 * keyboard_temp = p_buffer;\n\n    modify_key  = key_function.usb_registration.content.shortcut.modify;\n    std_key[0]  = key_function.usb_registration.content.shortcut.key;\n    std_key[1]  = key_function.usb_registration.addContent.normalKey.key1;\n\n    if (key_changed) // if the key changed\n    {\n        result = SHORT_KEY;\n    }\n    if (key_status == KEY_STATUS_DOWN)  // if key down\n    {\n        keyboard_temp[0] |= modify_key;\n        for (nn = 0;nn < 2;nn++)\n        {\n            if (std_key[nn] != 0)\n            {\n                for (ii = 2;ii < 8;ii++)\n                {\n                    if(!keyboard_temp[ii])\n                    {\n                        keyboard_temp[ii] = std_key[nn];\n                        break;\n                    }else\n                    {\n                        if(keyboard_temp[ii] == std_key[nn])\n                        {\n                            break;\n                        }\n                    }\n                }\n            }\n        }\n    }else   // key up\n    {\n        \n    }\n    return result;          \n}", "st": "used", "who": "same", "callers": ["Custom_HandleKey"], "size": 82}, "Custom_Deal_MouseMediaKey": {"a": 668, "b": 692, "code": "UINT8 Custom_Deal_MouseMediaKey(KEY_REGIST_T key_function,BOOL key_changed,BOOL key_status,UINT8 * p_buffer)\n{\n    UINT8 result= 0;\n    UINT8 id_index = 0;\n\n\n    id_index  = key_function.usb_registration.id & 0x0f;\n\n    if (key_changed) // if the key changed\n    {\n        if (key_status == KEY_STATUS_DOWN)// if the key down\n        {\n            p_buffer[2] = (UINT8)(consumer_a_table[id_index] >> 8);\n            p_buffer[1] = (UINT8)(consumer_a_table[id_index]);\n        }else // if the key up\n        {\n            p_buffer[2] = 0;\n            p_buffer[1] = 0;\n        }\n\n        result = MULTIMEDIA_KEY;\n    }   \n\n    return result;\n}", "st": "used", "who": "same", "callers": ["Custom_HandleKey"], "size": 50}, "Custom_Deal_MouseHotKey": {"a": 694, "b": 719, "code": "UINT8 Custom_Deal_MouseHotKey(KEY_REGIST_T key_function,BOOL key_changed,BOOL key_status,UINT8 * p_buffer)\n{\n    UINT8 result= 0;\n    UINT8 id_index;\n\n\n    id_index  = key_function.usb_registration.id & 0x0f;\n\n    if (key_changed) // if the key changed\n    {\n        if (key_status == KEY_STATUS_DOWN)// if the key down\n        {\n            p_buffer[2] = (UINT8)(consumer_b_table[id_index] >> 8);\n            p_buffer[1] = (UINT8)(consumer_b_table[id_index]);\n\n        }else // if the key up\n        {\n            p_buffer[2] = 0;\n            p_buffer[1] = 0;\n        }\n\n        result = HOT_KEY;\n    }   \n\n    return result;\n}", "st": "used", "who": "same", "callers": ["Custom_HandleKey"], "size": 48}, "Custom_Deal_MouseKey": {"a": 721, "b": 828, "code": "UINT8 Custom_Deal_MouseKey(KEY_REGIST_T key_function,BOOL key_changed,BOOL key_status,UINT8 * p_buffer)\n{\n    UINT8 result= 0;\n\n    UINT8 id = 0;\n\n    UINT8 *mouse_temp = p_buffer;\n\n    \n    id  = key_function.usb_registration.id;\n\n    if (key_changed)\n    {\n        result = MOUSE_KEY;\n    }\n\n    if (key_status)// if the key down\n    {\n        switch(id)\n        {   \n        case 0xB0:\n            mouse_temp[1] |= 0x01; //L\n            break;\n        case 0xB1:\n            mouse_temp[1] |= 0x02; //R\n            break;\n        case 0xB2:\n            mouse_temp[1] |= 0x04;//M\n            break;\n        case 0xB3:\n            mouse_temp[1] |= 0x10;//K4\n//        DrvGPIOOutput(0,14,1) ;\n//          DrvGPIOOutput(0,13,1) ;\n//          DrvGPIOOutput(0,16,1) ;\n            break;\n        case 0xB4:\n            mouse_temp[1] |= 0x08;//K5\n            break;\n        case 0xB5:\n            if (key_changed)\n            {\n                mouse_temp[6] = 0x01; //WHEEL UP\n            }   \n            break;\n        case 0xB6:\n            if (key_changed)\n            {\n                mouse_temp[6] = 0xff;//WHEEL DOWN\n            }   \n            break;\n        case 0xB7:\n            if (key_changed)\n            {\n                mouse_temp[7] = 0xff;\n        \n                Device_LrWheel_Start(0xff);\n            }   \n            break;\n        case 0xB8:\n            if (key_changed)\n            {\n                mouse_temp[7] = 0x01;\n    \n                Device_LrWheel_Start(0x01);\n            }   \n            break;\n        case 0XB9:\n            if (key_changed)\n            {\n                Device_DoubleClick_Start();\n            }           \n            break;\n        case 0XBA:\n            mouse_temp[1] |= 0x40;//M1\n            //UsbSendTest4Byte(0x05,0x05,0x05,0x05);\n            break;\n        case 0XBB:\n            mouse_temp[1] |= 0x80;//M2\n            //UsbSendTest4Byte(0x06,0x06,0x06,0x06);\n            break;\n        default:\n            break;\n        }   \n    }else // if the key up\n    {\n        switch(id)\n        {   \n        case 0xB7:\n            if (key_changed)\n            {\n                mouse_temp[7] = 0x00;\n                Device_LrWheel_Stop();\n            }   \n            break;\n        case 0xB8:\n            if (key_changed)\n            {\n                mouse_temp[7] = 0x00;\n                Device_LrWheel_Stop();\n            }   \n            break;\n        default:\n            break;\n        }\n    }\n\n    return result;\n}", "st": "used", "who": "changed", "callers": ["Custom_HandleKey"], "size": 208}, "DealSpecialFunctionKey": {"a": 831, "b": 975, "code": "UINT8 DealSpecialFunctionKey(KEY_REGIST_T key_function,BOOL key_changed,BOOL key_status,UINT8 * mouseBuf,UINT8 *keyboardBuf,UINT8 key_index)\n{\n#define IN_DYNAMIC_DPI 1\n#define NO_IN_DYNAMIC_DPI 0\n\n    UINT8 result= 0;\n    UINT8 enable_function = 0;\n    //UINT8 dpi_x,dpi_y,driver_cmd;\n    UINT8 *dat = &(key_function.usb_registration.id);\n    //BOOL keyStatus;\n\n    //UINT8 *mouse_temp = mouseBuf;\n    //UINT8 *keyboard_temp = keyboardBuf;\n    \n    enable_function  = key_function.usb_registration.id;\n\n    if (key_status == KEY_STATUS_DOWN)// if the key down\n    {\n        if (key_changed) // if the key changed\n        {\n            switch (enable_function)         \n            {\n            case ONCE_DPI:\n                //optical_set_dpi(dpi_x,dpi_y);\n                break;\n            case CYCLE_DPI:\n                Custom_Dpi_Deal(CYCLE_DPI);\n                break;\n            case LOCK_X:\n        \n                break;\n            case LOCK_Y:\n                \n                break;\n            case DPI_INCREASE:\n                Custom_Dpi_Deal(DPI_INCREASE);\n\n                break;\n            case DPI_REDUCE:\n                Custom_Dpi_Deal(DPI_REDUCE);\n\n                break;\n            case DYNAMIC_DPI:\n                \n                break;\n            case DRIVEN_CUSTOM:\n                PC_Driver_Define(dat);\n                break;\n            case LED_MODE_SWITCH:\n                \n                break;\n            case CUSTOM_TEST_CHANNEL:\n                \n                break;\n            case SELECT_MODE:\n\n                Onboard_And_Inline_Event_Set();\n//              profile_timer=3000;\n//        profile_keyflag=TRUE;\n                break;\n            case PRODUCTION_MODE_KEY:\n            case PRODUCTION_MODE_LED:\n                //keyStatus = 1;\n                //ProductionLine_Deal(enable_function,key_index,keyStatus);\n                break;\n            case CU_DPI_Default:\n                Custom_Dpi_Deal(CU_DPI_Default);\n                break;\n\n            case CU_Zoon_Out:\n\n                //mouse_temp[6] = 0x01; //WHEEL UP\n\n                Device_Zoom_OutIn_Start(0x01);\n\n                //keyboard_temp[0] |= 0x01;\n\n                //result = ONE_KEYBOARD_KEY;\n\n                break;\n            case CU_Zoon_In:\n\n                //mouse_temp[6] = 0xff;//WHEEL Down\n\n                Device_Zoom_OutIn_Start(0xff);\n\n                //keyboard_temp[0] |= 0x01;\n\n                //result = ONE_KEYBOARD_KEY;\n\n                break;\n            default:\n\n                break;\n            }   \n        }\n    }else // if the key up\n    {\n        if (key_changed) // if the key changed\n        {\n            switch (enable_function)         \n            {\n            case ONCE_DPI:\n                \n                break;\n            case CYCLE_DPI:\n                break;\n            case LOCK_X:\n            \n                break;\n            case LOCK_Y:\n    \n                break;\n            case DPI_INCREASE:\n\n                break;\n            case DPI_REDUCE:\n\n                break;\n            case DYNAMIC_DPI:\n\n                break;\n\n            case PRODUCTION_MODE_KEY:\n            case PRODUCTION_MODE_LED:\n                //keyStatus = 0;\n                //ProductionLine_Deal(enable_function,key_index,keyStatus);\n                break;\n            case CU_Zoon_Out:\n            case CU_Zoon_In:\n                \n                //result = ONE_KEYBOARD_KEY;\n\n                Device_Zoom_OutIn_Stop();\n    \n                break;\n            default:\n\n                break;\n            }   \n        }\n    }\n\n    return result;\n}", "st": "used", "who": "changed", "callers": ["Custom_HandleKey"], "size": 140}, "Custom_HandleKey": {"a": 1045, "b": 1169, "code": "UINT8 Custom_HandleKey(UINT32 button_wheel,REPORT_POINTER * report_pointer)\n{\n    static UINT32 last_button_wheel_status;\n    UINT8 result = 0, id;\n\n    UINT32 button_wheel_changed = 0;\n    UINT32 ii,mask;\n\n    BOOL key_changed = FALSE;\n    BOOL key_status = FALSE;\n\n    UINT8 key_event_type = 0;\n\n    BOOL mouse_multimedia_flag_temp = FALSE;\n    BOOL keyboard_flag_temp = FALSE;\n    BOOL mouse_flag_temp = FALSE;\n    //UINT8 reserve_temp = 0;\n\n    KEY_REGIST_T * key_fun;\n\n    UINT8 mouse_temp[8] = {MOUSE_ID,0,0,0,0,0,0,0};\n    UINT8 keyboard_temp[8] = {0,0,0,0,0,0,0,0};\n    UINT8 mouse_multimedia_temp[3] = {MOUSE_MULTIMEDIA_ID,0,0};\n\n    button_wheel_changed = (button_wheel ^ last_button_wheel_status); // which changed\n    \n//  if (!ProductionLine_Start_Get())\n//  {\n//      LED_Test_ByKey(button_wheel_changed, button_wheel);\n//  }\n    \n    for (ii = 0,mask = 0x01;ii < CUSTOM_BUTTON_NUMBER;ii++,mask <<= 1)  //mask = 0x02 ,because L button not define\n    {\n\n        if(button_wheel_changed & mask)// check key if changed\n        {\n            key_changed = TRUE;\n        }\n\n        if (button_wheel & mask)   //  check key up or down\n        {\n            key_status = KEY_STATUS_DOWN;\n        }else\n        {\n            key_status = KEY_STATUS_UP;\n        }\n//      if (key_changed && key_status && (ii != 3) && (ii != 4) && (gloabSetting.settingMode.LE_value.type == LED_MODE_REACT))\n//      {\n//          Led_React_Start(1);\n//      }\n        key_fun = &gloabSetting.settingMode.key_function[ii];\n        id = ClassKeyfunction((*key_fun).usb_registration.id);\n        switch (id)\n        {\n        case NO_RELATIONSHIP:\n            break;\n        case MACRO_KEY:\n            key_event_type = Macro_Start(*key_fun,key_changed,key_status,ii);\n            break;\n        case ONE_KEYBOARD_KEY:\n            key_event_type = Custom_Deal_KeyboardOneKey(*key_fun,key_changed,key_status,keyboard_temp);\n            break;\n        case SHORT_KEY:\n            key_event_type = Custom_Deal_KeyboardShortKey(*key_fun,key_changed,key_status,keyboard_temp);\n            break;\n        case ENABLE_KEY:\n            //key_event_type = DealEnableKey(*key_fun,key_changed,key_status,&usb_rf_enable,send_type);\n            break;\n        case MULTIMEDIA_KEY:\n            key_event_type = Custom_Deal_MouseMediaKey(*key_fun,key_changed,key_status,mouse_multimedia_temp);\n            break;\n        case HOT_KEY:\n            key_event_type = Custom_Deal_MouseHotKey(*key_fun,key_changed,key_status,mouse_multimedia_temp);\n            break;\n        case MOUSE_KEY:\n            key_event_type = Custom_Deal_MouseKey(*key_fun,key_changed,key_status,mouse_temp);\n            break;\n        case SPECIAL_FUNCTION_KEY:\n            key_event_type = DealSpecialFunctionKey(*key_fun,key_changed,key_status,mouse_temp,keyboard_temp,ii);\n            break;\n        default:\n            break;\n        }\n\n        if ((key_event_type == MULTIMEDIA_KEY) ||  (key_event_type == HOT_KEY))\n        {\n            mouse_multimedia_flag_temp = TRUE;  \n        }else if ((key_event_type == ONE_KEYBOARD_KEY) || (key_event_type == SHORT_KEY))\n        {\n            keyboard_flag_temp = TRUE;\n        }else if (key_event_type == MOUSE_KEY)\n        {\n            mouse_flag_temp = TRUE; \n        }else if (key_event_type == Mouse_Add_Keyboard)\n        {\n            //mouse_flag_temp = TRUE;\n            //keyboard_flag_temp = TRUE;\n        }\n\n        key_changed = FALSE; //clear the key changed flag\n        key_event_type = 0;\n    }\n\n    if (mouse_multimedia_flag_temp)\n    {\n        result |= MULTIMEDIA_KEY_REPORT;\n        Tool_Assigned_BufferToBuffer(mouse_multimedia_temp,report_pointer->multimedia_report,3);\n    }\n    if (keyboard_flag_temp)\n    {\n        result |= KEYBOARD_KEY_REPORT;\n        Tool_Assigned_BufferToBuffer(keyboard_temp,report_pointer->keyboard_report,8);\n\n    }\n    if (mouse_flag_temp)\n    {\n        result |= MOUSE_KEY_REPORT;\n        Tool_Assigned_BufferToBuffer(mouse_temp,report_pointer->mouse_report,8);\n    }\n\n    last_button_wheel_status = button_wheel;\n\n    return result;  \n     \n}", "st": "used", "who": "same", "callers": ["Device_Pack"], "size": 482}};
+const GLOB="GLOAB_SETTING_MODE_TYPE gloabSetting;\nUINT8 *usb_sendBuffer_p = NULL;\nBOOL SaveDPIflag =FALSE;\nLAYER_Message layer_message;\nBOOL profile_keyflag=FALSE;\nuint16_t profile_timer=3000;\nUINT8 cu_manualLedMode;\nuint8_t *VecDst=(uint8_t*)0x10001F00;\n//uint8_t *ISPADR=(uint8_t*)0x000002FC;\n//UINT32  ISPDISDATA= 0x4E697370;\nuint8_t FlashData=0xAA;\n//uint8_t Zero_FlashData=0x00;\nBOOL Check_mode_flag=FALSE;\nextern UINT8 mouseReport_back[8];\nBOOL LED_Test_Flag = false;\n//extern Profile_Mode_Stru profile_mode;\n//extern uint8_t profile_timer;\n\nUINT8 Code_Compile_Timer[] = \n{\n//202205070\n    0x32,0x30,0x32,0x32,0x30,0x34,0x30,0x31,0x30,\n};\n\nUINT8 profileName[Profile_Name_Len]  = \n{\n    233,133,141,231,189,174,230,150,135,228,\n    187,182,49,0,0,0,0,0,0,0,\n    0,0,0,0,0,0,0,0,0,0\n};\n\n//UINT8 Dpi_Value[30] = \n//{\n//  RESOLUTION_3200,RESOLUTION_3300,RESOLUTION_3300,RESOLUTION_3400,RESOLUTION_3400,\n//  RESOLUTION_3500,RESOLUTION_3600,RESOLUTION_3600,RESOLUTION_3700,RESOLUTION_3800,\n//  RESOLUTION_3800,RESOLUTION_3900,RESOLUTION_3900,RESOLUTION_4000,RESOLUTION_4100,\n//  RESOLUTION_4100,RESOLUTION_4200,RESOLUTION_4300,RESOLUTION_4300,RESOLUTION_4400,\n//  RESOLUTION_4400,RESOLUTION_4500,RESOLUTION_4600,RESOLUTION_4600,RESOLUTION_4700,\n//  RESOLUTION_4800,RESOLUTION_4800,RESOLUTION_4900,RESOLUTION_4900,RESOLUTION_5000";
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const hx=v=>v.toString(16).toUpperCase().padStart(2,'0');
+
+/* ================= function explanations ================= */
+const EX={
+Code_Compile_Timer_Len:{when:'老 GUI 查询编译日期、或 operation_flash.c 读写编译日期时',what:'返回 <code>sizeof(Code_Compile_Timer)</code>，也就是 9。写成函数是因为数组定义在 custom.c，别的文件只看得到 <code>extern UINT8 Code_Compile_Timer[]</code>（不知道长度），头文件里 <code>Code_Compile_Timer_LEN</code> 宏就展开成这个函数调用。'},
+Custom_Pointer_Init:{when:'开机一次（device.c:453）',what:'让 <code>usb_sendBuffer_p</code> 指向 <code>receive_buff</code>（pc_communicate.c:19 的 64 字节 USB 接收缓冲）。之后 <code>Custom_Set_DPI()</code> 要给 GUI 发包时，就在这块缓冲里拼数据。收和发共用一块内存，省 64 字节 RAM。'},
+Bootloadable_Load:{when:'老 GUI 发 0x11（<code>PC_CMD_BOOTLOADER</code>）时',what:'<b>固件升级入口。</b><code>memcpy(VecDst, &FlashData, 1)</code>：往 RAM 地址 0x10001F00 写一个字节 0xAA；然后 <code>NVIC_SystemReset()</code> 软件复位。复位后先跑公司 bootloader（Flash 0x0000~0x3FFF），它看到“这次是软件复位 + 0x10001F00 是 0xAA”，就留在升级模式等 GUI 发新固件，否则跳到我们的程序（0-3 课“公司 Bootloader”）。函数里一大堆注释是当年试过的别的写法，可以无视。<b>不能删。</b>'},
+Custom_DefineKey_Init:{when:'恢复默认时（开机、GUI 恢复默认）',what:'给 10 个键位填默认 id（只填 id，content 不动，所以保留上一次的值；鼠标类、特殊类只看 id，没关系）：<br>[0] 左 B0、[1] 右 B1、[2] 中 B2、[3] 滚上 B5、[4] 滚下 B6、[5] K4 前侧 B3、[6] K5 后侧 B4、[7] 音量+ 位 → 0、[8] 音量− 位 → 1、[9] DPI → C1。<br>id 0 和 1 都归为“无功能”，所以这块板没有的两个音量键位是空的。注释里 “DPI,K5,K4,WHEEL_DOWN…7,6,5,4…” 的位号是老板子的，和现在的位号对不上。'},
+Custom_Perform_Init:{when:'恢复默认时',what:'“性能”默认值：4 档 DPI 的 dpi_x / dpi_y = 0x04、0x08、0x10、0x18（第 5 档 dpi_class[4] 不填）；<code>report_rate = REPORT_RATE_1000</code>（= 0）；当前档 <code>dpi_gear</code>、默认档、最大档都是 <code>DPI_GEAR_4</code>（= 3，第 4 档）；<code>aloneXY[0..5]</code> 清 0（<code>Tool_Clear_ArrayData</code> 的结束下标是包含的）；加速度 0。参数 <code>mode</code> 没用到。和 M300S 比，本项目把默认档从第 2 档改成了第 4 档、最大档从 3 改成 <code>DPI_GEAR_4</code>（值相同）。'},
+Custom_LefEffect_Init:{when:'恢复默认时',what:'灯效默认值：亮度 0xCC（约 80%）、类型“彩色循环”、透明度 100、速度 1。<code>for</code> 循环 <code>LE_Group_Num</code> 次但每次写的是同一个地方（<code>LE_Group_Num</code> 现在是 1）。IRPT_V4 板子上没有灯，这些值没人用。函数名 Lef 是 Led 的笔误。'},
+Custom_ModeParamter_Init:{when:'<code>Custom_Paramter_Init()</code> 的循环里、GUI 恢复当前配置（0x07 类型 4）',what:'把 RAM 里那一套配置（<code>settingMode</code>）整套填成默认：<code>nameID = mode</code>；名字 = <code>profileName</code>，第 12 字节改成 <code>49 + mode</code>（\'1\' 或 \'2\'）；调上面三个 Init；<code>pixThresh = 0x0A</code>、<code>min_sq = 0x10</code>（老传感器参数）；<code>enter_LefOff = 0</code>（不自动关灯）。老代码最后还有 <code>OperateFlash_Store_ModeSetting(mode)</code> 存进 EEPROM 第 mode 槽，本项目注释掉了（custom.c:192）。'},
+Custom_Paramter_Init:{when:'每次开机（经 <code>Custom_Init()</code>）、GUI“全部恢复默认”、开机组合键',what:'全局 3 字节：<code>sign = 0xAA</code>、<code>currentMode = 0</code>、<code>FP_ID = 0xFF</code>；然后对 2 套配置各调一次 <code>Custom_ModeParamter_Init()</code>。因为 RAM 只有一套、存储又被注释，第二遍盖掉第一遍，最后 RAM 是第 2 套（第 4 节可以逐行跑）。<code>FP_ID</code> 那行外面的 for 被注释了，缩进还在，其实只执行一次。'},
+Device_check_Profile:{when:'开机一次（device.c:468）',what:'老代码：读 EEPROM 里每套配置算校验和，和存的校验和比，不一致就 <code>Check_mode_flag = TRUE</code> 并恢复默认。现在校验部分全部注释，只剩 <code>if(Check_mode_flag) Custom_Paramter_Init();</code>，而 <code>Check_mode_flag</code> 初值 FALSE 且没人改，<b>等于空函数</b>。函数名不以 Custom_ 开头，是放错文件的 device 函数。'},
+Custom_Init:{when:'开机一次（device.c:472）',what:'老代码：读全局设置 → 读 EEPROM 里的编译日期 → 和 <code>Code_Compile_Timer</code> 比 → 不一样（第一次烧录或换了版本）才恢复默认并存 → 如果 currentMode 越界就改回 0。现在：只剩一句 <code>Custom_Paramter_Init();</code>，<b>每次开机都恢复默认</b>。这就是“老设置开机不读回”（第 11 课）的原因之一。'},
+Custom_GloabSetting_Init:{when:'<code>Custom_Load_ModeSetting()</code> 里',what:'把 RAM 里的设置“应用”到硬件：<code>Custom_Set_DPI(dpi_gear, 不存, 不发, 灯)</code>；<code>Device_Set_ReportRate(report_rate)</code> → <code>device_ReportRata</code>，主循环用它决定隔几毫秒读一次 PAW3950（0 = 每圈都读，8 ≈ 125 Hz）。<b>回报率这一项在 IRPT_V4 下真的生效。</b>关灯、亮度、灯效启动都被注释了。'},
+Custom_Load_ModeSetting:{when:'开机（device.c:474）、恢复默认、GUI 同步 / 切配置后',what:'老代码：<code>OperateFlash_Read_ModeSetting(currentMode)</code> 从 EEPROM 把当前那套读进 RAM，再“应用”。现在读取被注释（custom.c:298），只剩“应用”。所以 GUI 切配置（0x05）、整体同步（0x01）之后 RAM 不会变。'},
+Custom_RestoreAll_Default:{when:'GUI 发 0x07 类型 5（全部恢复）',what:'<code>ProductionLine_Start_Clear()</code> 退出产线模式 → <code>Macro_Init_Head()</code> 清宏的索引 → <code>Custom_Paramter_Init()</code> → <code>Custom_Load_ModeSetting()</code> 应用。'},
+Custom_Restore_Default:{when:'GUI 发 0x07（<code>FW_RESTORE_DEFAULT</code>）',what:'按 <code>buffer[1]</code> 分：1 只恢复键位并存；2 恢复性能（DPI、回报率）、存、应用；3 恢复灯效并存；4 恢复当前这一套（不存）并应用；5 全部恢复。最后回复 GUI：<code>buffer[2] = currentMode</code>、<code>buffer[3] = TRUE</code>，原包从 EP3 发回。'},
+Custom_Set_DPI:{when:'开机应用设置、按 DPI 键、老 GUI 改 DPI（那段现在被注释）',what:'参数：<code>gear</code> 第几档（&gt; 3 直接返回）、<code>save</code> 要不要存 EEPROM、<code>send</code> 要不要通知 GUI、<code>ledAction</code> 灯效（整段注释，没用）。<br>① 取 <code>dpi_class[gear].dpi_x</code>；② &gt; 0x3E 时 <code>optical_double_flag = 1</code>（老传感器翻倍）；③ 限幅 80；④ 查 <code>dpi_value_array[dpi_x − 2]</code>；⑤ <code>optical_set_dpi()</code> <b>被 #if 关掉</b>，IRPT_V4 不改传感器；⑥ save 且不在产线模式 → <code>SaveDPIflag = TRUE</code>、存 129 字节到 EEPROM；⑦ send → 64 字节 <code>[0x04, 0x00, 当前配置, 档位, dpi_x(2 字节)]</code> 从 EP3 发给 GUI，然后清 <code>receive_buff</code>。<br>注意 ③④ 的结果在 IRPT_V4 下没人用，编译器直接优化掉了（map 里 <code>dpi_value_array</code> 被链接器删除）。'},
+Custom_Dpi_Deal:{when:'DPI 类特殊键按下时（<code>DealSpecialFunctionKey()</code>）',what:'四种：<code>CYCLE_DPI</code> 档位 +1，超过最大档回到第 1 档；<code>CU_DPI_Default</code> 回到默认档；<code>DPI_INCREASE</code> +1 封顶；<code>DPI_REDUCE</code> −1 到 0 为止。然后 <code>Custom_Set_DPI(档位, 存, 发, 灯)</code>。'},
+Custom_Profile:{when:'<b>没人调用</b>（只被下面的 Custom_Select_Profile 调）',what:'存全局设置 → 应用当前配置 → 可选：告诉 GUI“现在是第几套”。'},
+Custom_Select_Profile:{when:'<b>没人调用</b>：唯一的调用者 <code>Onboard_And_Inline_ProfileCnt()</code> 自己也没人调用',what:'切到下一套配置（超过就回 0），再 <code>Custom_Profile(TRUE)</code>。整条“切配置档”功能在本项目里是断的。'},
+ClassKeyfunction:{when:'每次 <code>Custom_HandleKey()</code>，10 个键位各一次',what:'按 id 的范围分类：0 / 1 无功能；0xF0~0xF3 宏；0xFE 单个键盘键；0xFD 组合键；0x80~0x8F 开关类（处理分支是空的）；0x90~0x9F 多媒体；0xA0~0xAF 热键；0xB0~0xBF 鼠标键；0xC0~0xCF 特殊功能；其余返回 0（也当无功能）。'},
+Custom_Deal_KeyboardOneKey:{when:'id = 0xFE 的键位',what:'键码在 <code>content.key.key_index</code>。如果高 4 位是 0xB（0xB0~0xB7），说明是<b>修饰键</b>：查 <code>multifuction_table</code>（keydef.c：B0 左Ctrl 0x01、B1 左Shift 0x02、B2 左Alt 0x04、B3 左Win 0x08、B4~B7 右边四个），按下时 <code>键盘报告[0] |= 位</code>；否则是<b>普通键</b>（HID 用法码，A = 0x04），按下时放进报告第 2~7 字节里第一个空位（已经有就不重复放）。变了就返回 <code>ONE_KEYBOARD_KEY</code>。'},
+Custom_Deal_KeyboardShortKey:{when:'id = 0xFD 的键位',what:'组合键：修饰键在 <code>content.shortcut.modify</code>（直接是位，Ctrl = 0x01），普通键最多 2 个：<code>content.shortcut.key</code> 和 <code>addContent.normalKey.key1</code>。按下时修饰键并进报告[0]，普通键放进第 2~7 字节空位。例：Ctrl+C = <code>FD 01 06 00 00</code>。'},
+Custom_Deal_MouseMediaKey:{when:'id = 0x90~0x9F 的键位',what:'下标 = id 的低 4 位，查 <code>consumer_a_table</code>（keydef.c）：0 音量+ 0x00E9、1 音量− 0x00EA、2 静音 0x00E2、3 播放/暂停 0x00CD、4 停止 0x00B7、5 上一首 0x00B6、6 下一首 0x00B5。只在变化时处理：按下填多媒体报告[1]、[2]（用法码低、高），松开填 0。<b>表只有 7 项，下标 7~15 越界。</b>'},
+Custom_Deal_MouseHotKey:{when:'id = 0xA0~0xAF 的键位',what:'同上，查 <code>consumer_b_table</code>：0 媒体选择、1 我的电脑、2 邮件、3 浏览器主页、4 计算器 0x0192、5 搜索、6 后退、7 前进、8 停止、9 刷新、10 收藏。<b>表只有 11 项，下标 11~15 越界。</b>'},
+Custom_Deal_MouseKey:{when:'id = 0xB0~0xBF 的键位（默认 7 个键位都是）',what:'按着时：B0 左 <code>[1]|=0x01</code>、B1 右 0x02、B2 中 0x04、B3 0x10（第 5 键，前进）、B4 0x08（第 4 键，后退）、BA 0x40、BB 0x80；滚轮只在“刚变成按着”时：B5 <code>[6]=0x01</code>、B6 <code>[6]=0xFF</code>；B7 / B8 横滚 <code>[7]=0xFF/0x01</code> 并启动横滚连发，松开时停；B9 启动双击。变了就返回 <code>MOUSE_KEY</code>。注释掉的 <code>DrvGPIOOutput(0,14..)</code> 是老板子按 K4 点灯的调试代码。'},
+DealSpecialFunctionKey:{when:'id = 0xC0~0xCF 的键位（默认只有 DPI 键 C1）',what:'只在“刚按下”或“刚松开”时动作。按下：C1 循环 DPI、C4 DPI+、C5 DPI−、CD 回默认 DPI（都走 <code>Custom_Dpi_Deal()</code>）；C7 把 5 字节键位交给 <code>PC_Driver_Define()</code>；CA 从 EP3 给 GUI 发一包“询问板载 / 在线模式”（<code>Onboard_And_Inline_Event_Set()</code>）；CE / CF 开始缩放；C0、C2、C3、C6、C8、C9、CB、CC 空着。松开：CE / CF 停止缩放，其余空。<b>返回值永远是 0</b>，所以特殊键不产生任何 USB 报告。'},
+Custom_HandleKey:{when:'每次有键 / 滚轮变化（<code>Device_Pack()</code>，device.c:566），热路径',what:'第 5 节有模拟器。要点：① <code>static last_button_wheel_status</code> 记住上次，异或得出变化；② 三张临时报告每次从 0 开始（鼠标报告第 0 字节预填 ID 1，多媒体预填 ID 5）；③ 10 个键位依次：变了？按着？查类别 → 交给处理函数；④ 处理函数返回的类别决定哪张报告要发；⑤ 复制到调用者给的 <code>report_pointer</code>，返回位组合。注释 “mask = 0x02, because L button not define” 已过时：mask 从 0x01 开始，左键就是第 0 位。'},
+};
+const GRP={boot:['sw','开机线','开机时跑一次，把设置填好并应用',['Custom_Pointer_Init','Device_check_Profile','Custom_Init','Custom_Paramter_Init','Custom_ModeParamter_Init','Custom_DefineKey_Init','Custom_Perform_Init','Custom_LefEffect_Init','Custom_Load_ModeSetting','Custom_GloabSetting_Init','Custom_Set_DPI']],
+ key:['per','按键线','每次有键 / 滚轮变化都跑，热路径',['Custom_HandleKey','ClassKeyfunction','Custom_Deal_MouseKey','Custom_Deal_KeyboardOneKey','Custom_Deal_KeyboardShortKey','Custom_Deal_MouseMediaKey','Custom_Deal_MouseHotKey','DealSpecialFunctionKey','Custom_Dpi_Deal','Custom_Set_DPI']],
+ gui:['gold','GUI 线','老 GUI 发命令时才跑',['Custom_Restore_Default','Custom_RestoreAll_Default','Custom_Paramter_Init','Custom_Load_ModeSetting','Bootloadable_Load','Code_Compile_Timer_Len','Custom_Profile','Custom_Select_Profile']]};
+let curFn=null,curFn2=null;
+function card(n){const f=FN[n],e=EX[n];return `<div class="fcard2"><h3>${n}()</h3><div class="meta"><span>custom.c:${f.a}~${f.b}</span><span>${f.st==='used'?'✅ 在用':'⚠️ 没人调用'}</span><span>${f.who==='same'?'和 M300S 一样':'本项目改过'}</span><span>${f.size} 字节</span><span>谁调用：${f.callers.join('、')||'—'}</span></div><p><b>什么时候跑：</b>${e.when}</p><p><b>做什么：</b>${e.what}</p><details><summary>原始代码（${f.b-f.a+1} 行）</summary><pre class="code">${esc(f.code)}</pre></details></div>`}
+(function(){const box=$('lanes');Object.entries(GRP).forEach(([k,[c,t,w,fs]])=>{const d=document.createElement('div');d.className='lane';d.style.setProperty('--c',V(c));d.innerHTML=`<h4>${t}</h4><div class="w">${w}</div>`;fs.forEach(n=>{const b=document.createElement('button');b.type='button';b.className='fnb'+(FN[n].st==='dead'?' dead':'');b.dataset.fn=n;b.innerHTML=`${n}() <i>:${FN[n].a}</i>`;b.onclick=()=>{curFn=curFn===n?null:n;drawLanes()};d.appendChild(b)});box.appendChild(d)});drawLanes()})();
+function drawLanes(){document.querySelectorAll('#lanes .fnb').forEach(b=>b.setAttribute('aria-pressed',b.dataset.fn===curFn));$('fcard').innerHTML=curFn?card(curFn):'<p class="note">↑ 点一个函数名。同一个函数可能出现在几条线上（比如 Custom_Set_DPI）。</p>'}
+(function(){const box=$('allfn');Object.keys(FN).sort((a,b)=>FN[a].a-FN[b].a).forEach(n=>{const b=document.createElement('button');b.type='button';b.style.setProperty('--c',V(FN[n].st==='dead'?'muted':'per'));b.style.fontFamily='var(--font-m)';b.style.fontSize='.8rem';b.textContent=`${FN[n].a} ${n}`;b.onclick=()=>{curFn2=n;[...box.children].forEach(x=>x.setAttribute('aria-pressed',x===b));$('fcard2').innerHTML=card(n)};box.appendChild(b)});box.children[box.children.length-1].click()})();
+
+/* ================= byte map ================= */
+const nameBytes=[0xE9,0x85,0x8D,0xE7,0xBD,0xAE,0xE6,0x96,0x87,0xE4,0xBB,0xB6,0x32];while(nameBytes.length<30)nameBytes.push(0);
+const keyIds=[0xB0,0xB1,0xB2,0xB5,0xB6,0xB3,0xB4,0,1,0xC1];
+const dpi=[4,8,16,24,0];
+const FIELDS=[
+ ['sign',0,1,'gold','.setting.sign','“存过”标记，默认 0xAA。老代码开机靠它判断 EEPROM 里的设置是否有效；现在没人读。',[0xAA]],
+ ['currentMode',1,1,'gold','.setting.currentMode','当前用第几套配置（0 / 1）。老 GUI 0x05 会改它。',[0]],
+ ['FP_ID',2,1,'gold','.setting.FP_ID','指纹 ID，默认 0xFF。指纹功能早已删除，只有老 GUI 指纹命令会写（pc_communicate.c:615）。',[0xFF]],
+ ['nameID',3,2,'muted','.settingMode.nameID（UINT16）','配置编号。现在开机后是 1（“配置文件2”的毛病，第 4 节）。2 字节小端：低字节在前。',[1,0]],
+ ['name',5,30,'muted','.settingMode.name[30]','配置名，UTF-8。默认“配置文件1 / 2”：E9 85 8D = 配，E7 BD AE = 置，E6 96 87 = 文，E4 BB B6 = 件，第 12 字节 0x31 / 0x32 = \'1\' / \'2\'。老 GUI 0x09 可以改名。',nameBytes],
+ ['key_function',35,50,'per','.settingMode.key_function[10]（每个 5 字节）','10 个键位的功能，第 3 节讲格式。<b>在用</b>：每次按键 <code>Custom_HandleKey()</code> 都查它。格子里只显示了每项的 id（第 1 字节），后 4 字节开机时是 0。',keyIds.flatMap(i=>[i,0,0,0,0])],
+ ['dpi_class',85,20,'pc','.settingMode.dpi_class[5]（每档 dpi_x、dpi_y 各 UINT16）','5 档 DPI，默认用前 4 档：0x04、0x08、0x10、0x18。IRPT_V4 下<b>不影响传感器</b>（第 6 节）。',dpi.flatMap(v=>[v,0,v,0])],
+ ['report_rate',105,1,'sw','.settingMode.report_rate','回报率：0 = 1000 Hz、2 = 500、4 = 250、8 = 125。<b>真的生效</b>：<code>Device_Set_ReportRate()</code> → 主循环隔这么多毫秒读一次 PAW3950。',[0]],
+ ['dpi_gear',106,1,'pc','.settingMode.dpi_gear','当前 DPI 档（0~3），默认 3（第 4 档）。按 DPI 键 +1。',[3]],
+ ['dpi_default',107,1,'pc','.settingMode.dpi_default','默认档（<code>CU_DPI_Default</code> 键用），3。',[3]],
+ ['dpi_max',108,1,'pc','.settingMode.dpi_max','最大档，3。循环到超过它就回到第 1 档。',[3]],
+ ['aloneXY',109,6,'muted','.settingMode.aloneXY[6]','X / Y 分开设 DPI 的参数（老 GUI），默认全 0，没人用。',[0,0,0,0,0,0]],
+ ['pixThresh',115,1,'muted','.settingMode.pixThresh','老传感器参数，0x0A，没人用。',[0x0A]],
+ ['min_sq',116,1,'muted','.settingMode.min_sq','老传感器“表面质量”下限，0x10，没人用。',[0x10]],
+ ['acceleration',117,1,'muted','.settingMode.acceleration','加速度，0，没人用。',[0]],
+ ['brightness',118,1,'hw','.settingMode.brightness','灯亮度，0xCC（约 80%）。板子没灯。',[0xCC]],
+ ['enter_LefOff',119,1,'hw','.settingMode.enter_LefOff','几分钟不动关灯，0 = 不关。<code>Device_Pack()</code> 每次都调 <code>Device_Set_LEDOff()</code> 用它，但板子没灯。',[0]],
+ ['LE_value',120,12,'hw','.settingMode.LE_value（类型 1 字节 + 联合体 11 字节）','灯效：类型 1（彩色循环）、透明度 100、速度 1。板子没灯。',[1,100,0,1,0,0,0,0,0,0,0,0]],
+];
+let selF=5;
+(function(){const lg=$('flegend');FIELDS.forEach((f,i)=>{const b=document.createElement('button');b.type='button';b.style.setProperty('--c',V(f[3]));b.textContent=f[0];b.onclick=()=>{selF=i;drawBytes()};lg.appendChild(b)});
+ const bx=$('bytes');FIELDS.forEach((f,i)=>{for(let k=0;k<f[2];k++){const b=document.createElement('button');b.type='button';b.style.setProperty('--c',V(f[3]));b.dataset.f=i;b.innerHTML=`<b>${f[1]+k}</b>${hx(f[6][k])}`;b.title=`${f[4]} +${k}`;b.onclick=()=>{selF=i;drawBytes()};bx.appendChild(b)}});drawBytes()})();
+function drawBytes(){[...$('flegend').children].forEach((b,i)=>b.setAttribute('aria-pressed',i===selF));[...$('bytes').children].forEach(b=>b.classList.toggle('sel',+b.dataset.f===selF));
+ const f=FIELDS[selF];$('finfo').innerHTML=`<b class="t">${f[4]}</b><br>在 gloabSetting 里的位置：第 ${f[1]}${f[2]>1?'~'+(f[1]+f[2]-1):''} 字节（${f[2]} 字节）${f[1]>=3?`；在一套配置里是第 ${f[1]-3} 字节；EEPROM 第 0 套里的地址 0x${(f[1]).toString(16).toUpperCase().padStart(3,'0')}`:`；EEPROM 地址 0x${f[1].toString(16).padStart(3,'0')}`}<br>${f[5]}`}
+
+/* ================= 5-byte key examples ================= */
+const K5=[
+ ['鼠标左键',[0xB0,0,0,0,0],'鼠标键','id 0xB0 本身就说明了一切，后 4 字节不用。',['id = B0 → MOUSE_KEY','不用','不用','不用','不用']],
+ ['单键：A',[0xFE,0x04,0,0,0],'单个键盘键','content.key.key_index = 0x04（HID 键盘用法码，A = 0x04）。按下时放进键盘报告第 2~7 字节的空位。',['id = FE → ONE_KEYBOARD_KEY','content.key.key_index','content.key.reserved','addContent','addContent']],
+ ['单键：左 Ctrl',[0xFE,0xB0,0,0,0],'单个键盘键（修饰键）','key_index 高 4 位是 B → 修饰键，查 multifuction_table[0] = 0x01，并进键盘报告[0]。',['id = FE','key_index = B0 → 修饰键表第 0 项','reserved','—','—']],
+ ['组合：Ctrl+C',[0xFD,0x01,0x06,0x00,0x00],'组合键','content.shortcut.modify = 0x01（左 Ctrl 的位），content.shortcut.key = 0x06（C），addContent.normalKey.key1 = 0（没有第二个普通键）。',['id = FD → SHORT_KEY','shortcut.modify','shortcut.key','normalKey.key1','normalKey.key2（没用）']],
+ ['多媒体：音量+',[0x90,0,0,0,0],'多媒体','id 低 4 位 = 0 → consumer_a_table[0] = 0x00E9。',['id = 90：低 4 位是表下标','不用','不用','不用','不用']],
+ ['热键：计算器',[0xA4,0,0,0,0],'热键','id 低 4 位 = 4 → consumer_b_table[4] = 0x0192。',['id = A4：低 4 位是表下标','不用','不用','不用','不用']],
+ ['宏',[0xF2,0x03,0x01,0,0],'宏','id F2 = 宏类型“按一次播一遍”，content.macro.id = 3（第几个宏），content.macro.count = 1（次数）。交给 macro.c 的 <code>Macro_Start()</code>。',['id = F2 → MACRO_KEY（类型）','macro.id','macro.count','—','—']],
+ ['DPI 循环',[0xC1,0,0,0,0],'特殊功能','id C1 = CYCLE_DPI。',['id = C1 → SPECIAL_FUNCTION_KEY','不用','不用','不用','不用']],
+];
+let k5i=3;
+(function(){const box=$('k5sel');K5.forEach((k,i)=>{const b=document.createElement('button');b.type='button';b.style.setProperty('--c',V('per'));b.textContent=k[0];b.onclick=()=>{k5i=i;drawK5()};box.appendChild(b)});drawK5()})();
+function drawK5(){[...$('k5sel').children].forEach((b,i)=>b.setAttribute('aria-pressed',i===k5i));const k=K5[k5i];const cs=['gold','per','per','sw','sw'];
+ $('k5').innerHTML=k[1].map((v,i)=>`<div style="--c:${V(cs[i])}"><span>${['byte 0','byte 1','byte 2','byte 3','byte 4'][i]}</span><b>${hx(v)}</b><span>${k[4][i]}</span></div>`).join('');
+ $('k5info').innerHTML=`<b class="t">${k[0]}（${k[2]}）</b><br>${k[3]}<br><span class="note">byte 0 = id；byte 1~2 = content；byte 3~4 = addContent。</span>`}
+
+/* ================= Custom_Paramter_Init stepper ================= */
+const OLD=[['void Custom_Paramter_Init(void)','h'],['{','h'],['\tUINT8 ii;','h'],
+ ['\tgloabSetting.setting.sign = STORE_ONCE_SIGN;',s=>{s.sign='0xAA';s.chg='set'},'sign = 0xAA：标记“存储里的设置有效”'],
+ ['\tgloabSetting.setting.currentMode = 0;',s=>{s.cur='0';s.chg='set'},'当前用第 0 套'],
+ ['\tfor (ii = 0;ii < MODE_NUM;ii++)','h'],['\t{','h'],
+ ['\t\tgloabSetting.setting.FP_ID = 0xff;',s=>{s.fp='0xFF';s.chg='set'},'老代码里这句在循环里，跑两遍，结果一样'],['\t}','h'],
+ ['\tOperateFlash_Store_GloabSetting();',s=>{s.eg=`sign=${s.sign} cur=${s.cur} FP=${s.fp}`;s.chg='eg'},'把全局 3 字节存进 EEPROM 0x000'],
+ ['\tfor (ii = 0;ii < MODE_NUM;ii++) {   // ii = 0','h'],
+ ['\t\tCustom_ModeParamter_Init(0);',s=>{s.ram='nameID 0 · “配置文件1” · 默认 DPI / 键位';s.chg='ram'},'RAM 里那一套填成第 0 套的默认值……'],
+ ['\t\t  └ OperateFlash_Store_ModeSetting(0);',s=>{s.e0=s.ram;s.chg='e0'},'……并存进 EEPROM 槽 0（0x003）'],
+ ['\t}  // ii = 1','h'],
+ ['\t\tCustom_ModeParamter_Init(1);',s=>{s.ram='nameID 1 · “配置文件2” · 默认 DPI / 键位';s.chg='ram'},'RAM 被第 1 套覆盖……'],
+ ['\t\t  └ OperateFlash_Store_ModeSetting(1);',s=>{s.e1=s.ram;s.chg='e1'},'……存进槽 1（0x084）。RAM 现在是第 2 套，下一步会读回'],['}','h'],
+ ['(返回后) Custom_Load_ModeSetting() → OperateFlash_Read_ModeSetting(currentMode = 0)',s=>{s.ram=s.e0;s.chg='ram'},'按 currentMode = 0 从槽 0 读回 RAM：RAM = “配置文件1”，和 currentMode 一致 ✅']];
+const NOW=[['void Custom_Paramter_Init(void)','h'],['{','h'],['\tUINT8 ii;','h'],
+ ['\tgloabSetting.setting.sign = STORE_ONCE_SIGN;',s=>{s.sign='0xAA';s.chg='set'},'sign = 0xAA，但现在没人读它'],
+ ['\tgloabSetting.setting.currentMode = 0;',s=>{s.cur='0';s.chg='set'},'当前用第 0 套'],
+ ['//\tfor (ii = 0;ii < MODE_NUM;ii++)','c'],['//\t{','c'],
+ ['\t\tgloabSetting.setting.FP_ID = 0xff;',s=>{s.fp='0xFF';s.chg='set'},'循环被注释，这句只跑一次（缩进是骗人的）'],['//\t}','c'],
+ ['//\tOperateFlash_Store_GloabSetting();','c','不存 EEPROM'],
+ ['\tfor (ii = 0;ii < MODE_NUM;ii++) {   // ii = 0','h'],
+ ['\t\tCustom_ModeParamter_Init(0);',s=>{s.ram='nameID 0 · “配置文件1” · 默认 DPI / 键位';s.chg='ram'},'RAM 填成第 0 套（Custom_ModeParamter_Init 里的存储也被注释了，custom.c:192）'],
+ ['\t}  // ii = 1','h'],
+ ['\t\tCustom_ModeParamter_Init(1);',s=>{s.ram='nameID 1 · “配置文件2” · 默认 DPI / 键位';s.chg='ram'},'RAM 被第 1 套覆盖'],['}','h'],
+ ['(返回后) Custom_Load_ModeSetting()  // 里面的读取被注释了 (custom.c:298)',s=>{s.chg=''},'没读回。结果：currentMode = 0，RAM 里却是“配置文件2”（nameID = 1）⚠️']];
+let ver=1,pc=-1,S;
+function init(){S={sign:'?',cur:'?',fp:'?',ram:'（上次的内容）',eg:'（不变）',e0:'（不变）',e1:'（不变）',chg:''};pc=-1}
+function steps(){return ver?NOW:OLD}
+function nextStep(){const L=steps();while(pc<L.length-1){pc++;const r=L[pc];if(typeof r[1]==='function'){S.chg='';r[1](S);draw(r[2]);return}if(r[2]){S.chg='';draw(r[2]);return}}draw('跑完了。点“从头”，或换另一个版本对比。')}
+function draw(m){const L=steps();
+ $('code').innerHTML=L.map((r,i)=>`<div class="${i===pc?'cur':''} ${r[1]==='c'?'cm':''}">${esc(r[0]).replace(/\t/g,'    ')}</div>`).join('');
+ const sl=(k,lab,v,off)=>`<div class="slot ${S.chg===k?'chg':''} ${off?'off':''}"><b>${lab}</b>${v}</div>`;
+ $('ram').innerHTML=sl('set','.setting',`sign = ${S.sign} · currentMode = ${S.cur} · FP_ID = ${S.fp}`)+sl('ram','.settingMode',S.ram);
+ $('ee').innerHTML=sl('eg','0x000 全局',S.eg,ver)+sl('e0','0x003 槽 0',S.e0,ver)+sl('e1','0x084 槽 1',S.e1,ver);
+ $('msg').innerHTML=m||'点“下一步”。';[...$('ver').children].forEach((b,i)=>b.setAttribute('aria-pressed',i===ver))}
+['老代码（M300S）','现在（本项目）'].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.style.setProperty('--c',V(i?'sw':'muted'));b.onclick=()=>{ver=i;init();draw(i?'现在的版本：EEPROM 一栏变灰，表示这次不会写它。':'老代码：每填一套就存一套。')};$('ver').appendChild(b)});
+$('nx').onclick=nextStep;$('rs').onclick=()=>{init();draw()};init();draw();
+
+/* ================= Custom_HandleKey simulator ================= */
+const PHYS=['左键','右键','中键','滚轮上','滚轮下','前侧 K4','后侧 K5','（音量+ 位）','（音量− 位）','DPI 键'];
+const OPTS=[['00 无功能',[0,0,0,0,0]],['B0 鼠标左键',[0xB0,0,0,0,0]],['B1 鼠标右键',[0xB1,0,0,0,0]],['B2 鼠标中键',[0xB2,0,0,0,0]],['B3 第 5 键（前进）',[0xB3,0,0,0,0]],['B4 第 4 键（后退）',[0xB4,0,0,0,0]],['B5 滚轮 +1',[0xB5,0,0,0,0]],['B6 滚轮 −1',[0xB6,0,0,0,0]],
+ ['FE 04 键盘 A',[0xFE,0x04,0,0,0]],['FE B0 左 Ctrl',[0xFE,0xB0,0,0,0]],['FD Ctrl+C',[0xFD,0x01,0x06,0,0]],['FD Ctrl+Shift+Esc',[0xFD,0x03,0x29,0,0]],['90 音量+',[0x90,0,0,0,0]],['93 播放/暂停',[0x93,0,0,0,0]],['A4 计算器',[0xA4,0,0,0,0]],['99 （越界示例）',[0x99,0,0,0,0]],['C1 DPI 循环',[0xC1,0,0,0,0]]];
+const DEFSEL=[1,2,3,6,7,4,5,0,0,16];
+const CA=[0x00E9,0x00EA,0x00E2,0x00CD,0x00B7,0x00B6,0x00B5],CB=[0x0183,0x0194,0x018A,0x0223,0x0192,0x0221,0x0224,0x0225,0x00AE,0x0227,0x022A];
+const MOD=[1,2,4,8,0x10,0x20,0x40,0x80];
+let sel=DEFSEL.slice(),down=Array(10).fill(false),last=0,gear=3;
+function cls(id){if(id===0||id===1)return'NO_RELATIONSHIP';if(id>0xEF&&id<0xF4)return'MACRO_KEY';if(id===0xFE)return'ONE_KEYBOARD_KEY';if(id===0xFD)return'SHORT_KEY';if(id>0x7F&&id<0x90)return'ENABLE_KEY';if(id>0x8F&&id<0xA0)return'MULTIMEDIA_KEY';if(id>0x9F&&id<0xB0)return'HOT_KEY';if(id>0xAF&&id<0xC0)return'MOUSE_KEY';if(id>0xBF&&id<0xD0)return'SPECIAL_FUNCTION_KEY';return'0（default）'}
+function simTable(){$('simT').innerHTML=PHYS.map((p,i)=>`<tr><td>[${i}]</td><td>${p}</td><td><select data-i="${i}" aria-label="键位 ${i} 的功能">${OPTS.map((o,j)=>`<option value="${j}" ${j===sel[i]?'selected':''}>${o[0]}</option>`).join('')}</select></td><td><input type="checkbox" data-i="${i}" ${down[i]?'checked':''} aria-label="键位 ${i} 按着"></td></tr>`).join('');
+ $('simT').querySelectorAll('select').forEach(s=>s.onchange=()=>{sel[+s.dataset.i]=+s.value});$('simT').querySelectorAll('input').forEach(c=>c.onchange=()=>{down[+c.dataset.i]=c.checked})}
+function addKey(kb,code){for(let i=2;i<8;i++){if(!kb[i]){kb[i]=code;return}if(kb[i]===code)return}}
+function simRun(){const bw=down.reduce((a,d,i)=>a|(d?1<<i:0),0),chg=bw^last;const ms=[1,0,0,0,0,0,0,0],kb=[0,0,0,0,0,0,0,0],mm=[5,0,0];let fm=false,fk=false,fx=false;const tr=[];
+ tr.push(`button_wheel = 0b${bw.toString(2).padStart(10,'0')}，上次 = 0b${last.toString(2).padStart(10,'0')}，变化 = 0b${chg.toString(2).padStart(10,'0')}`);
+ for(let i=0;i<10;i++){const kc=!!(chg&(1<<i)),ks=!!(bw&(1<<i)),k=OPTS[sel[i]][1],id=k[0],c=cls(id);let ev=0,note='';
+  if(c==='MOUSE_KEY'){if(kc)ev='MOUSE_KEY';if(ks){const m={0xB0:[1,1],0xB1:[1,2],0xB2:[1,4],0xB3:[1,0x10],0xB4:[1,8],0xBA:[1,0x40],0xBB:[1,0x80]}[id];if(m){ms[1]|=m[1];note=`鼠标[1] |= 0x${hx(m[1])}`}if(id===0xB5&&kc){ms[6]=1;note='鼠标[6] = 01'}if(id===0xB6&&kc){ms[6]=0xFF;note='鼠标[6] = FF'}}}
+  else if(c==='ONE_KEYBOARD_KEY'){if(kc)ev='ONE_KEYBOARD_KEY';if(ks){let code=k[1];if((code&0xF0)===0xB0){kb[0]|=MOD[code-0xB0];note=`修饰键 → 键盘[0] |= 0x${hx(MOD[code-0xB0])}`}else{addKey(kb,code);note=`键码 0x${hx(code)} 放进空位`}}}
+  else if(c==='SHORT_KEY'){if(kc)ev='SHORT_KEY';if(ks){kb[0]|=k[1];[k[2],k[3]].forEach(x=>{if(x)addKey(kb,x)});note=`修饰 0x${hx(k[1])} + 键 0x${hx(k[2])}`}}
+  else if(c==='MULTIMEDIA_KEY'||c==='HOT_KEY'){const T=c==='HOT_KEY'?CB:CA,ix=id&0xF;if(kc){ev=c;if(ks){const u=T[ix];if(u===undefined){note=`⚠️ 下标 ${ix} 超出表（${T.length} 项），真机会读到表外的内存`;mm[1]=0x3F;mm[2]=0x3F}else{mm[1]=u&0xFF;mm[2]=u>>8;note=`用法码 0x${u.toString(16).toUpperCase().padStart(4,'0')}`}}else{mm[1]=0;mm[2]=0;note='松开：填 0'}}}
+  else if(c==='SPECIAL_FUNCTION_KEY'){if(kc&&ks&&id===0xC1){gear=gear+1>3?0:gear+1;note=`Custom_Dpi_Deal → 档位变成 ${gear}，写 EEPROM、EP3 通知 GUI，传感器不变；返回 0`}}
+  if(ev==='MULTIMEDIA_KEY'||ev==='HOT_KEY')fx=true;else if(ev==='ONE_KEYBOARD_KEY'||ev==='SHORT_KEY')fk=true;else if(ev==='MOUSE_KEY')fm=true;
+  if(kc||ks)tr.push(`[${i}] ${PHYS[i]}：${kc?'变了':'没变'}、${ks?'按着':'松着'}，id 0x${hx(id)} → ${c}${note?'，'+note:''}`)}
+ last=bw;let r=(fx?4:0)|(fk?2:0)|(fm?1:0);
+ tr.push(`返回 result = ${r}（${[fm&&'MOUSE',fk&&'KEYBOARD',fx&&'MULTIMEDIA'].filter(Boolean).join(' + ')||'没有报告要发'}）`);
+ const box=(t,c,arr,on,dest)=>`<div style="--c:${V(c)}"><h5>${t}</h5><div class="bb">${arr.map((v,i)=>`<span class="${v&&i>0||(i===0&&on)?'nz':''}">${hx(v)}</span>`).join('')}</div><div class="st">${on?'✅ 复制出去 → '+dest:'这次不发'}</div></div>`;
+ $('simRep').innerHTML=box('鼠标临时报告（8 字节）','per',ms,fm,'EP1')+box('键盘临时报告（8 字节）','sw',kb,fk,'EP2')+box('多媒体临时报告（3 字节）','gold',mm,fx,'EP1');
+ $('simTrace').textContent=tr.join('\n')}
+$('simRun').onclick=simRun;$('simDef').onclick=()=>{sel=DEFSEL.slice();down.fill(false);last=0;simTable();$('simRep').innerHTML='';$('simTrace').textContent='已恢复默认键位，全部松开。'};
+$('simDemo').onclick=()=>{sel=DEFSEL.slice();sel[6]=10;down.fill(false);last=0;simTable();down[6]=true;simTable();simRun();$('simTrace').textContent+='\n\n（示例：键位 [6] 改成 FD 01 06 → 按下后侧键，键盘报告 = 01 00 06 …，从 EP2 发出；再取消勾选跑一次，就是“松开”的报告）'};
+simTable();$('simTrace').textContent='勾选“按着”或改功能后点“跑一次”。每跑一次相当于一次 Device_Pack()；上一次的状态会被记住。';
+
+/* ================= quiz ================= */
+const Q=[
+ ['1. gloabSetting 在 RAM 里一共多少字节？',['129','132','261'],1,'对。3 字节全局 + 129 字节一套配置。','看第 2 节。'],
+ ['2. 为什么成员之间没有空字节？',['编译器默认如此','gloab.h 里的 #pragma pack(1)','EEPROM 要求'],1,'对。好处是和 EEPROM 格式一样，代价是 M0 要逐字节访问。','看第 2 节的说明。'],
+ ['3. 键位设置 FD 01 06 00 00 表示？',['鼠标左键','Ctrl+C','音量+'],1,'对。FD 组合键，修饰 01 = 左 Ctrl，键 06 = C。','看第 3 节。'],
+ ['4. 松开一个键盘键时，custom.c 怎么让电脑知道？',['专门写一个“松开”报告','每次从 0 重填报告，松开的键不填，再发出去','不处理'],1,'对。键变了 → 这一类报告重新发。','看第 5 节第 3 步。'],
+ ['5. 下面哪项设置在 IRPT_V4 上真的生效？',['dpi_class','report_rate','brightness'],1,'对。它决定隔几毫秒读一次 PAW3950。','看第 2 节点 report_rate。'],
+ ['6. 老 GUI 发 0x05 切配置，现在会怎样？',['正常切换','编号变了，RAM 里的设置没变','鼠标重启'],1,'对。Custom_Load_ModeSetting() 里的读取被注释了。','看第 7 节。'],
+ ['7. 哪个函数是固件升级入口，不能删？',['Custom_Init','Bootloadable_Load','Custom_Profile'],1,'对。写 0xAA 到 0x10001F00 再软件复位。','看第 7 节、第 8 节。'],
+];
+(function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0]}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+</script>
