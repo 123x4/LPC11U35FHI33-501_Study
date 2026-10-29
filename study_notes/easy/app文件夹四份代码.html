@@ -445,7 +445,7 @@ const QS=[
  ['为什么变量叫 hall_，这块板却是红外？','同一份代码要支持好几种板型（<code>my_board.h</code> 里的 HAPTIC_V2/V3/V4、P723_POC、GEN_2_H_V1、IRPT_V4、V4_HALL_HPTIC_V4）。霍尔板型先写的，红外板型（IRPT_V4）沿用了同一个数组和处理函数，只是把数据来源换成 ADC。'],
  ['optical_3325.c 能直接删吗？','不能直接删：<code>TimerDelayMsec()</code> 还在用，删了会链接失败。正确顺序：先把 <code>TimerDelayMsec()</code> 挪到 Timer.c（或 device.c），从 Keil 工程移除 optical_3325.c，编译 0 错误、程序大小变小约 0.7 KB，再上板试按键、USB 都正常，最后问杰哥。'],
  ['custom.c 里的“配置档”现在还有用吗？','基本没用。<code>MODE_NUM = 2</code> 套配置档还在内存里，但开机不再从 EEPROM 读，也没有键绑定“切换配置档”。新 GUI 用的是 my_protocol 那套参数（EEPROM 0xF00 起，第 11 课）。老 GUI 的命令（<code>PC_Communicate()</code>）还在响应，所以这些代码不能随便删。'],
- ['线圈震动是在哪里触发的？','button.c 在左键 / 右键按下和松开、K4 / K5 按下的那一刻调用 <code>Ele_*Process()</code>（定义在本项目写的 <code>src/my_electromagnet.c</code>），这些函数只是“登记要震”；主循环里的 <code>Ele_PollingTask()</code>（device.c 的 <code>Device_Active()</code> 每圈调用）按状态机真正输出脉冲。这是下一步值得单独讲的一课。'],
+ ['线圈震动是在哪里触发的？','button.c 在左键 / 右键按下和松开、K4 / K5 按下的那一刻调用 <code>Ele_*Process()</code>（定义在本项目写的 <code>src/my_electromagnet.c</code>）。以左键按下为例，<code>Ele_LeftKeyPressProcess()</code> <b>当场</b>把 PIO0_4 拉高、用 <code>CT16B1_DelayUs()</code> 忙等设定时长（默认 100 µs，GUI 可改）、再拉低，震动在这个函数里同步完成；主循环里的 <code>Ele_PollingTask()</code> 只负责之后 8 ms 的“震后消抖”。（更正：此前这里误写成“只是登记、由 Ele_PollingTask() 输出脉冲”。）完整过程见“一次左键点击全程”。'],
 ];
 $('qs').innerHTML=QS.map(q=>`<details><summary>${q[0]}</summary><p>${q[1]}</p></details>`).join('');
 

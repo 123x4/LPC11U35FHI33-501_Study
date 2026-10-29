@@ -39,6 +39,7 @@
 
 | 页面 | 在线页面 |
 |---|---|
+| **主线：一次左键点击（全程 + 26 个全局变量 + 24 个函数）** | https://claude.ai/artifact/QoPZuz6jMfgBqK7WrEJL29 |
 | 全程：按下 DPI 键的完整流程（17 步） | https://claude.ai/artifact/7yhiDgMLCiZYLqHzKXnRVy |
 | 文件夹：app 文件夹四份代码 | https://claude.ai/artifact/DQeECLZbqjbizU3wtk2zHv |
 | 文件：custom.c 完全讲透 | https://claude.ai/artifact/VZVKafNhxDA6watP5e6RMT |
