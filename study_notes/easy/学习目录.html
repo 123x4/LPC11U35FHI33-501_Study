@@ -1,0 +1,251 @@
+<title>学习目录</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
+.mx{border-collapse:separate;border-spacing:4px;min-width:720px}
+.mx th{text-align:center;font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.mx th.s{text-align:left;font-size:.85rem;color:var(--muted);font-family:var(--font-b);width:150px}
+.mx td{padding:0;border:0}
+.mx button{width:100%;font:inherit;font-size:.8rem;line-height:1.35;padding:6px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-align:left;min-height:46px}
+.mx button.w-sw{border-left:5px solid var(--sw)}
+.mx button.w-ex{border-left:5px solid var(--muted)}
+.mx button.w-hw{border-left:5px solid var(--per)}
+.mx button.na{color:var(--muted);background:var(--soft);border-style:dashed}
+.mx button[aria-pressed="true"]{outline:3px solid var(--pc);outline-offset:1px}
+.who{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.85rem;margin:.4rem 0}
+.who span{display:inline-flex;align-items:center;gap:6px}
+.who i{width:14px;height:14px;border-radius:3px;display:inline-block}
+pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
+details.ans{margin:.4rem 0;border:1px dashed var(--line);border-radius:6px;padding:4px 10px;background:var(--panel)}
+details.ans summary{cursor:pointer;color:var(--per);font-size:.9rem}
+details.ans[open]{background:var(--soft)}
+.task{border-left:4px solid var(--per);background:var(--panel);border-radius:0 6px 6px 0;padding:8px 12px;margin:.6rem 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.task .pg{font-family:var(--font-m);font-size:.8rem;color:var(--per)}
+.sim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:640px){.sim{grid-template-columns:minmax(0,1fr)}}
+.sim fieldset{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:0 0 8px}
+.sim legend{font-size:.82rem;color:var(--muted);padding:0 4px}
+.sim label{display:inline-flex;align-items:center;gap:4px;margin:2px 10px 2px 0;font-size:.9rem;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;margin:.4rem 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+</style>
+<style>
+.srch{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:.6rem 0}
+.srch input[type=search]{flex:1 1 220px;max-width:100%;font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.srch label{font-size:.88rem;display:inline-flex;gap:5px;align-items:center}
+.grp{margin-top:2rem}
+.grp h2{margin-top:0;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.grp h2 small{font-family:var(--font-b);font-size:.85rem;font-weight:400;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin:.6rem 0}
+.cd{border:1.5px solid var(--line);border-left:5px solid var(--c);border-radius:8px;background:var(--panel);padding:10px 12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.cd.read{opacity:.6}
+.cd .no{font-family:var(--font-m);font-size:.75rem;color:var(--muted)}
+.cd a.ti{font-weight:600;color:var(--fg);text-decoration:none;font-size:1rem}
+.cd a.ti:hover{color:var(--c);text-decoration:underline}
+.cd p{margin:0;font-size:.86rem;color:var(--muted);max-width:none}
+.cd .ft{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:auto;padding-top:4px;font-size:.78rem;color:var(--muted)}
+.cd .tag{border:1px solid var(--c);border-radius:999px;padding:0 7px;color:var(--c)}
+.cd input{width:16px;height:16px;accent-color:var(--sw)}
+.next{border:2px solid var(--sw);border-radius:8px;background:var(--panel);padding:10px 14px;margin:.8rem 0}
+.next b{color:var(--sw)}
+.prog{height:8px;border-radius:4px;background:var(--soft);overflow:hidden;margin:.3rem 0}
+.prog i{display:block;height:100%;background:var(--sw);width:0;transition:width .3s}
+</style>
+<div class="wrap">
+<div class="eyebrow">LPC11U35 触感鼠标 · 学习笔记</div>
+<h1>学习目录</h1>
+<p class="lede">所有讲解页都在这里，按用途分成 5 组。点标题打开；读完勾一下“已读”（只记在你自己的浏览器里）。也可以在搜索框里输入关键词，比如 <code>USB</code>、<code>DPI</code>、<code>EEPROM</code>。</p>
+<div class="next" id="next"></div>
+<div class="srch"><input type="search" id="q" placeholder="搜索标题或说明，例如 USB、custom、引脚" aria-label="搜索"><label><input type="checkbox" id="hideRead">隐藏已读</label><span class="note" id="cnt"></span></div>
+<div class="prog" aria-hidden="true"><i id="bar"></i></div>
+<div id="groups"></div>
+<p class="note" style="margin-top:2rem">这一页本身也在仓库里：<code>study_notes/easy/学习目录.html</code>。新增讲解页时，这里和 <code>study_notes/easy/README.md</code> 一起更新。</p>
+</div>
+<script>
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
+const A=id=>'https://claude.ai/artifact/'+id;
+const GH=p=>'https://github.com/123x4/LPC11U35FHI33-501_Study/blob/claude/focused-ptolemy-tmjyrp/'+encodeURI(p);
+const G=[
+ {k:'base',t:'一、入门',d:'第 0~5 课：打地基，按顺序读',c:'sw',items:[
+  ['第 0 课','这只鼠标的地图','整个项目有哪几块、谁负责什么；24 课的完整路线也在这里',A('M2RnYCfavarnoiBEjJ9Eky'),'课'],
+  ['第 1 课','电怎么传信息','电压、高低电平、信号怎么表示 0 和 1',A('QAeSDfXisuYV89dGuqVqX2'),'课'],
+  ['第 2 课','0 和 1：一排开关','位、字节、十六进制，寄存器就是一排开关',A('HwMr9Ng8ocHS9MBvvJD1bX'),'课'],
+  ['第 3 课','单片机是什么','外设七步法；怎么查芯片手册',A('Df8iYXGpcqsQs45cVTXCQf'),'课'],
+  ['第 4 课','程序怎么跑','从上电到 main、主循环、中断的完整过程',A('8avBhNLVJRzRPehvi6xtsN'),'课'],
+  ['第 5 课','代码仓库怎么读','文件怎么分类、编译产物、map 文件、Flash 余量',A('DMHaAKpxifpv3aa1bAJoeM'),'课'],
+ ]},
+ {k:'per',t:'二、芯片外设',d:'第 6~13 课：每课一个外设，结合手册和项目代码',c:'per',items:[
+  ['第 6 课','GPIO 与引脚配置','引脚功能选择、上下拉、开漏；按键和线圈脚',A('NHfRyw19iDqMJRYwhLUfTw'),'课'],
+  ['第 7 课','ADC','逐次逼近；左右键红外信号怎么变成数字',A('3CLVMetraYoANnCKhpJuC6'),'课'],
+  ['第 8 课','定时器','1 ms 节拍、五种计时方法、延时函数',A('RjnBzgLW6mYK5WRAY7Xviy'),'课'],
+  ['第 9 课','SPI 与 PAW3950','移位寄存器、CPOL/CPHA、传感器读写时序',A('7HACF2oXVpWjSqS19giSyB'),'课'],
+  ['第 10 课','USB','枚举、端点、HID 报告描述符',A('C5mHnxa8bSv88j9P2V7jvN'),'课'],
+  ['第 10 课配套','USB 接口与端点总表','3 个接口、各端点干什么、谁发谁收（速查）',A('Axd33DZ2jkDBAo9C5vSKac'),'速查'],
+  ['第 11 课','EEPROM 与 IAP','ROM 里的 IAP 程序、EEPROM 地址分布、存设置',A('Q5ub7uZ9fE8dAmVVgaJvoy'),'课'],
+  ['第 11 课配套','芯片存储地址分布','ROM / Flash / RAM / USB RAM / EEPROM 每块放了什么',A('JoG6GLLsaj4RPKbny4Ea4i'),'速查'],
+  ['第 12 课','看门狗、复位与掉电','看门狗、5 种复位原因、掉电检测 BOD',A('NhatmnbFU8ZA6ZF1UzLvws'),'课'],
+  ['第 13 课','时钟、电源与低功耗','12 MHz 怎么变 48 MHz；挂起和深度睡眠',A('2Kw9ZtbCBu6cax3WLFieuv'),'课'],
+ ]},
+ {k:'code',t:'三、读代码',d:'按文件、按一次事件读项目代码；先看“全程”，再看文件',c:'pc',items:[
+  ['全程','按下 DPI 键的完整流程','17 步：从手指按下到 GUI 收到通知，跨 9 个文件',A('7yhiDgMLCiZYLqHzKXnRVy'),'全程'],
+  ['文件夹','app 文件夹四份代码','button / scroll / custom / optical_3325 的来历、职责、按键接力',A('DQeECLZbqjbizU3wtk2zHv'),'文件'],
+  ['文件','custom.c 完全讲透','本质（键位映射层）、先猜设计、四条线、26 个函数附录、自测',A('VZVKafNhxDA6watP5e6RMT'),'文件'],
+  ['专题','从内存看一次 IO','GUI 收发在 USB RAM 和 SRAM 之间怎么复制；指针是什么',A('6Z4TjTfoJmmkLUsBX27KDm'),'专题'],
+  ['早期版','函数讲解：Custom_Paramter_Init()','已并入“custom.c 完全讲透”第 7 节，留作参考',A('C2Pkz5eGpiTkeNkUvThqJJ'),'旧'],
+ ]},
+ {k:'ref',t:'四、速查与清单',d:'随时翻的表；每学完一课会更新',c:'gold',items:[
+  ['速查','引脚总表','33 个脚：功能、配置在哪、哪课学过、T1A 用途',A('5PUa6UQrGCyzkQPpPrzByB'),'速查'],
+  ['清单','代码来源清单','每个文件最终是谁写的、每个函数在不在用（可筛选）',A('VPsyav56Zh3cacuF4xg6us'),'清单'],
+  ['进度','学习目标与覆盖','“熟悉代码 / 手册”的标准；每个文件、每章手册在哪课讲',A('Fe6KbvbH6bcSansEMkZds1'),'进度'],
+  ['速查','USB 接口与端点总表','（同第 10 课配套）',A('Axd33DZ2jkDBAo9C5vSKac'),'速查'],
+  ['速查','芯片存储地址分布','（同第 11 课配套）',A('JoG6GLLsaj4RPKbny4Ea4i'),'速查'],
+ ]},
+ {k:'old',t:'五、早期讲义（GitHub 里直接看）',d:'改版前的逐行精读，内容更细，当字典查',c:'muted',items:[
+  ['图解','L1 USB 报文解剖','每一包的真实字节、CRC、D+/D- 波形',A('Qvima6yiNCJCzXs62oqyEC'),'图解'],
+  ['讲义','L1 USB 是怎么工作的','USB 原理版讲义',GH('study_notes/L1_USB是怎么工作的.md'),'md'],
+  ['讲义','L2 一次点击','ADC → 段数 → 状态机 → 报文',GH('study_notes/L2_一次点击.md'),'md'],
+  ['讲义','0-3 公司 Bootloader','升级标志 0x10001F00、bootloader 反汇编',GH('study_notes/0-3_公司Bootloader.md'),'md'],
+  ['讲义','0-4 启动文件','向量表、Reset_Handler',GH('study_notes/0-4_启动文件.md'),'md'],
+  ['讲义','1-1 ~ 1-14 逐行精读','看门狗、时钟、GPIO、线圈、USB 初始化与枚举、三个 Pointer_Init……',GH('study_notes/01_逐行精读路线图.md'),'md'],
+  ['清单','T1A 适配清单','T1A 和 IRPT_V4 的硬件差异、要改的代码',GH('study_notes/03_T1A适配清单.md'),'md'],
+  ['清单','芯片状态总表','每个外设初始化后的寄存器状态',GH('study_notes/02_芯片状态总表.md'),'md'],
+ ]},
+];
+const KEY='hub_read_v1';let read={};try{read=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(read))}catch(e){}};
+function draw(){const q=$('q').value.trim().toLowerCase(),hide=$('hideRead').checked;let shown=0,total=0,done=0;const seen=new Set();
+ $('groups').innerHTML=G.map(g=>{const cs=g.items.filter(it=>{const id=it[3];if(!seen.has(id)){seen.add(id);total++;if(read[id])done++}
+   if(hide&&read[id])return false;return !q||(it.join(' ')+g.t).toLowerCase().includes(q)});shown+=cs.length;if(!cs.length)return'';
+  return `<section class="grp"><h2>${g.t}<small>${g.d}</small></h2><div class="cards">${cs.map(it=>`<div class="cd${read[it[3]]?' read':''}" style="--c:${V(g.c)}"><span class="no">${it[0]}</span><a class="ti" href="${it[3]}" target="_blank" rel="noopener">${it[1]}</a><p>${it[2]}</p><div class="ft"><span class="tag">${it[4]}</span><label><input type="checkbox" data-id="${it[3]}" ${read[it[3]]?'checked':''}> 已读</label></div></div>`).join('')}</div></section>`}).join('')||'<p class="note">没有匹配的页面。</p>';
+ $('groups').querySelectorAll('input[data-id]').forEach(c=>c.onchange=()=>{read[c.dataset.id]=c.checked;save();draw()});
+ $('cnt').textContent=`显示 ${shown} 项 · 已读 ${done} / ${total}`;$('bar').style.width=(total?done/total*100:0)+'%';
+ const nx=G.slice(0,3).flatMap(g=>g.items).find(it=>!read[it[3]]&&it[4]!=='旧'&&it[4]!=='速查');
+ $('next').innerHTML=nx?`<b>下一篇建议读：</b><a href="${nx[3]}" target="_blank" rel="noopener">${nx[0]} · ${nx[1]}</a>（${nx[2]}）<br><span class="note">还没写的：第 14 课“一次点击”（先看手册猜代码），以及其余文件的精读。</span>`:'<b>列表里的都读完了。</b>下一步：第 14 课“一次点击”，或挑一个文件让我精读。'}
+$('q').oninput=draw;$('hideRead').onchange=draw;draw();
+</script>

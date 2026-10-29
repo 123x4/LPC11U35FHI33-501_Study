@@ -3,37 +3,61 @@
 从零开始的图解课，每课一个 HTML 页面（用浏览器打开），10~15 分钟，可以拖、点、做小测验。
 之前的 0-x、1-x、L1、L2 讲义保留，作为以后查细节的“字典”。
 
-| 课 | 文件 | 在线页面 |
-|---|---|---|
-| 第 0 课 这只鼠标的地图 | `00_鼠标项目地图.html` | https://claude.ai/artifact/M2RnYCfavarnoiBEjJ9Eky |
-| 第 1 课 电怎么传信息 | `01_电怎么传信息.html` | https://claude.ai/artifact/QAeSDfXisuYV89dGuqVqX2 |
-| 第 2 课 0 和 1：一排开关 | `02_0和1.html` | https://claude.ai/artifact/HwMr9Ng8ocHS9MBvvJD1bX |
-| 第 3 课 单片机是什么（外设七步法） | `03_单片机是什么.html` | https://claude.ai/artifact/Df8iYXGpcqsQs45cVTXCQf |
-| 第 4 课 程序怎么跑 | `04_程序怎么跑.html` | https://claude.ai/artifact/8avBhNLVJRzRPehvi6xtsN |
-| 第 5 课 代码仓库怎么读 | `05_代码仓库怎么读.html` | https://claude.ai/artifact/DMHaAKpxifpv3aa1bAJoeM |
-| 第 6 课 GPIO 与引脚配置 | `06_GPIO与引脚配置.html` | https://claude.ai/artifact/NHfRyw19iDqMJRYwhLUfTw |
-| 第 7 课 ADC | `07_ADC.html` | https://claude.ai/artifact/3CLVMetraYoANnCKhpJuC6 |
-| 第 8 课 定时器 | `08_定时器.html` | https://claude.ai/artifact/RjnBzgLW6mYK5WRAY7Xviy |
-| 第 9 课 SPI 与 PAW3950 | `09_SPI与PAW3950.html` | https://claude.ai/artifact/7HACF2oXVpWjSqS19giSyB |
-| 第 10 课 USB | `10_USB.html` | https://claude.ai/artifact/C5mHnxa8bSv88j9P2V7jvN |
-| USB 接口与端点总表（第 10 课配套速查） | `USB接口与端点总表.html` | https://claude.ai/artifact/Axd33DZ2jkDBAo9C5vSKac |
-| 第 11 课 EEPROM 与 IAP | `11_EEPROM与IAP.html` | https://claude.ai/artifact/Q5ub7uZ9fE8dAmVVgaJvoy |
-| 芯片存储地址分布（ROM / Flash / RAM / USB RAM，第 11 课配套） | `芯片存储地址分布.html` | https://claude.ai/artifact/JoG6GLLsaj4RPKbny4Ea4i |
-| 第 12 课 看门狗、复位与掉电 | `12_看门狗复位与掉电.html` | https://claude.ai/artifact/NhatmnbFU8ZA6ZF1UzLvws |
-| 第 13 课 时钟、电源与低功耗 | `13_时钟电源与低功耗.html` | https://claude.ai/artifact/2Kw9ZtbCBu6cax3WLFieuv |
-| 代码来源清单（整理代码用，可筛选） | `代码来源清单.html` | https://claude.ai/artifact/VPsyav56Zh3cacuF4xg6us |
-| app 文件夹四份代码（button / scroll / custom / optical_3325） | `app文件夹四份代码.html` | https://claude.ai/artifact/DQeECLZbqjbizU3wtk2zHv |
-| 函数讲解：Custom_Paramter_Init()（custom.c） | `Custom_Paramter_Init.html` | https://claude.ai/artifact/C2Pkz5eGpiTkeNkUvThqJJ |
-| custom.c 完全讲透（本质、先猜设计、四条线、想法上、自测；26 个函数在附录） | `custom.c完全讲透.html` | https://claude.ai/artifact/VZVKafNhxDA6watP5e6RMT |
-| 从内存看一次 IO（Custom_Pointer_Init 与 GUI 收发） | `从内存看一次IO.html` | https://claude.ai/artifact/6Z4TjTfoJmmkLUsBX27KDm |
-| 按下 DPI 键的完整流程（17 步全程） | `按下DPI键的完整流程.html` | https://claude.ai/artifact/7yhiDgMLCiZYLqHzKXnRVy |
+## 📚 从这里开始：学习目录
 
-完整路线见第 0 课第 5 节（24 课，第 0~23 课）。
+**https://claude.ai/artifact/9nXLjFSsDezEn5UDfeTqe8**（`学习目录.html`：分组、可搜索、可勾选已读、给出下一篇建议）
 
-**引脚总表**（每学完一课都要更新：`PINS` 里的“学过”和用法、`UPDATED`、`LOG`）：`引脚总表.html` → https://claude.ai/artifact/5PUa6UQrGCyzkQPpPrzByB
+下面是同样内容的分组表格。
 
-**课程总目标与进度**：`学习目标与覆盖.html` → https://claude.ai/artifact/Fe6KbvbH6bcSansEMkZds1
-“熟悉代码 / 熟悉手册”的具体标准、每个编译文件和每一章手册分别在哪一课讲，可勾选进度。
+### 一、入门（第 0~5 课，按顺序读）
+
+| 课 | 在线页面 |
+|---|---|
+| 第 0 课 这只鼠标的地图（含 24 课完整路线） | https://claude.ai/artifact/M2RnYCfavarnoiBEjJ9Eky |
+| 第 1 课 电怎么传信息 | https://claude.ai/artifact/QAeSDfXisuYV89dGuqVqX2 |
+| 第 2 课 0 和 1：一排开关 | https://claude.ai/artifact/HwMr9Ng8ocHS9MBvvJD1bX |
+| 第 3 课 单片机是什么（外设七步法） | https://claude.ai/artifact/Df8iYXGpcqsQs45cVTXCQf |
+| 第 4 课 程序怎么跑 | https://claude.ai/artifact/8avBhNLVJRzRPehvi6xtsN |
+| 第 5 课 代码仓库怎么读 | https://claude.ai/artifact/DMHaAKpxifpv3aa1bAJoeM |
+
+### 二、芯片外设（第 6~13 课）
+
+| 课 | 在线页面 |
+|---|---|
+| 第 6 课 GPIO 与引脚配置 | https://claude.ai/artifact/NHfRyw19iDqMJRYwhLUfTw |
+| 第 7 课 ADC | https://claude.ai/artifact/3CLVMetraYoANnCKhpJuC6 |
+| 第 8 课 定时器 | https://claude.ai/artifact/RjnBzgLW6mYK5WRAY7Xviy |
+| 第 9 课 SPI 与 PAW3950 | https://claude.ai/artifact/7HACF2oXVpWjSqS19giSyB |
+| 第 10 课 USB | https://claude.ai/artifact/C5mHnxa8bSv88j9P2V7jvN |
+| 　└ 配套：USB 接口与端点总表 | https://claude.ai/artifact/Axd33DZ2jkDBAo9C5vSKac |
+| 第 11 课 EEPROM 与 IAP | https://claude.ai/artifact/Q5ub7uZ9fE8dAmVVgaJvoy |
+| 　└ 配套：芯片存储地址分布 | https://claude.ai/artifact/JoG6GLLsaj4RPKbny4Ea4i |
+| 第 12 课 看门狗、复位与掉电 | https://claude.ai/artifact/NhatmnbFU8ZA6ZF1UzLvws |
+| 第 13 课 时钟、电源与低功耗 | https://claude.ai/artifact/2Kw9ZtbCBu6cax3WLFieuv |
+
+### 三、读代码（先看“全程”，再看文件）
+
+| 页面 | 在线页面 |
+|---|---|
+| 全程：按下 DPI 键的完整流程（17 步） | https://claude.ai/artifact/7yhiDgMLCiZYLqHzKXnRVy |
+| 文件夹：app 文件夹四份代码 | https://claude.ai/artifact/DQeECLZbqjbizU3wtk2zHv |
+| 文件：custom.c 完全讲透 | https://claude.ai/artifact/VZVKafNhxDA6watP5e6RMT |
+| 专题：从内存看一次 IO | https://claude.ai/artifact/6Z4TjTfoJmmkLUsBX27KDm |
+| 早期版：函数讲解 Custom_Paramter_Init()（已并入 custom.c 完全讲透） | https://claude.ai/artifact/C2Pkz5eGpiTkeNkUvThqJJ |
+
+### 四、速查与清单
+
+| 页面 | 在线页面 |
+|---|---|
+| 引脚总表（每学完一课都要更新：`PINS` 里的“学过”和用法、`UPDATED`、`LOG`） | https://claude.ai/artifact/5PUa6UQrGCyzkQPpPrzByB |
+| 代码来源清单（可筛选） | https://claude.ai/artifact/VPsyav56Zh3cacuF4xg6us |
+| 学习目标与覆盖（标准、进度） | https://claude.ai/artifact/Fe6KbvbH6bcSansEMkZds1 |
+
+### 五、早期讲义（GitHub 里直接看）
+
+`L1_USB报文解剖`（https://claude.ai/artifact/Qvima6yiNCJCzXs62oqyEC）、`study_notes/` 下的 `L1_*.md`、`L2_*.md`、`0-3`、`0-4`、`1-1`~`1-14` 逐行精读、`03_T1A适配清单.md`、`02_芯片状态总表.md`。
+
+**新增讲解页时**：同时更新 `学习目录.html`（scratchpad 里的 `hub.js`）和上面对应分组的表格。
 
 ## 讲代码时的固定规则
 
