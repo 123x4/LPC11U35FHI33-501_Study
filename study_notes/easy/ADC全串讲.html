@@ -1,0 +1,354 @@
+<title>ADC 全串讲</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
+.mx{border-collapse:separate;border-spacing:4px;min-width:720px}
+.mx th{text-align:center;font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.mx th.s{text-align:left;font-size:.85rem;color:var(--muted);font-family:var(--font-b);width:150px}
+.mx td{padding:0;border:0}
+.mx button{width:100%;font:inherit;font-size:.8rem;line-height:1.35;padding:6px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-align:left;min-height:46px}
+.mx button.w-sw{border-left:5px solid var(--sw)}
+.mx button.w-ex{border-left:5px solid var(--muted)}
+.mx button.w-hw{border-left:5px solid var(--per)}
+.mx button.na{color:var(--muted);background:var(--soft);border-style:dashed}
+.mx button[aria-pressed="true"]{outline:3px solid var(--pc);outline-offset:1px}
+.who{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.85rem;margin:.4rem 0}
+.who span{display:inline-flex;align-items:center;gap:6px}
+.who i{width:14px;height:14px;border-radius:3px;display:inline-block}
+pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
+details.ans{margin:.4rem 0;border:1px dashed var(--line);border-radius:6px;padding:4px 10px;background:var(--panel)}
+details.ans summary{cursor:pointer;color:var(--per);font-size:.9rem}
+details.ans[open]{background:var(--soft)}
+.task{border-left:4px solid var(--per);background:var(--panel);border-radius:0 6px 6px 0;padding:8px 12px;margin:.6rem 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.task .pg{font-family:var(--font-m);font-size:.8rem;color:var(--per)}
+.sim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:640px){.sim{grid-template-columns:minmax(0,1fr)}}
+.sim fieldset{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:0 0 8px}
+.sim legend{font-size:.82rem;color:var(--muted);padding:0 4px}
+.sim label{display:inline-flex;align-items:center;gap:4px;margin:2px 10px 2px 0;font-size:.9rem;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;margin:.4rem 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+</style>
+<style>
+.stg{display:flex;flex-wrap:wrap;gap:6px;margin:.4rem 0}
+.stg button{font:inherit;font-size:.84rem;border:1.5px solid var(--c);border-radius:999px;padding:2px 10px;background:var(--panel);color:var(--fg);cursor:pointer}
+.stg button[aria-pressed="true"]{background:color-mix(in srgb,var(--c) 25%,var(--panel))}
+.codeview{font-family:var(--font-m);font-size:.82rem;background:var(--soft);border-radius:6px;padding:6px 0;margin:.5rem 0;overflow-x:auto}
+.codeview div{padding:0 10px;white-space:pre}
+.codeview div.cur{background:color-mix(in srgb,var(--per) 28%,transparent)}
+.codeview div.dim{color:var(--muted)}
+.regs{display:grid;gap:6px;margin:.5rem 0}
+.rg2{border:1.5px solid var(--line);border-radius:6px;background:var(--panel);padding:5px 8px;min-width:0}
+.rg2.chg{border-color:var(--pc);box-shadow:0 0 0 2px color-mix(in srgb,var(--pc) 30%,transparent)}
+.rg2 .h{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;font-size:.84rem}
+.rg2 .h b{font-family:var(--font-m)}
+.rg2 .h span{color:var(--muted);font-size:.78rem}
+.fl2{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
+.fl2 span{font-family:var(--font-m);font-size:.74rem;border:1px solid var(--c);border-radius:4px;padding:1px 6px;background:color-mix(in srgb,var(--c) 10%,var(--panel))}
+.fl2 span.on{background:color-mix(in srgb,var(--c) 35%,var(--panel));font-weight:700}
+.fl2 span.x{background:var(--pc);color:var(--bg);border-color:var(--pc)}
+.wire{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:.6rem 0}
+.wire div{border:2px solid var(--c);border-radius:8px;padding:6px;text-align:center;background:var(--panel);font-size:.84rem;min-width:0}
+.wire div b{display:block;font-family:var(--font-d)}
+.wire div span{display:block;font-size:.74rem;color:var(--muted)}
+@media (max-width:760px){.wire{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+<div class="wrap">
+<div class="eyebrow">轻松版 · 读代码 · ADC 全串讲（src/my_adc.c 全文 + 所有调用处）</div>
+<h1>ADC：从上电到每 1 ms 读出两个数</h1>
+<p class="lede">把项目里所有和 ADC 有关的代码按执行顺序串起来，<b>每一行</b>都讲：它改了哪个寄存器的哪几位、手册在哪一页、为什么这么写。第 7 课讲过 ADC 的原理，这一页专讲代码。</p>
+
+<h2><span class="step">1/8</span>🧭 本质</h2>
+<p class="big">在这个项目里，ADC 只干一件事：<b>每 1 ms，把左右两个红外接收管上的电压，各变成一个 0~1023 的数。</b></p>
+<p>用 ADC 分三步，和第 3 课的“外设七步”一一对应：<b>① 开电源、开时钟、设分频</b>（只做一次）→ <b>② 把引脚切成模拟输入</b>（每个通道一次）→ <b>③ 每次要数时：选通道 → 启动 → 等 DONE → 取结果</b>。这一页的代码全部落在这三步里。</p>
+<div class="wire">
+<div style="--c:var(--gold)"><b>IR_EN</b><span>PIO0_19 = 1<br>给红外发射管通电</span></div>
+<div style="--c:var(--muted)"><b>红外对管</b><span>按下挡光<br>接收管电压下降</span></div>
+<div style="--c:var(--sw)"><b>PIO0_13 / 14</b><span>引脚切成模拟输入<br>AD2 / AD3</span></div>
+<div style="--c:var(--per)"><b>ADC 电路</b><span>3 MHz，11 个时钟<br>逐次逼近</span></div>
+<div style="--c:var(--per)"><b>DR[2] / DR[3]</b><span>结果在第 15~6 位<br>第 31 位 DONE</span></div>
+<div style="--c:var(--pc)"><b>MyADC_GetValue</b><span>取出 0~1023<br>交给按键算法</span></div>
+</div>
+<div class="scroll"><table>
+<thead><tr><th>文件</th><th>和 ADC 有关的部分</th><th>状态</th></tr></thead>
+<tbody>
+<tr><td><code>src/my_adc.c</code>、<code>inc/my_adc.h</code></td><td>本项目（chengjie，2026-08）写的 ADC 驱动，全文 167 行，整份包在 <code>#if (defined(IRPT_V4))</code> 里</td><td>✅ 在用</td></tr>
+<tr><td><code>src/GPIO.c</code></td><td><code>InitGPIO()</code> 里配置 PIO0_13 / 14、IR_EN（318~321、496~503 行）</td><td>✅ 在用</td></tr>
+<tr><td><code>src/device.c</code></td><td><code>Device_Init()</code> 调 <code>MyADC_Init()</code> 两次（485~486 行）；主循环调 <code>MyADC_Poll_Test()</code>（529 行）</td><td>✅ 在用</td></tr>
+<tr><td><code>app/button.c</code></td><td><code>LR_GetState()</code> 每 1 ms 调 <code>MyADC_GetValue()</code> 两次（320~321 行）</td><td>✅ 在用</td></tr>
+<tr><td><code>src/ADC.c</code></td><td>老代码（ADAM）的 <code>InitADC()</code>、<code>ADCRead()</code></td><td>⛔ IRPT_V4 下没编译（代码来源清单可查）</td></tr>
+</tbody></table></div>
+
+<h2><span class="step">2/8</span>动手：逐行走一遍（寄存器面板跟着变）</h2>
+<p>按执行顺序分 5 段。点“下一行”：高亮当前这行代码，紧接着是讲解和手册页码，最下面的寄存器面板显示它改了哪几位（变了的亮框、改动的位标红）。手册指 LPC11U3x 用户手册 UM10462。</p>
+<div class="stg" id="stg"></div>
+<div class="btns"><button type="button" id="aPrev">上一行</button><button type="button" id="aNext">下一行</button><span class="note" id="aProg"></span></div>
+<div class="codeview" id="code"></div>
+<div class="card" id="aInfo" aria-live="polite"></div>
+<div class="regs" id="regs"></div>
+
+<h2><span class="step">3/8</span>怎么用这个模块（API）</h2>
+<div class="scroll"><table>
+<thead><tr><th>函数</th><th>什么时候调</th><th>返回</th></tr></thead>
+<tbody>
+<tr><td><code>int32_t MyADC_Init(MyADC_ts *p)</code></td><td>每个通道开机调一次。第一次调用时顺带完成整个 ADC 的上电、开时钟、设分频（<code>hwInitFlag</code> 保证只做一次）</td><td>永远 0</td></tr>
+<tr><td><code>int32_t MyADC_GetValue(MyADC_ts *p, uint16_t *pVal)</code></td><td>要数的时候调，阻塞等转换完成（实际约 4 µs，最多等约 20 µs）</td><td>0 成功；−1 参数错；−2 超时</td></tr>
+<tr><td><code>void MyADC_Poll_Test(void)</code></td><td>调试用，函数体整个被 <code>#if 0</code> 关掉，现在是空函数</td><td>—</td></tr>
+</tbody></table></div>
+<p><b>加一个新通道的做法</b>（示意，没编译）：比如想读 PIO0_16（功能 1 = AD5）上的电压：</p>
+<pre class="code">MyADC_ts batAdcInst = {           // 1. 定义一个对象：通道号、引脚、IOCON 寄存器地址
+  .ch = 5,
+  .port = 0,
+  .pin = 16,
+  .pFuncReg = &amp;(LPC_IOCON-&gt;PIO0_16),
+};
+MyADC_Init(&amp;batAdcInst);          // 2. 开机调一次
+
+uint16_t v;
+if(MyADC_GetValue(&amp;batAdcInst, &amp;v) == 0)   // 3. 要用时读
+{
+  // v: 0~1023，对应 0~3.3 V（VDD 就是参考电压）
+}</pre>
+<p class="note">⚠️ <code>MYADC_SET_FUNC(…, MYADC_FUNC_AS_AD)</code> 写死了 FUNC = 2，注释也写着“只适用于 PIO0_13 和 PIO0_14”。PIO0_16 当 AD5 时 FUNC 是 1，所以真要加通道，<code>MyADC_ts</code> 里还得多存一个“AD 功能号”。这正是上一页“面向对象”说的：差异放进对象里。</p>
+
+<h2><span class="step">4/8</span>读出来的数之后去哪</h2>
+<p><code>LR_GetState()</code>（button.c:298）拿到两个数后：按“右、左”装进 <code>hall_spi_rx[4]</code> → <code>ProcessRecvSampleRawData()</code>：<code>1023 − 原始值</code>（按得越深数越大）→ 滤波 → 按顶部 / 底部基线换算成 0~100 的按下程度 → 快速触发状态机得出“按着 / 松着”。这部分在“一次左键点击全程”第 5、6 步，这里不重复。</p>
+
+<h2><span class="step">5/8</span>坑和值得注意的地方</h2>
+<div class="scroll"><table class="iss">
+<thead><tr><th>位置</th><th>问题</th><th>影响</th></tr></thead>
+<tbody>
+<tr><td>my_adc.c:113 vs 108、117</td><td>超时返回 −2 的那条路，<b>既没停止转换（108 行），也没把 SEL 位清掉</b>（117 行）。下一次读另一个通道时，SEL 里会同时有两位是 1；手册要求软件启动模式下只能选一个通道</td><td>只有超时才发生，概率低；但一旦发生，下一次读数可能读错通道。修法：超时返回前也清 SEL</td></tr>
+<tr><td>my_adc.c:56</td><td><code>CR &amp;= ~(0x7U &lt;&lt; 17)</code> 设 CLKS = 0。按手册 Table 352，CLKS 只在 BURST（连续转换）模式下决定转换位数</td><td>本项目用软件启动、不用 BURST，这句不起作用，也无害</td></tr>
+<tr><td>device.c:463 vs 485</td><td>开机“右键 + 后侧键”检测在 <code>MyADC_Init()</code> 之前就读 ADC。这时 ADC 没上电、没时钟</td><td>读不到 DONE，超时 −2，右键永远当松开（待上板验证）</td></tr>
+<tr><td>my_adc.c:17</td><td><code>MyADC_DelayUs</code> 就是 <code>CT16B1_DelayUs</code>：忙等，和线圈震动共用同一个定时器</td><td>两者都在主循环里顺序执行，不会冲突；但 ADC 等待期间 CPU 什么也干不了（每次约 4 µs）</td></tr>
+<tr><td>GPIO.c:497</td><td>IR_EN 开机后一直是高电平</td><td>红外发射管一直通电，挂起时也是（引脚总表记过），费电</td></tr>
+<tr><td>device.c:529</td><td>主循环每圈都调 <code>MyADC_Poll_Test()</code>，函数体是空的</td><td>浪费一次函数调用，可以删</td></tr>
+</tbody></table></div>
+
+<h2><span class="step">6/8</span>T1A</h2>
+<p>T1A 的左右键换成 GTRY164 霍尔芯片（SPI），<b>不再需要 ADC 读按键</b>；PIO0_13 / 14 改作线圈 PWM，PIO0_19 改作滚轮信号（T1A 适配清单）。所以 T1A 上：<code>MyADC_Init()</code> 的两次调用、<code>IR_EN</code> 的初始化、<code>LR_GetState()</code> 里的 ADC 分支都要去掉。<code>my_adc.c</code> 这个驱动本身可以留着，以后如果要量电池电压之类的模拟量，按第 3 节的做法加通道。</p>
+
+<h2><span class="step">7/8</span>💡 想法上</h2>
+<div class="card"><b class="t">1. 读驱动代码，一行对一个寄存器字段</b><br>这一页的方法可以用在任何外设上：每看到一句 <code>XXX-&gt;REG |= / &amp;= …</code>，就问三件事：<b>哪个寄存器？哪几位？手册里这几位是什么意思？</b>把答案写在旁边。读完一个驱动，你就有了一张“这个外设被设成了什么样”的表。</div>
+<div class="card"><b class="t">2. 错误处理的路径，最容易漏掉收尾</b><br>上面第一个坑就是典型：正常路径最后会清 SEL，超时提前 <code>return</code> 的路径却没清。以后写“中途可能返回”的函数，检查一下：<b>每一个 return 之前，该恢复的东西都恢复了吗？</b></div>
+
+<h2><span class="step">8/8</span>小测</h2>
+<div class="box quiz" id="quiz"></div>
+<div class="sum"><b>记住：</b>开机 <code>MyADC_Init()</code>：PDRUNCFG bit4 清 0（上电）、SYSAHBCLKCTRL bit13 置 1（时钟）、CLKDIV = 15（48 MHz ÷ 16 = 3 MHz）；引脚 IOCON 去上下拉、ADMODE 清 0（模拟）、FUNC = 2（AD）。每次 <code>MyADC_GetValue()</code>：停 → 选 SEL → 读一次 DR 清 DONE → START = 001 → 每 2 µs 看 DONE → 取 DR 第 15~6 位 → 清 SEL。</div>
+<h3>本页新词</h3>
+<table><tbody>
+<tr><td><b>CLKDIV</b></td><td>ADC 时钟分频：ADC 时钟 = 系统时钟 ÷（CLKDIV + 1），不能超过 4.5 MHz</td></tr>
+<tr><td><b>SEL</b></td><td>CR 低 8 位，选哪个通道</td></tr>
+<tr><td><b>START</b></td><td>CR 第 26~24 位，写 001 = 立刻开始转换</td></tr>
+<tr><td><b>DONE</b></td><td>DR 第 31 位，转换完成；读一次 DR 自动清掉</td></tr>
+<tr><td><b>ADMODE</b></td><td>IOCON 第 7 位：0 = 模拟（断开数字输入电路），1 = 数字</td></tr>
+<tr><td><b>BURST</b></td><td>连续转换模式（本项目没用）</td></tr>
+</tbody></table>
+</div>
+<script>
+const AC={"gpio": [[318, "    LPC_IOCON->TDO_PIO0_13 &= ~0x07 ;"], [319, "    LPC_IOCON->TDO_PIO0_13 |= 0x01 ;                                "], [320, "    LPC_IOCON->TRST_PIO0_14 &= ~0x07 ;"], [321, "    LPC_IOCON->TRST_PIO0_14 |= 0x01 ; "], [0, "  ……"], [495, "  //IRPT"], [496, "  IOCTRL_NoPull(IR_EN);"], [497, "  IOCTRL_HighLevel(IR_EN_PORT, IR_EN_PIN);   //high: enable, open power."], [498, "  IOCTR_PushPull(IR_EN);"], [499, "  IOCTRL_CfgAsOutput(IR_EN_PORT, IR_EN_PIN);"], [500, "  IOCTRL_NoPull(LB_ADC);"], [501, "  DrvGPIOInput(LB_ADC_PORT, LB_ADC_PIN);    //LB_ADC"], [502, "  IOCTRL_NoPull(RB_ADC);"], [503, "  DrvGPIOInput(RB_ADC_PORT, RB_ADC_PIN);    //RB_ADC"]], "dev": [[463, "    Device_Manually_Enter_RestoreDefault(); "], [0, "  ……"], [485, "  MyADC_Init(pLeftAdcHandle);"], [486, "  MyADC_Init(pRightAdcHandle);"]], "init": [[45, "static uint8_t hwInitFlag = 0;"], [46, "static void MyADC_HwInit(void)"], [47, "{"], [48, "  if(!hwInitFlag)"], [49, "  {"], [50, "    hwInitFlag = 0xFF;"], [51, "    LPC_SYSCON->PDRUNCFG &= ~(1U << 4); // Open adc power"], [52, "    LPC_SYSCON->SYSAHBCLKCTRL |= (1u << 13); //enables clock for ADC"], [53, "   "], [54, "    LPC_ADC->CR &= ~(0xFFU << 8); "], [55, "    LPC_ADC->CR |= (15U << 8); // 48MHz / (15+1) = 3Mhz"], [56, "    LPC_ADC->CR &= ~(0x7U << 17);  //11 clocks,  10bit accuracy"], [57, "  }"], [58, "}"], [59, "__attribute__((unused)) static void MyADC_HwDeinit(void)"], [60, "{"], [61, "  LPC_ADC->CR &= ~(1u << 24); //stop conversion"], [62, "  LPC_SYSCON->SYSAHBCLKCTRL &= ~(1u << 13); //disable clock for ADC"], [63, "  LPC_SYSCON->PDRUNCFG |= (1U << 4); // close adc power"], [64, "  hwInitFlag = 0;"], [65, "}"], [66, ""], [67, "int32_t MyADC_Init(MyADC_ts *p)"], [68, "{"], [69, "   MyADC_HwInit();"], [70, "  //GPIO"], [71, "  *(p->pFuncReg) &= (~((0x01 << 3) | (0x01 << 4))); // no pull-down, no pull-up"], [72, "  DrvGPIOInput(p->port, p->pin); //input mode"], [73, "  *(p->pFuncReg) &= ~(1U << 7);  //analog input mode"], [74, "  MYADC_SET_FUNC(*(p->pFuncReg), MYADC_FUNC_AS_AD); //AD FUNC"], [75, "  return 0;"], [76, "}"]], "get": [[79, "int32_t MyADC_GetValue(MyADC_ts *p, uint16_t *pVal)"], [80, "{"], [81, "  uint32_t dummy;"], [82, "  uint8_t ch = 0;"], [83, "  #if MYDEBUG_ENABLE"], [84, "  cnt = 0;"], [85, "  #else"], [86, "  uint8_t cnt = 0;"], [87, "  #endif"], [88, "  "], [89, "  if(!p || p->ch > 7)"], [90, "  {"], [91, "    return -1;"], [92, "  }"], [93, ""], [94, "  ch = p->ch;"], [95, "  LPC_ADC->CR &= ~(1u << 24); //stop conversion"], [96, "  //LPC_ADC->CR &= ~(0xFFU);  //0~7bit clear"], [97, "  LPC_ADC->CR |= (1u << ch);  //select channel"], [98, "  dummy = LPC_ADC->DR[ch]; // clear DONE of bit31"], [99, "  (void)dummy; //cancel warnning"], [100, "  LPC_ADC->CR |= (1u << 24); //start conversion now"], [101, "  "], [102, "  while(1)"], [103, "  {"], [104, "    cnt += 1;"], [105, "    MyADC_DelayUs(2);"], [106, "    if((LPC_ADC->DR[ch]) & (1u << 31))"], [107, "    {"], [108, "      LPC_ADC->CR &= ~(1u << 24); //stop conversion"], [109, "      break;"], [110, "    }"], [111, "    if(cnt >= 10)"], [112, "    {"], [113, "      return -2;"], [114, "    }"], [115, "  }"], [116, "  *pVal = (LPC_ADC->DR[ch] >> 6) & 0x3FF; //[15:6] is data, 10BIT"], [117, "  LPC_ADC->CR &= ~(1u << ch);  //cancel selected channel"], [118, "  "], [119, "  //If necessary, convert to voltage"], [120, "  //float voltage = (float)(*pVal) * 3.3f / 1023.0f;"], [121, "  "], [122, "  return 0;"], [123, "}"]]};
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const S0={pd:1,ahb:0,sel:0,div:0,burst:0,clks:0,start:0,f13:0,m13:2,a13:1,d13:0,f14:0,m14:2,a14:1,d14:0,p19:0,d19:0,done:0,res:0,hw:0,ret:'—'};
+const MODE=['无上下拉','下拉','上拉','中继'],FUNC13=['TDO','PIO0_13','AD2','CT32B1_MAT0'],FUNC14=['TRST','PIO0_14','AD3','CT32B1_MAT1'];
+const STG=[
+ {k:'rst',n:'A 上电复位',c:'muted',code:null,steps:[
+  {hl:[],t:'芯片刚上电，所有寄存器是复位值：<b>ADC 断电</b>（PDRUNCFG bit4 = 1）、<b>没时钟</b>（SYSAHBCLKCTRL bit13 = 0）；PIO0_13 / 14 的 IOCON 是 FUNC = 0（JTAG 的 TDO / TRST）、上拉、ADMODE = 1（数字）。这两只脚此刻还不是 ADC 输入。',m:'p.43 Table 47（PDRUNCFG）；p.31 Table 24（SYSAHBCLKCTRL）；p.96 Table 89、p.97 Table 90（IOCON 复位值）',set:{}}]},
+ {k:'gpio',n:'B InitGPIO（GPIO.c）',c:'sw',code:'gpio',steps:[
+  {hl:[318,319],t:'把 PIO0_13 的 FUNC（第 2~0 位）先清 0 再写 1：从 JTAG 的 TDO 改成普通 GPIO。<code>&amp;= ~0x07</code> 清低 3 位，<code>|= 0x01</code> 写 1。',m:'p.96 Table 89 FUNC',set:{f13:1},chg:['io13']},
+  {hl:[320,321],t:'PIO0_14 同样从 TRST 改成 GPIO。为什么先改成 GPIO？因为 JTAG 功能会占用这两只脚；先让它们变成“普通脚”，后面再切成 AD。',m:'p.97 Table 90 FUNC',set:{f14:1},chg:['io14']},
+  {hl:[496,497,498,499],t:'IR_EN（PIO0_19）：无上下拉 → <code>SET[0] = 1&lt;&lt;19</code> 先输出高 → 推挽 → <code>DIR[0] |= 1&lt;&lt;19</code> 设为输出。<b>先给好电平再设为输出</b>，避免切成输出的一瞬间出现错误电平。高电平 = 给红外发射管通电，从此一直亮。',m:'第 6 课 GPIO；IR_EN 见 my_board.h',set:{p19:1,d19:1},chg:['ir']},
+  {hl:[500,501],t:'<code>IOCTRL_NoPull(LB_ADC)</code> 展开是 <code>LPC_IOCON-&gt;TDO_PIO0_13 &amp;= ~((1&lt;&lt;3)|(1&lt;&lt;4))</code>：MODE 清 0，去掉上拉。<b>模拟输入必须去掉上下拉</b>，否则上拉电阻会把被测电压拉偏。再 <code>DIR[0] &amp;= ~(1&lt;&lt;13)</code> 设为输入。',m:'p.96 Table 89 MODE（bit4:3）',set:{m13:0,d13:0},chg:['io13','dir']},
+  {hl:[502,503],t:'PIO0_14 同样：去上下拉、设输入。到这里两只脚还是“数字 GPIO 输入”，ADMODE 仍是 1。',m:'p.97 Table 90',set:{m14:0,d14:0},chg:['io14','dir']},
+ ]},
+ {k:'dev',n:'C 开机组合键（device.c:463）',c:'pc',code:'dev',steps:[
+  {hl:[463],t:'<code>Device_Manually_Enter_RestoreDefault()</code> 检查“右键 + 后侧键”，会走到 <code>Button_GetState()</code> → <code>MyADC_GetValue()</code>。<b>这时 ADC 还没上电、没时钟</b>，DONE 永远等不到，10 次后返回 −2，右键当成松开（第 5 节第 3 个坑，待上板验证）。',m:'device.c:463 早于 485',set:{ret:'−2（超时）'},chg:['ret']},
+  {hl:[485,486],t:'<code>Device_Init()</code> 末尾才调用 <code>MyADC_Init(pLeftAdcHandle)</code> 和 <code>MyADC_Init(pRightAdcHandle)</code>。下一段进到函数里面逐行看。',m:'',set:{ret:'—'},chg:[]},
+ ]},
+ {k:'init',n:'D MyADC_Init（my_adc.c:45~76）',c:'per',code:'init',steps:[
+  {hl:[67,68,69],t:'<code>MyADC_Init(pLeftAdcHandle)</code>：<code>p</code> 指向 <code>leftAdcInst</code>（ch = 2、PIO0_13、pFuncReg = &amp;LPC_IOCON-&gt;TDO_PIO0_13）。第一件事调 <code>MyADC_HwInit()</code>。',m:'',set:{},chg:[]},
+  {hl:[45,48,50],t:'<code>static uint8_t hwInitFlag</code>：文件内 static，记住“整个 ADC 已经初始化过”。第一次进来是 0，置成 0xFF；第二个通道再调就直接跳过。<b>一个 ADC 模块、多个通道</b>，模块级的设置只做一次。',m:'',set:{hw:1},chg:['hw']},
+  {hl:[51],t:'<code>PDRUNCFG &amp;= ~(1U &lt;&lt; 4)</code>：PDRUNCFG 每一位是“这个模块断电吗”，bit4 是 ADC_PD。清 0 = <b>给 ADC 模拟电路通电</b>。',m:'p.43 Table 47 bit4 ADC_PD',set:{pd:0},chg:['pd']},
+  {hl:[52],t:'<code>SYSAHBCLKCTRL |= (1u &lt;&lt; 13)</code>：bit13 = 1，<b>给 ADC 的寄存器接口开时钟</b>。不开的话，读写 ADC 寄存器都没有效果。电源和时钟是两回事，都要开。',m:'p.31 Table 24 bit13',set:{ahb:1},chg:['ahb']},
+  {hl:[54,55],t:'CR 的第 15~8 位是 CLKDIV。先清 8 位，再写 15：ADC 时钟 = 系统时钟 48 MHz ÷ (15 + 1) = <b>3 MHz</b>。手册要求不超过 4.5 MHz。一次转换 11 个时钟 ≈ 3.7 µs。',m:'p.385 Table 352 CLKDIV',set:{div:15},chg:['cr']},
+  {hl:[56],t:'CR 第 19~17 位 CLKS 清 0（注释写“11 个时钟、10 位”）。按 Table 352，CLKS 只在 BURST 连续转换模式下起作用；本项目用软件启动，这句不影响结果，写上无害。',m:'p.385 Table 352 CLKS',set:{clks:0},chg:['cr']},
+  {hl:[71],t:'回到 <code>MyADC_Init()</code>，开始配这一只脚。<code>*(p-&gt;pFuncReg)</code> 就是 <code>LPC_IOCON-&gt;TDO_PIO0_13</code>（通过指针访问）。清第 3、4 位：MODE = 0，无上下拉（GPIO.c 已经做过一次，这里再保证一次）。',m:'p.96 Table 89 MODE',set:{m13:0},chg:['io13']},
+  {hl:[72],t:'<code>DrvGPIOInput(0, 13)</code>：<code>DIR[0] &amp;= ~(1&lt;&lt;13)</code>，设为输入（也是再保证一次）。',m:'第 6 课',set:{d13:0},chg:['dir']},
+  {hl:[73],t:'<code>&amp;= ~(1U &lt;&lt; 7)</code>：IOCON 第 7 位 ADMODE 清 0 = <b>模拟模式</b>。断开这只脚的数字输入电路，模拟电压不会被数字电路干扰，也省电。',m:'p.96 Table 89 ADMODE；7.3.7',set:{a13:0},chg:['io13']},
+  {hl:[74],t:'<code>MYADC_SET_FUNC(reg, 2)</code> 展开：<code>reg = (reg &amp; ~0x07) | 0x02</code>。FUNC = 2 = <b>AD2</b>。从这一刻起，PIO0_13 上的电压接到 ADC 第 2 通道。左键配完，返回 0。',m:'p.96 Table 89 FUNC = 0x2 AD2',set:{f13:2},chg:['io13']},
+  {hl:[67,69,71,72,73,74],t:'<code>MyADC_Init(pRightAdcHandle)</code>：<code>MyADC_HwInit()</code> 看到 <code>hwInitFlag = 0xFF</code>，直接返回；PIO0_14 走同样 4 步：无上下拉、输入、ADMODE = 0、FUNC = 2（AD3）。初始化全部完成。',m:'p.97 Table 90',set:{m14:0,a14:0,f14:2},chg:['io14']},
+ ]},
+ {k:'get',n:'E MyADC_GetValue（每 1 ms）',c:'gold',code:'get',steps:[
+  {hl:[79,89,94],t:'<code>LR_GetState()</code> 调 <code>MyADC_GetValue(pLeftAdcHandle, &amp;leftVal)</code>。先检查参数（指针为空或通道号 &gt; 7 就返回 −1），取出 <code>ch = 2</code>。',m:'',set:{ret:'—'},chg:[]},
+  {hl:[95],t:'<code>CR &amp;= ~(1u &lt;&lt; 24)</code>：START（第 26~24 位）的最低位清 0 → START = 000，<b>不启动</b>。先停下来，再改设置。',m:'p.385 Table 352 START',set:{start:0},chg:['cr']},
+  {hl:[97],t:'<code>CR |= (1u &lt;&lt; ch)</code>：SEL（第 7~0 位）的第 2 位置 1，<b>选通道 2</b>。注意上一行注释掉的 <code>CR &amp;= ~0xFF</code>：它不清别的通道位，全靠上一次读完后自己清（第 117 行）。',m:'p.385 Table 352 SEL',set:{sel:4},chg:['cr']},
+  {hl:[98,99],t:'<code>dummy = DR[2]</code>：读一次 DR，<b>顺手清掉上一次的 DONE</b>（手册：读 DR 会清 DONE）。读出来的值不要，<code>(void)dummy</code> 只是让编译器别报“变量没用”的警告。',m:'p.387 Table 355 DONE',set:{done:0},chg:['dr']},
+  {hl:[100],t:'<code>CR |= (1u &lt;&lt; 24)</code>：START = 001 = <b>立刻开始转换</b>。ADC 开始对 AD2 的电压采样，逐次逼近 10 次，约 3.7 µs。',m:'p.385 Table 352 START = 0x1',set:{start:1},chg:['cr']},
+  {hl:[102,104,105,106,111],t:'第 1 圈：<code>cnt = 1</code>，忙等 2 µs，看 DR[2] 第 31 位 DONE：还是 0（才过 2 µs）。<code>cnt</code> 没到 10，继续。',m:'',set:{},chg:[]},
+  {hl:[104,105,106,108,109],t:'第 2 圈：再等 2 µs，共约 4 µs，DONE = 1 → START 清回 000 停止 → <code>break</code> 跳出循环。（如果等了 10 圈约 20 µs 还没 DONE，就 <code>return -2</code>，这条路没清 START、没清 SEL，第 5 节第 1 个坑。）',m:'p.387 Table 355',set:{done:1,res:612,start:0},chg:['dr','cr']},
+  {hl:[116],t:'<code>*pVal = (DR[2] &gt;&gt; 6) &amp; 0x3FF</code>：结果在第 15~6 位，右移 6 位再留低 10 位，得到 0~1023。这里假设读出 612，约 612 ÷ 1023 × 3.3 V ≈ 1.97 V。',m:'p.387 Table 355 V_VREF（bit15:6）',set:{},chg:['dr']},
+  {hl:[117],t:'<code>CR &amp;= ~(1u &lt;&lt; ch)</code>：取消选择通道 2，留给下一次（右键用通道 3）。',m:'',set:{sel:0},chg:['cr']},
+  {hl:[122],t:'<code>return 0</code>，左键读完。紧接着 <code>MyADC_GetValue(pRightAdcHandle, &amp;rightVal)</code> 对通道 3 再走一遍。两次合计约 8~10 µs，每 1 ms 一次。',m:'',set:{ret:'0（成功），值 612'},chg:['ret']},
+ ]},
+];
+const flat=[];STG.forEach((g,gi)=>g.steps.forEach((s,si)=>flat.push({gi,si})));
+let cur=0;
+function stAt(k){const o=Object.assign({},S0);for(let i=0;i<=k;i++){const f=flat[i];Object.assign(o,STG[f.gi].steps[f.si].set)}return o}
+function fl(c,arr){return `<div class="fl2" style="--c:${V(c)}">${arr.map(a=>`<span class="${a[1]?'on':''}${a[2]?' x':''}">${a[0]}</span>`).join('')}</div>`}
+function draw(){const f=flat[cur],g=STG[f.gi],s=g.steps[f.si],st=stAt(cur),pv=cur?stAt(cur-1):S0;const ch=s.chg||[];
+ [...$('stg').children].forEach((b,i)=>b.setAttribute('aria-pressed',i===f.gi));
+ $('code').innerHTML=g.code?AC[g.code].map(([n,t])=>`<div class="${s.hl.includes(n)?'cur':''}${n===0?' dim':''}">${n?String(n).padStart(3,' '):'   '}  ${esc(t)}</div>`).join(''):'<div class="dim">  （上电，还没有代码运行）</div>';
+ const d=k=>st[k]!==pv[k];
+ const R=[];
+ R.push(['pd','PDRUNCFG','0x4004 8238',fl('gold',[[`bit4 ADC_PD = ${st.pd}（${st.pd?'断电':'通电'}）`,!st.pd,d('pd')]])]);
+ R.push(['ahb','SYSAHBCLKCTRL','0x4004 8080',fl('gold',[[`bit13 ADC = ${st.ahb}（${st.ahb?'时钟开':'时钟关'}）`,st.ahb,d('ahb')]])]);
+ R.push(['io13','IOCON TDO_PIO0_13','0x4004 4034',fl('sw',[[`FUNC = ${st.f13}（${FUNC13[st.f13]}）`,st.f13===2,d('f13')],[`MODE = ${MODE[st.m13]}`,st.m13===0,d('m13')],[`ADMODE = ${st.a13}（${st.a13?'数字':'模拟'}）`,!st.a13,d('a13')]])]);
+ R.push(['io14','IOCON TRST_PIO0_14','0x4004 4038',fl('sw',[[`FUNC = ${st.f14}（${FUNC14[st.f14]}）`,st.f14===2,d('f14')],[`MODE = ${MODE[st.m14]}`,st.m14===0,d('m14')],[`ADMODE = ${st.a14}（${st.a14?'数字':'模拟'}）`,!st.a14,d('a14')]])]);
+ R.push(['dir','GPIO DIR[0]','0x5000 2000',fl('sw',[[`bit13 = ${st.d13}（输入）`,0,d('d13')],[`bit14 = ${st.d14}（输入）`,0,d('d14')]])]);
+ R.push(['ir','IR_EN（PIO0_19）','',fl('gold',[[`方向 = ${st.d19?'输出':'输入'}`,st.d19,d('d19')],[`电平 = ${st.p19}（红外${st.p19?'通电':'不亮'}）`,st.p19,d('p19')]])]);
+ R.push(['cr','ADC CR','0x4001 C000',fl('per',[[`SEL[7:0] = ${st.sel.toString(2).padStart(8,'0')}${st.sel?'（通道 '+Math.log2(st.sel)+'）':''}`,st.sel,d('sel')],[`CLKDIV[15:8] = ${st.div}（${st.div?(48/(st.div+1)).toFixed(0)+' MHz':'—'}）`,st.div,d('div')],[`BURST[16] = 0`,0,0],[`CLKS[19:17] = ${st.clks}`,0,0],[`START[26:24] = ${st.start.toString(2).padStart(3,'0')}${st.start?'（开始）':''}`,st.start,d('start')]])]);
+ R.push(['dr','ADC DR[2]','0x4001 C018',fl('per',[[`DONE[31] = ${st.done}`,st.done,d('done')],[`RESULT[15:6] = ${st.res}`,st.res,d('res')]])]);
+ R.push(['hw','hwInitFlag（my_adc.c 的 static）','RAM',fl('muted',[[`= ${st.hw?'0xFF（已初始化）':'0'}`,st.hw,d('hw')]])]);
+ R.push(['ret','返回值','',fl('muted',[[st.ret,st.ret!=='—',d('ret')]])]);
+ $('regs').innerHTML=R.map(([k,n,a,b])=>`<div class="rg2${ch.includes(k)?' chg':''}"><div class="h"><b>${n}</b><span>${a}</span></div>${b}</div>`).join('');
+ $('aInfo').innerHTML=`<b class="t">${g.n} · 第 ${f.si+1} / ${g.steps.length} 步</b><br>${s.t}${s.m?`<br><span class="note">📖 ${s.m}</span>`:''}`;
+ $('aProg').textContent=`${cur+1} / ${flat.length}`;$('aPrev').disabled=cur===0;$('aNext').disabled=cur===flat.length-1}
+STG.forEach((g,gi)=>{const b=document.createElement('button');b.type='button';b.textContent=g.n;b.style.setProperty('--c',V(g.c));b.onclick=()=>{cur=flat.findIndex(x=>x.gi===gi);draw()};$('stg').appendChild(b)});
+$('aNext').onclick=()=>{cur++;draw()};$('aPrev').onclick=()=>{cur--;draw()};draw();
+const Q=[
+ ['1. ADC 要能用，“电源”和“时钟”分别是哪两个寄存器位？',['PDRUNCFG bit4 清 0、SYSAHBCLKCTRL bit13 置 1','CR 的 START 和 SEL','IOCON 的 FUNC 和 MODE'],0,'对。一个给模拟电路通电，一个给寄存器接口开时钟。','看 D 段第 3、4 步。'],
+ ['2. ADC 时钟是多少？',['48 MHz','3 MHz','4.5 MHz'],1,'对。48 ÷ (15 + 1) = 3 MHz，不超过 4.5 MHz。','看 D 段第 5 步。'],
+ ['3. 为什么要把 IOCON 的 ADMODE 清 0？',['让引脚变成输出','切成模拟模式，断开数字输入电路','开上拉'],1,'对。','看 D 段第 9 步。'],
+ ['4. dummy = DR[ch] 这一句是为了什么？',['读上次的结果备用','读一次清掉旧的 DONE','延时'],1,'对。读 DR 会清 DONE，这样后面等到的 DONE 一定是这次的。','看 E 段第 4 步。'],
+ ['5. 结果怎么从 DR 里取出来？',['DR & 0x3FF','(DR >> 6) & 0x3FF','DR >> 31'],1,'对。结果在第 15~6 位。','看 E 段第 8 步。'],
+ ['6. 超时返回 −2 的那条路少做了什么？',['没停止转换、没清 SEL','没读 DR','没开时钟'],0,'对。下一次读别的通道时 SEL 会有两位同时为 1。','看第 5 节第 1 个坑。'],
+];
+(function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0]}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+</script>

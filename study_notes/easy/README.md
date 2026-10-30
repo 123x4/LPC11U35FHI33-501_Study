@@ -40,6 +40,7 @@
 | 页面 | 在线页面 |
 |---|---|
 | **主线：一次左键点击（全程 + 26 个全局变量 + 24 个函数）** | https://claude.ai/artifact/QoPZuz6jMfgBqK7WrEJL29 |
+| 模块：ADC 全串讲（每一行代码 + 寄存器变化） | https://claude.ai/artifact/KM5wmiR61CJWKNEk68Xnfs |
 | 全程：按下 DPI 键的完整流程（17 步） | https://claude.ai/artifact/7yhiDgMLCiZYLqHzKXnRVy |
 | 文件夹：app 文件夹四份代码 | https://claude.ai/artifact/DQeECLZbqjbizU3wtk2zHv |
 | 文件：custom.c 完全讲透 | https://claude.ai/artifact/VZVKafNhxDA6watP5e6RMT |
@@ -126,3 +127,5 @@
 **读 app 文件夹时发现的问题**（详见“app 文件夹四份代码”页面）：① DPI 键不改 PAW3950（`optical_set_dpi()` 被 `#if` 关掉），但每按一次写一次 EEPROM、给 GUI 发一包；② `Main_Mouse_SCROLL_UP/DN()` 写的 `g_Main_Setting.MouseInReport` 在 IRPT_V4 下没人发送；③ scroll.c 第 15 行注释的 up / down 和代码相反；④ optical_3325.c 只剩 `TimerDelayMsec()` 在用，却让整段约 720 字节留在 Flash 里；⑤ button.c 的 `Hall_*` 函数（霍尔芯片菊花链）对 T1A 的 GTRY164 有参考价值，先别删。
 
 **读 custom.c 时新发现的问题**（详见“custom.c 完全讲透”页面）：① 老 GUI 切配置（0x05）、整体同步（0x01）后 RAM 不更新（`Custom_Load_ModeSetting()` 的读取被注释）；② 多媒体 / 热键 id 低 4 位直接当表下标，`consumer_a_table` 7 项、`consumer_b_table` 11 项，会越界；③ `inc/gloab.h:20` 的 `#pragma pack(1)` 没恢复，影响所有 include 它的文件；④ 开机组合键（右键 + 后侧键）在 IRPT_V4 下可能因 ADC 未初始化而失效，待上板验证。
+
+**ADC 全串讲时新发现**：`MyADC_GetValue()` 超时返回 −2 的那条路（my_adc.c:113）既没停止转换、也没清 SEL 位，下一次读另一个通道时 SEL 会同时选中两个通道；主循环每圈调用的 `MyADC_Poll_Test()` 函数体是 `#if 0`，是空调用。
