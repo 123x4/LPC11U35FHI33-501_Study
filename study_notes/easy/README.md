@@ -45,6 +45,7 @@
 | 文件：custom.c 完全讲透 | https://claude.ai/artifact/VZVKafNhxDA6watP5e6RMT |
 | 函数：Button_GetState()（6 个键的快照） | https://claude.ai/artifact/BMsC1ca4aV6Wh5QRUoTySZ |
 | 专题：从内存看一次 IO | https://claude.ai/artifact/6Z4TjTfoJmmkLUsBX27KDm |
+| 思想：C 语言里的面向对象（用本项目代码举例） | https://claude.ai/artifact/1pZrKGuEwLFjCwAWh7nK8H |
 | 早期版：函数讲解 Custom_Paramter_Init()（已并入 custom.c 完全讲透） | https://claude.ai/artifact/C2Pkz5eGpiTkeNkUvThqJJ |
 
 ### 四、速查与清单

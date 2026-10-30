@@ -1,0 +1,347 @@
+<title>C 语言里的面向对象</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one relaxed reading column (~860px); every idea = picture first, then a "try it" box, then at most a few lines of code. */
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --hw:#7a5ea8; --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --hw:#b49be0; --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;font-weight:600;margin-top:2.8rem}
+h3{font-size:1.1rem;font-weight:600;margin-top:1.4rem}
+p{margin:.7rem 0;max-width:66ch}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.08em;color:var(--muted)}
+.lede{font-size:1.08rem;color:var(--muted)}
+code,.mono{font-family:var(--font-m);font-size:.88em}
+code{background:var(--soft);padding:.05em .35em;border-radius:3px}
+.step{display:inline-block;font-family:var(--font-m);font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:1rem 0}
+.try{border-color:var(--per)}
+.try>.tag{font-family:var(--font-m);font-size:.75rem;color:var(--per);letter-spacing:.06em}
+.scroll{overflow-x:auto}
+.scroll svg,.box svg{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+.big{font-family:var(--font-d);font-size:1.25rem;font-weight:600;max-width:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:.6rem 0}
+.btns button,.btn{font:inherit;font-size:.92rem;padding:6px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.btns button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.card{border-left:4px solid var(--per);background:var(--soft);border-radius:0 6px 6px 0;padding:10px 14px;margin:.8rem 0}
+.card b.t{font-family:var(--font-d);font-size:1.08rem}
+.flowlist{margin:.6rem 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.flowlist li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.flowlist li>i{font-style:normal;font-family:var(--font-m);font-size:.8rem;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--bg)}
+.flowlist small{color:var(--muted);font-family:var(--font-m);font-size:.78rem}
+.quiz{display:grid;gap:14px}
+.q p{margin:.2rem 0 .4rem;font-weight:600}
+.q .opts{display:flex;flex-wrap:wrap;gap:8px}
+.q button{font:inherit;font-size:.92rem;padding:5px 12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;cursor:pointer}
+.q button.ok{border-color:var(--good);color:var(--good);font-weight:600}
+.q button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.q .fb{font-size:.9rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.sum{border:2px solid var(--sw);border-radius:8px;padding:14px 16px;background:var(--panel)}
+.sum b{color:var(--sw)}
+.route{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:4px}
+.route li{display:grid;grid-template-columns:26px 54px minmax(0,1fr);gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px}
+.route li.cur{background:var(--soft)}
+.route .stage{font-family:var(--font-d);font-size:.95rem;margin-top:.8rem;color:var(--muted);display:block}
+.route input{width:16px;height:16px;accent-color:var(--sw)}
+.route .no{font-family:var(--font-m);font-size:.82rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.84rem}
+input[type=range]{width:100%;accent-color:var(--per)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:.6rem 0}
+.stat{background:var(--soft);border-radius:6px;padding:8px 10px}
+.stat span{display:block;font-size:.78rem;color:var(--muted)}
+.stat b{font-family:var(--font-m);font-size:1.25rem;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--font-b)}
+svg .m{font-family:var(--font-m)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.term{display:inline-block;border:1px dashed var(--sw);border-radius:4px;padding:0 6px;font-weight:600;color:var(--sw)}
+.def{border-left:4px solid var(--sw);background:var(--soft);border-radius:0 6px 6px 0;padding:8px 14px;margin:.8rem 0}
+.def b{color:var(--sw)}
+.bits{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+.bit{width:44px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);font:inherit;cursor:pointer;padding:4px 0;text-align:center}
+.bit b{display:block;font-family:var(--font-m);font-size:1.3rem}
+.bit small{display:block;font-size:.66rem;color:var(--muted);font-family:var(--font-m)}
+.bit.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.bit.on small{color:var(--bg)}
+.bit.hi{box-shadow:0 0 0 3px var(--pc)}
+.gap{width:10px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;margin:.4rem 0}
+.reg div{font-family:var(--font-m);font-size:.8rem;text-align:center;border-radius:3px;padding:3px 0;background:var(--soft);color:var(--muted)}
+.reg div.on{background:var(--gold);color:var(--bg)}
+.reg div.chg{outline:2px solid var(--pc)}
+.reg div.n{background:none;font-size:.62rem;padding:0}
+.reg div.n.hl{color:var(--pc);font-weight:700}
+.where{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--panel);margin:1rem 0}
+.where b{color:var(--per)}
+.mx{border-collapse:separate;border-spacing:4px;min-width:720px}
+.mx th{text-align:center;font-family:var(--font-d);font-size:.95rem;color:var(--fg)}
+.mx th.s{text-align:left;font-size:.85rem;color:var(--muted);font-family:var(--font-b);width:150px}
+.mx td{padding:0;border:0}
+.mx button{width:100%;font:inherit;font-size:.8rem;line-height:1.35;padding:6px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;text-align:left;min-height:46px}
+.mx button.w-sw{border-left:5px solid var(--sw)}
+.mx button.w-ex{border-left:5px solid var(--muted)}
+.mx button.w-hw{border-left:5px solid var(--per)}
+.mx button.na{color:var(--muted);background:var(--soft);border-style:dashed}
+.mx button[aria-pressed="true"]{outline:3px solid var(--pc);outline-offset:1px}
+.who{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.85rem;margin:.4rem 0}
+.who span{display:inline-flex;align-items:center;gap:6px}
+.who i{width:14px;height:14px;border-radius:3px;display:inline-block}
+pre.code{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:.5rem 0;white-space:pre}
+.um{font-family:var(--font-m);font-size:.8rem;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:.6rem 0;background:var(--panel)}
+.um .cap{background:var(--soft);padding:6px 10px;font-weight:600;color:var(--fg)}
+.um table{font-size:.8rem;margin:0}
+.um td,.um th{padding:4px 8px}
+.um tr.pick{cursor:pointer}
+.um tr.pick:hover{background:var(--soft)}
+.um tr.ok td{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.um tr.bad td{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.man{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--panel)}
+.man .src{font-size:.8rem;color:var(--muted)}
+.man .en{font-family:var(--font-m);font-size:.8rem;margin:4px 0;white-space:pre-wrap}
+.man .zh{font-size:.88rem}
+.tl{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:0;border-left:3px solid var(--line);margin-left:12px}
+.tl li{position:relative;padding:6px 0 10px 22px}
+.tl li::before{content:"";position:absolute;left:-9px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--sw)}
+.tl li.ex::before{border-color:var(--muted)}
+.tl li.irq::before{background:var(--pc);border-color:var(--pc)}
+.tl li b.fn{font-family:var(--font-m);font-size:.9rem}
+.tl .tag2{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:6px;color:var(--muted)}
+.tl .why{display:block;font-size:.88rem;color:var(--muted)}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:.6rem 0}
+.ring div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.ring div b{font-family:var(--font-m);font-size:.85rem;display:block;color:var(--sw)}
+.tl li,.man .en,.card,.def{overflow-wrap:anywhere}
+.wrap>table{display:block;overflow-x:auto}
+.tree{font-family:var(--font-m);font-size:.88rem;display:grid;gap:2px}
+.tree button{font:inherit;text-align:left;background:none;border:0;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer}
+.tree button:hover,.tree button[aria-pressed="true"]{background:var(--soft)}
+.tree .d{color:var(--per);font-weight:600}
+.snip{font-family:var(--font-m);font-size:.84rem;background:var(--soft);border-radius:6px;padding:8px 0;overflow-x:auto;margin:.5rem 0}
+.snip div{padding:0 10px;white-space:pre;line-height:1.6}
+.snip .pp{color:var(--pc)}
+.snip .off{opacity:.3;text-decoration:line-through}
+.snip .on{background:color-mix(in srgb,var(--sw) 18%,transparent)}
+.ftab td:first-child{font-family:var(--font-m);font-size:.82rem;white-space:nowrap}
+.bar{display:flex;height:30px;border-radius:5px;overflow:hidden;border:1px solid var(--line);margin:.4rem 0}
+.bar div{display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--bg);white-space:nowrap;overflow:hidden}
+details.ans{margin:.4rem 0;border:1px dashed var(--line);border-radius:6px;padding:4px 10px;background:var(--panel)}
+details.ans summary{cursor:pointer;color:var(--per);font-size:.9rem}
+details.ans[open]{background:var(--soft)}
+.task{border-left:4px solid var(--per);background:var(--panel);border-radius:0 6px 6px 0;padding:8px 12px;margin:.6rem 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.task .pg{font-family:var(--font-m);font-size:.8rem;color:var(--per)}
+.sim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:640px){.sim{grid-template-columns:minmax(0,1fr)}}
+.sim fieldset{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:0 0 8px}
+.sim legend{font-size:.82rem;color:var(--muted);padding:0 4px}
+.sim label{display:inline-flex;align-items:center;gap:4px;margin:2px 10px 2px 0;font-size:.9rem;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;margin:.4rem 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+</style>
+<style>
+.modes{display:flex;flex-wrap:wrap;gap:8px;margin:.3rem 0 .6rem}
+.modes button{font:inherit;font-size:.9rem;border:2px solid var(--c);border-radius:8px;padding:6px 12px;background:var(--panel);color:var(--fg);cursor:pointer}
+.modes button[aria-pressed="true"]{background:color-mix(in srgb,var(--c) 22%,transparent)}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.two>div{min-width:0}
+.two h4{margin:.2rem 0;font-family:var(--font-d)}
+pre.code mark{background:color-mix(in srgb,var(--pc) 30%,transparent);color:inherit;border-radius:2px}
+.stat2{display:flex;flex-wrap:wrap;gap:8px;margin:.4rem 0}
+.stat2 span{background:var(--soft);border-radius:6px;padding:4px 10px;font-size:.88rem}
+.stat2 b{font-family:var(--font-m)}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+</style>
+<div class="wrap">
+<div class="eyebrow">轻松版 · 编程思想 · 用这个项目的代码举例</div>
+<h1>C 语言里的面向对象</h1>
+<p class="lede">C 没有 class，但面向对象是一种<b>组织代码的方式</b>，不是某种语言的专利。这一页用本项目里已经存在的代码，说明 C 怎么做到“对象、方法、封装、多态”，再看一处本该这么写、却复制粘贴了 4 份的代码，最后说 T1A 可以怎么用。</p>
+
+<h2><span class="step">1/6</span>🧭 本质</h2>
+<p class="big">面向对象的本质：<b>把“一份数据”和“操作这份数据的函数”绑在一起，并且这份数据可以有好几个实例。</b></p>
+<p>在 C 里，这件事用 4 样东西拼出来：</p>
+<div class="scroll"><table>
+<thead><tr><th>面向对象的概念</th><th>C 里怎么做</th><th>本项目里现成的例子</th></tr></thead>
+<tbody>
+<tr><td><b>类 / 对象</b>：一种东西的模样，和具体的某一个</td><td><code>typedef struct</code> 定义模样；定义几个这种类型的变量，就是几个对象</td><td><code>MyADC_ts</code> 是模样，<code>leftAdcInst</code>、<code>rightAdcInst</code> 是两个对象（my_adc.c:27、33）</td></tr>
+<tr><td><b>方法</b>：属于这个对象的操作</td><td>普通函数，<b>第一个参数传对象的指针</b>（相当于别的语言里的 this / self）</td><td><code>MyADC_GetValue(MyADC_ts *p, …)</code>：传左键的指针就读左键，传右键的就读右键</td></tr>
+<tr><td><b>封装 / 私有</b>：外面不能随便碰内部数据</td><td>在 .c 文件里用 <code>static</code> 藏起变量，头文件只公开函数</td><td>my_tick.c 里 <code>static uint32_t mySysTickMs</code>，外面只能调 <code>MyTick_GetTickMs()</code> 读，改不了</td></tr>
+<tr><td><b>多态</b>：同一句调用，不同对象有不同行为</td><td><b>函数指针</b>：存一个“该调哪个函数”的地址，运行时再决定</td><td><code>USB_P_EP[]</code>（usbuser.c:165）：USB 中断里同一句 <code>USB_P_EP[m](event)</code>（usbhw.c:1408），m 不同就调不同端点的处理函数</td></tr>
+</tbody></table></div>
+<p class="note">“继承”在 C 里很少硬做，常用<b>组合</b>代替：一个结构体里装着另一个结构体。比如 <code>TI_DRV8833_ts</code> 里装着一个 <code>TI_DRV8833_IO_ts io</code>（inc/TI_DRV8833.h:33），<code>AllConfig_ts</code> 里装着触发、线圈、刹车 5 个配置结构体。</p>
+
+<h2><span class="step">2/6</span>本项目里做得好的例子：带“句柄”的驱动</h2>
+<p><b>句柄（handle）</b>：指向某个对象的指针。函数只拿句柄，不关心具体是哪一个，所以同一份代码能服务多个实例。</p>
+<pre class="code">// src/my_adc.c:27~40  —— 两个对象
+MyADC_ts leftAdcInst  = { .ch = 2, .port = LB_ADC_PORT, .pin = LB_ADC_PIN, .pFuncReg = &(LPC_IOCON->LB_ADC) };
+MyADC_ts rightAdcInst = { .ch = 3, .port = RB_ADC_PORT, .pin = RB_ADC_PIN, .pFuncReg = &(LPC_IOCON->RB_ADC) };
+MyADC_ts *pLeftAdcHandle  = &leftAdcInst;
+MyADC_ts *pRightAdcHandle = &rightAdcInst;
+
+// 一个方法，服务两个对象（button.c:320~321）
+ret  = MyADC_GetValue(pLeftAdcHandle,  &leftVal);
+ret |= MyADC_GetValue(pRightAdcHandle, &rightVal);</pre>
+<p>chengjie 写的 <code>TI_DRV8833.c</code> 也是这个风格：<code>TI_DERV8833_Forward(TI_DRV8833_ts *p, bridge)</code>，左右两个电机驱动芯片各一个对象（<code>motorLeft</code>、<code>motorRight</code>，GEN_2_H_V1 板型用），同一套函数。</p>
+
+<h2><span class="step">3/6</span>本该这样写、却复制了 4 份的代码：左右线圈</h2>
+<p>my_electromagnet.c 里已经有了“线圈对象”<code>Ele_Handle_ts</code>，也有 <code>leftEle</code>、<code>rightEle</code> 两个实例，<code>Ele_StatusTask(Ele_Handle_ts *pEle)</code> 也是按句柄写的。可是“按下震一下 / 松开震一下”却写成了 4 个函数：<code>Ele_LeftKeyPressProcess</code>、<code>Ele_RightKeyPressProcess</code>、<code>…ReleaseProcess</code> ×2，每个约 40 行。我把左右两个“按下”函数比了一遍，<b>除了“左 / 右”这几个字，只差 3 处</b>：段位数组下标 0 / 1、定时器匹配通道 MR0 / MR1、开关哪根引脚。</p>
+<div class="box try"><div class="tag">动手 · 对比两种写法</div>
+<div class="modes" id="oopSel"></div>
+<div class="two" id="oopTwo"></div>
+<div class="stat2" id="oopStat"></div>
+</div>
+<p class="note">右边是<b>示意代码</b>，用来说明思路，没有编译过。真要改，要连同 4 个调用处、开关引脚的宏一起改，按规矩先编译、上板实测、再问杰哥。</p>
+
+<h2><span class="step">4/6</span>多态：让上层不关心“红外还是霍尔”</h2>
+<p>现在 <code>LR_GetState()</code> 里用 <code>#if (defined(IRPT_V4))</code> 区分板型：红外读 ADC，霍尔读 SPI。板型越多，<code>#if</code> 越多（这个项目已经有 7 种板型）。用函数指针，可以把“怎么读左右键”做成一个<b>接口</b>：</p>
+<div class="box try"><div class="tag">动手 · 选一种板子，看同一句调用实际调到了哪个函数</div>
+<div class="modes" id="polySel"></div>
+<pre class="code" id="polyCode"></pre>
+<div class="card" id="polyInfo" aria-live="polite"></div>
+</div>
+
+<h2><span class="step">5/6</span>💡 想法上：分寸</h2>
+<div class="card"><b class="t">1. 第二个出现时，再抽象</b><br>只有一个线圈时，写 <code>Ele_LeftKeyPressProcess()</code> 完全没问题。等出现了<b>第二个实例</b>（右线圈），或者<b>第二种实现</b>（红外 / 霍尔），再把它变成“对象 + 句柄”或“接口 + 函数指针”。提前为想象中的需求抽象，代码会变复杂却换不来好处。</div>
+<div class="card"><b class="t">2. 在 M0 上有代价，但通常很小</b><br>多传一个指针参数、多一次通过指针取成员，每次多几条指令；函数指针调用不能被内联。按键每 1 ms 才处理一次，这点开销可以忽略。真正要小心的是中断里、每微秒都要跑的代码。</div>
+<div class="card"><b class="t">3. 先认出现有代码里的“对象”</b><br>这个项目里已经有很多“对象”：<code>leftEle</code>、<code>leftAdcInst</code>、<code>buttonScan_stru</code>、<code>g_USBHW_Setting</code>，连 <code>LPC_GPIO</code> 都是一个“外设对象”（指向 0x5000 0000 的结构体指针）。读代码时把它们当成对象看：<b>它有哪些数据？哪些函数是它的方法？</b>比把一堆全局变量和函数分开记容易得多。</div>
+
+<h2><span class="step">6/6</span>小测</h2>
+<div class="box quiz" id="quiz"></div>
+<div class="sum"><b>记住：</b>C 的面向对象 = <code>struct</code> 装数据 + 第一个参数传对象指针的函数 + <code>static</code> 藏私有 + 函数指针做多态。本项目的 <code>MyADC_ts</code>、<code>TI_DRV8833_ts</code>、<code>USB_P_EP[]</code> 是现成的好例子；左右线圈的 4 个函数是可以合并的反例。</div>
+<h3>本页新词</h3>
+<table><tbody>
+<tr><td><b>实例</b></td><td>按某个结构体模样定义出来的一个具体变量</td></tr>
+<tr><td><b>句柄（handle）</b></td><td>指向某个对象的指针，函数靠它知道操作的是哪一个</td></tr>
+<tr><td><b>函数指针</b></td><td>存着一个函数地址的变量，调用它就调到那个函数</td></tr>
+<tr><td><b>接口</b></td><td>一组函数指针打包成的结构体，规定“能做哪些事”，不规定“怎么做”</td></tr>
+<tr><td><b>组合</b></td><td>一个结构体里装着另一个结构体</td></tr>
+</tbody></table>
+</div>
+<script>
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const mk=s=>esc(s).replace(/⟦(.*?)⟧/g,'<mark>$1</mark>');
+const OLD_L=`void Ele_LeftKeyPressProcess(void)        // my_electromagnet.c:777
+{
+  if(⟦leftEle⟧.pressVibrateDurationUs)
+  {
+    if(ELE_PRESS_VIBRATING == ⟦rightEle⟧.status || ...)
+    { gxCacheVibrate.pos = ⟦ELE_POS_LEFT⟧; ... return; }
+    ⟦leftEle⟧.status = ELE_PRESS_VIBRATING;
+    ⟦Ele_LeftOpen()⟧;
+    CT16B1_DelayUs(Ele_CalculateDuration(⟦ELE_POS_LEFT⟧,
+        nowHallSegment[⟦0⟧], ⟦leftEle⟧.pressVibrateDurationUs));
+    ⟦Ele_LeftClose()⟧;
+    if(⟦leftEle⟧.brakeEnable) { ... ⟦Ele_LeftOpen()⟧; ... ⟦Ele_LeftClose()⟧; }
+    ⟦leftEle⟧.status = ELE_RELEASE_DEBOUNCE;
+    ⟦leftEle⟧.debounceBeginTick = MyTick_GetTickMs();
+  }
+}`;
+const OLD_R=`void Ele_RightKeyPressProcess(void)       // my_electromagnet.c:859
+{
+  if(⟦rightEle⟧.pressVibrateDurationUs)
+  {
+    if(ELE_PRESS_VIBRATING == ⟦leftEle⟧.status || ...)
+    { gxCacheVibrate.pos = ⟦ELE_POS_RIGHT⟧; ... return; }
+    ⟦rightEle⟧.status = ELE_PRESS_VIBRATING;
+    ⟦Ele_RightOpen()⟧;
+    CT16B1_DelayUs(Ele_CalculateDuration(⟦ELE_POS_RIGHT⟧,
+        nowHallSegment[⟦1⟧], ⟦rightEle⟧.pressVibrateDurationUs));
+    ⟦Ele_RightClose()⟧;
+    if(⟦rightEle⟧.brakeEnable) { ... ⟦Ele_RightOpen()⟧; ... ⟦Ele_RightClose()⟧; }
+    ⟦rightEle⟧.status = ELE_RELEASE_DEBOUNCE;
+    ⟦rightEle⟧.debounceBeginTick = MyTick_GetTickMs();
+  }
+}
+// 另外还有 Ele_LeftKeyReleaseProcess、Ele_RightKeyReleaseProcess 两份`;
+const NEW_S=`// 示意：把“左右不同的东西”放进对象里
+typedef struct Ele_Handle      // 加个名字，成员里才能指向同类
+{
+  Ele_Position_te pos;
+  Ele_Status_te status;
+  ...（原有成员不变）
+  uint8_t pwmPort, pwmPin;      // ⟦新增：这个线圈接哪根脚⟧
+  uint8_t segIndex;             // ⟦新增：段位数组的下标⟧
+  struct Ele_Handle *pOther;    // ⟦新增：另一个线圈（单线圈互斥用）⟧
+}Ele_Handle_ts;
+
+Ele_Handle_ts leftEle  = { .pos = ELE_POS_LEFT,  .pwmPort = PWM1_PORT, .pwmPin = PWM1_PIN, .segIndex = 0, ... };
+Ele_Handle_ts rightEle = { .pos = ELE_POS_RIGHT, .pwmPort = PWM2_PORT, .pwmPin = PWM2_PIN, .segIndex = 1, ... };`;
+const NEW_F=`// 示意：一个“方法”服务两个线圈
+void Ele_KeyPressProcess(Ele_Handle_ts *⟦p⟧)
+{
+  if(p->pressVibrateDurationUs)
+  {
+    if(ELE_PRESS_VIBRATING == ⟦p->pOther⟧->status || ...)
+    { gxCacheVibrate.pos = ⟦p->pos⟧; ... return; }
+    p->status = ELE_PRESS_VIBRATING;
+    DrvGPIOOutput(⟦p->pwmPort, p->pwmPin⟧, 1);
+    CT16B1_DelayUs(Ele_CalculateDuration(⟦p->pos⟧,
+        nowHallSegment[⟦p->segIndex⟧], p->pressVibrateDurationUs));
+    DrvGPIOOutput(⟦p->pwmPort, p->pwmPin⟧, 0);
+    if(p->brakeEnable) { ... }
+    p->status = ELE_RELEASE_DEBOUNCE;
+    p->debounceBeginTick = MyTick_GetTickMs();
+  }
+}
+
+// button.c 里调用：
+Ele_KeyPressProcess(⟦&leftEle⟧);    // 左键按下
+Ele_KeyPressProcess(⟦&rightEle⟧);   // 右键按下`;
+const M=[['现在：复制粘贴','muted'],['对象版（示意）','sw']];let mi=0;
+function drawO(){[...$('oopSel').children].forEach((b,i)=>b.setAttribute('aria-pressed',i===mi));
+ if(mi===0){$('oopTwo').innerHTML=`<div><h4>左线圈</h4><pre class="code">${mk(OLD_L)}</pre></div><div><h4>右线圈</h4><pre class="code">${mk(OLD_R)}</pre></div>`;
+  $('oopStat').innerHTML='<span>函数 <b>4</b> 个（按下 / 松开 × 左 / 右）</span><span>每个约 <b>40</b> 行</span><span>高亮 = 左右不同的地方</span><span>改一处逻辑要改 <b>4</b> 次</span>'}
+ else{$('oopTwo').innerHTML=`<div><h4>对象里多存 3 样东西</h4><pre class="code">${mk(NEW_S)}</pre></div><div><h4>一个函数，传指针</h4><pre class="code">${mk(NEW_F)}</pre></div>`;
+  $('oopStat').innerHTML='<span>函数 <b>2</b> 个（按下 / 松开）</span><span>左右差异全在对象里</span><span>改一处逻辑改 <b>1</b> 次</span><span>T1A 线圈换脚：只改两行初始化</span>'}}
+M.forEach((m,i)=>{const b=document.createElement('button');b.type='button';b.textContent=m[0];b.style.setProperty('--c',V(m[1]));b.onclick=()=>{mi=i;drawO()};$('oopSel').appendChild(b)});drawO();
+const P=[['IRPT_V4（红外）','gold','LR_Ir_Read','IrSensor_Read()：两次 ADC 转换（AD2、AD3），返回两个 10 位值。就是现在 LR_GetState() 里 #if (defined(IRPT_V4)) 那一段。'],
+ ['T1A（GTRY164 霍尔）','sw','LR_Hall_Read','HallSensor_Read()：SSP1 菊花链读两颗 GTRY164（4 字节），做校验，返回两个值。button.c 末尾的 Hall_* 函数可作参考。'],
+ ['调试用（假数据）','muted','LR_Fake_Read','FakeSensor_Read()：返回 GUI 发来的模拟数值，不接硬件也能测按键状态机。']];
+let pi=0;
+function drawP(){[...$('polySel').children].forEach((b,i)=>b.setAttribute('aria-pressed',i===pi));const p=P[pi];
+ $('polyCode').innerHTML=mk(`// 示意：接口 = 一组函数指针
+typedef struct
+{
+  int32_t (*init)(void);
+  int32_t (*read)(uint16_t *pLeft, uint16_t *pRight);
+}LR_Sensor_ts;
+
+const LR_Sensor_ts irSensor   = { IrSensor_Init,   IrSensor_Read   };
+const LR_Sensor_ts hallSensor = { HallSensor_Init, HallSensor_Read };
+const LR_Sensor_ts fakeSensor = { FakeSensor_Init, FakeSensor_Read };
+
+const LR_Sensor_ts *pLrSensor = ⟦&${['irSensor','hallSensor','fakeSensor'][pi]}⟧;   // 开机时按板型选一次
+
+UINT32 LR_GetState(void)        // 上层永远只写这一句，不再有 #if
+{
+  uint16_t l, r;
+  if(⟦pLrSensor->read(&l, &r)⟧) return 0;
+  return ProcessTwoValues(l, r);
+}`);
+ $('polyInfo').innerHTML=`<b class="t">pLrSensor-&gt;read(&amp;l, &amp;r) 实际调到：</b><code>${['IrSensor_Read','HallSensor_Read','FakeSensor_Read'][pi]}()</code><br>${p[3]}<br><span class="note">这就是 USB_P_EP[] 用的同一招：同一句调用，指针指向谁就调谁。（示意代码，没编译。）</span>`}
+P.forEach((p,i)=>{const b=document.createElement('button');b.type='button';b.textContent=p[0];b.style.setProperty('--c',V(p[1]));b.onclick=()=>{pi=i;drawP()};$('polySel').appendChild(b)});drawP();
+const Q=[
+ ['1. C 里“方法”通常怎么写？',['写在 struct 里面','普通函数，第一个参数传对象指针','用 #define'],1,'对。MyADC_GetValue(MyADC_ts *p, …) 就是。','看第 1 节表格。'],
+ ['2. my_tick.c 怎么做到“外面改不了 mySysTickMs”？',['用 const','在 .c 里用 static 藏起来，只公开 MyTick_GetTickMs()','放在 EEPROM'],1,'对。这就是封装。','看第 1 节。'],
+ ['3. USB 中断里 USB_P_EP[m](event) 体现的是？',['封装','多态（函数指针）','继承'],1,'对。m 不同，调到不同端点的处理函数。','看第 1 节。'],
+ ['4. 什么时候值得把代码改成“对象 + 句柄”？',['一开始就要','出现第二个实例或第二种实现时','永远不要'],1,'对。比如出现了右线圈、或出现了霍尔板型。','看第 5 节第 1 条。'],
+];
+(function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0]}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+</script>
