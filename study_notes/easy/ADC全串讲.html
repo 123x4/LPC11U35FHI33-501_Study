@@ -352,16 +352,56 @@ temp[k] |= ana_rd_buff[2*k + 1];     // 低字节 → 0~1023
 </div>
 </div>
 
-<div class="sub" id="k3" style="--c:var(--pc)"><h3>③ 线圈在震，就沿用上一次的结论（my_misc.c:488~511）</h3>
-<pre class="code">if(Ele_IsVibrating(ELE_POS_LEFT))    // 左线圈不是“不震”状态（含震后 8 ms 消抖）
-{
-  if(k == 1)                          // 左键
-  {
-    gbKeyState[k] = previousKeySta[k];   // 照抄上一次
-    continue;                            // 这一毫秒的读数不用
-  }
-}</pre>
-<p>线圈一震，鼠标外壳和手指都会抖，红外读数跟着乱跳。所以从按下震动开始，到震后消抖结束（约 8 ms），这一侧<b>完全不信任读数</b>，也不滤波、不校准。<code>USE_HALL_VALUE_DURING_VIBRATION</code> = 0（my_electromagnet.h:31）就是这个开关。</p></div>
+<div class="sub" id="k3" style="--c:var(--pc)"><h3>③ 线圈在震，就沿用上一次的结论（my_misc.c:487~512）</h3>
+<style>
+.frz{display:grid;grid-template-columns:repeat(20,minmax(0,1fr));gap:2px;margin:.5rem 0}
+.frz div{font-family:var(--font-m);font-size:.62rem;text-align:center;padding:4px 0;border-radius:3px;border:1px solid var(--line);background:var(--panel)}
+.frz div.p{background:var(--pc);color:var(--bg);border-color:var(--pc)}
+.frz div.f{background:color-mix(in srgb,var(--pc) 22%,var(--panel));border-color:var(--pc)}
+.frz div.n{background:color-mix(in srgb,var(--sw) 18%,var(--panel))}
+</style>
+<p><b>场景</b>：左键刚被判定按下，<code>Button_Scan()</code> 当场让左线圈通电震一下（“一次左键点击全程”第 8 步）。线圈一震，按键和手指都在抖，红外接收管看到的光也跟着抖，读数会乱跳。如果这时照常算，乱跳的读数可能被快速触发判成“松开”，松开又会震一下，震了又乱跳……<b>形成自己触发自己的循环</b>。所以震动期间，干脆不看这一侧的读数。</p>
+<pre class="code">487  for(uint8_t k = 0; k &lt; ANA_TOTAL_COUNT; k++)        // k = 0 右键，k = 1 左键
+488  {
+489    #if (!USE_HALL_VALUE_DURING_VIBRATION)              // = 0，这段会编译（my_electromagnet.h:31）
+490    if(Ele_IsVibrating(ELE_POS_LEFT))                   // 左线圈不在“不震”状态
+491    {
+492      if(k == 1) // left button                         // 而且现在处理的正是左键
+493      {
+494        gbKeyState[k] = previousKeySta[k];              // 结论 = 上一次的结论
+495        #if MYDEBUG_ENABLE                              // = 0，不编译
+496        temp[k] = previousTemp[k];                      // 调试打印用：读数也用上一次的
+497        #endif
+498        continue;                                       // 这个键这一毫秒到此为止，跳去处理下一个 k
+499      }
+500    }
+502    if(Ele_IsVibrating(ELE_POS_RIGHT))                  // 右线圈同理，冻结右键（k == 0）
+503    { if(k == 0) { gbKeyState[k] = previousKeySta[k]; ... continue; } }
+512    #endif
+       ……后面是取数、滤波、算段位、快速触发、校准……
+558    Ele_UpadteSegment(VK_LBUTTON, node[1]);
+561    previousKeySta[k] = gbKeyState[k];                  // 正常处理完，记下这次的结论
+     }</pre>
+<div class="scroll"><table>
+<thead><tr><th>行</th><th>讲解</th></tr></thead>
+<tbody>
+<tr><td>489</td><td><code>USE_HALL_VALUE_DURING_VIBRATION</code> 是个开关：“震动期间还用不用读数”。现在是 0（不用），所以 <code>#if (!0)</code> 成立，这段代码参与编译。想做实验看看震动时读数到底有多乱，可以把它改成 1。</td></tr>
+<tr><td>490</td><td><code>Ele_IsVibrating(ELE_POS_LEFT)</code>（my_electromagnet.c:694）：<code>leftEle.status != ELE_NO_VIBRATING</code> 就返回 1。<code>status</code> 有 4 种：不震 / 按下在震 / 松开在震 / <b>震后消抖</b>。注意“震后消抖”也算在震：线圈断电后机械还在晃，这段也不可信。</td></tr>
+<tr><td>492</td><td>只冻结<b>震的那一侧</b>：左线圈震，只跳过左键（k == 1）；右键照常处理。两侧互不影响。</td></tr>
+<tr><td>494</td><td><code>previousKeySta[k]</code> 是函数里的 <code>static</code> 数组（my_misc.c:435），每次正常处理完都在第 561 行记下当时的结论。这一句把结论“恢复”成上一次的。<br>其实冻结期间 <code>gbKeyState[k]</code> 本来就没人改，和 <code>previousKeySta[k]</code> 是同一个值，<b>这一句等于什么也没变</b>，是一种“保险”写法：万一以后别处改了 <code>gbKeyState</code>，冻结期间也能保证结论不变。</td></tr>
+<tr><td>495~497</td><td><code>MYDEBUG_ENABLE</code> = 0（my_debug.h:19），不编译。打开调试时，后面会打印 <code>temp</code>，这里让打印的也是上一次的读数，免得日志里出现乱跳的值。</td></tr>
+<tr><td>498</td><td><code>continue</code>：结束 <b>for 循环的这一圈</b>，直接去处理下一个 k（不是退出整个函数）。于是这个键这一毫秒<b>跳过了后面所有步骤</b>：取数、滤波、算段位、快速触发、两条基线的校准、<code>Ele_UpadteSegment()</code>、<code>Hall_SyncParam()</code>（所以 GUI 上那条实时曲线也会停 9 ms）。</td></tr>
+<tr><td>502~511</td><td>右键一模一样，只是换成 <code>ELE_POS_RIGHT</code> 和 <code>k == 0</code>。</td></tr>
+</tbody></table></div>
+<p><b>冻结持续多久</b>：按下震动本身只有约 0.1 ms（默认 100 µs 忙等，在 <code>Button_Scan()</code> 里就已经结束），之后进入“震后消抖”；主循环里的 <code>Ele_StatusTask()</code> 发现过了 8 ms 以上（<code>VIBRATE_DEBOUNCE_TIME_MS</code> = 8，条件是 <code>&gt; 8</code>），才改回“不震”。所以每次震动后，这一侧大约有 <b>9 次扫描（9 ms）不看读数</b>：</p>
+<div class="frz" id="frzStrip"></div>
+<p class="note">每格 1 ms。深色 = 判定按下、当场震动的那一毫秒；浅红 = 冻结，沿用“按着”；绿 = 恢复正常处理。</p>
+<div class="card"><b class="t">带来的影响</b><br>
+• 按下后约 9 ms 内<b>判不出松开</b>；松开后约 9 ms 内<b>判不出再次按下</b>（松开也会震）。所以一次点击最短约 18 ms，最快约 50 次 / 秒。人手做不到这么快，没有实际影响。<br>
+• 冻结期间不滤波、不校准，滤波器的“记忆”停在震动前。解冻后如果读数变化超过 10，滤波器会直接跟上（第 ④ 步的“变化大就跟上”），不会拖尾。<br>
+• 左右两段代码几乎一模一样，又是一处“左右复制”（“C 语言里的面向对象”那页讲过）。可以写成一张表：<code>const Ele_Position_te posOfKey[2] = {ELE_POS_RIGHT, ELE_POS_LEFT};</code>，然后只写一次 <code>if(Ele_IsVibrating(posOfKey[k])) {…}</code>（示意，没编译）。</div>
+<p class="note">💡 想法上：这段代码是在解决一个<b>反馈回路</b>问题：系统的输出（线圈震动）会干扰自己的输入（红外读数）。凡是“执行器会影响传感器”的地方（电机和电流采样、加热和测温、扬声器和麦克风），都要想清楚：执行器动作期间，传感器的读数还能不能信？常见做法就是这里的“动作期间屏蔽一段时间”。</p>
+</div>
 
 <div class="sub" id="k4" style="--c:var(--sw)"><h3>④ 滤波（my_misc.c:534~545）</h3>
 <pre class="code">if(|上次滤波值 − 新值| &gt; 10)          // FILTER_SKIP_VALUE = 10
@@ -632,3 +672,4 @@ SC.forEach((s,i)=>{const b=document.createElement('button');b.type='button';b.te
 draw();
 })();
 </script>
+<script>(function(){const box=document.getElementById('frzStrip');if(!box)return;let h='';for(let i=0;i<20;i++){const c=i===0?'p':(i<=9?'f':'n');const t=i===0?'按下\n震':(i<=9?'冻结':'正常');h+=`<div class="${c}" title="${i} ms">${i}<br>${i===0?'震':(i<=9?'冻':'✓')}</div>`}box.innerHTML=h})();</script>
