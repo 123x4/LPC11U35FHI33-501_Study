@@ -182,7 +182,7 @@ details.ans[open]{background:var(--soft)}
 <div class="wrap">
 <div class="eyebrow">轻松版 · 读代码 · ADC 全串讲（src/my_adc.c 全文 + 所有调用处）</div>
 <h1>ADC：从上电到每 1 ms 读出两个数</h1>
-<p class="lede">把项目里所有和 ADC 有关的代码按执行顺序串起来，<b>每一行</b>都讲：它改了哪个寄存器的哪几位、手册在哪一页、为什么这么写。第 7 课讲过 ADC 的原理，这一页专讲代码。</p>
+<p class="lede">把项目里所有和 ADC 有关的代码按执行顺序串起来，<b>每一行</b>都讲：它改了哪个寄存器的哪几位、手册在哪一页、为什么这么写。第 7 课讲过 ADC 的原理，这一页专讲代码；第 4 节接着讲读出来的数怎么变成“按着 / 松着”。</p>
 
 <h2><span class="step">1/8</span>🧭 本质</h2>
 <p class="big">在这个项目里，ADC 只干一件事：<b>每 1 ms，把左右两个红外接收管上的电压，各变成一个 0~1023 的数。</b></p>
@@ -237,8 +237,136 @@ if(MyADC_GetValue(&amp;batAdcInst, &amp;v) == 0)   // 3. 要用时读
 }</pre>
 <p class="note">⚠️ <code>MYADC_SET_FUNC(…, MYADC_FUNC_AS_AD)</code> 写死了 FUNC = 2，注释也写着“只适用于 PIO0_13 和 PIO0_14”。PIO0_16 当 AD5 时 FUNC 是 1，所以真要加通道，<code>MyADC_ts</code> 里还得多存一个“AD 功能号”。这正是上一页“面向对象”说的：差异放进对象里。</p>
 
-<h2><span class="step">4/8</span>读出来的数之后去哪</h2>
-<p><code>LR_GetState()</code>（button.c:298）拿到两个数后：按“右、左”装进 <code>hall_spi_rx[4]</code> → <code>ProcessRecvSampleRawData()</code>：<code>1023 − 原始值</code>（按得越深数越大）→ 滤波 → 按顶部 / 底部基线换算成 0~100 的按下程度 → 快速触发状态机得出“按着 / 松着”。这部分在“一次左键点击全程”第 5、6 步，这里不重复。</p>
+<h2><span class="step">4/8</span>读出来的数之后：按键算法（my_misc.c）</h2>
+<style>
+.pipe2{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:.6rem 0}
+.pipe2 a{font-size:.8rem;border:1.5px solid var(--c);border-radius:6px;padding:3px 8px;background:color-mix(in srgb,var(--c) 12%,var(--panel));color:var(--fg);text-decoration:none}
+.pipe2 span{color:var(--muted);font-size:.8rem}
+.sub{border-left:4px solid var(--c);background:var(--panel);border:1.5px solid var(--line);border-left-width:5px;border-left-color:var(--c);border-radius:6px;padding:8px 12px;margin:.7rem 0}
+.sub h3{margin:.1rem 0 .3rem;font-size:1.02rem}
+.sub p{max-width:none}
+.simctl{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:.4rem 0}
+.simctl label{font-size:.86rem;display:flex;gap:6px;align-items:center}
+.simctl input[type=range]{width:110px}
+.simctl output{font-family:var(--font-m);font-weight:700}
+#simSvg{display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px}
+.lg{display:flex;flex-wrap:wrap;gap:10px;font-size:.8rem;margin:.3rem 0}
+.lg i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:4px;background:var(--c)}
+.simlog{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:6px 10px;white-space:pre-wrap;max-height:220px;overflow:auto}
+</style>
+<p class="big">🧭 本质：把“一个电压数”变成“按着 / 松着”。难点在于<b>每只鼠标、每对红外管、每个温度下，没按时和按到底的电压都不一样</b>，所以不能写死一个阈值，而是让程序<b>自己学</b>两条基线，再看当前值落在两条线之间的哪里。</p>
+<p>整个模块在 <code>src/my_misc.c</code>（本项目 chengjie 写，2026-03），入口是 <code>ProcessRecvSampleRawData()</code>（418 行），每 1 ms 被 <code>LR_GetState()</code> 调一次，左右两个键各走一遍下面这条流水线（点一格跳到说明）：</p>
+<div class="pipe2">
+<a href="#k1" style="--c:var(--per)">① 拼数、取反</a><span>→</span><a href="#k2" style="--c:var(--gold)">② 开机学基线（≤ 600 ms）</a><span>→</span><a href="#k3" style="--c:var(--pc)">③ 线圈在震就冻结</a><span>→</span><a href="#k4" style="--c:var(--sw)">④ 滤波</a><span>→</span><a href="#k5" style="--c:var(--sw)">⑤ 算按下程度 0~100</a><span>→</span><a href="#k6" style="--c:var(--pc)">⑥ 快速触发：按着 / 松着</a><span>→</span><a href="#k7" style="--c:var(--gold)">⑦ 校准两条基线</a><span>→</span><a href="#k8" style="--c:var(--muted)">⑧ 交出结果</a>
+</div>
+<div class="def"><b>两条基线</b>（取反之后，数越大 = 按得越深）：<br><b>顶部基线 <code>gwTopBaseline</code></b> = 没按时的数值；<b>底部基线 <code>gwBottomBaseline</code></b> = 按到底时的数值。<br><b>按下程度（段位，0~100）</b> = 当前值在两条线之间的位置：贴着顶部是 0，到底部是 100。下标 0 = 右键，1 = 左键。</div>
+
+<div class="box try"><div class="tag">动手 · 逐毫秒模拟（和 C 代码同一套算法，左键一路）</div>
+<div class="modes" id="scSel"></div>
+<div class="simctl">
+<label>触发点 ap <input type="range" id="sAp" min="1" max="90" value="10"><output id="oAp">10</output></label>
+<label>按下距离 rt_press <input type="range" id="sRp" min="1" max="60" value="30"><output id="oRp">30</output></label>
+<label>松开距离 rt_release <input type="range" id="sRr" min="1" max="60" value="20"><output id="oRr">20</output></label>
+</div>
+<svg id="simSvg" viewBox="0 0 900 330" role="img" aria-label="模拟曲线"></svg>
+<div class="lg"><span><i style="--c:var(--per)"></i>滤波后的值 temp</span><span><i style="--c:var(--sw)"></i>顶部基线</span><span><i style="--c:var(--gold)"></i>底部基线</span><span><i style="--c:var(--pc)"></i>按下程度（右轴 0~100）</span><span><i style="--c:color-mix(in srgb,var(--pc) 25%,transparent);height:10px"></i>判定为“按着”</span></div>
+<div class="simlog" id="simLog" aria-live="polite"></div>
+<p class="note">手指按下的深度是我编的（没按时 ADC ≈ 800，按到底 ≈ 420，带 ±2 的噪声）；算法部分照抄 C 代码：学基线、滤波、查 nodeCaliTable、快速触发、两条基线的校准。线圈冻结没有模拟。</p>
+</div>
+
+<div class="sub" id="k1" style="--c:var(--per)"><h3>① 拼数、取反（my_misc.c:516~523）</h3>
+<pre class="code">temp[k] = ana_rd_buff[2*k];          // 高字节
+temp[k] &lt;&lt;= 8;
+temp[k] |= ana_rd_buff[2*k + 1];     // 低字节 → 0~1023
+#if PRESS_KEY_AND_VALUE_DECREASE      // IRPT_V4 = 1
+  temp[k] = MAX_VALUE_10BIT - temp[k];   // 1023 − 原始值
+#endif</pre>
+<p><code>hall_spi_rx[4]</code> 里每个键 2 字节，先拼回一个 16 位数。IRPT_V4 的红外管<b>按下时电压变低</b>，所以 <code>PRESS_KEY_AND_VALUE_DECREASE</code> = 1（my_misc.h:28），用 1023 减一下，变成“按得越深数越大”。这样后面的算法和霍尔板型（按下数变大）共用一套。</p></div>
+
+<div class="sub" id="k2" style="--c:var(--gold)"><h3>② 开机学顶部基线：Hall_InitBaseline()（my_misc.c:135，调用在 441~456）</h3>
+<pre class="code">if(cali_init_cnt)               // 初值 600：开机后最多学 600 ms
+{
+  cali_init_cnt--;
+  ...取反同上...
+  if(0 == Hall_InitBaseline(k, temp[k], &amp;gwTopBaseline[k], &amp;gwBottomBaseline[k]))
+    cali_init_cnt = 0;           // 学好了，提前结束
+}
+// Hall_InitBaseline 里：
+if(新值 超出 顶部基线 ± 20)  { 顶部 = 底部 = 新值; 计数 = 0; }        // 不稳，重来
+else                        { 顶部 = (顶部 + 新值) / 2; 底部 = 顶部; 计数++; }
+if(计数 ≥ 100) return 0;                                               // 连续 100 ms 稳定</pre>
+<p>开机后先<b>假设手指没按</b>，连续 100 ms 读数都在 ±20 以内，就认定这是“没按时的数值”，作为顶部基线。初值 10000 是故意给的不可能值，第一次读数一定“超出范围”，直接用读数开始。<b>这段时间里不做按键判断</b>，左右键一直是松着。</p>
+<p>注意：学完以后<b>底部基线 = 顶部基线</b>，两条线重合，还不知道“按到底”是多少（见 ⑦）。</p></div>
+
+<div class="sub" id="k3" style="--c:var(--pc)"><h3>③ 线圈在震，就沿用上一次的结论（my_misc.c:488~511）</h3>
+<pre class="code">if(Ele_IsVibrating(ELE_POS_LEFT))    // 左线圈不是“不震”状态（含震后 8 ms 消抖）
+{
+  if(k == 1)                          // 左键
+  {
+    gbKeyState[k] = previousKeySta[k];   // 照抄上一次
+    continue;                            // 这一毫秒的读数不用
+  }
+}</pre>
+<p>线圈一震，鼠标外壳和手指都会抖，红外读数跟着乱跳。所以从按下震动开始，到震后消抖结束（约 8 ms），这一侧<b>完全不信任读数</b>，也不滤波、不校准。<code>USE_HALL_VALUE_DURING_VIBRATION</code> = 0（my_electromagnet.h:31）就是这个开关。</p></div>
+
+<div class="sub" id="k4" style="--c:var(--sw)"><h3>④ 滤波（my_misc.c:534~545）</h3>
+<pre class="code">if(|上次滤波值 − 新值| &gt; 10)          // FILTER_SKIP_VALUE = 10
+{
+  raw_data_filter[k] = temp[k];                  // 变化大：直接跟上
+  raw_data_filter_sum[k] = temp[k] &lt;&lt; 4;         // 累加和 = 新值 × 16
+}
+else
+{
+  raw_data_filter_sum[k] += temp[k];             // 加上新值
+  raw_data_filter_sum[k] -= raw_data_filter[k];  // 减掉一份旧平均
+  raw_data_filter[k] = raw_data_filter_sum[k] &gt;&gt; 4;  // ÷ 16
+  temp[k] = raw_data_filter[k];
+}</pre>
+<p>小波动（≤ 10）当噪声，做“新值占 1/16”的平滑；大变化（手指真的在动）立刻跟上，不拖后腿。<b>÷16 用右移 4 位</b>，不用除法（M0 没有除法指令，见 ⑤）。两个 <code>raw_data_filter</code> 数组是函数里的 <code>static</code>，所以记得上一次。</p></div>
+
+<div class="sub" id="k5" style="--c:var(--sw)"><h3>⑤ 算按下程度：Hall_CalculateNode()（my_misc.c:288~327）</h3>
+<pre class="code">if(顶部 ≥ 底部 || 底部 − 顶部 &lt; 100) return 0;   // 两条线还没拉开，一律当 0
+if(值 ≤ 顶部) tmp = 0;
+else if(值 ≥ 底部) tmp = 255;
+else
+{
+  if(基线变了) step = (1 &lt;&lt; 21) / (底部 − 顶部);     // 只在基线变化时做一次除法
+  tmp = ((值 − 顶部) * step * 255) &gt;&gt; 21;          // = (值 − 顶部) × 255 ÷ (底部 − 顶部)
+}
+return nodeCaliTable[tmp];                         // 0~255 查表成 0~100</pre>
+<p>本质就是一个比例：<code>(值 − 顶部) ÷ (底部 − 顶部)</code>，换算成 0~255，再查表变成 0~100。两个工程技巧：</p>
+<ul>
+<li><b>定点数代替除法</b>：Cortex-M0 <b>没有硬件除法指令</b>，每次除法都要调库函数（几十个时钟）。这里把 <code>1/(底部 − 顶部)</code> 预先算成 <code>step = 2²¹ / 差</code>，存在 static 里；之后每毫秒只做乘法和右移 21 位。基线不变就不再除。</li>
+<li><b>查表</b>：<code>nodeCaliTable[256]</code>（my_misc.c:16~44）IRPT_V4 版接近一条直线（每 2.55 格 +1）；霍尔板型那版是弯的，用来修正磁场的非线性。想调整“按到一半算几段”，改这张表就行。</li>
+</ul>
+<p>⚠️ <b>两条线没拉开（差 &lt; 100）时永远返回 0</b>，这时怎么按都不会触发。开机学完顶部基线后正是这种状态，要靠 ⑦ 的底部基线学习把它拉开。</p></div>
+
+<div class="sub" id="k6" style="--c:var(--pc)"><h3>⑥ 快速触发：Hall_HandleKeyRapidTrigger()（my_misc.c:330~396）</h3>
+<pre class="code">if(现在是按着)
+{
+  if(段位 == 0)                                      → 松开
+  else if(段位 &gt; 记录的最深)  记录的最深 = 段位;     // 还在往下按，跟着记
+  else if(记录的最深 &gt; 段位 + rt_release)            → 松开（从最深处回弹够多）
+}
+else // 现在是松着
+{
+  if(段位 ≥ 100)                                     → 按下（按到底）
+  else if(段位 &lt; 记录的最浅)  记录的最浅 = 段位;     // 还在往上抬，跟着记
+  else if(段位 ≥ 记录的最浅 + rt_press 且 段位 ≥ ap)  → 按下（从最浅处按下去够多，且过了触发点）
+}</pre>
+<p>普通按键是“过了某个固定深度就算按下”。<b>快速触发（Rapid Trigger）</b>是电竞鼠标 / 键盘的做法：只看“<b>相对</b>最近的最浅 / 最深点移动了多少”。好处：按住不放、稍微抬一点就能松开，再稍微压一点又能按下，连点更快。</p>
+<p>三个参数（段位单位，0~100）：<code>ap_value</code> 触发点（默认 10）、<code>rt_press_value</code> 按下距离（默认 30）、<code>rt_release_value</code> 松开距离（默认 20）。默认值在 my_misc.h:42~44，实际值开机由 <code>Hall_UpdateParam()</code>（my_misc.c:101）从 EEPROM 参数 <code>xgAllParam</code> 覆盖，GUI 能改。<code>current_node_update[]</code> 是函数内 static，记着“最深 / 最浅”。</p></div>
+
+<div class="sub" id="k7" style="--c:var(--gold)"><h3>⑦ 校准两条基线（my_misc.c:162~286）</h3>
+<p><b>顶部基线 <code>Hall_CalibrateTopBaseline()</code></b>：只在<b>松着</b>的时候调。当前值 比 顶部 低 20 以上、持续 300 ms → 顶部 −20；比顶部低一点、持续 100 ms → −5；比顶部高一点（≤ 20）、持续 100 ms → +2。按着时三个计数器清零。<b>作用</b>：温度、环境光慢慢变化时，“没按”的数值会漂，顶部基线慢慢跟着走。</p>
+<p><b>底部基线 <code>Hall_CalibrateBottomBaseline()</code></b>：当前值 比 底部 高 80 以上、持续 30 ms → 底部 +60；高 20 以上、持续 30 ms → +10。<b>只会往大走，不会往回缩</b>；按住超过 100 ms 后就不再学（避免长按时乱改）。<b>作用</b>：学出“按到底”是多少。<br><b>由此推出</b>：每次按下，只有被判定按下后的前 100 ms 在学，所以底部基线要<b>点好几次</b>才学到真正的“按到底”。学到之前，底部偏浅，段位会偏大（按一半就显示 70、80）。模拟器“开机 + 第一次点击”里可以看到底部基线一次次往上走。</p>
+<div class="card" style="border-left-color:var(--bad)"><b class="t">⚠️ 由此推出：开机后的第一次点击要“按住一会儿”</b><br>开机学完后底部 = 顶部，⑤ 一律返回 0，不会触发。第一次按下去，当前值比底部高很多，每持续 30 ms 底部 +60；大约 <b>60 ms 后两条线拉开到 ≥ 100</b>，⑤ 开始算出段位，此时当前值已经 ≥ 底部，段位 = 100，⑥ 判定按下。所以开机后<b>第一下快速轻点可能不响应</b>，按住约 60 ms 以上才行；之后的点击都正常。模拟器里选“开机 + 第一次点击”能看到。这是从代码推出来的，<b>要上板验证</b>。</div></div>
+
+<div class="sub" id="k8" style="--c:var(--muted)"><h3>⑧ 交出结果（my_misc.c:552~668）</h3>
+<p>每个键算完后：<code>Ele_UpadteSegment()</code> 把段位告诉线圈（线圈按段位微调通电时长）；<code>Hall_SyncParam()</code> 把当前值、两条基线、段位存进 <code>xgAllParam.xInfo[]</code>，GUI 查询时发出去（GUI 上那条实时曲线就是它）；记下 <code>previousKeySta</code> 给 ③ 用。最后：</p>
+<pre class="code">if(gbKeyState[0]) ret |= (0x01 &lt;&lt; 1);   // 右键 → 第 1 位
+if(gbKeyState[1]) ret |= (0x01 &lt;&lt; 0);   // 左键 → 第 0 位
+return ret;                             // 回到 LR_GetState() → Button_GetState() → Button_Scan()</pre></div>
 
 <h2><span class="step">5/8</span>坑和值得注意的地方</h2>
 <div class="scroll"><table class="iss">
@@ -351,4 +479,62 @@ const Q=[
  ['6. 超时返回 −2 的那条路少做了什么？',['没停止转换、没清 SEL','没读 DR','没开时钟'],0,'对。下一次读别的通道时 SEL 会有两位同时为 1。','看第 5 节第 1 个坑。'],
 ];
 (function(){const box=$('quiz');Q.forEach(q=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${q[0]}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;const o=d.querySelector('.opts'),fb=d.querySelector('.fb');q[1].forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{if(i===q[2]){b.className='ok';fb.textContent='✓ '+q[3];fb.style.color=V('good')}else{b.className='no';fb.textContent=q[4];fb.style.color=V('muted')}};o.appendChild(b)});box.appendChild(d)})})();
+</script>
+<script>window.NODE_TBL=[0, 0, 1, 1, 1, 2, 2, 3, 3, 3, 4, 4, 5, 5, 5, 6, 6, 7, 7, 7, 8, 8, 9, 9, 9, 10, 10, 11, 11, 11, 12, 12, 13, 13, 13, 14, 14, 15, 15, 15, 16, 16, 17, 17, 17, 18, 18, 19, 19, 19, 20, 20, 20, 21, 21, 22, 22, 22, 23, 23, 24, 24, 24, 25, 25, 26, 26, 26, 27, 27, 28, 28, 28, 29, 29, 30, 30, 30, 31, 31, 32, 32, 32, 33, 33, 34, 34, 34, 35, 35, 36, 36, 36, 37, 37, 38, 38, 38, 39, 39, 39, 40, 40, 41, 41, 41, 42, 42, 43, 43, 43, 44, 44, 45, 45, 45, 46, 46, 47, 47, 47, 48, 48, 49, 49, 49, 50, 50, 51, 51, 51, 52, 52, 53, 53, 53, 54, 54, 55, 55, 55, 56, 56, 57, 57, 57, 58, 58, 59, 59, 59, 60, 60, 60, 61, 61, 62, 62, 62, 63, 63, 64, 64, 64, 65, 65, 66, 66, 66, 67, 67, 68, 68, 68, 69, 69, 70, 70, 70, 71, 71, 72, 72, 72, 73, 73, 74, 74, 74, 75, 75, 76, 76, 76, 77, 77, 78, 78, 78, 79, 79, 79, 80, 80, 81, 81, 81, 82, 82, 83, 83, 83, 84, 84, 85, 85, 85, 86, 86, 87, 87, 87, 88, 88, 89, 89, 89, 90, 90, 91, 91, 91, 92, 92, 93, 93, 93, 94, 94, 95, 95, 95, 96, 96, 97, 97, 97, 98, 98, 99, 100, 100, 100, 100, 100, 100];</script>
+<script>(function(){
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);const NS='http://www.w3.org/2000/svg';
+function el(p,t,a,x){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e}
+/* ---------- the algorithm, same as my_misc.c (one key) ---------- */
+function newState(){return{cali:600,top:10000,bottom:6000,initCnt:0,filt:0,sum:0,oldB:0,oldT:0,step:0,key:0,cnu:0,t1:0,t2:0,t3:0,pc:0,pt:0,b1:0,b2:0}}
+function initBaseline(s,raw){const up=s.top+20,lo=s.top-20;if(raw>up||raw<lo){s.top=raw;s.bottom=raw;s.initCnt=0;return -1}s.top=Math.floor((s.top+raw)/2);s.bottom=s.top;s.initCnt++;if(s.initCnt>=100){s.initCnt=100;return 0}return -1}
+function calcNode(s,raw){const b=s.bottom,t=s.top;if(t>=b)return TBL[0];if(b-t<100)return TBL[0];let tmp;
+ if(raw<=t)tmp=0;else if(raw>=b)tmp=255;else{if(s.oldB!==b||s.oldT!==t){s.oldB=b;s.oldT=t;s.step=Math.floor((1<<21)/(b-t))}tmp=Math.floor(((raw-t)*s.step*255)/2097152)&0xFF}return TBL[tmp]}
+function rapid(s,seg){if(s.key){if(seg===0){s.key=0;s.cnu=seg}else if(seg>s.cnu)s.cnu=seg;else if(s.cnu>seg+P.rr){s.key=0;s.cnu=seg}}
+ else{if(seg>=100){s.key=1;s.cnu=seg}else if(seg<s.cnu)s.cnu=seg;else if(seg>=s.cnu+P.rp&&seg>=P.ap){s.key=1;s.cnu=seg}}}
+function calTop(s,v){if(s.key){s.t1=s.t2=s.t3=0;return}const t=s.top;
+ if(v<t-20){s.t1++;s.t2++;s.t3=0;if(s.t1>=300){s.t1=s.t2=0;s.top=t-20}}
+ else if(v<t){s.t2++;s.t1=0;s.t3=0;if(s.t2>=100){s.t2=0;s.top=t-5}}
+ else if(v<=t+20&&v>t){s.t3++;s.t1=s.t2=0;if(s.t3>=100){s.t3=0;s.top=t+2}}
+ else{s.t1=s.t2=s.t3=0}}
+function calBot(s,v){if(s.key){s.pc++;if(s.pc>=1){s.pc=0;if(s.pt<255)s.pt++}}else{s.pc=0;s.pt=0}
+ if(s.pt>100){s.b1=s.b2=0;return}const b=s.bottom;
+ if(v>b+80){s.b1++;s.b2++;if(s.b1>=30){s.b1=s.b2=0;s.bottom=b+60}}
+ else if(v>b+20){s.b2++;s.b1=0;if(s.b2>=30){s.b2=0;s.bottom=b+10}}
+ else{s.b1=s.b2=0}}
+function step(s,adc){let v=1023-adc;const r={v,top:0,bot:0,node:0,key:0,cali:false};
+ if(s.cali){s.cali--;if(initBaseline(s,v)===0)s.cali=0;r.cali=true;r.top=s.top;r.bot=s.bottom;r.key=s.key;return r}
+ if(s.filt>v+10||s.filt+10<v){s.filt=v;s.sum=v<<4}else{s.sum+=v;s.sum-=s.filt;s.filt=s.sum>>4;v=s.filt}
+ const node=calcNode(s,v);rapid(s,node);calTop(s,v);calBot(s,v);
+ r.v=v;r.node=node;r.key=s.key;r.top=s.top;r.bot=s.bottom;return r}
+/* ---------- finger profiles ---------- */
+let seed=1;const rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff};
+function prof(segs){const d=[];segs.forEach(([ms,to])=>{const from=d.length?d[d.length-1]:0;for(let i=1;i<=ms;i++)d.push(from+(to-from)*i/ms)});return d}
+const adcOf=d=>Math.round(800-380*d+(rnd()*4-2));
+const WARM=[[400,0]].concat(...Array(8).fill([[10,1],[150,1],[10,0],[150,0]]));
+const SC=[
+ {n:'开机 + 第一次点击',c:'gold',warm:null,segs:[[650,0],[10,1],[40,1],[10,0],[150,0],[10,1],[200,1],[10,0],[200,0],[10,1],[40,1],[10,0],[160,0]],note:'0~100 ms：学顶部基线（灰底）。第 1 下快速轻点（按住 40 ms）：两条线还没拉开，<b>不触发</b>，但底部基线学到了一点。第 2 下按住久一点：底部继续长，拉开到 ≥ 100 后立刻判按下；判按下 100 ms 后底部停止学习，还没学到真正的“按到底”。第 3 下快速轻点：能触发，底部又往上学一点。（另外三个场景开头都先“暗中”点了 8 次，让底部基线学到位。）'},
+ {n:'正常点击两次',c:'per',warm:WARM,segs:[[100,0],[15,1],[120,1],[15,0],[250,0],[10,1],[60,1],[10,0],[200,0]],note:'基线已经学好。按下时段位一路升到 100，过了触发点、并且比最浅处深了 rt_press 就判按下；松开时从最深处回弹超过 rt_release 就判松开。'},
+ {n:'快速触发：按住、微抬、再压',c:'pc',warm:WARM,segs:[[100,0],[15,1],[150,1],[30,0.7],[120,0.7],[30,1],[150,1],[200,0],[100,0]],note:'按到底后<b>不松手，只抬到 70%</b>：段位从 100 降到约 70，回弹超过 rt_release（20）→ 判松开。再压回到底：比最浅处深了 30 ≥ rt_press → 又判按下。最后慢慢松开。普通按键做不到“不完全松开就能再点一次”。'},
+ {n:'半按：没到触发点',c:'sw',warm:WARM,segs:[[100,0],[30,0.08],[200,0.08],[30,0],[100,0],[30,0.25],[200,0.25],[30,0],[100,0],[30,0.45],[200,0.45],[30,0],[100,0]],note:'按到约 8 段：没过触发点 ap（10），不触发。按到约 25 段：过了 ap，但离最浅处还不到 rt_press（30），不触发。按到约 45 段：两个条件都满足，触发。拖动上面三个滑块，看触发时刻怎么变。'},
+];
+const TBL=window.NODE_TBL;let P={ap:10,rp:30,rr:20},si=0;
+function run(){seed=7;const s=newState();const rows=[];let off=0;
+ const sc=SC[si];if(sc.warm){prof(sc.warm).forEach(d=>step(s,adcOf(d)));off=0}
+ const d=prof(sc.segs);d.forEach((x,i)=>{const r=step(s,adcOf(x));r.t=i;r.d=x;rows.push(r)});return rows}
+function draw(){const rows=run(),svg=$('simSvg');svg.innerHTML='';const W=900,H=330,L=46,R=40,T=14,B=30,pw=W-L-R,ph=H-T-B,n=rows.length;
+ const X=i=>L+i/(n-1)*pw,Y=v=>T+ph-(Math.max(0,Math.min(700,v))/700)*ph,YN=v=>T+ph-v/100*ph;
+ for(let g=0;g<=700;g+=100){el(svg,'line',{x1:L,x2:W-R,y1:Y(g),y2:Y(g),stroke:'var(--grid)'});el(svg,'text',{x:L-6,y:Y(g)+4,'text-anchor':'end','font-size':11,fill:'var(--muted)'},g)}
+ for(let g=0;g<=100;g+=25)el(svg,'text',{x:W-R+6,y:YN(g)+4,'font-size':11,fill:'var(--pc)'},g);
+ for(let t=0;t<n;t+=100)el(svg,'text',{x:X(t),y:H-10,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},t+' ms');
+ let st=-1;rows.forEach((r,i)=>{if(r.key&&st<0)st=i;if((!r.key||i===n-1)&&st>=0){el(svg,'rect',{x:X(st),y:T,width:Math.max(1,X(i)-X(st)),height:ph,fill:'color-mix(in srgb,var(--pc) 18%,transparent)'});st=-1}});
+ let cs=-1;rows.forEach((r,i)=>{if(r.cali&&cs<0)cs=i;if((!r.cali||i===n-1)&&cs>=0){el(svg,'rect',{x:X(cs),y:T,width:X(i)-X(cs),height:ph,fill:'color-mix(in srgb,var(--muted) 18%,transparent)'});el(svg,'text',{x:X(cs)+4,y:T+14,'font-size':11,fill:'var(--muted)'},'学顶部基线');cs=-1}});
+ const line=(f,c,w)=>el(svg,'polyline',{points:rows.map((r,i)=>`${X(i).toFixed(1)},${f(r).toFixed(1)}`).join(' '),fill:'none',stroke:c,'stroke-width':w});
+ line(r=>Y(Math.min(r.top,700)),'var(--sw)',2);line(r=>Y(Math.min(r.bot,700)),'var(--gold)',2);line(r=>Y(r.v),'var(--per)',1.5);line(r=>YN(r.node),'var(--pc)',1.5);
+ const ev=[];rows.forEach((r,i)=>{const p=rows[i-1];if(!p)return;if(p.cali&&!r.cali)ev.push(`${i} ms  顶部基线学好 = ${r.top}（底部 = 顶部）`);if(r.bot!==p.bot&&!r.cali)ev.push(`${i} ms  底部基线 ${p.bot} → ${r.bot}（差 ${r.bot-r.top}）`);if(r.top!==p.top&&!r.cali)ev.push(`${i} ms  顶部基线 ${p.top} → ${r.top}`);if(r.key&&!p.key)ev.push(`${i} ms  ▶ 判定按下（段位 ${r.node}）`);if(!r.key&&p.key)ev.push(`${i} ms  ◀ 判定松开（段位 ${r.node}）`)});
+ $('simLog').innerHTML=`<b>${SC[si].n}</b>：${SC[si].note}\n\n`+(ev.join('\n')||'（没有事件）');
+ [...$('scSel').children].forEach((b,i)=>b.setAttribute('aria-pressed',i===si))}
+SC.forEach((s,i)=>{const b=document.createElement('button');b.type='button';b.textContent=s.n;b.style.setProperty('--c',V(s.c));b.onclick=()=>{si=i;draw()};$('scSel').appendChild(b)});
+[['sAp','oAp','ap'],['sRp','oRp','rp'],['sRr','oRr','rr']].forEach(([s,o,k])=>{$(s).oninput=()=>{P[k]=+$(s).value;$(o).textContent=$(s).value;draw()}});
+draw();
+})();
 </script>
