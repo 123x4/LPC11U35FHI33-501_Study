@@ -249,7 +249,7 @@ if(MyADC_GetValue(&amp;batAdcInst, &amp;v) == 0)   // 3. 要用时读
 .simctl label{font-size:.86rem;display:flex;gap:6px;align-items:center}
 .simctl input[type=range]{width:110px}
 .simctl output{font-family:var(--font-m);font-weight:700}
-#simSvg{display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px}
+#simSvg,#ibSvg{display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px}
 .lg{display:flex;flex-wrap:wrap;gap:10px;font-size:.8rem;margin:.3rem 0}
 .lg i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:4px;background:var(--c)}
 .simlog{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:6px 10px;white-space:pre-wrap;max-height:220px;overflow:auto}
@@ -283,20 +283,74 @@ temp[k] |= ana_rd_buff[2*k + 1];     // 低字节 → 0~1023
 #endif</pre>
 <p><code>hall_spi_rx[4]</code> 里每个键 2 字节，先拼回一个 16 位数。IRPT_V4 的红外管<b>按下时电压变低</b>，所以 <code>PRESS_KEY_AND_VALUE_DECREASE</code> = 1（my_misc.h:28），用 1023 减一下，变成“按得越深数越大”。这样后面的算法和霍尔板型（按下数变大）共用一套。</p></div>
 
-<div class="sub" id="k2" style="--c:var(--gold)"><h3>② 开机学顶部基线：Hall_InitBaseline()（my_misc.c:135，调用在 441~456）</h3>
-<pre class="code">if(cali_init_cnt)               // 初值 600：开机后最多学 600 ms
-{
-  cali_init_cnt--;
-  ...取反同上...
-  if(0 == Hall_InitBaseline(k, temp[k], &amp;gwTopBaseline[k], &amp;gwBottomBaseline[k]))
-    cali_init_cnt = 0;           // 学好了，提前结束
-}
-// Hall_InitBaseline 里：
-if(新值 超出 顶部基线 ± 20)  { 顶部 = 底部 = 新值; 计数 = 0; }        // 不稳，重来
-else                        { 顶部 = (顶部 + 新值) / 2; 底部 = 顶部; 计数++; }
-if(计数 ≥ 100) return 0;                                               // 连续 100 ms 稳定</pre>
-<p>开机后先<b>假设手指没按</b>，连续 100 ms 读数都在 ±20 以内，就认定这是“没按时的数值”，作为顶部基线。初值 10000 是故意给的不可能值，第一次读数一定“超出范围”，直接用读数开始。<b>这段时间里不做按键判断</b>，左右键一直是松着。</p>
-<p>注意：学完以后<b>底部基线 = 顶部基线</b>，两条线重合，还不知道“按到底”是多少（见 ⑦）。</p></div>
+<div class="sub" id="k2" style="--c:var(--gold)"><h3>② 开机学顶部基线：Hall_InitBaseline()（my_misc.c:135~160，调用在 441~456）</h3>
+<p><b>场景</b>：鼠标刚插上，程序还不知道“这一只鼠标、这一对红外管，没按时读数是多少”。开机后的头几百毫秒，先假设手指没按，把读数学下来当作顶部基线。学好之前，<b>左右键都不判断，一律当松着</b>。</p>
+<p><b>调用处</b>（ProcessRecvSampleRawData 开头，每 1 ms 一次）：</p>
+<pre class="code">441  if(cali_init_cnt)                       // 全局变量，初值 600（my_misc.c:72）
+442  {
+443    cali_init_cnt--;                       // 每毫秒减 1：最多学 600 ms
+444    for(uint8_t k = 0; k &lt; ANA_TOTAL_COUNT; k++)    // k = 0 右键，k = 1 左键
+445    {
+447      temp[k] = ana_rd_buff[2*k];           // 拼数
+448      temp[k] &lt;&lt;= 8;
+449      temp[k] |= ana_rd_buff[2*k + 1];
+451      temp[k] = MAX_VALUE_10BIT - temp[k];  // 取反：按得越深数越大
+453      if(0 == Hall_InitBaseline(k, temp[k], &amp;(gwTopBaseline[k]), &amp;(gwBottomBaseline[k])))
+454      {
+455        cali_init_cnt = 0;                  // 学好了 → 立刻结束学习阶段
+456      }
+457    }
+     }   // 学习阶段这一毫秒到此为止，后面的滤波、算段位、判按键都不做</pre>
+<p><b>函数本身</b>：</p>
+<pre class="code">135  int32_t Hall_InitBaseline(uint16_t keyIndex, uint16_t rawData,
+                               uint16_t *const pTopBaseline, uint16_t *const pBottomBaseline)
+136  {
+137    static uint16_t counter[ANA_TOTAL_COUNT] = {0};          // 每个键一个“连续稳定了几毫秒”
+138    uint16_t upperLimit = *pTopBaseline + (MAGNETIC_NOISE);  // 当前顶部基线 + 20
+139    uint16_t lowerLimit = *pTopBaseline - (MAGNETIC_NOISE);  // 当前顶部基线 − 20
+140
+141    if((rawData &gt; upperLimit) || (rawData &lt; lowerLimit))     // 新读数跳出 ±20 的范围
+142    {
+143      *pTopBaseline = rawData;                              // 不稳：从这个新读数重新开始
+144      *pBottomBaseline = rawData;
+145      counter[keyIndex] = 0;                                // 稳定计数清零
+146      return -1;                                            // −1 = 还没学好
+147    }
+148    else                                                    // 在 ±20 以内
+149    {
+150      *pTopBaseline = (*pTopBaseline + rawData) / 2;        // 和新读数平均一下
+151      *pBottomBaseline = *pTopBaseline;                     // 底部先跟顶部一样
+152      counter[keyIndex] += 1;                               // 又稳定了 1 毫秒
+153      if(counter[keyIndex] &gt;= (100 * ONE_MS_COUNT))         // ONE_MS_COUNT = 1 → 100 次 = 100 ms
+154      {
+155        counter[keyIndex] = 100;
+156        return 0;                                           // 0 = 学好了
+157      }
+158    }
+159    return -1;
+160  }</pre>
+<div class="scroll"><table>
+<thead><tr><th>行</th><th>讲解</th></tr></thead>
+<tbody>
+<tr><td>135</td><td><b>参数</b>：<code>keyIndex</code> 哪个键（0 右 / 1 左）；<code>rawData</code> 这一毫秒取反后的读数；后两个是<b>指针</b>，指向全局的 <code>gwTopBaseline[k]</code>、<code>gwBottomBaseline[k]</code>。传指针是为了让函数能<b>直接改调用者的变量</b>（C 函数只有一个返回值，返回值已经用来报“学好没有”，基线只能通过指针改回去）。<code>*const</code> 表示指针本身不能改指向，但它指的数可以改。</td></tr>
+<tr><td>137</td><td><code>static</code> 局部数组：两个键各一个计数，函数返回后还记得。用来数“<b>连续</b>稳定了几毫秒”。</td></tr>
+<tr><td>138~139</td><td><code>MAGNETIC_NOISE</code> 在 IRPT_V4 下 = 20（my_hallkey_func.h:22，名字是霍尔板型留下的，这里指 ADC 噪声）。以当前顶部基线为中心，±20 算“稳定”。</td></tr>
+<tr><td>141~146</td><td>新读数跳出 ±20：说明还不稳（刚上电、手指在动）。<b>直接把基线换成这个新读数</b>，计数清零，重新数。顶部基线初值是 10000（my_misc.c:74），这是一个 10 位 ADC 不可能出现的值，所以<b>第一次调用一定走这里</b>，等于“用第一个读数开局”。</td></tr>
+<tr><td>148~151</td><td>在 ±20 以内：把基线和新读数取平均（新读数占一半），慢慢收敛到真实值；<b>底部基线设成和顶部一样</b>，因为这时还不知道“按到底”是多少。</td></tr>
+<tr><td>152~157</td><td>连续稳定满 100 次（100 ms）就返回 0。<code>counter = 100</code> 这句没有实际作用（之后不会再调用这个函数）。</td></tr>
+<tr><td>调用处 453~455</td><td>返回 0 → <code>cali_init_cnt = 0</code>，学习阶段立刻结束。如果 600 ms 都没学好，<code>cali_init_cnt</code> 也会减到 0，用当时手上的基线凑合，代码里没有任何提示。</td></tr>
+</tbody></table></div>
+<div class="card" style="border-left-color:var(--bad)"><b class="t">⚠️ 两个从代码推出来的问题（待上板验证）</b><br>
+<b>1. 任何一个键学好，两个键一起结束。</b>第 455 行在 <code>for</code> 循环里：右键（k = 0）先稳定满 100 ms，就把 <code>cali_init_cnt</code> 清 0，<b>左键学没学好都不管</b>了。<br>
+<b>2. 开机时手指搭在键上，会把“按下”学成“没按”。</b>函数只看“稳不稳”，不看“是不是没按”。手指按着不动，读数也很稳，就被当成了顶部基线。之后：两条线重合在“按下”的位置，段位一律 0，这个键<b>按不出来</b>；要等手指松开后，顶部基线靠 ⑦ 的校准每 300 ms 往回挪 20，挪够了才恢复。下面的模拟里，场景 3 演示问题 1（左键没学稳就被右键带着结束了），场景 2 演示问题 2：开机时左手指搭在左键上 300 ms，左键大约 3 秒后才第一次响应，再过好几秒，顶部基线才回到正常值。<br>
+<span class="note">可能的改法（示意）：两个键都学好才结束（用两个标志）；或者学习期间读数如果明显偏向“按下”一侧就不采用；或者把学到的基线存进 EEPROM，开机时先用上次的值。改之前先问杰哥。</span></div>
+<div class="box try"><div class="tag">动手 · 开机学基线（左右两个键一起模拟）</div>
+<div class="modes" id="ibSel"></div>
+<svg id="ibSvg" viewBox="0 0 900 300" role="img" aria-label="开机学基线模拟"></svg>
+<div class="lg"><span><i style="--c:var(--per)"></i>左键读数（取反后）</span><span><i style="--c:var(--sw)"></i>左键顶部基线</span><span><i style="--c:var(--gold)"></i>左键底部基线</span><span><i style="--c:color-mix(in srgb,var(--pc) 25%,transparent);height:10px"></i>左键判为按着</span><span><i style="--c:color-mix(in srgb,var(--muted) 25%,transparent);height:10px"></i>学习阶段</span></div>
+<div class="simlog" id="ibLog" aria-live="polite"></div>
+</div>
+</div>
 
 <div class="sub" id="k3" style="--c:var(--pc)"><h3>③ 线圈在震，就沿用上一次的结论（my_misc.c:488~511）</h3>
 <pre class="code">if(Ele_IsVibrating(ELE_POS_LEFT))    // 左线圈不是“不震”状态（含震后 8 ms 消抖）
@@ -535,6 +589,46 @@ function draw(){const rows=run(),svg=$('simSvg');svg.innerHTML='';const W=900,H=
  [...$('scSel').children].forEach((b,i)=>b.setAttribute('aria-pressed',i===si))}
 SC.forEach((s,i)=>{const b=document.createElement('button');b.type='button';b.textContent=s.n;b.style.setProperty('--c',V(s.c));b.onclick=()=>{si=i;draw()};$('scSel').appendChild(b)});
 [['sAp','oAp','ap'],['sRp','oRp','rp'],['sRr','oRr','rr']].forEach(([s,o,k])=>{$(s).oninput=()=>{P[k]=+$(s).value;$(o).textContent=$(s).value;draw()}});
+draw();
+})();
+</script>
+<script>(function(){
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);const NS='http://www.w3.org/2000/svg';
+function el(p,t,a,x){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e}
+const TBL=window.NODE_TBL;
+function ns(){return{top:10000,bottom:6000,ic:0,filt:0,sum:0,key:0,cnu:0,t1:0,t2:0,t3:0,pc:0,pt:0,b1:0,b2:0,oldB:0,oldT:0,stp:0}}
+function init(s,v){const up=s.top+20,lo=(s.top-20)&0xFFFF;if(v>up||v<lo){s.top=v;s.bottom=v;s.ic=0;return -1}s.top=(s.top+v)>>1;s.bottom=s.top;s.ic++;if(s.ic>=100){s.ic=100;return 0}return -1}
+function node(s,v){const b=s.bottom,t=s.top;if(t>=b||b-t<100)return TBL[0];let tmp;if(v<=t)tmp=0;else if(v>=b)tmp=255;else{if(s.oldB!==b||s.oldT!==t){s.oldB=b;s.oldT=t;s.stp=Math.floor(2097152/(b-t))}tmp=Math.floor((v-t)*s.stp*255/2097152)&255}return TBL[tmp]}
+function rapid(s,g){if(s.key){if(g===0){s.key=0;s.cnu=g}else if(g>s.cnu)s.cnu=g;else if(s.cnu>g+20){s.key=0;s.cnu=g}}else{if(g>=100){s.key=1;s.cnu=g}else if(g<s.cnu)s.cnu=g;else if(g>=s.cnu+30&&g>=10){s.key=1;s.cnu=g}}}
+function calTop(s,v){if(s.key){s.t1=s.t2=s.t3=0;return}const t=s.top;if(v<t-20){s.t1++;s.t2++;s.t3=0;if(s.t1>=300){s.t1=s.t2=0;s.top=t-20}}else if(v<t){s.t2++;s.t1=0;s.t3=0;if(s.t2>=100){s.t2=0;s.top=t-5}}else if(v<=t+20&&v>t){s.t3++;s.t1=s.t2=0;if(s.t3>=100){s.t3=0;s.top=t+2}}else{s.t1=s.t2=s.t3=0}}
+function calBot(s,v){if(s.key){s.pc++;if(s.pc>=1){s.pc=0;if(s.pt<255)s.pt++}}else{s.pc=0;s.pt=0}if(s.pt>100){s.b1=s.b2=0;return}const b=s.bottom;if(v>b+80){s.b1++;s.b2++;if(s.b1>=30){s.b1=s.b2=0;s.bottom=b+60}}else if(v>b+20){s.b2++;s.b1=0;if(s.b2>=30){s.b2=0;s.bottom=b+10}}else{s.b1=s.b2=0}}
+let seed=3;const rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff};
+const clickAfter=(t,from)=>t>from&&((t-from)%500)<150;
+const SC=[
+ {n:'正常开机（手没碰按键）',c:'per',T:2500,left:t=>clickAfter(t,800)?1:0,noise:2,note:'左右键都在第 100 ms 左右学好，学习阶段结束。之后每 0.5 秒点一下左键：第一下按住时底部基线开始学，学开到 ≥ 100 后就能正常点。'},
+ {n:'开机时手指搭在左键上 300 ms',c:'pc',T:9000,left:t=>t<300?1:(clickAfter(t,800)?1:0),noise:2,note:'手指搭着不动，左键读数也很稳，所以第 100 ms 两个键一起“学好”，而左键学到的是“按下”的值（约 603）。手指松开后，左键读数比顶部基线低得多，只能靠顶部校准每 300 ms 挪 20 慢慢往回走；两条线差不到 100 时段位一律 0，按不出来。'},
+ {n:'开机时左键读数抖得厉害',c:'gold',T:2500,left:t=>clickAfter(t,800)?1:0,noise:2,lnoise:t=>t<400?40:2,note:'左键前 400 ms 噪声 ±40（比如手指在键附近晃动），一直跳出 ±20 的范围，学不稳。右键 100 ms 学好，学习阶段结束，左键的顶部基线就是“最后一次跳出范围时的那个读数”，没有平均过。这里偏差不大，左键还能用，但基线不准。'},
+];
+let si=0;
+function run(){seed=3;const sc=SC[si];const K=[ns(),ns()];let cali=600;const rows=[],ev=[];let last=0;
+ for(let t=0;t<sc.T;t++){const nz=k=>(k===1&&sc.lnoise?sc.lnoise(t):sc.noise);const d=[0,sc.left(t)];const v0=[0,1].map(k=>1023-Math.round(800-380*d[k]+(rnd()*2-1)*nz(k)));
+  let caliNow=cali>0;
+  if(cali){cali--;const done=[];for(let k=0;k<2;k++){if(init(K[k],v0[k])===0){cali=0;done.push(k)}}if(!cali)ev.push(`${t} ms  学习阶段结束（这一毫秒学好的：${done.map(k=>k?'左键':'右键').join('、')}）：右键顶部 ${K[0].top}，左键顶部 ${K[1].top}`)}
+  else{for(let k=0;k<2;k++){const s=K[k];let v=v0[k];if(s.filt>v+10||s.filt+10<v){s.filt=v;s.sum=v<<4}else{s.sum+=v;s.sum-=s.filt;s.filt=s.sum>>4;v=s.filt}const g=node(s,v);rapid(s,g);calTop(s,v);calBot(s,v)}}
+  const L=K[1];rows.push({t,v:v0[1],top:L.top,bot:L.bottom,key:L.key,cali:caliNow});
+  if(L.key!==last){ev.push(`${t} ms  左键${L.key?'▶ 判按下':'◀ 判松开'}（顶部 ${L.top}，底部 ${L.bottom}）`);last=L.key}}
+ return{rows,ev}}
+function draw(){const {rows,ev}=run(),svg=$('ibSvg');svg.innerHTML='';const W=900,H=300,L=46,R=16,T=12,B=28,pw=W-L-R,ph=H-T-B,n=rows.length;
+ const X=i=>L+i/(n-1)*pw,Y=v=>T+ph-(Math.max(0,Math.min(700,v))/700)*ph;
+ for(let g=0;g<=700;g+=100){el(svg,'line',{x1:L,x2:W-R,y1:Y(g),y2:Y(g),stroke:'var(--grid)'});el(svg,'text',{x:L-6,y:Y(g)+4,'text-anchor':'end','font-size':11,fill:'var(--muted)'},g)}
+ const stepT=n>4000?1000:250;for(let t=0;t<n;t+=stepT)el(svg,'text',{x:X(t),y:H-9,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},t+' ms');
+ const band=(f,c)=>{let s=-1;rows.forEach((r,i)=>{if(f(r)&&s<0)s=i;if((!f(r)||i===n-1)&&s>=0){el(svg,'rect',{x:X(s),y:T,width:Math.max(1.5,X(i)-X(s)),height:ph,fill:c});s=-1}})};
+ band(r=>r.cali,'color-mix(in srgb,var(--muted) 22%,transparent)');band(r=>r.key,'color-mix(in srgb,var(--pc) 20%,transparent)');
+ const line=(f,c,w)=>el(svg,'polyline',{points:rows.map((r,i)=>`${X(i).toFixed(1)},${Y(f(r)).toFixed(1)}`).join(' '),fill:'none',stroke:c,'stroke-width':w});
+ line(r=>r.v,'var(--per)',1);line(r=>r.top,'var(--sw)',2);line(r=>r.bot,'var(--gold)',2);
+ const show=ev.slice(0,14);$('ibLog').innerHTML=`<b>${SC[si].n}</b>：${SC[si].note}\n\n`+show.join('\n')+(ev.length>show.length?`\n……（之后每次点击都正常判按下 / 松开，共 ${ev.length} 条事件）`:'');
+ [...$('ibSel').children].forEach((b,i)=>b.setAttribute('aria-pressed',i===si))}
+SC.forEach((s,i)=>{const b=document.createElement('button');b.type='button';b.textContent=s.n;b.style.setProperty('--c',V(s.c));b.onclick=()=>{si=i;draw()};$('ibSel').appendChild(b)});
 draw();
 })();
 </script>
