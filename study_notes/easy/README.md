@@ -40,7 +40,8 @@
 | 页面 | 在线页面 |
 |---|---|
 | **主线：一次左键点击（全程 + 26 个全局变量 + 24 个函数）** | https://claude.ai/artifact/QoPZuz6jMfgBqK7WrEJL29 |
-| 模块：ADC 全串讲（每一行代码 + 寄存器变化） | https://claude.ai/artifact/KM5wmiR61CJWKNEk68Xnfs |
+| 模块：ADC 串讲（重讲版，10 关，每关先算题再看代码） | https://claude.ai/artifact/KM5wmiR61CJWKNEk68Xnfs |
+| 模块：ADC 全串讲参考版（每一行代码 + 寄存器变化 + 模拟器 + 坑） | https://claude.ai/artifact/HCgkuzBx81QJ9H9jpG2Xr5 |
 | 全程：按下 DPI 键的完整流程（17 步） | https://claude.ai/artifact/7yhiDgMLCiZYLqHzKXnRVy |
 | 文件夹：app 文件夹四份代码 | https://claude.ai/artifact/DQeECLZbqjbizU3wtk2zHv |
 | 文件：custom.c 完全讲透 | https://claude.ai/artifact/VZVKafNhxDA6watP5e6RMT |
