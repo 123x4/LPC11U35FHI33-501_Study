@@ -179,12 +179,41 @@ details.ans[open]{background:var(--soft)}
 .wire div span{display:block;font-size:.74rem;color:var(--muted)}
 @media (max-width:760px){.wire{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
+<style>
+.modes{display:flex;flex-wrap:wrap;gap:6px;margin:.4rem 0}
+.modes button{font:inherit;font-size:.84rem;border:1.5px solid var(--c);border-radius:999px;padding:2px 10px;background:var(--panel);color:var(--fg);cursor:pointer}
+.modes button[aria-pressed="true"]{background:color-mix(in srgb,var(--c) 25%,var(--panel))}
+details.sub>summary{list-style:none;cursor:pointer;display:block}
+details.sub>summary::-webkit-details-marker{display:none}
+details.sub>summary h3::before{content:"▸ ";color:var(--c)}
+details.sub[open]>summary h3::before{content:"▾ "}
+details.sub>summary .one{display:block;font-size:.9rem;color:var(--muted);margin:.1rem 0 .2rem 1.1em}
+details.sub[open]>summary{border-bottom:1px dashed var(--line);margin-bottom:.4rem;padding-bottom:.3rem}
+.sub h4{font-family:var(--font-d);font-size:.98rem;margin:1rem 0 .2rem;color:var(--c)}
+.map{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:.6rem 0}
+.map>div{border:2px solid var(--c);border-radius:8px;padding:8px 12px;background:color-mix(in srgb,var(--c) 7%,var(--panel));min-width:0}
+.map b.h{font-family:var(--font-d);display:block}
+.map a{color:var(--fg)}
+.map ol{margin:.3rem 0 0;padding-left:1.3em;font-size:.9rem}
+@media (max-width:640px){.map{grid-template-columns:minmax(0,1fr)}}
+.xall{display:flex;gap:8px;margin:.4rem 0}
+.xall button{font:inherit;font-size:.82rem;border:1px solid var(--line);border-radius:6px;padding:2px 10px;background:var(--panel);color:var(--fg);cursor:pointer}
+</style>
 <div class="wrap">
 <div class="eyebrow">轻松版 · 读代码 · ADC 全串讲（src/my_adc.c 全文 + 所有调用处）</div>
 <h1>ADC：从上电到每 1 ms 读出两个数</h1>
 <p class="lede">把项目里所有和 ADC 有关的代码按执行顺序串起来，<b>每一行</b>都讲：它改了哪个寄存器的哪几位、手册在哪一页、为什么这么写。第 7 课讲过 ADC 的原理，这一页专讲代码；第 4 节接着讲读出来的数怎么变成“按着 / 松着”。</p>
+<div class="box"><b>这一页怎么读</b>：内容分两层，<b>彼此独立，分开读</b>。
+<div class="map">
+<div style="--c:var(--per)"><b class="h">上半：驱动层（src/my_adc.c）</b>问题：寄存器怎么设，ADC 才能给出一个 0~1023 的数？和手册一一对应。
+<ol><li><a href="#s1">本质：三步用 ADC</a></li><li><a href="#s2">逐行走一遍（寄存器面板）</a></li><li><a href="#s3">API：怎么调用、怎么加通道</a></li></ol></div>
+<div style="--c:var(--pc)"><b class="h">下半：算法层（src/my_misc.c）</b>问题：这个数怎么变成“按着 / 松着”？纯软件，和寄存器无关。
+<ol start="4"><li><a href="#s4">本质 + 两条基线</a></li><li><a href="#k0">函数骨架（先看这个）</a></li><li><a href="#k1">①~⑧ 八个步骤</a>（点开看细节）</li><li><a href="#ksim">合起来的模拟器</a></li></ol></div>
+</div>
+最后是 <a href="#s5">坑</a>、<a href="#s6">T1A</a>、<a href="#s7">想法上</a>、<a href="#s8">小测</a>。<br><b>建议</b>：第一遍只看每节开头的“本质”和 ①~⑧ 标题下那一句话（默认是收起的），先知道每一步干什么；第二遍再一个个点开看代码。</div>
 
-<h2><span class="step">1/8</span>🧭 本质</h2>
+
+<h2 id="s1"><span class="step">1/8</span>🧭 本质</h2>
 <p class="big">在这个项目里，ADC 只干一件事：<b>每 1 ms，把左右两个红外接收管上的电压，各变成一个 0~1023 的数。</b></p>
 <p>用 ADC 分三步，和第 3 课的“外设七步”一一对应：<b>① 开电源、开时钟、设分频</b>（只做一次）→ <b>② 把引脚切成模拟输入</b>（每个通道一次）→ <b>③ 每次要数时：选通道 → 启动 → 等 DONE → 取结果</b>。这一页的代码全部落在这三步里。</p>
 <div class="wire">
@@ -205,7 +234,7 @@ details.ans[open]{background:var(--soft)}
 <tr><td><code>src/ADC.c</code></td><td>老代码（ADAM）的 <code>InitADC()</code>、<code>ADCRead()</code></td><td>⛔ IRPT_V4 下没编译（代码来源清单可查）</td></tr>
 </tbody></table></div>
 
-<h2><span class="step">2/8</span>动手：逐行走一遍（寄存器面板跟着变）</h2>
+<h2 id="s2"><span class="step">2/8</span>动手：逐行走一遍（寄存器面板跟着变）</h2>
 <p>按执行顺序分 5 段。点“下一行”：高亮当前这行代码，紧接着是讲解和手册页码，最下面的寄存器面板显示它改了哪几位（变了的亮框、改动的位标红）。手册指 LPC11U3x 用户手册 UM10462。</p>
 <div class="stg" id="stg"></div>
 <div class="btns"><button type="button" id="aPrev">上一行</button><button type="button" id="aNext">下一行</button><span class="note" id="aProg"></span></div>
@@ -213,7 +242,7 @@ details.ans[open]{background:var(--soft)}
 <div class="card" id="aInfo" aria-live="polite"></div>
 <div class="regs" id="regs"></div>
 
-<h2><span class="step">3/8</span>怎么用这个模块（API）</h2>
+<h2 id="s3"><span class="step">3/8</span>怎么用这个模块（API）</h2>
 <div class="scroll"><table>
 <thead><tr><th>函数</th><th>什么时候调</th><th>返回</th></tr></thead>
 <tbody>
@@ -237,7 +266,7 @@ if(MyADC_GetValue(&amp;batAdcInst, &amp;v) == 0)   // 3. 要用时读
 }</pre>
 <p class="note">⚠️ <code>MYADC_SET_FUNC(…, MYADC_FUNC_AS_AD)</code> 写死了 FUNC = 2，注释也写着“只适用于 PIO0_13 和 PIO0_14”。PIO0_16 当 AD5 时 FUNC 是 1，所以真要加通道，<code>MyADC_ts</code> 里还得多存一个“AD 功能号”。这正是上一页“面向对象”说的：差异放进对象里。</p>
 
-<h2><span class="step">4/8</span>读出来的数之后：按键算法（my_misc.c）</h2>
+<h2 id="s4"><span class="step">4/8</span>读出来的数之后：按键算法（my_misc.c）</h2>
 <style>
 .pipe2{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:.6rem 0}
 .pipe2 a{font-size:.8rem;border:1.5px solid var(--c);border-radius:6px;padding:3px 8px;background:color-mix(in srgb,var(--c) 12%,var(--panel));color:var(--fg);text-decoration:none}
@@ -259,6 +288,7 @@ if(MyADC_GetValue(&amp;batAdcInst, &amp;v) == 0)   // 3. 要用时读
 <div class="pipe2">
 <a href="#k1" style="--c:var(--per)">① 拼数、取反</a><span>→</span><a href="#k2" style="--c:var(--gold)">② 开机学基线（≤ 600 ms）</a><span>→</span><a href="#k3" style="--c:var(--pc)">③ 线圈在震就冻结</a><span>→</span><a href="#k4" style="--c:var(--sw)">④ 滤波</a><span>→</span><a href="#k5" style="--c:var(--sw)">⑤ 算按下程度 0~100</a><span>→</span><a href="#k6" style="--c:var(--pc)">⑥ 快速触发：按着 / 松着</a><span>→</span><a href="#k7" style="--c:var(--gold)">⑦ 校准两条基线</a><span>→</span><a href="#k8" style="--c:var(--muted)">⑧ 交出结果</a>
 </div>
+<div class="xall"><button type="button" id="xOpen">①~⑧ 全部展开</button><button type="button" id="xClose">全部收起</button></div>
 <div class="def"><b>两条基线</b>（取反之后，数越大 = 按得越深）：<br><b>顶部基线 <code>gwTopBaseline</code></b> = 没按时的数值；<b>底部基线 <code>gwBottomBaseline</code></b> = 按到底时的数值。<br><b>按下程度（段位，0~100）</b> = 当前值在两条线之间的位置：贴着顶部是 0，到底部是 100。下标 0 = 右键，1 = 左键。</div>
 
 <div class="sub" id="k0" style="--c:var(--per)"><h3>先看全局：ProcessRecvSampleRawData() 的宏观结构</h3>
@@ -322,7 +352,7 @@ if(MyADC_GetValue(&amp;batAdcInst, &amp;v) == 0)   // 3. 要用时读
 这次你主动要求“先讲整体”，这个直觉是对的：以后读任何长函数，都先自己按这 5 步画一张骨架图，画不出来再问我。</div>
 </div>
 
-<div class="sub" id="kv" style="--c:var(--gold)"><h3>这个模块的全局变量（my_misc.c:67~75）</h3>
+<details class="sub" id="kv" style="--c:var(--gold)"><summary><h3>这个模块的全局变量（my_misc.c:67~75）</h3><span class="one">9 行全局变量分三组：手感参数（ap / rt_press / rt_release）、结论和学习倒计时、两条基线。</span></summary>
 <pre class="code">67  uint16_t rt_press_value[ANA_TOTAL_COUNT]   = {DEFAULT_RTP, DEFAULT_RTP};   // {30, 30}
 68  uint16_t rt_release_value[ANA_TOTAL_COUNT] = {DEFAULT_RTR, DEFAULT_RTR};   // {20, 20}
 69  uint16_t ap_value[ANA_TOTAL_COUNT]         = {DEFAULT_AP, DEFAULT_AP};     // {10, 10}
@@ -353,31 +383,20 @@ if(MyADC_GetValue(&amp;batAdcInst, &amp;v) == 0)   // 3. 要用时读
 • <b>这些都是普通全局变量（没加 static）</b>：任何文件 <code>extern</code> 一下就能改。实际上除了 my_misc.c，只有没编译的 my_hallkey_func.c 碰过它们，所以加上 <code>static</code> 会更安全（<code>gbKeyState</code> 在 my_misc.h 里声明了 extern，但也只有 my_misc.c 在用）。<br>
 • <b>手感参数改了以后立刻生效、也存 EEPROM</b>：GUI 改参数 → <code>Task_ParamGuard()</code> 把 <code>xgAllParam</code> 写进 EEPROM（第 11 课），再调 <code>Hall_UpdateParam()</code> 更新这三个数组。下次开机 <code>Param_Init()</code> 从 EEPROM 读回。<br>
 • <code>Hall_UpdateParam()</code> 的两个细节：GUI 那边 <code>bmEnableMask</code> 第 7 位没开时，用回默认值 10 / 30 / 20；按下 / 松开距离传来 0 时改成 1，避免“距离为 0 一碰就切换”。</div>
-</div>
+</details>
 
-<div class="box try"><div class="tag">动手 · 逐毫秒模拟（和 C 代码同一套算法，左键一路）</div>
-<div class="modes" id="scSel"></div>
-<div class="simctl">
-<label>触发点 ap <input type="range" id="sAp" min="1" max="90" value="10"><output id="oAp">10</output></label>
-<label>按下距离 rt_press <input type="range" id="sRp" min="1" max="60" value="30"><output id="oRp">30</output></label>
-<label>松开距离 rt_release <input type="range" id="sRr" min="1" max="60" value="20"><output id="oRr">20</output></label>
-</div>
-<svg id="simSvg" viewBox="0 0 900 330" role="img" aria-label="模拟曲线"></svg>
-<div class="lg"><span><i style="--c:var(--per)"></i>滤波后的值 temp</span><span><i style="--c:var(--sw)"></i>顶部基线</span><span><i style="--c:var(--gold)"></i>底部基线</span><span><i style="--c:var(--pc)"></i>按下程度（右轴 0~100）</span><span><i style="--c:color-mix(in srgb,var(--pc) 25%,transparent);height:10px"></i>判定为“按着”</span></div>
-<div class="simlog" id="simLog" aria-live="polite"></div>
-<p class="note">手指按下的深度是我编的（没按时 ADC ≈ 800，按到底 ≈ 420，带 ±2 的噪声）；算法部分照抄 C 代码：学基线、滤波、查 nodeCaliTable、快速触发、两条基线的校准。线圈冻结没有模拟。</p>
-</div>
 
-<div class="sub" id="k1" style="--c:var(--per)"><h3>① 拼数、取反（my_misc.c:516~523）</h3>
+
+<details class="sub" id="k1" style="--c:var(--per)"><summary><h3>① 拼数、取反（my_misc.c:516~523）</h3><span class="one">两个字节拼成 0~1023，再用 1023 减，变成“按得越深，数越大”。</span></summary>
 <pre class="code">temp[k] = ana_rd_buff[2*k];          // 高字节
 temp[k] &lt;&lt;= 8;
 temp[k] |= ana_rd_buff[2*k + 1];     // 低字节 → 0~1023
 #if PRESS_KEY_AND_VALUE_DECREASE      // IRPT_V4 = 1
   temp[k] = MAX_VALUE_10BIT - temp[k];   // 1023 − 原始值
 #endif</pre>
-<p><code>hall_spi_rx[4]</code> 里每个键 2 字节，先拼回一个 16 位数。IRPT_V4 的红外管<b>按下时电压变低</b>，所以 <code>PRESS_KEY_AND_VALUE_DECREASE</code> = 1（my_misc.h:28），用 1023 减一下，变成“按得越深数越大”。这样后面的算法和霍尔板型（按下数变大）共用一套。</p></div>
+<p><code>hall_spi_rx[4]</code> 里每个键 2 字节，先拼回一个 16 位数。IRPT_V4 的红外管<b>按下时电压变低</b>，所以 <code>PRESS_KEY_AND_VALUE_DECREASE</code> = 1（my_misc.h:28），用 1023 减一下，变成“按得越深数越大”。这样后面的算法和霍尔板型（按下数变大）共用一套。</p></details>
 
-<div class="sub" id="k2" style="--c:var(--gold)"><h3>② 开机学顶部基线：Hall_InitBaseline()（my_misc.c:135~160，调用在 441~456）</h3>
+<details class="sub" id="k2" style="--c:var(--gold)"><summary><h3>② 开机学顶部基线：Hall_InitBaseline()（my_misc.c:135~160，调用在 441~456）</h3><span class="one">开机最多 600 ms：读数稳定 100 ms，就把它当成“没按”的位置；任意一个键学好，学习阶段就结束。</span></summary>
 <p><b>场景</b>：鼠标刚插上，程序还不知道“这一只鼠标、这一对红外管，没按时读数是多少”。开机后的头几百毫秒，先假设手指没按，把读数学下来当作顶部基线。学好之前，<b>左右键都不判断，一律当松着</b>。</p>
 <p><b>调用处</b>（ProcessRecvSampleRawData 开头，每 1 ms 一次）：</p>
 <pre class="code">441  if(cali_init_cnt)                       // 全局变量，初值 600（my_misc.c:72）
@@ -444,9 +463,9 @@ temp[k] |= ana_rd_buff[2*k + 1];     // 低字节 → 0~1023
 <div class="lg"><span><i style="--c:var(--per)"></i>左键读数（取反后）</span><span><i style="--c:var(--sw)"></i>左键顶部基线</span><span><i style="--c:var(--gold)"></i>左键底部基线</span><span><i style="--c:color-mix(in srgb,var(--pc) 25%,transparent);height:10px"></i>左键判为按着</span><span><i style="--c:color-mix(in srgb,var(--muted) 25%,transparent);height:10px"></i>学习阶段</span></div>
 <div class="simlog" id="ibLog" aria-live="polite"></div>
 </div>
-</div>
+</details>
 
-<div class="sub" id="k3" style="--c:var(--pc)"><h3>③ 线圈在震，就沿用上一次的结论（my_misc.c:487~512）</h3>
+<details class="sub" id="k3" style="--c:var(--pc)"><summary><h3>③ 线圈在震，就沿用上一次的结论（my_misc.c:487~512）</h3><span class="one">线圈震动和震后约 8 ms 内，这个键不看读数，结论沿用上一次。</span></summary>
 <style>
 .frz{display:grid;grid-template-columns:repeat(20,minmax(0,1fr));gap:2px;margin:.5rem 0}
 .frz div{font-family:var(--font-m);font-size:.62rem;text-align:center;padding:4px 0;border-radius:3px;border:1px solid var(--line);background:var(--panel)}
@@ -495,24 +514,100 @@ temp[k] |= ana_rd_buff[2*k + 1];     // 低字节 → 0~1023
 • 冻结期间不滤波、不校准，滤波器的“记忆”停在震动前。解冻后如果读数变化超过 10，滤波器会直接跟上（第 ④ 步的“变化大就跟上”），不会拖尾。<br>
 • 左右两段代码几乎一模一样，又是一处“左右复制”（“C 语言里的面向对象”那页讲过）。可以写成一张表：<code>const Ele_Position_te posOfKey[2] = {ELE_POS_RIGHT, ELE_POS_LEFT};</code>，然后只写一次 <code>if(Ele_IsVibrating(posOfKey[k])) {…}</code>（示意，没编译）。</div>
 <p class="note">💡 想法上：这段代码是在解决一个<b>反馈回路</b>问题：系统的输出（线圈震动）会干扰自己的输入（红外读数）。凡是“执行器会影响传感器”的地方（电机和电流采样、加热和测温、扬声器和麦克风），都要想清楚：执行器动作期间，传感器的读数还能不能信？常见做法就是这里的“动作期间屏蔽一段时间”。</p>
+</details>
+
+<details class="sub" id="k4" style="--c:var(--sw)"><summary><h3>④ 滤波：小抖动磨平，大动作放行（my_misc.c:534~545）</h3><span class="one">变化 ≤ 10 当噪声，新值只占 1/16；变化 &gt; 10 当手指真的在动，直接用新值。</span></summary>
+<style>
+.flow4{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin:.6rem 0}
+.flow4 .q{grid-column:1/-1;text-align:center;border:2px solid var(--per);border-radius:8px;padding:6px;background:var(--panel)}
+.flow4 .a{border:2px solid var(--c);border-radius:8px;padding:6px 8px;background:color-mix(in srgb,var(--c) 10%,var(--panel));font-size:.88rem;min-width:0}
+.flow4 .a b{display:block;font-family:var(--font-d)}
+#fSvg{display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px}
+</style>
+<h4>宏观逻辑：它要解决什么问题</h4>
+<p><b>场景</b>：手指没碰鼠标，红外接收管的读数也在 ±2~4 之间来回跳（ADC 本身的噪声、环境光）。后面的步骤都怕这种抖动：⑥ 快速触发看“相对最浅点动了多少”，⑦ 校准看“连续偏离了多少毫秒”，读数一跳，计数就被打断。所以先把抖动磨平。</p>
+<p>但又<b>不能一味磨平</b>：平滑一定带来滞后，而按键要快。于是这段代码每毫秒只问一个问题：</p>
+<div class="flow4">
+<div class="q">新读数 和 上一次的滤波结果，差多少？</div>
+<div class="a" style="--c:var(--sw)"><b>差 ≤ 10：当成噪声</b>平滑：新结果 ≈ 旧结果 + (新值 − 旧结果) ÷ 16。新值只占 1/16 的分量</div>
+<div class="a" style="--c:var(--pc)"><b>差 &gt; 10：当成真的在动</b>不平滑，直接用新值；同时把滤波器的“记忆”重置成新值</div>
+</div>
+<p>得到的效果（用下面的模拟器算的，噪声幅度是我假设的）：</p>
+<ul>
+<li><b>手不动时</b>：±4 的噪声，抖动幅度（标准差）降到原来的 1/5 左右，曲线基本是平的。</li>
+<li><b>快速按下时</b>：每毫秒变化几十，每次都走“直接用新值”，等于<b>没有滤波、没有滞后</b>。</li>
+<li><b>任何时候</b>：输出和真实读数最多差 10。按两条基线相差约 380 算，10 只相当于 2~3 段，比 rt_press 的 30 段小得多。</li>
+</ul>
+
+<h4>代码逻辑：逐行</h4>
+<pre class="code">421  #define length_filter_bit   4      // IRPT_V4：右移 4 位 = ÷16（霍尔板型是 6，÷64）
+422  #define FILTER_SKIP_VALUE   10     // IRPT_V4：差 &gt; 10 就不滤（霍尔板型是 60）
+427  static uint16_t raw_data_filter[ANA_TOTAL_COUNT] = {0};      // 上一次的滤波结果
+428  static uint32_t raw_data_filter_sum[ANA_TOTAL_COUNT] = {0};  // 16 倍的滤波结果（带“零头”）
+     ……
+534  if((raw_data_filter[k] &gt; (temp[k] + FILTER_SKIP_VALUE)) || ((raw_data_filter[k] + FILTER_SKIP_VALUE) &lt; temp[k]))
+535  {
+536    raw_data_filter[k] = temp[k];                         // 直接用新值
+537    raw_data_filter_sum[k] = temp[k] &lt;&lt; length_filter_bit; // 累加和 = 新值 × 16
+538  }
+539  else
+540  {
+541    raw_data_filter_sum[k] += temp[k];                   // 加 1 份新值
+542    raw_data_filter_sum[k] -= raw_data_filter[k];        // 减 1 份旧结果
+543    raw_data_filter[k] = raw_data_filter_sum[k] &gt;&gt; length_filter_bit;  // ÷16 得新结果
+544    temp[k] = raw_data_filter[k];                         // 后面用滤波后的值
+545  }</pre>
+<div class="scroll"><table>
+<thead><tr><th>行</th><th>讲解</th></tr></thead>
+<tbody>
+<tr><td>421~422</td><td>两个宏只在这个函数开头定义。霍尔板型是 14 位（数值大 16 倍），所以阈值也大，从 10 变成 60。</td></tr>
+<tr><td>427~428</td><td><code>static</code>：两次调用之间记得住；左右键各一份。初值是 0，所以第一次进入工作阶段时，新值（几百）和 0 一定差 &gt; 10，走 536 行，<b>等于用第一个读数初始化滤波器</b>。和 <code>gwTopBaseline</code> 初值 10000 是同一个思路：用一个“不可能”的初值，让第一次一定走重置。</td></tr>
+<tr><td>534</td><td>就是“<code>|旧结果 − 新值| &gt; 10</code>”。为什么不写 <code>abs(a − b)</code>？两个都是 <code>uint16_t</code>，如果写成无符号相减，小减大会变成一个很大的数。写成两个“加法比较”就绕开了负数。</td></tr>
+<tr><td>536~537</td><td>重置：结果 = 新值，累加和 = 新值 × 16，<b>以前的“记忆”全丢掉</b>。<code>temp[k]</code> 不用改，它本来就是新值。</td></tr>
+<tr><td>541~543</td><td><code>sum</code> 一直存着“16 倍的结果”。每毫秒加 1 份新值、减 1 份旧结果，再 ÷16：<br><code>新结果 = (16 × 旧结果 + 新值 − 旧结果) ÷ 16 = 旧结果 + (新值 − 旧结果) ÷ 16</code><br>这叫<b>指数滑动平均</b>：越老的读数，权重越小（每过 1 ms 乘 15/16）。大约 16 ms 前的读数只剩 1/e 的影响。<code>÷16</code> 用右移 4 位，不用除法（M0 没有除法指令，见 ⑤）。</td></tr>
+<tr><td>544</td><td>只有平滑分支才改 <code>temp[k]</code>。从这里往后，⑤ 算段位、⑥ 快速触发、⑦ 校准、⑧ 发给 GUI 的曲线，用的<b>都是滤波后的值</b>。</td></tr>
+</tbody></table></div>
+
+<div class="card"><b class="t">关键问题：为什么要多存一个 sum，不直接算 filter？</b><br>
+直觉写法是 <code>filter += (新值 − filter) &gt;&gt; 4;</code>。但进到这个分支时差最多 10，<b>10 &gt;&gt; 4 = 0</b>，filter 永远不动，卡死在原地。<br>
+<code>sum</code> 是放大了 16 倍的结果，<b>它的低 4 位就是被 ÷16 截掉的“零头”</b>。每次差的一点点先攒在零头里，攒满 16 才让 filter 进 1。下面是读数从 223 跳到 230（差 7，走平滑分支）的前几毫秒：
+<div class="scroll"><table>
+<thead><tr><th>ms</th><th>新值</th><th>分支</th><th>sum 计算</th><th>sum</th><th>filter = sum &gt;&gt; 4</th><th>直觉写法</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>223</td><td>重置</td><td>223 × 16</td><td>3568</td><td>223</td><td>223</td></tr>
+<tr><td>1</td><td>230</td><td>平滑</td><td>3568 + 230 − 223</td><td>3575</td><td>223</td><td>223</td></tr>
+<tr><td>2</td><td>230</td><td>平滑</td><td>3575 + 230 − 223</td><td>3582</td><td>223</td><td>223</td></tr>
+<tr><td>3</td><td>230</td><td>平滑</td><td>3582 + 230 − 223</td><td>3589</td><td><b>224</b></td><td>223</td></tr>
+<tr><td>5</td><td>230</td><td>平滑</td><td>3595 + 230 − 224</td><td>3601</td><td>225</td><td>223</td></tr>
+<tr><td>~40</td><td>230</td><td>平滑</td><td>…</td><td>…</td><td><b>230</b></td><td>223（永远）</td></tr>
+</tbody></table></div>
+最后会停在 <code>sum</code> = 3680~3695，即 <code>filter</code> = 230，没有偏差。</div>
+
+<div class="box try"><div class="tag">动手 · 滤波器（照抄 534~545 行，单个键）</div>
+<div class="modes" id="fSel"></div>
+<div class="simctl">
+<label>阈值 FILTER_SKIP_VALUE <input type="range" id="fTh" min="2" max="40" value="10"><output id="fThO">10</output></label>
+<label><input type="checkbox" id="fNaive"> 对比“直觉写法”</label>
+</div>
+<svg id="fSvg" viewBox="0 0 900 260" role="img" aria-label="滤波前后的读数"></svg>
+<div class="lg"><span><i style="--c:var(--muted)"></i>原始读数（取反后）</span><span><i style="--c:var(--sw)"></i>滤波后（temp）</span><span><i style="--c:var(--pc);height:8px;width:3px"></i>这一毫秒走了“重置”分支</span><span><i style="--c:var(--gold)"></i>直觉写法</span></div>
+<div class="simlog" id="fLog" aria-live="polite"></div>
+<p class="note">读数和噪声幅度是我编的；滤波部分照抄 C 代码。把阈值调到 2 试试：噪声本身就会超过阈值，几乎每毫秒都在重置，等于没滤波。调到 40：慢慢按下时滤波结果会落后很多。</p>
 </div>
 
-<div class="sub" id="k4" style="--c:var(--sw)"><h3>④ 滤波（my_misc.c:534~545）</h3>
-<pre class="code">if(|上次滤波值 − 新值| &gt; 10)          // FILTER_SKIP_VALUE = 10
-{
-  raw_data_filter[k] = temp[k];                  // 变化大：直接跟上
-  raw_data_filter_sum[k] = temp[k] &lt;&lt; 4;         // 累加和 = 新值 × 16
-}
-else
-{
-  raw_data_filter_sum[k] += temp[k];             // 加上新值
-  raw_data_filter_sum[k] -= raw_data_filter[k];  // 减掉一份旧平均
-  raw_data_filter[k] = raw_data_filter_sum[k] &gt;&gt; 4;  // ÷ 16
-  temp[k] = raw_data_filter[k];
-}</pre>
-<p>小波动（≤ 10）当噪声，做“新值占 1/16”的平滑；大变化（手指真的在动）立刻跟上，不拖后腿。<b>÷16 用右移 4 位</b>，不用除法（M0 没有除法指令，见 ⑤）。两个 <code>raw_data_filter</code> 数组是函数里的 <code>static</code>，所以记得上一次。</p></div>
+<h4>它在什么时候不运行</h4>
+<ul>
+<li><b>开机学习阶段</b>（②）：441~484 行没有滤波，<code>Hall_InitBaseline()</code> 看到的是原始读数。所以 ② 要自己做“±20 范围内取平均”。</li>
+<li><b>线圈冻结期间</b>（③）：<code>continue</code> 跳过了滤波，记忆停在震动前。解冻后差 &gt; 10 就重置，不会拖尾。</li>
+</ul>
 
-<div class="sub" id="k5" style="--c:var(--sw)"><h3>⑤ 算按下程度：Hall_CalculateNode()（my_misc.c:288~327）</h3>
+<div class="card"><b class="t">值得注意</b><br>
+• <b>超过 10 的单次尖刺会原样放行</b>：比如某一毫秒读数突然 +15，它会直接进 ⑤⑥。下一毫秒回来，又差 &gt; 10，再重置回去。15 大约是 4 段，远小于 30 段的按下距离，不会误触。真实噪声有多大，<b>要上板用 GUI 曲线看</b>。<br>
+• <b>慢慢按</b>（每毫秒变化不到 10）时，结果会落后真实值，但最多落后 10，超过就重置追上。</div>
+<p class="note">💡 想法上：① 这段滤波的本质是<b>按变化大小决定信不信</b>：小变化不信（噪声），大变化信（动作）。设计这种阈值前，先弄清楚两者的尺度：噪声 ±几，按键动作几百，阈值放在中间就行。② 整数运算里，<b>一点点的小量会被截断吞掉</b>（10 &gt;&gt; 4 = 0）。需要累积小量时，存一个放大过的累加值，让零头留下来。以后写 PID 积分、计步、时间累加时都会遇到这个问题。</p>
+</details>
+
+<details class="sub" id="k5" style="--c:var(--sw)"><summary><h3>⑤ 算按下程度：Hall_CalculateNode()（my_misc.c:288~327）</h3><span class="one">当前值落在两条基线之间的哪里，换算成 0~100 段。</span></summary>
 <pre class="code">if(顶部 ≥ 底部 || 底部 − 顶部 &lt; 100) return 0;   // 两条线还没拉开，一律当 0
 if(值 ≤ 顶部) tmp = 0;
 else if(值 ≥ 底部) tmp = 255;
@@ -527,9 +622,9 @@ return nodeCaliTable[tmp];                         // 0~255 查表成 0~100</pre
 <li><b>定点数代替除法</b>：Cortex-M0 <b>没有硬件除法指令</b>，每次除法都要调库函数（几十个时钟）。这里把 <code>1/(底部 − 顶部)</code> 预先算成 <code>step = 2²¹ / 差</code>，存在 static 里；之后每毫秒只做乘法和右移 21 位。基线不变就不再除。</li>
 <li><b>查表</b>：<code>nodeCaliTable[256]</code>（my_misc.c:16~44）IRPT_V4 版接近一条直线（每 2.55 格 +1）；霍尔板型那版是弯的，用来修正磁场的非线性。想调整“按到一半算几段”，改这张表就行。</li>
 </ul>
-<p>⚠️ <b>两条线没拉开（差 &lt; 100）时永远返回 0</b>，这时怎么按都不会触发。开机学完顶部基线后正是这种状态，要靠 ⑦ 的底部基线学习把它拉开。</p></div>
+<p>⚠️ <b>两条线没拉开（差 &lt; 100）时永远返回 0</b>，这时怎么按都不会触发。开机学完顶部基线后正是这种状态，要靠 ⑦ 的底部基线学习把它拉开。</p></details>
 
-<div class="sub" id="k6" style="--c:var(--pc)"><h3>⑥ 快速触发：Hall_HandleKeyRapidTrigger()（my_misc.c:330~396）</h3>
+<details class="sub" id="k6" style="--c:var(--pc)"><summary><h3>⑥ 快速触发：Hall_HandleKeyRapidTrigger()（my_misc.c:330~396）</h3><span class="one">看段位相对“最近的最浅 / 最深点”走了多少，决定按下还是松开。</span></summary>
 <pre class="code">if(现在是按着)
 {
   if(段位 == 0)                                      → 松开
@@ -543,20 +638,36 @@ else // 现在是松着
   else if(段位 ≥ 记录的最浅 + rt_press 且 段位 ≥ ap)  → 按下（从最浅处按下去够多，且过了触发点）
 }</pre>
 <p>普通按键是“过了某个固定深度就算按下”。<b>快速触发（Rapid Trigger）</b>是电竞鼠标 / 键盘的做法：只看“<b>相对</b>最近的最浅 / 最深点移动了多少”。好处：按住不放、稍微抬一点就能松开，再稍微压一点又能按下，连点更快。</p>
-<p>三个参数（段位单位，0~100）：<code>ap_value</code> 触发点（默认 10）、<code>rt_press_value</code> 按下距离（默认 30）、<code>rt_release_value</code> 松开距离（默认 20）。默认值在 my_misc.h:42~44，实际值开机由 <code>Hall_UpdateParam()</code>（my_misc.c:101）从 EEPROM 参数 <code>xgAllParam</code> 覆盖，GUI 能改。<code>current_node_update[]</code> 是函数内 static，记着“最深 / 最浅”。</p></div>
+<p>三个参数（段位单位，0~100）：<code>ap_value</code> 触发点（默认 10）、<code>rt_press_value</code> 按下距离（默认 30）、<code>rt_release_value</code> 松开距离（默认 20）。默认值在 my_misc.h:42~44，实际值开机由 <code>Hall_UpdateParam()</code>（my_misc.c:101）从 EEPROM 参数 <code>xgAllParam</code> 覆盖，GUI 能改。<code>current_node_update[]</code> 是函数内 static，记着“最深 / 最浅”。</p></details>
 
-<div class="sub" id="k7" style="--c:var(--gold)"><h3>⑦ 校准两条基线（my_misc.c:162~286）</h3>
+<details class="sub" id="k7" style="--c:var(--gold)"><summary><h3>⑦ 校准两条基线（my_misc.c:162~286）</h3><span class="one">松着时让顶部基线慢慢跟着漂移；刚按下的 100 ms 里让底部基线往深处学。</span></summary>
 <p><b>顶部基线 <code>Hall_CalibrateTopBaseline()</code></b>：只在<b>松着</b>的时候调。当前值 比 顶部 低 20 以上、持续 300 ms → 顶部 −20；比顶部低一点、持续 100 ms → −5；比顶部高一点（≤ 20）、持续 100 ms → +2。按着时三个计数器清零。<b>作用</b>：温度、环境光慢慢变化时，“没按”的数值会漂，顶部基线慢慢跟着走。</p>
 <p><b>底部基线 <code>Hall_CalibrateBottomBaseline()</code></b>：当前值 比 底部 高 80 以上、持续 30 ms → 底部 +60；高 20 以上、持续 30 ms → +10。<b>只会往大走，不会往回缩</b>；按住超过 100 ms 后就不再学（避免长按时乱改）。<b>作用</b>：学出“按到底”是多少。<br><b>由此推出</b>：每次按下，只有被判定按下后的前 100 ms 在学，所以底部基线要<b>点好几次</b>才学到真正的“按到底”。学到之前，底部偏浅，段位会偏大（按一半就显示 70、80）。模拟器“开机 + 第一次点击”里可以看到底部基线一次次往上走。</p>
-<div class="card" style="border-left-color:var(--bad)"><b class="t">⚠️ 由此推出：开机后的第一次点击要“按住一会儿”</b><br>开机学完后底部 = 顶部，⑤ 一律返回 0，不会触发。第一次按下去，当前值比底部高很多，每持续 30 ms 底部 +60；大约 <b>60 ms 后两条线拉开到 ≥ 100</b>，⑤ 开始算出段位，此时当前值已经 ≥ 底部，段位 = 100，⑥ 判定按下。所以开机后<b>第一下快速轻点可能不响应</b>，按住约 60 ms 以上才行；之后的点击都正常。模拟器里选“开机 + 第一次点击”能看到。这是从代码推出来的，<b>要上板验证</b>。</div></div>
+<div class="card" style="border-left-color:var(--bad)"><b class="t">⚠️ 由此推出：开机后的第一次点击要“按住一会儿”</b><br>开机学完后底部 = 顶部，⑤ 一律返回 0，不会触发。第一次按下去，当前值比底部高很多，每持续 30 ms 底部 +60；大约 <b>60 ms 后两条线拉开到 ≥ 100</b>，⑤ 开始算出段位，此时当前值已经 ≥ 底部，段位 = 100，⑥ 判定按下。所以开机后<b>第一下快速轻点可能不响应</b>，按住约 60 ms 以上才行；之后的点击都正常。模拟器里选“开机 + 第一次点击”能看到。这是从代码推出来的，<b>要上板验证</b>。</div></details>
 
-<div class="sub" id="k8" style="--c:var(--muted)"><h3>⑧ 交出结果（my_misc.c:552~668）</h3>
+<details class="sub" id="k8" style="--c:var(--muted)"><summary><h3>⑧ 交出结果（my_misc.c:552~668）</h3><span class="one">段位告诉线圈、数据存给 GUI、两个键的结论拼成一个字节返回。</span></summary>
 <p>每个键算完后：<code>Ele_UpadteSegment()</code> 把段位告诉线圈（线圈按段位微调通电时长）；<code>Hall_SyncParam()</code> 把当前值、两条基线、段位存进 <code>xgAllParam.xInfo[]</code>，GUI 查询时发出去（GUI 上那条实时曲线就是它）；记下 <code>previousKeySta</code> 给 ③ 用。最后：</p>
 <pre class="code">if(gbKeyState[0]) ret |= (0x01 &lt;&lt; 1);   // 右键 → 第 1 位
 if(gbKeyState[1]) ret |= (0x01 &lt;&lt; 0);   // 左键 → 第 0 位
-return ret;                             // 回到 LR_GetState() → Button_GetState() → Button_Scan()</pre></div>
+return ret;                             // 回到 LR_GetState() → Button_GetState() → Button_Scan()</pre></details>
 
-<h2><span class="step">5/8</span>坑和值得注意的地方</h2>
+<h3 id="ksim">合起来：①~⑧ 一起跑</h3>
+<p>上面每一步都看过之后，再用这个模拟器看它们怎么配合：拖一拖三个手感参数，换一换场景，看“按着”的色块什么时候出现。</p>
+<div class="box try"><div class="tag">动手 · 合起来跑一遍：①~⑧ 逐毫秒模拟（和 C 代码同一套算法，左键一路）</div>
+<div class="modes" id="scSel"></div>
+<div class="simctl">
+<label>触发点 ap <input type="range" id="sAp" min="1" max="90" value="10"><output id="oAp">10</output></label>
+<label>按下距离 rt_press <input type="range" id="sRp" min="1" max="60" value="30"><output id="oRp">30</output></label>
+<label>松开距离 rt_release <input type="range" id="sRr" min="1" max="60" value="20"><output id="oRr">20</output></label>
+</div>
+<svg id="simSvg" viewBox="0 0 900 330" role="img" aria-label="模拟曲线"></svg>
+<div class="lg"><span><i style="--c:var(--per)"></i>滤波后的值 temp</span><span><i style="--c:var(--sw)"></i>顶部基线</span><span><i style="--c:var(--gold)"></i>底部基线</span><span><i style="--c:var(--pc)"></i>按下程度（右轴 0~100）</span><span><i style="--c:color-mix(in srgb,var(--pc) 25%,transparent);height:10px"></i>判定为“按着”</span></div>
+<div class="simlog" id="simLog" aria-live="polite"></div>
+<p class="note">手指按下的深度是我编的（没按时 ADC ≈ 800，按到底 ≈ 420，带 ±2 的噪声）；算法部分照抄 C 代码：学基线、滤波、查 nodeCaliTable、快速触发、两条基线的校准。线圈冻结没有模拟。</p>
+</div>
+
+<h2 id="s5"><span class="step">5/8</span>坑和值得注意的地方</h2>
+<p><b>ADC 驱动（my_adc.c 等）</b></p>
 <div class="scroll"><table class="iss">
 <thead><tr><th>位置</th><th>问题</th><th>影响</th></tr></thead>
 <tbody>
@@ -568,14 +679,25 @@ return ret;                             // 回到 LR_GetState() → Button_GetSt
 <tr><td>device.c:529</td><td>主循环每圈都调 <code>MyADC_Poll_Test()</code>，函数体是空的</td><td>浪费一次函数调用，可以删</td></tr>
 </tbody></table></div>
 
-<h2><span class="step">6/8</span>T1A</h2>
+<p><b>按键算法（my_misc.c）</b>：下面都是从代码和模拟推出来的，<b>待上板验证</b>。</p>
+<div class="scroll"><table class="iss">
+<thead><tr><th>位置</th><th>问题</th><th>影响</th></tr></thead>
+<tbody>
+<tr><td><a href="#k7">⑦</a> + <a href="#k5">⑤</a></td><td>开机学完后底部基线 = 顶部基线，⑤ 一律返回 0</td><td>开机后第一下快速轻点可能不响应，要按住约 60 ms</td></tr>
+<tr><td><a href="#k7">⑦</a></td><td>底部基线只在判定按下后的前 100 ms 学习，只增不减</td><td>要点好几次才学到真正的“按到底”；学好之前段位偏大</td></tr>
+<tr><td><a href="#k2">②</a></td><td>左右键共用 <code>cali_init_cnt</code></td><td>一个键学好，两个键的学习一起结束；另一个键可能还没学稳</td></tr>
+<tr><td><a href="#k2">②</a></td><td>开机时手指搭在键上，会把“按着”的读数学成“没按”</td><td>模拟中左键约 3.3 s 按不出来，要等顶部校准慢慢挪回</td></tr>
+<tr><td><a href="#k4">④</a></td><td>单次超过 10 的尖刺原样放行</td><td>约 4 段，远小于按下距离 30 段，一般无影响；真实噪声要看 GUI 曲线</td></tr>
+</tbody></table></div>
+
+<h2 id="s6"><span class="step">6/8</span>T1A</h2>
 <p>T1A 的左右键换成 GTRY164 霍尔芯片（SPI），<b>不再需要 ADC 读按键</b>；PIO0_13 / 14 改作线圈 PWM，PIO0_19 改作滚轮信号（T1A 适配清单）。所以 T1A 上：<code>MyADC_Init()</code> 的两次调用、<code>IR_EN</code> 的初始化、<code>LR_GetState()</code> 里的 ADC 分支都要去掉。<code>my_adc.c</code> 这个驱动本身可以留着，以后如果要量电池电压之类的模拟量，按第 3 节的做法加通道。</p>
 
-<h2><span class="step">7/8</span>💡 想法上</h2>
+<h2 id="s7"><span class="step">7/8</span>💡 想法上</h2>
 <div class="card"><b class="t">1. 读驱动代码，一行对一个寄存器字段</b><br>这一页的方法可以用在任何外设上：每看到一句 <code>XXX-&gt;REG |= / &amp;= …</code>，就问三件事：<b>哪个寄存器？哪几位？手册里这几位是什么意思？</b>把答案写在旁边。读完一个驱动，你就有了一张“这个外设被设成了什么样”的表。</div>
 <div class="card"><b class="t">2. 错误处理的路径，最容易漏掉收尾</b><br>上面第一个坑就是典型：正常路径最后会清 SEL，超时提前 <code>return</code> 的路径却没清。以后写“中途可能返回”的函数，检查一下：<b>每一个 return 之前，该恢复的东西都恢复了吗？</b></div>
 
-<h2><span class="step">8/8</span>小测</h2>
+<h2 id="s8"><span class="step">8/8</span>小测</h2>
 <div class="box quiz" id="quiz"></div>
 <div class="sum"><b>记住：</b>开机 <code>MyADC_Init()</code>：PDRUNCFG bit4 清 0（上电）、SYSAHBCLKCTRL bit13 置 1（时钟）、CLKDIV = 15（48 MHz ÷ 16 = 3 MHz）；引脚 IOCON 去上下拉、ADMODE 清 0（模拟）、FUNC = 2（AD）。每次 <code>MyADC_GetValue()</code>：停 → 选 SEL → 读一次 DR 清 DONE → START = 001 → 每 2 µs 看 DONE → 取 DR 第 15~6 位 → 清 SEL。</div>
 <h3>本页新词</h3>
@@ -767,3 +889,54 @@ draw();
 })();
 </script>
 <script>(function(){const box=document.getElementById('frzStrip');if(!box)return;let h='';for(let i=0;i<20;i++){const c=i===0?'p':(i<=9?'f':'n');const t=i===0?'按下\n震':(i<=9?'冻结':'正常');h+=`<div class="${c}" title="${i} ms">${i}<br>${i===0?'震':(i<=9?'冻':'✓')}</div>`}box.innerHTML=h})();</script>
+
+<script>(function(){
+const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);const NS='http://www.w3.org/2000/svg';
+if(!$('fSvg'))return;
+function el(p,t,a,x){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e}
+let seed=7;const rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff};
+const nz=a=>Math.round((rnd()*2-1)*a);
+const SC=[
+ {n:'手不动（噪声 ±4）',c:'per',T:120,f:t=>300+nz(4)},
+ {n:'读数慢慢变了 7',c:'gold',T:120,f:t=>(t<20?300:307)+nz(1)},
+ {n:'快速按下再松开',c:'pc',T:120,f:t=>{let b;if(t<20)b=300;else if(t<35)b=300+(t-20)*25;else if(t<75)b=675;else if(t<90)b=675-(t-75)*25;else b=300;return b+nz(2)}},
+ {n:'慢慢按下（每 ms +3）',c:'sw',T:120,f:t=>(t<20?300:Math.min(600,300+(t-20)*3))+nz(1)},
+ {n:'偶发尖刺 +15',c:'muted',T:120,f:t=>300+nz(2)+((t===40||t===80)?15:0)},
+];
+let si=0;
+function run(){seed=7;const sc=SC[si],TH=+$('fTh').value;let f=0,s=0,nv=0;const rows=[];
+ for(let t=0;t<sc.T;t++){const v=sc.f(t);let jump=0,out;
+  if(f>v+TH||f+TH<v){f=v;s=v<<4;jump=1;out=v}else{s+=v;s-=f;f=s>>4;out=f}
+  if(t===0)nv=v;else{nv=nv+Math.trunc((v-nv)/16)}if(Math.abs(nv-v)>TH)nv=v;
+  rows.push({t,v,out,jump,nv})}
+ return rows}
+function draw(){const rows=run(),svg=$('fSvg');svg.innerHTML='';const W=900,H=260,L=46,R=12,T=10,B=26,pw=W-L-R,ph=H-T-B,n=rows.length;
+ let lo=Math.min(...rows.map(r=>Math.min(r.v,r.out))),hi=Math.max(...rows.map(r=>Math.max(r.v,r.out)));
+ if(hi-lo<24){const m=(hi+lo)/2;lo=m-12;hi=m+12}const pad=(hi-lo)*.08;lo-=pad;hi+=pad;
+ const X=i=>L+i/(n-1)*pw,Y=v=>T+ph-(v-lo)/(hi-lo)*ph;
+ const gs=Math.pow(10,Math.floor(Math.log10((hi-lo)/4)));const g0=Math.ceil(lo/gs)*gs;
+ for(let g=g0;g<=hi;g+=gs*((hi-lo)/gs>8?2:1)){el(svg,'line',{x1:L,x2:W-R,y1:Y(g),y2:Y(g),stroke:'var(--grid)'});el(svg,'text',{x:L-6,y:Y(g)+4,'text-anchor':'end','font-size':11,fill:'var(--muted)'},Math.round(g))}
+ for(let t=0;t<n;t+=20)el(svg,'text',{x:X(t),y:H-8,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},t+' ms');
+ rows.forEach((r,i)=>{if(r.jump)el(svg,'rect',{x:X(i)-1,y:H-B-6,width:2.5,height:6,fill:'var(--pc)'})});
+ const line=(f,c,w,d)=>{const a={points:rows.map((r,i)=>`${X(i).toFixed(1)},${Y(f(r)).toFixed(1)}`).join(' '),fill:'none',stroke:c,'stroke-width':w};if(d)a['stroke-dasharray']=d;el(svg,'polyline',a)};
+ line(r=>r.v,'var(--muted)',1);if($('fNaive').checked)line(r=>r.nv,'var(--gold)',2,'5 3');line(r=>r.out,'var(--sw)',2.2);
+ const j=rows.filter(r=>r.jump).length,lag=Math.max(...rows.map(r=>Math.abs(r.v-r.out)));
+ const sd=a=>{const m=a.reduce((p,c)=>p+c,0)/a.length;return Math.sqrt(a.reduce((p,c)=>p+(c-m)**2,0)/a.length)};
+ let msg=`${SC[si].n}：120 ms 里有 ${j} 次走“重置”分支，滤波结果和原始读数最多差 ${lag}。`;
+ if(si===0){const q=rows.slice(10);msg+=`\n原始读数标准差 ${sd(q.map(r=>r.v)).toFixed(2)}，滤波后 ${sd(q.map(r=>r.out)).toFixed(2)}。`}
+ if(si===1)msg+=`\n差 7 &lt; 阈值，走平滑分支，大约 40 ms 才完全跟上。勾“对比直觉写法”：它卡在原地不动。`;
+ if(si===2)msg+=`\n按下 / 松开的过程中，每毫秒变化 25，全部走重置，输出 = 原始读数，没有滞后。`;
+ if(si===3)msg+=`\n每毫秒只变 3，走平滑分支，结果越落越远；落后超过阈值就重置一次追上，所以是锯齿形。`;
+ if(si===4)msg+=`\n尖刺 15 &gt; 10，原样放行一毫秒，下一毫秒又重置回去。`;
+ $('fLog').innerHTML=msg;$('fThO').value=$('fTh').value;
+ [...$('fSel').children].forEach((b,i)=>b.setAttribute('aria-pressed',i===si))}
+SC.forEach((s,i)=>{const b=document.createElement('button');b.type='button';b.textContent=s.n;b.style.setProperty('--c',V(s.c));b.onclick=()=>{si=i;draw()};$('fSel').appendChild(b)});
+$('fTh').oninput=draw;$('fNaive').onchange=draw;draw();
+})();
+</script>
+<script>(function(){const subs=()=>[...document.querySelectorAll('details.sub')];
+const o=document.getElementById('xOpen'),c=document.getElementById('xClose');
+if(o)o.onclick=()=>subs().forEach(d=>d.open=true);if(c)c.onclick=()=>subs().forEach(d=>d.open=false);
+function openHash(){const id=location.hash.slice(1);if(!id)return;const t=document.getElementById(id);if(t&&t.tagName==='DETAILS'){t.open=true;t.scrollIntoView()}}
+document.addEventListener('click',e=>{const a=e.target.closest('a[href^="#"]');if(!a)return;const t=document.getElementById(a.getAttribute('href').slice(1));if(t&&t.tagName==='DETAILS')t.open=true});
+window.addEventListener('hashchange',openHash);openHash();})();</script>
