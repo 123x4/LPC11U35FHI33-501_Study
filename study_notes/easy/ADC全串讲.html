@@ -322,6 +322,39 @@ if(MyADC_GetValue(&amp;batAdcInst, &amp;v) == 0)   // 3. 要用时读
 这次你主动要求“先讲整体”，这个直觉是对的：以后读任何长函数，都先自己按这 5 步画一张骨架图，画不出来再问我。</div>
 </div>
 
+<div class="sub" id="kv" style="--c:var(--gold)"><h3>这个模块的全局变量（my_misc.c:67~75）</h3>
+<pre class="code">67  uint16_t rt_press_value[ANA_TOTAL_COUNT]   = {DEFAULT_RTP, DEFAULT_RTP};   // {30, 30}
+68  uint16_t rt_release_value[ANA_TOTAL_COUNT] = {DEFAULT_RTR, DEFAULT_RTR};   // {20, 20}
+69  uint16_t ap_value[ANA_TOTAL_COUNT]         = {DEFAULT_AP, DEFAULT_AP};     // {10, 10}
+71  uint8_t  gbKeyState[ANA_TOTAL_COUNT]       = {0};
+72  uint16_t cali_init_cnt                     = 600;
+73  extern const unsigned char bit_error[256];
+74  uint16_t gwTopBaseline[ANA_TOTAL_COUNT]    = {10000, 10000};
+75  uint16_t gwBottomBaseline[ANA_TOTAL_COUNT] = {6000, 6000};</pre>
+<p><code>ANA_TOTAL_COUNT</code> = 2（my_hallkey_func.h:17）：每个数组两格，<b>[0] = 右键，[1] = 左键</b>。三个 DEFAULT 宏在 my_misc.h:42~44。可以分成三组看：</p>
+<div class="scroll"><table>
+<thead><tr><th>变量</th><th>初值</th><th>是什么</th><th>谁写 / 谁读</th></tr></thead>
+<tbody>
+<tr><td colspan="4"><b>第一组：手感参数</b>（单位都是“段”，0~100；GUI 可以改）</td></tr>
+<tr><td><code>ap_value[2]</code><br>0x1000 0322</td><td>10</td><td><b>触发点</b>（Actuation Point）：段位至少到这么深，才<b>有资格</b>判按下。防止手指轻轻搭着就误触</td><td rowspan="3">写：<code>Hall_UpdateParam()</code>（my_misc.c:101），开机由 <code>Param_Init()</code> → <code>Init_CfgParamToRun()</code> 调一次，GUI 改参数后由 <code>Task_ParamGuard()</code> 再调（my_protocol_mouse.c:83~85、130~133）。数据来自 EEPROM 0xF00 的 <code>xgAllParam.xConfig[].xRtCfg</code>。<br>读：<code>Hall_HandleKeyRapidTrigger()</code></td></tr>
+<tr><td><code>rt_press_value[2]</code><br>0x1000 031A</td><td>30</td><td><b>按下距离</b>：松着的时候，从最近的最浅点再往下按这么多段，就判按下</td></tr>
+<tr><td><code>rt_release_value[2]</code><br>0x1000 031E</td><td>20</td><td><b>松开距离</b>：按着的时候，从最近的最深点往回抬这么多段，就判松开</td></tr>
+<tr><td colspan="4"><b>第二组：结论和学习状态</b></td></tr>
+<tr><td><code>gbKeyState[2]</code><br>0x1000 030C</td><td>0</td><td><b>结论</b>：1 = 按着，0 = 松着。整个模块的最终产物</td><td>写：<code>Hall_HandleKeyRapidTrigger()</code>；冻结时被 <code>previousKeySta</code> 覆盖。<br>读：<code>ProcessRecvSampleRawData()</code> 拼返回值、两个校准函数（按着时不校准顶部）</td></tr>
+<tr><td><code>cali_init_cnt</code><br>0x1000 030E</td><td>600</td><td><b>开机学习倒计时</b>（毫秒）：不为 0 时处于学习阶段。每毫秒减 1，学好提前清 0。<b>两个键共用一个</b>，所以“一个学好、两个一起结束”</td><td>写 / 读：<code>ProcessRecvSampleRawData()</code></td></tr>
+<tr><td colspan="4"><b>第三组：两条基线</b>（单位是取反后的读数，IRPT_V4 是 0~1023）</td></tr>
+<tr><td><code>gwTopBaseline[2]</code><br>0x1000 0326</td><td>10000</td><td><b>顶部基线</b> = 没按时的读数。初值 10000 是<b>故意的不可能值</b>：10 位 ADC 最大 1023，所以开机第一次 <code>Hall_InitBaseline()</code> 一定判“跳出范围”，直接用第一个读数开局</td><td rowspan="2">写：<code>Hall_InitBaseline()</code>（开机）、<code>Hall_CalibrateTopBaseline()</code> / <code>…BottomBaseline()</code>（运行中）。<br>读：<code>Hall_CalculateNode()</code> 算段位、<code>Hall_SyncParam()</code> 给 GUI 显示</td></tr>
+<tr><td><code>gwBottomBaseline[2]</code><br>0x1000 032A</td><td>6000</td><td><b>底部基线</b> = 按到底的读数。初值 6000 其实<b>用不上</b>：第一次 <code>Hall_InitBaseline()</code> 就把它改成和顶部一样</td></tr>
+<tr><td colspan="4"><b>多出来的一行</b></td></tr>
+<tr><td><code>bit_error[256]</code></td><td>—</td><td><code>extern</code> 声明，真身在 app/button.c:125。是霍尔芯片 SPI 数据的<b>校验表</b>（判断 14 位数据有没有传错），只给霍尔板型的 <code>ana_phy_bit_error_checker2()</code> 用</td><td>IRPT_V4 没人用：那个函数被标成 <code>unused</code>，链接器把这张表也删掉了（map 里找不到）</td></tr>
+</tbody></table></div>
+<div class="card"><b class="t">几个值得注意的地方</b><br>
+• <b>10000 / 6000 是霍尔板型留下的数</b>：霍尔芯片是 14 位（0~16383），没按 / 按到底大约就在这个量级。对 IRPT_V4 的 10 位红外来说，这两个数只起“不可能值”的作用。<br>
+• <b>这些都是普通全局变量（没加 static）</b>：任何文件 <code>extern</code> 一下就能改。实际上除了 my_misc.c，只有没编译的 my_hallkey_func.c 碰过它们，所以加上 <code>static</code> 会更安全（<code>gbKeyState</code> 在 my_misc.h 里声明了 extern，但也只有 my_misc.c 在用）。<br>
+• <b>手感参数改了以后立刻生效、也存 EEPROM</b>：GUI 改参数 → <code>Task_ParamGuard()</code> 把 <code>xgAllParam</code> 写进 EEPROM（第 11 课），再调 <code>Hall_UpdateParam()</code> 更新这三个数组。下次开机 <code>Param_Init()</code> 从 EEPROM 读回。<br>
+• <code>Hall_UpdateParam()</code> 的两个细节：GUI 那边 <code>bmEnableMask</code> 第 7 位没开时，用回默认值 10 / 30 / 20；按下 / 松开距离传来 0 时改成 1，避免“距离为 0 一碰就切换”。</div>
+</div>
+
 <div class="box try"><div class="tag">动手 · 逐毫秒模拟（和 C 代码同一套算法，左键一路）</div>
 <div class="modes" id="scSel"></div>
 <div class="simctl">
