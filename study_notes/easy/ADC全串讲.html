@@ -519,7 +519,7 @@ temp[k] |= ana_rd_buff[2*k + 1];     // 低字节 → 0~1023
 <p class="note">💡 想法上：这段代码是在解决一个<b>反馈回路</b>问题：系统的输出（线圈震动）会干扰自己的输入（红外读数）。凡是“执行器会影响传感器”的地方（电机和电流采样、加热和测温、扬声器和麦克风），都要想清楚：执行器动作期间，传感器的读数还能不能信？常见做法就是这里的“动作期间屏蔽一段时间”。</p>
 </details>
 
-<details class="sub" id="k4" style="--c:var(--sw)"><summary><h3>④ 滤波：小抖动磨平，大动作放行（my_misc.c:534~545）</h3><span class="one">读数抖几下，输出不动；读数一下变很多，输出立刻跟上。</span></summary>
+<details class="sub" id="k4" style="--c:var(--sw)"><summary><h3>④ 滤波：小抖动磨平，大动作放行（my_misc.c:534~545）</h3><span class="one">差 ≤ 10 只往新读数走 1/16；差 &gt; 10 直接跳过去。</span></summary>
 <style>
 .ex4{font-family:var(--font-m);font-size:.84rem;border-collapse:collapse;margin:.4rem 0}
 .ex4 td,.ex4 th{border:1px solid var(--line);padding:2px 7px;text-align:center}
@@ -536,76 +536,88 @@ temp[k] |= ana_rd_buff[2*k + 1];     // 低字节 → 0~1023
 #fSvg{display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px}
 </style>
 
-<h4>第 1 步：先看效果（不看代码）</h4>
-<p>手指不动时，红外读数也会在几个数之间来回跳。滤波就是把这种小跳动抹掉。看一串数（左边是读数在 300 附近抖，右边是手指按下、读数一下变成 360 附近）：</p>
-<div class="scroll"><table class="ex4">
-<tr><th>第几毫秒</th><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td class="j">7</td><td>8</td><td>9</td><td>10</td></tr>
-<tr><th>读数（滤波前）</th><td>300</td><td>304</td><td>297</td><td>303</td><td>306</td><td>299</td><td>302</td><td class="j">360</td><td>365</td><td>363</td><td>361</td></tr>
-<tr><th>滤波后</th><td>300</td><td>300</td><td>300</td><td>300</td><td>300</td><td>300</td><td>300</td><td class="j">360</td><td>360</td><td>360</td><td>360</td></tr>
-</table></div>
-<p>就两件事：<b>① 抖几下（差 ≤ 10），输出不动</b>；<b>② 一下变了很多（差 &gt; 10），输出立刻跟上</b>。像看电子秤：数字在 60.1、60.3、59.9 之间跳，你心里记的是“60 左右”；有人突然踩上去变成 120，你马上就认 120。</p>
+<h4>第 1 步：为什么要滤波</h4>
+<p>手指没碰按键，ADC 每毫秒读出来的数是这样的：<code>300, 304, 297, 303, 306, 299 ……</code> 手没动，数却在跳。后面的程序靠这个数判断“按没按”，数一跳，它可能以为手动了。所以先把这个数弄稳。</p>
 
-<h4>第 2 步：它怎么做到的——“16 份”</h4>
-<p>程序心里记着 <b>16 份“当前结果”</b>，把它们加起来存成一个数，叫 <code>sum</code>。所以 <code>sum ÷ 16</code> 就是当前结果。每来一个新读数，先看它和当前结果差多少：</p>
-<ul>
-<li><b>差 ≤ 10（小抖动）</b>：从 16 份里<b>拿出 1 份旧结果，放进 1 份新读数</b>，再 ÷16。新读数只占 16 份里的 1 份，所以只能把结果拉动一点点。抖上抖下互相抵消，结果就几乎不动。</li>
-<li><b>差 &gt; 10（真的变了）</b>：不商量了，<b>16 份全部换成新读数</b>。结果立刻等于新读数。</li>
-</ul>
-<p>点“下一毫秒”，一步一步看上面那串数是怎么算出来的：</p>
-<div class="box try"><div class="tag">动手 · 一毫秒一毫秒地算（数字和上表一样）</div>
-<div class="btns"><button type="button" id="s4Prev">上一毫秒</button><button type="button" id="s4Next">下一毫秒</button><span class="note" id="s4Prog"></span></div>
-<div class="st4" id="s4Box" aria-live="polite"></div>
-<p class="note">小方块是那 16 份；绿色 = 刚放进去的新读数；红色 = 16 份全换成新读数。<span class="chip">零头</span> 是 ÷16 除不尽剩下的余数，第 4 步再讲它，现在可以先不管。</p>
+<h4>第 2 步：规则只有一句话</h4>
+<p>程序记着一个“<b>结果</b>”（稳定后的数）。每来一个新读数：</p>
+<div class="flow4" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin:.6rem 0">
+<div style="border:2px solid var(--sw);border-radius:8px;padding:6px 10px;background:color-mix(in srgb,var(--sw) 10%,var(--panel));min-width:0"><b>差 ≤ 10：只往新读数走 1/16</b><br>结果 300，新读数 308，差 8 → 走 0.5 → <b>300.5</b><br>结果 300，新读数 306，差 6 → 走 0.375 → <b>300.375</b></div>
+<div style="border:2px solid var(--pc);border-radius:8px;padding:6px 10px;background:color-mix(in srgb,var(--pc) 10%,var(--panel));min-width:0"><b>差 &gt; 10：直接跳过去</b><br>结果 300，新读数 325，差 25 → <b>325</b><br>结果 300，新读数 360，差 60 → <b>360</b></div>
 </div>
 
-<h4>第 3 步：对上代码</h4>
-<p>有了上面的画面，代码每一行就是其中一个动作：</p>
+<h4>第 3 步：为什么只走 1/16</h4>
+<p>两个极端都不行：每次走 100%，结果就是读数本身，等于没滤；完全不走，结果永远 300，读数真的变了也跟不上。走一小部分，会出现两种效果：</p>
+<div class="scroll"><table class="ex4">
+<tr><th colspan="5">① 抖动：一会儿往上推、一会儿往下推，推不动</th></tr>
+<tr><th>新读数</th><td>304</td><td>296</td><td>304</td><td>296</td></tr>
+<tr><th>结果</th><td>300.25</td><td>299.98</td><td>300.23</td><td>299.96</td></tr>
+</table></div>
+<div class="scroll"><table class="ex4">
+<tr><th colspan="6">② 真变化（读数一直是 306）：一直往一个方向推，最后推过去</th></tr>
+<tr><th>第几次</th><td>1</td><td>2</td><td>3</td><td>16</td><td>40</td></tr>
+<tr><th>结果</th><td>300.375</td><td>300.73</td><td>301.06</td><td>约 303.9</td><td>约 305.5</td></tr>
+</table></div>
+<p><b>1/16 是取舍</b>：走得越少（1/64）越稳但越慢；走得越多（1/2）越快但抖动也漏过来。而且 ÷16 在代码里就是右移 4 位，M0 做起来最便宜。<br>
+<b>差 &gt; 10 为什么直接跳</b>：按 ② 的速度，要 40 ms 左右才跟上。真按键时读数一下变几十上百，等 40 ms 手感就迟钝了。变化大到不可能是抖动，就直接跳。</p>
+
+<h4>第 4 步：对上代码——sum 是干什么的</h4>
+<p>问题：结果要存 300.375 这种小数，但代码里全是整数。办法：<b>不存结果，存“结果 × 16”</b>，叫 <code>sum</code>。300.375 × 16 = 4806，是整数，小数就不会丢。</p>
+<p>把第 2 步的规则两边都乘 16：</p>
+<pre class="code">结果 = 结果 + (读数 − 结果) ÷ 16
+  ↓ 两边 × 16
+sum  = sum  + 读数 − 结果</pre>
+<p>这正是代码 541~543 行：</p>
 <pre class="code">534  if(差 &gt; 10)        // if((raw_data_filter[k] &gt; (temp[k] + 10)) || ((raw_data_filter[k] + 10) &lt; temp[k]))
 535  {
-536    raw_data_filter[k]     = temp[k];        // 结果 = 新读数
-537    raw_data_filter_sum[k] = temp[k] &lt;&lt; 4;   // 16 份全换成新读数（&lt;&lt; 4 就是 ×16）
+536    raw_data_filter[k]     = temp[k];        // 直接跳：结果 = 读数
+537    raw_data_filter_sum[k] = temp[k] &lt;&lt; 4;   //         sum  = 读数 × 16
 538  }
 539  else
 540  {
-541    raw_data_filter_sum[k] += temp[k];           // 放进 1 份新读数
-542    raw_data_filter_sum[k] -= raw_data_filter[k]; // 拿出 1 份旧结果
-543    raw_data_filter[k] = raw_data_filter_sum[k] &gt;&gt; 4;  // ÷16，得新结果（&gt;&gt; 4 就是 ÷16）
-544    temp[k] = raw_data_filter[k];                // 把新结果交给后面的步骤
+541    raw_data_filter_sum[k] += temp[k];           // sum = sum + 读数
+542    raw_data_filter_sum[k] -= raw_data_filter[k]; //           − 结果
+543    raw_data_filter[k] = raw_data_filter_sum[k] &gt;&gt; 4;  // 结果 = sum ÷ 16（只留整数部分交出去）
+544    temp[k] = raw_data_filter[k];                // 交给后面的步骤
 545  }</pre>
 <div class="scroll"><table>
-<thead><tr><th>代码里的名字</th><th>就是上面的</th></tr></thead>
+<thead><tr><th>代码里的名字</th><th>就是</th></tr></thead>
 <tbody>
-<tr><td><code>temp[k]</code></td><td>这一毫秒的新读数（① 拼数、取反之后的值）</td></tr>
-<tr><td><code>raw_data_filter[k]</code></td><td>当前结果（上一次滤波的输出）</td></tr>
-<tr><td><code>raw_data_filter_sum[k]</code></td><td>16 份加起来的总数 <code>sum</code></td></tr>
-<tr><td><code>FILTER_SKIP_VALUE</code> = 10（422 行）</td><td>“小抖动”和“真的变了”的分界线</td></tr>
-<tr><td><code>length_filter_bit</code> = 4（421 行）</td><td>移 4 位 = ×16 或 ÷16，也就是“16 份”的 16</td></tr>
+<tr><td><code>temp[k]</code></td><td>新读数（① 拼数、取反之后的值）</td></tr>
+<tr><td><code>raw_data_filter[k]</code></td><td>结果的整数部分（交出去的那个数）</td></tr>
+<tr><td><code>raw_data_filter_sum[k]</code></td><td>结果 × 16（小数藏在这里）</td></tr>
+<tr><td><code>FILTER_SKIP_VALUE</code> = 10（422 行）</td><td>“抖动”和“真变化”的分界线</td></tr>
+<tr><td><code>length_filter_bit</code> = 4（421 行）</td><td>移 4 位 = ×16 或 ÷16，就是“1/16”里的 16</td></tr>
 </tbody></table></div>
-<p>534 行那一长串，意思就是“<code>|当前结果 − 新读数| &gt; 10</code>”：要么结果比读数大 10 以上，要么读数比结果大 10 以上。<br>544 行之后，⑤ 算段位、⑥ 快速触发、⑦ 校准、⑧ GUI 上的曲线，用的<b>都是滤波后的值</b>。</p>
+<p>点“下一毫秒”，看你算过的那道题（300 → 读数 306）在代码里是怎么算的：</p>
+<div class="box try"><div class="tag">动手 · 一毫秒一毫秒地算</div>
+<div class="btns"><button type="button" id="s4Prev">上一毫秒</button><button type="button" id="s4Next">下一毫秒</button><span class="note" id="s4Prog"></span></div>
+<div class="st4" id="s4Box" aria-live="polite"></div>
+</div>
+<p>534 行那一长串就是“<code>|结果 − 读数| &gt; 10</code>”。544 行之后，⑤ 算段位、⑥ 快速触发、⑦ 校准、⑧ GUI 曲线用的都是滤波后的值。</p>
 
-<h4>第 4 步：自己拖一拖</h4>
+<h4>第 5 步：自己拖一拖</h4>
 <div class="box try"><div class="tag">动手 · 滤波器（照抄 534~545 行，单个键）</div>
 <div class="modes" id="fSel"></div>
 <div class="simctl">
 <label>分界线 FILTER_SKIP_VALUE <input type="range" id="fTh" min="2" max="40" value="10"><output id="fThO">10</output></label>
-<label><input type="checkbox" id="fNaive"> 对比“不存 sum 的写法”（见下面细节）</label>
+<label><input type="checkbox" id="fNaive"> 对比“不存 sum 的写法”</label>
 </div>
 <svg id="fSvg" viewBox="0 0 900 260" role="img" aria-label="滤波前后的读数"></svg>
-<div class="lg"><span><i style="--c:var(--muted)"></i>读数（滤波前）</span><span><i style="--c:var(--sw)"></i>滤波后</span><span><i style="--c:var(--pc);height:8px;width:3px"></i>这一毫秒 16 份全换了</span><span><i style="--c:var(--gold)"></i>不存 sum 的写法</span></div>
+<div class="lg"><span><i style="--c:var(--muted)"></i>读数（滤波前）</span><span><i style="--c:var(--sw)"></i>滤波后</span><span><i style="--c:var(--pc);height:8px;width:3px"></i>这一毫秒直接跳</span><span><i style="--c:var(--gold)"></i>不存 sum 的写法</span></div>
 <div class="simlog" id="fLog" aria-live="polite"></div>
 <p class="note">读数和噪声幅度是我编的，滤波部分照抄 C 代码。把分界线调到 2：噪声本身就超过分界线，几乎每毫秒都全换，等于没滤。调到 40：慢慢按时，滤波结果会落后很多。</p>
 </div>
 
-<details class="more"><summary><b>第 5 步（可以以后再看）：几个细节</b></summary>
-<p><b>① 零头是什么，为什么一定要存 sum？</b><br>
-<code>sum ÷ 16</code> 不一定除得尽，余数（零头）就留在 <code>sum</code> 里。比如上面第 1 毫秒后 <code>sum</code> = 4804 = 300 × 16 + 4。<br>
-如果不存 <code>sum</code>，直接写 <code>结果 += (新读数 − 结果) &gt;&gt; 4</code> 会怎样？进到这个分支时差最多 10，而 <code>10 &gt;&gt; 4 = 0</code>，结果<b>永远不动</b>，卡死。存了 <code>sum</code>，每次的一点点差先攒在零头里，攒够 16 才让结果加 1。例子：读数从 223 变成 230 并保持（差 7）：</p>
+<details class="more"><summary><b>第 6 步（可以以后再看）：几个细节</b></summary>
+<p><b>① 不存 sum 行不行？</b> 直接写 <code>结果 += (读数 − 结果) &gt;&gt; 4</code>：差最多 10，<code>10 &gt;&gt; 4 = 0</code>，小数被扔掉，结果<b>永远不动</b>。下表是读数从 223 变成 230 并保持：</p>
 <div class="scroll"><table class="ex4">
 <tr><th>毫秒</th><td>0</td><td>1</td><td>2</td><td>3</td><td>5</td><td>约 40</td></tr>
 <tr><th>sum</th><td>3568</td><td>3575</td><td>3582</td><td>3589</td><td>3601</td><td>3680~3695</td></tr>
 <tr><th>结果（存 sum）</th><td>223</td><td>223</td><td>223</td><td><b>224</b></td><td>225</td><td><b>230</b></td></tr>
 <tr><th>结果（不存 sum）</th><td>223</td><td>223</td><td>223</td><td>223</td><td>223</td><td>223（永远）</td></tr>
 </table></div>
+<p><b>和“精确公式”的小差别</b>：542 行减的是结果的<b>整数部分</b>，不是带小数的结果，所以和第 3 步表格的数差一点点（第 2 次是 300.75，不是 300.73），不影响使用。</p>
 <p><b>② 为什么 534 行不写 <code>abs(结果 − 读数) &gt; 10</code>？</b> 两个都是 <code>uint16_t</code>（无符号），小减大不会得到负数，而是变成一个很大的数。写成两个加法比较，就不会出现减法。</p>
 <p><b>③ 第一次怎么开始？</b> 两个变量是函数里的 <code>static</code>（427~428 行），初值 0。第一次进工作阶段，读数几百，和 0 差 &gt; 10，一定走“全换”，等于用第一个读数开局。</p>
 <p><b>④ 什么时候不滤？</b> 开机学习阶段（②，441~484 行没有这段代码）；线圈冻结期间（③ 用 <code>continue</code> 跳过了）。</p>
@@ -613,7 +625,7 @@ temp[k] |= ana_rd_buff[2*k + 1];     // 低字节 → 0~1023
 <p><b>⑥ 霍尔板型</b>（<code>#else</code> 分支）是 ÷64、分界线 60，因为 14 位的读数比 10 位大 16 倍。</p>
 </details>
 
-<p class="note">💡 想法上：读一个算法，先<b>拿一串具体数字看它输出什么</b>（第 1 步），再找一个能在脑子里动起来的<b>画面</b>（第 2 步的“16 份”），最后才对代码（第 3 步）。直接从代码或公式开始，就像不看地图直接看路口编号。上一版我是从公式讲起的，这是我讲反了。如果这一版还有哪一步卡住，告诉我是第几步，我从那里再拆。</p>
+<p class="note">💡 想法上：这次真正让你明白的，是<b>自己算了两道题</b>，还顺手抓到了我例子里的错（316 和 300 差 16，应该直接跳）。理解一个算法，最快的办法不是多读讲解，而是<b>拿几个数自己算一遍</b>：算得出来就是懂了，算不出来，卡住的地方就是不懂的地方。以后看 ⑤⑥⑦，也先自己拿数字算一遍。</p>
 </details>
 
 <details class="sub" id="k5" style="--c:var(--sw)"><summary><h3>⑤ 算按下程度：Hall_CalculateNode()（my_misc.c:288~327）</h3><span class="one">当前值落在两条基线之间的哪里，换算成 0~100 段。</span></summary>
@@ -931,12 +943,12 @@ function draw(){const rows=run(),svg=$('fSvg');svg.innerHTML='';const W=900,H=26
  line(r=>r.v,'var(--muted)',1);if($('fNaive').checked)line(r=>r.nv,'var(--gold)',2,'5 3');line(r=>r.out,'var(--sw)',2.2);
  const j=rows.filter(r=>r.jump).length,lag=Math.max(...rows.map(r=>Math.abs(r.v-r.out)));
  const sd=a=>{const m=a.reduce((p,c)=>p+c,0)/a.length;return Math.sqrt(a.reduce((p,c)=>p+(c-m)**2,0)/a.length)};
- let msg=`${SC[si].n}：120 ms 里 ${j} 次“16 份全换”，滤波结果和原始读数最多差 ${lag}。`;
+ let msg=`${SC[si].n}：120 ms 里 ${j} 次“直接跳”，滤波结果和原始读数最多差 ${lag}。`;
  if(si===0){const q=rows.slice(10);msg+=`\n原始读数标准差 ${sd(q.map(r=>r.v)).toFixed(2)}，滤波后 ${sd(q.map(r=>r.out)).toFixed(2)}。`}
  if(si===1)msg+=`\n差 7 &lt; 阈值，走平滑分支，大约 40 ms 才完全跟上。勾“对比不存 sum 的写法”：它卡在原地不动。`;
- if(si===2)msg+=`\n按下 / 松开的过程中，每毫秒变化 25，每次都是 16 份全换，输出 = 原始读数，没有滞后。`;
- if(si===3)msg+=`\n每毫秒只变 3，走平滑分支，结果越落越远；落后超过阈值就全换一次追上，所以是锯齿形。`;
- if(si===4)msg+=`\n尖刺 15 &gt; 10，原样放行一毫秒，下一毫秒又全换回去。`;
+ if(si===2)msg+=`\n按下 / 松开的过程中，每毫秒变化 25，每次都直接跳，输出 = 原始读数，没有滞后。`;
+ if(si===3)msg+=`\n每毫秒只变 3，走平滑分支，结果越落越远；落后超过阈值就直接跳一次追上，所以是锯齿形。`;
+ if(si===4)msg+=`\n尖刺 15 &gt; 10，原样放行一毫秒，下一毫秒又跳回去。`;
  $('fLog').innerHTML=msg;$('fThO').value=$('fTh').value;
  [...$('fSel').children].forEach((b,i)=>b.setAttribute('aria-pressed',i===si))}
 SC.forEach((s,i)=>{const b=document.createElement('button');b.type='button';b.textContent=s.n;b.style.setProperty('--c',V(s.c));b.onclick=()=>{si=i;draw()};$('fSel').appendChild(b)});
@@ -944,15 +956,14 @@ $('fTh').oninput=draw;$('fNaive').onchange=draw;draw();
 })();
 
 (function(){const $=id=>document.getElementById(id);if(!$('s4Box'))return;
-const SEQ=[300,304,297,303,306,299,302,360,365,363,361];
-const ST=[];let f=0,s=0;
-SEQ.forEach((v,i)=>{const of=f,os=s,d=Math.abs(f-v);let jump=f>v+10||f+10<v;if(jump){f=v;s=v<<4}else{s+=v;s-=f;f=s>>4}ST.push({i,v,of,os,d,jump,f,s})});
+const SEQ=[306,306,306,296,360];
+const ST=[];let f=300,s=4800;
+SEQ.forEach((v,i)=>{const of=f,os=s,d=Math.abs(f-v);let jump=f>v+10||f+10<v;if(jump){f=v;s=v<<4}else{s+=v;s-=f;f=s>>4}ST.push({i:i+1,v,of,os,d,jump,f,s})});
 let k=0;
-function cells(n,val,cls,last){let h='';for(let j=0;j<16;j++){const isLast=last!=null&&j===15;h+=`<div class="${isLast?'new':cls}">${isLast?last:val}</div>`}return `<div class="cells">${h}</div>`}
-function show(){const t=ST[k];let h=`<div class="hd">第 ${t.i} 毫秒：新读数 <b>${t.v}</b></div>`;
- if(t.i===0){h+=`<p>刚开始，当前结果是初值 0，和 300 差 300 &gt; 10 → <b>16 份全换成 300</b>。</p>`+cells(16,300,'all')+`<div class="calc">sum = 300 × 16 = ${t.s}　→　结果 = ${t.s} ÷ 16 = <b>${t.f}</b>　<span class="chip">零头 0</span></div>`}
- else if(t.jump){h+=`<p>当前结果 ${t.of}，新读数 ${t.v}，差 <b>${t.d} &gt; 10</b> → 手指真的在动，<b>16 份全换成 ${t.v}</b>，以前的全不要了。</p>`+cells(16,t.v,'all')+`<div class="calc">sum = ${t.v} × 16 = ${t.s}　→　结果 = <b>${t.f}</b>（马上跟上）　<span class="chip">零头 0</span></div>`}
- else{const rem=t.os-t.of*16,nr=t.s-t.f*16;h+=`<p>当前结果 ${t.of}，新读数 ${t.v}，差 <b>${t.d} ≤ 10</b> → 当成抖动：拿出 1 份 ${t.of}，放进 1 份 ${t.v}。</p>`+cells(16,t.of,'',t.v)+`<div class="calc">原来 sum = ${t.os}（${t.of} × 16 + 零头 ${rem}）<br>${t.os} − ${t.of} + ${t.v} = <b>${t.s}</b>　→　结果 = ${t.s} ÷ 16 = <b>${t.f}</b>　<span class="chip">零头 ${nr}</span></div>`+(t.f===t.of?`<p class="note">新读数只占 1/16，${t.v>t.of?'往上':'往下'}拉了 ${(Math.abs(t.v-t.of)/16).toFixed(2)}，不够 1，结果不变。</p>`:'')}
+function show(){const t=ST[k];let h=`<div class="hd">第 ${t.i} 毫秒：新读数 <b>${t.v}</b>${t.i===1?'（开始时 sum = 4800，结果 = 300）':''}</div>`;
+ h+=`<p>现在 sum = ${t.os}（= 结果 ${ (t.os/16).toFixed(3).replace(/\.?0+$/,'') } × 16），交出去的整数结果 = ${t.of}。读数和结果差 <b>${t.d}</b>。</p>`;
+ if(t.jump)h+=`<div class="calc">${t.d} &gt; 10 → 直接跳（536~537 行）<br>结果 = ${t.v}，sum = ${t.v} × 16 = <b>${t.s}</b></div>`;
+ else h+=`<div class="calc">${t.d} ≤ 10 → 走 1/16（541~543 行）<br>541：sum = ${t.os} + ${t.v} = ${t.os+t.v}<br>542：sum = ${t.os+t.v} − ${t.of} = <b>${t.s}</b>　（= ${(t.s/16).toFixed(3)} × 16）<br>543：结果 = ${t.s} &gt;&gt; 4 = <b>${t.f}</b>　（小数 ${(t.s/16-t.f).toFixed(3)} 留在 sum 里）</div>`;
  $('s4Box').innerHTML=h;$('s4Prog').textContent=`${k+1} / ${ST.length}`;$('s4Prev').disabled=k===0;$('s4Next').disabled=k===ST.length-1}
 $('s4Prev').onclick=()=>{if(k>0){k--;show()}};$('s4Next').onclick=()=>{if(k<ST.length-1){k++;show()}};show();})();
 </script>
