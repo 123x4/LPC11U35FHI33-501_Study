@@ -198,6 +198,9 @@ details.sub[open]>summary{border-bottom:1px dashed var(--line);margin-bottom:.4r
 @media (max-width:640px){.map{grid-template-columns:minmax(0,1fr)}}
 .xall{display:flex;gap:8px;margin:.4rem 0}
 .xall button{font:inherit;font-size:.82rem;border:1px solid var(--line);border-radius:6px;padding:2px 10px;background:var(--panel);color:var(--fg);cursor:pointer}
+details.more{border:1px dashed var(--line);border-radius:6px;padding:6px 10px;margin:.8rem 0}
+details.more>summary{cursor:pointer}
+.btns button:disabled{opacity:.4;cursor:default}
 </style>
 <div class="wrap">
 <div class="eyebrow">轻松版 · 读代码 · ADC 全串讲（src/my_adc.c 全文 + 所有调用处）</div>
@@ -516,95 +519,101 @@ temp[k] |= ana_rd_buff[2*k + 1];     // 低字节 → 0~1023
 <p class="note">💡 想法上：这段代码是在解决一个<b>反馈回路</b>问题：系统的输出（线圈震动）会干扰自己的输入（红外读数）。凡是“执行器会影响传感器”的地方（电机和电流采样、加热和测温、扬声器和麦克风），都要想清楚：执行器动作期间，传感器的读数还能不能信？常见做法就是这里的“动作期间屏蔽一段时间”。</p>
 </details>
 
-<details class="sub" id="k4" style="--c:var(--sw)"><summary><h3>④ 滤波：小抖动磨平，大动作放行（my_misc.c:534~545）</h3><span class="one">变化 ≤ 10 当噪声，新值只占 1/16；变化 &gt; 10 当手指真的在动，直接用新值。</span></summary>
+<details class="sub" id="k4" style="--c:var(--sw)"><summary><h3>④ 滤波：小抖动磨平，大动作放行（my_misc.c:534~545）</h3><span class="one">读数抖几下，输出不动；读数一下变很多，输出立刻跟上。</span></summary>
 <style>
-.flow4{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin:.6rem 0}
-.flow4 .q{grid-column:1/-1;text-align:center;border:2px solid var(--per);border-radius:8px;padding:6px;background:var(--panel)}
-.flow4 .a{border:2px solid var(--c);border-radius:8px;padding:6px 8px;background:color-mix(in srgb,var(--c) 10%,var(--panel));font-size:.88rem;min-width:0}
-.flow4 .a b{display:block;font-family:var(--font-d)}
+.ex4{font-family:var(--font-m);font-size:.84rem;border-collapse:collapse;margin:.4rem 0}
+.ex4 td,.ex4 th{border:1px solid var(--line);padding:2px 7px;text-align:center}
+.ex4 .j{background:color-mix(in srgb,var(--pc) 22%,var(--panel))}
+.cells{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:3px;margin:.4rem 0}
+@media (max-width:640px){.cells{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.cells div{font-family:var(--font-m);font-size:.72rem;text-align:center;padding:5px 0;border-radius:4px;border:1px solid var(--line);background:var(--soft)}
+.cells div.new{background:var(--sw);color:var(--bg);border-color:var(--sw);font-weight:700}
+.cells div.all{background:var(--pc);color:var(--bg);border-color:var(--pc);font-weight:700}
+.st4{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 12px}
+.st4 .hd{font-weight:600}
+.st4 .calc{font-family:var(--font-m);font-size:.84rem;overflow-wrap:anywhere}
+.chip{display:inline-block;font-family:var(--font-m);font-size:.78rem;border:1px dashed var(--gold);border-radius:4px;padding:0 6px;color:var(--gold)}
 #fSvg{display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px}
 </style>
-<h4>宏观逻辑：它要解决什么问题</h4>
-<p><b>场景</b>：手指没碰鼠标，红外接收管的读数也在 ±2~4 之间来回跳（ADC 本身的噪声、环境光）。后面的步骤都怕这种抖动：⑥ 快速触发看“相对最浅点动了多少”，⑦ 校准看“连续偏离了多少毫秒”，读数一跳，计数就被打断。所以先把抖动磨平。</p>
-<p>但又<b>不能一味磨平</b>：平滑一定带来滞后，而按键要快。于是这段代码每毫秒只问一个问题：</p>
-<div class="flow4">
-<div class="q">新读数 和 上一次的滤波结果，差多少？</div>
-<div class="a" style="--c:var(--sw)"><b>差 ≤ 10：当成噪声</b>平滑：新结果 ≈ 旧结果 + (新值 − 旧结果) ÷ 16。新值只占 1/16 的分量</div>
-<div class="a" style="--c:var(--pc)"><b>差 &gt; 10：当成真的在动</b>不平滑，直接用新值；同时把滤波器的“记忆”重置成新值</div>
-</div>
-<p>得到的效果（用下面的模拟器算的，噪声幅度是我假设的）：</p>
-<ul>
-<li><b>手不动时</b>：±4 的噪声，抖动幅度（标准差）降到原来的 1/5 左右，曲线基本是平的。</li>
-<li><b>快速按下时</b>：每毫秒变化几十，每次都走“直接用新值”，等于<b>没有滤波、没有滞后</b>。</li>
-<li><b>任何时候</b>：输出和真实读数最多差 10。按两条基线相差约 380 算，10 只相当于 2~3 段，比 rt_press 的 30 段小得多。</li>
-</ul>
 
-<h4>代码逻辑：逐行</h4>
-<pre class="code">421  #define length_filter_bit   4      // IRPT_V4：右移 4 位 = ÷16（霍尔板型是 6，÷64）
-422  #define FILTER_SKIP_VALUE   10     // IRPT_V4：差 &gt; 10 就不滤（霍尔板型是 60）
-427  static uint16_t raw_data_filter[ANA_TOTAL_COUNT] = {0};      // 上一次的滤波结果
-428  static uint32_t raw_data_filter_sum[ANA_TOTAL_COUNT] = {0};  // 16 倍的滤波结果（带“零头”）
-     ……
-534  if((raw_data_filter[k] &gt; (temp[k] + FILTER_SKIP_VALUE)) || ((raw_data_filter[k] + FILTER_SKIP_VALUE) &lt; temp[k]))
+<h4>第 1 步：先看效果（不看代码）</h4>
+<p>手指不动时，红外读数也会在几个数之间来回跳。滤波就是把这种小跳动抹掉。看一串数（左边是读数在 300 附近抖，右边是手指按下、读数一下变成 360 附近）：</p>
+<div class="scroll"><table class="ex4">
+<tr><th>第几毫秒</th><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td class="j">7</td><td>8</td><td>9</td><td>10</td></tr>
+<tr><th>读数（滤波前）</th><td>300</td><td>304</td><td>297</td><td>303</td><td>306</td><td>299</td><td>302</td><td class="j">360</td><td>365</td><td>363</td><td>361</td></tr>
+<tr><th>滤波后</th><td>300</td><td>300</td><td>300</td><td>300</td><td>300</td><td>300</td><td>300</td><td class="j">360</td><td>360</td><td>360</td><td>360</td></tr>
+</table></div>
+<p>就两件事：<b>① 抖几下（差 ≤ 10），输出不动</b>；<b>② 一下变了很多（差 &gt; 10），输出立刻跟上</b>。像看电子秤：数字在 60.1、60.3、59.9 之间跳，你心里记的是“60 左右”；有人突然踩上去变成 120，你马上就认 120。</p>
+
+<h4>第 2 步：它怎么做到的——“16 份”</h4>
+<p>程序心里记着 <b>16 份“当前结果”</b>，把它们加起来存成一个数，叫 <code>sum</code>。所以 <code>sum ÷ 16</code> 就是当前结果。每来一个新读数，先看它和当前结果差多少：</p>
+<ul>
+<li><b>差 ≤ 10（小抖动）</b>：从 16 份里<b>拿出 1 份旧结果，放进 1 份新读数</b>，再 ÷16。新读数只占 16 份里的 1 份，所以只能把结果拉动一点点。抖上抖下互相抵消，结果就几乎不动。</li>
+<li><b>差 &gt; 10（真的变了）</b>：不商量了，<b>16 份全部换成新读数</b>。结果立刻等于新读数。</li>
+</ul>
+<p>点“下一毫秒”，一步一步看上面那串数是怎么算出来的：</p>
+<div class="box try"><div class="tag">动手 · 一毫秒一毫秒地算（数字和上表一样）</div>
+<div class="btns"><button type="button" id="s4Prev">上一毫秒</button><button type="button" id="s4Next">下一毫秒</button><span class="note" id="s4Prog"></span></div>
+<div class="st4" id="s4Box" aria-live="polite"></div>
+<p class="note">小方块是那 16 份；绿色 = 刚放进去的新读数；红色 = 16 份全换成新读数。<span class="chip">零头</span> 是 ÷16 除不尽剩下的余数，第 4 步再讲它，现在可以先不管。</p>
+</div>
+
+<h4>第 3 步：对上代码</h4>
+<p>有了上面的画面，代码每一行就是其中一个动作：</p>
+<pre class="code">534  if(差 &gt; 10)        // if((raw_data_filter[k] &gt; (temp[k] + 10)) || ((raw_data_filter[k] + 10) &lt; temp[k]))
 535  {
-536    raw_data_filter[k] = temp[k];                         // 直接用新值
-537    raw_data_filter_sum[k] = temp[k] &lt;&lt; length_filter_bit; // 累加和 = 新值 × 16
+536    raw_data_filter[k]     = temp[k];        // 结果 = 新读数
+537    raw_data_filter_sum[k] = temp[k] &lt;&lt; 4;   // 16 份全换成新读数（&lt;&lt; 4 就是 ×16）
 538  }
 539  else
 540  {
-541    raw_data_filter_sum[k] += temp[k];                   // 加 1 份新值
-542    raw_data_filter_sum[k] -= raw_data_filter[k];        // 减 1 份旧结果
-543    raw_data_filter[k] = raw_data_filter_sum[k] &gt;&gt; length_filter_bit;  // ÷16 得新结果
-544    temp[k] = raw_data_filter[k];                         // 后面用滤波后的值
+541    raw_data_filter_sum[k] += temp[k];           // 放进 1 份新读数
+542    raw_data_filter_sum[k] -= raw_data_filter[k]; // 拿出 1 份旧结果
+543    raw_data_filter[k] = raw_data_filter_sum[k] &gt;&gt; 4;  // ÷16，得新结果（&gt;&gt; 4 就是 ÷16）
+544    temp[k] = raw_data_filter[k];                // 把新结果交给后面的步骤
 545  }</pre>
 <div class="scroll"><table>
-<thead><tr><th>行</th><th>讲解</th></tr></thead>
+<thead><tr><th>代码里的名字</th><th>就是上面的</th></tr></thead>
 <tbody>
-<tr><td>421~422</td><td>两个宏只在这个函数开头定义。霍尔板型是 14 位（数值大 16 倍），所以阈值也大，从 10 变成 60。</td></tr>
-<tr><td>427~428</td><td><code>static</code>：两次调用之间记得住；左右键各一份。初值是 0，所以第一次进入工作阶段时，新值（几百）和 0 一定差 &gt; 10，走 536 行，<b>等于用第一个读数初始化滤波器</b>。和 <code>gwTopBaseline</code> 初值 10000 是同一个思路：用一个“不可能”的初值，让第一次一定走重置。</td></tr>
-<tr><td>534</td><td>就是“<code>|旧结果 − 新值| &gt; 10</code>”。为什么不写 <code>abs(a − b)</code>？两个都是 <code>uint16_t</code>，如果写成无符号相减，小减大会变成一个很大的数。写成两个“加法比较”就绕开了负数。</td></tr>
-<tr><td>536~537</td><td>重置：结果 = 新值，累加和 = 新值 × 16，<b>以前的“记忆”全丢掉</b>。<code>temp[k]</code> 不用改，它本来就是新值。</td></tr>
-<tr><td>541~543</td><td><code>sum</code> 一直存着“16 倍的结果”。每毫秒加 1 份新值、减 1 份旧结果，再 ÷16：<br><code>新结果 = (16 × 旧结果 + 新值 − 旧结果) ÷ 16 = 旧结果 + (新值 − 旧结果) ÷ 16</code><br>这叫<b>指数滑动平均</b>：越老的读数，权重越小（每过 1 ms 乘 15/16）。大约 16 ms 前的读数只剩 1/e 的影响。<code>÷16</code> 用右移 4 位，不用除法（M0 没有除法指令，见 ⑤）。</td></tr>
-<tr><td>544</td><td>只有平滑分支才改 <code>temp[k]</code>。从这里往后，⑤ 算段位、⑥ 快速触发、⑦ 校准、⑧ 发给 GUI 的曲线，用的<b>都是滤波后的值</b>。</td></tr>
+<tr><td><code>temp[k]</code></td><td>这一毫秒的新读数（① 拼数、取反之后的值）</td></tr>
+<tr><td><code>raw_data_filter[k]</code></td><td>当前结果（上一次滤波的输出）</td></tr>
+<tr><td><code>raw_data_filter_sum[k]</code></td><td>16 份加起来的总数 <code>sum</code></td></tr>
+<tr><td><code>FILTER_SKIP_VALUE</code> = 10（422 行）</td><td>“小抖动”和“真的变了”的分界线</td></tr>
+<tr><td><code>length_filter_bit</code> = 4（421 行）</td><td>移 4 位 = ×16 或 ÷16，也就是“16 份”的 16</td></tr>
 </tbody></table></div>
+<p>534 行那一长串，意思就是“<code>|当前结果 − 新读数| &gt; 10</code>”：要么结果比读数大 10 以上，要么读数比结果大 10 以上。<br>544 行之后，⑤ 算段位、⑥ 快速触发、⑦ 校准、⑧ GUI 上的曲线，用的<b>都是滤波后的值</b>。</p>
 
-<div class="card"><b class="t">关键问题：为什么要多存一个 sum，不直接算 filter？</b><br>
-直觉写法是 <code>filter += (新值 − filter) &gt;&gt; 4;</code>。但进到这个分支时差最多 10，<b>10 &gt;&gt; 4 = 0</b>，filter 永远不动，卡死在原地。<br>
-<code>sum</code> 是放大了 16 倍的结果，<b>它的低 4 位就是被 ÷16 截掉的“零头”</b>。每次差的一点点先攒在零头里，攒满 16 才让 filter 进 1。下面是读数从 223 跳到 230（差 7，走平滑分支）的前几毫秒：
-<div class="scroll"><table>
-<thead><tr><th>ms</th><th>新值</th><th>分支</th><th>sum 计算</th><th>sum</th><th>filter = sum &gt;&gt; 4</th><th>直觉写法</th></tr></thead>
-<tbody>
-<tr><td>0</td><td>223</td><td>重置</td><td>223 × 16</td><td>3568</td><td>223</td><td>223</td></tr>
-<tr><td>1</td><td>230</td><td>平滑</td><td>3568 + 230 − 223</td><td>3575</td><td>223</td><td>223</td></tr>
-<tr><td>2</td><td>230</td><td>平滑</td><td>3575 + 230 − 223</td><td>3582</td><td>223</td><td>223</td></tr>
-<tr><td>3</td><td>230</td><td>平滑</td><td>3582 + 230 − 223</td><td>3589</td><td><b>224</b></td><td>223</td></tr>
-<tr><td>5</td><td>230</td><td>平滑</td><td>3595 + 230 − 224</td><td>3601</td><td>225</td><td>223</td></tr>
-<tr><td>~40</td><td>230</td><td>平滑</td><td>…</td><td>…</td><td><b>230</b></td><td>223（永远）</td></tr>
-</tbody></table></div>
-最后会停在 <code>sum</code> = 3680~3695，即 <code>filter</code> = 230，没有偏差。</div>
-
+<h4>第 4 步：自己拖一拖</h4>
 <div class="box try"><div class="tag">动手 · 滤波器（照抄 534~545 行，单个键）</div>
 <div class="modes" id="fSel"></div>
 <div class="simctl">
-<label>阈值 FILTER_SKIP_VALUE <input type="range" id="fTh" min="2" max="40" value="10"><output id="fThO">10</output></label>
-<label><input type="checkbox" id="fNaive"> 对比“直觉写法”</label>
+<label>分界线 FILTER_SKIP_VALUE <input type="range" id="fTh" min="2" max="40" value="10"><output id="fThO">10</output></label>
+<label><input type="checkbox" id="fNaive"> 对比“不存 sum 的写法”（见下面细节）</label>
 </div>
 <svg id="fSvg" viewBox="0 0 900 260" role="img" aria-label="滤波前后的读数"></svg>
-<div class="lg"><span><i style="--c:var(--muted)"></i>原始读数（取反后）</span><span><i style="--c:var(--sw)"></i>滤波后（temp）</span><span><i style="--c:var(--pc);height:8px;width:3px"></i>这一毫秒走了“重置”分支</span><span><i style="--c:var(--gold)"></i>直觉写法</span></div>
+<div class="lg"><span><i style="--c:var(--muted)"></i>读数（滤波前）</span><span><i style="--c:var(--sw)"></i>滤波后</span><span><i style="--c:var(--pc);height:8px;width:3px"></i>这一毫秒 16 份全换了</span><span><i style="--c:var(--gold)"></i>不存 sum 的写法</span></div>
 <div class="simlog" id="fLog" aria-live="polite"></div>
-<p class="note">读数和噪声幅度是我编的；滤波部分照抄 C 代码。把阈值调到 2 试试：噪声本身就会超过阈值，几乎每毫秒都在重置，等于没滤波。调到 40：慢慢按下时滤波结果会落后很多。</p>
+<p class="note">读数和噪声幅度是我编的，滤波部分照抄 C 代码。把分界线调到 2：噪声本身就超过分界线，几乎每毫秒都全换，等于没滤。调到 40：慢慢按时，滤波结果会落后很多。</p>
 </div>
 
-<h4>它在什么时候不运行</h4>
-<ul>
-<li><b>开机学习阶段</b>（②）：441~484 行没有滤波，<code>Hall_InitBaseline()</code> 看到的是原始读数。所以 ② 要自己做“±20 范围内取平均”。</li>
-<li><b>线圈冻结期间</b>（③）：<code>continue</code> 跳过了滤波，记忆停在震动前。解冻后差 &gt; 10 就重置，不会拖尾。</li>
-</ul>
+<details class="more"><summary><b>第 5 步（可以以后再看）：几个细节</b></summary>
+<p><b>① 零头是什么，为什么一定要存 sum？</b><br>
+<code>sum ÷ 16</code> 不一定除得尽，余数（零头）就留在 <code>sum</code> 里。比如上面第 1 毫秒后 <code>sum</code> = 4804 = 300 × 16 + 4。<br>
+如果不存 <code>sum</code>，直接写 <code>结果 += (新读数 − 结果) &gt;&gt; 4</code> 会怎样？进到这个分支时差最多 10，而 <code>10 &gt;&gt; 4 = 0</code>，结果<b>永远不动</b>，卡死。存了 <code>sum</code>，每次的一点点差先攒在零头里，攒够 16 才让结果加 1。例子：读数从 223 变成 230 并保持（差 7）：</p>
+<div class="scroll"><table class="ex4">
+<tr><th>毫秒</th><td>0</td><td>1</td><td>2</td><td>3</td><td>5</td><td>约 40</td></tr>
+<tr><th>sum</th><td>3568</td><td>3575</td><td>3582</td><td>3589</td><td>3601</td><td>3680~3695</td></tr>
+<tr><th>结果（存 sum）</th><td>223</td><td>223</td><td>223</td><td><b>224</b></td><td>225</td><td><b>230</b></td></tr>
+<tr><th>结果（不存 sum）</th><td>223</td><td>223</td><td>223</td><td>223</td><td>223</td><td>223（永远）</td></tr>
+</table></div>
+<p><b>② 为什么 534 行不写 <code>abs(结果 − 读数) &gt; 10</code>？</b> 两个都是 <code>uint16_t</code>（无符号），小减大不会得到负数，而是变成一个很大的数。写成两个加法比较，就不会出现减法。</p>
+<p><b>③ 第一次怎么开始？</b> 两个变量是函数里的 <code>static</code>（427~428 行），初值 0。第一次进工作阶段，读数几百，和 0 差 &gt; 10，一定走“全换”，等于用第一个读数开局。</p>
+<p><b>④ 什么时候不滤？</b> 开机学习阶段（②，441~484 行没有这段代码）；线圈冻结期间（③ 用 <code>continue</code> 跳过了）。</p>
+<p><b>⑤ 有什么影响？</b> 单次超过 10 的尖刺会原样放过去一毫秒，大约 4 段，远小于按下距离 30 段，一般没事，真实噪声要上板看 GUI 曲线（待上板验证）。慢慢按时结果最多落后 10，约 2~3 段。</p>
+<p><b>⑥ 霍尔板型</b>（<code>#else</code> 分支）是 ÷64、分界线 60，因为 14 位的读数比 10 位大 16 倍。</p>
+</details>
 
-<div class="card"><b class="t">值得注意</b><br>
-• <b>超过 10 的单次尖刺会原样放行</b>：比如某一毫秒读数突然 +15，它会直接进 ⑤⑥。下一毫秒回来，又差 &gt; 10，再重置回去。15 大约是 4 段，远小于 30 段的按下距离，不会误触。真实噪声有多大，<b>要上板用 GUI 曲线看</b>。<br>
-• <b>慢慢按</b>（每毫秒变化不到 10）时，结果会落后真实值，但最多落后 10，超过就重置追上。</div>
-<p class="note">💡 想法上：① 这段滤波的本质是<b>按变化大小决定信不信</b>：小变化不信（噪声），大变化信（动作）。设计这种阈值前，先弄清楚两者的尺度：噪声 ±几，按键动作几百，阈值放在中间就行。② 整数运算里，<b>一点点的小量会被截断吞掉</b>（10 &gt;&gt; 4 = 0）。需要累积小量时，存一个放大过的累加值，让零头留下来。以后写 PID 积分、计步、时间累加时都会遇到这个问题。</p>
+<p class="note">💡 想法上：读一个算法，先<b>拿一串具体数字看它输出什么</b>（第 1 步），再找一个能在脑子里动起来的<b>画面</b>（第 2 步的“16 份”），最后才对代码（第 3 步）。直接从代码或公式开始，就像不看地图直接看路口编号。上一版我是从公式讲起的，这是我讲反了。如果这一版还有哪一步卡住，告诉我是第几步，我从那里再拆。</p>
 </details>
 
 <details class="sub" id="k5" style="--c:var(--sw)"><summary><h3>⑤ 算按下程度：Hall_CalculateNode()（my_misc.c:288~327）</h3><span class="one">当前值落在两条基线之间的哪里，换算成 0~100 段。</span></summary>
@@ -922,17 +931,30 @@ function draw(){const rows=run(),svg=$('fSvg');svg.innerHTML='';const W=900,H=26
  line(r=>r.v,'var(--muted)',1);if($('fNaive').checked)line(r=>r.nv,'var(--gold)',2,'5 3');line(r=>r.out,'var(--sw)',2.2);
  const j=rows.filter(r=>r.jump).length,lag=Math.max(...rows.map(r=>Math.abs(r.v-r.out)));
  const sd=a=>{const m=a.reduce((p,c)=>p+c,0)/a.length;return Math.sqrt(a.reduce((p,c)=>p+(c-m)**2,0)/a.length)};
- let msg=`${SC[si].n}：120 ms 里有 ${j} 次走“重置”分支，滤波结果和原始读数最多差 ${lag}。`;
+ let msg=`${SC[si].n}：120 ms 里 ${j} 次“16 份全换”，滤波结果和原始读数最多差 ${lag}。`;
  if(si===0){const q=rows.slice(10);msg+=`\n原始读数标准差 ${sd(q.map(r=>r.v)).toFixed(2)}，滤波后 ${sd(q.map(r=>r.out)).toFixed(2)}。`}
- if(si===1)msg+=`\n差 7 &lt; 阈值，走平滑分支，大约 40 ms 才完全跟上。勾“对比直觉写法”：它卡在原地不动。`;
- if(si===2)msg+=`\n按下 / 松开的过程中，每毫秒变化 25，全部走重置，输出 = 原始读数，没有滞后。`;
- if(si===3)msg+=`\n每毫秒只变 3，走平滑分支，结果越落越远；落后超过阈值就重置一次追上，所以是锯齿形。`;
- if(si===4)msg+=`\n尖刺 15 &gt; 10，原样放行一毫秒，下一毫秒又重置回去。`;
+ if(si===1)msg+=`\n差 7 &lt; 阈值，走平滑分支，大约 40 ms 才完全跟上。勾“对比不存 sum 的写法”：它卡在原地不动。`;
+ if(si===2)msg+=`\n按下 / 松开的过程中，每毫秒变化 25，每次都是 16 份全换，输出 = 原始读数，没有滞后。`;
+ if(si===3)msg+=`\n每毫秒只变 3，走平滑分支，结果越落越远；落后超过阈值就全换一次追上，所以是锯齿形。`;
+ if(si===4)msg+=`\n尖刺 15 &gt; 10，原样放行一毫秒，下一毫秒又全换回去。`;
  $('fLog').innerHTML=msg;$('fThO').value=$('fTh').value;
  [...$('fSel').children].forEach((b,i)=>b.setAttribute('aria-pressed',i===si))}
 SC.forEach((s,i)=>{const b=document.createElement('button');b.type='button';b.textContent=s.n;b.style.setProperty('--c',V(s.c));b.onclick=()=>{si=i;draw()};$('fSel').appendChild(b)});
 $('fTh').oninput=draw;$('fNaive').onchange=draw;draw();
 })();
+
+(function(){const $=id=>document.getElementById(id);if(!$('s4Box'))return;
+const SEQ=[300,304,297,303,306,299,302,360,365,363,361];
+const ST=[];let f=0,s=0;
+SEQ.forEach((v,i)=>{const of=f,os=s,d=Math.abs(f-v);let jump=f>v+10||f+10<v;if(jump){f=v;s=v<<4}else{s+=v;s-=f;f=s>>4}ST.push({i,v,of,os,d,jump,f,s})});
+let k=0;
+function cells(n,val,cls,last){let h='';for(let j=0;j<16;j++){const isLast=last!=null&&j===15;h+=`<div class="${isLast?'new':cls}">${isLast?last:val}</div>`}return `<div class="cells">${h}</div>`}
+function show(){const t=ST[k];let h=`<div class="hd">第 ${t.i} 毫秒：新读数 <b>${t.v}</b></div>`;
+ if(t.i===0){h+=`<p>刚开始，当前结果是初值 0，和 300 差 300 &gt; 10 → <b>16 份全换成 300</b>。</p>`+cells(16,300,'all')+`<div class="calc">sum = 300 × 16 = ${t.s}　→　结果 = ${t.s} ÷ 16 = <b>${t.f}</b>　<span class="chip">零头 0</span></div>`}
+ else if(t.jump){h+=`<p>当前结果 ${t.of}，新读数 ${t.v}，差 <b>${t.d} &gt; 10</b> → 手指真的在动，<b>16 份全换成 ${t.v}</b>，以前的全不要了。</p>`+cells(16,t.v,'all')+`<div class="calc">sum = ${t.v} × 16 = ${t.s}　→　结果 = <b>${t.f}</b>（马上跟上）　<span class="chip">零头 0</span></div>`}
+ else{const rem=t.os-t.of*16,nr=t.s-t.f*16;h+=`<p>当前结果 ${t.of}，新读数 ${t.v}，差 <b>${t.d} ≤ 10</b> → 当成抖动：拿出 1 份 ${t.of}，放进 1 份 ${t.v}。</p>`+cells(16,t.of,'',t.v)+`<div class="calc">原来 sum = ${t.os}（${t.of} × 16 + 零头 ${rem}）<br>${t.os} − ${t.of} + ${t.v} = <b>${t.s}</b>　→　结果 = ${t.s} ÷ 16 = <b>${t.f}</b>　<span class="chip">零头 ${nr}</span></div>`+(t.f===t.of?`<p class="note">新读数只占 1/16，${t.v>t.of?'往上':'往下'}拉了 ${(Math.abs(t.v-t.of)/16).toFixed(2)}，不够 1，结果不变。</p>`:'')}
+ $('s4Box').innerHTML=h;$('s4Prog').textContent=`${k+1} / ${ST.length}`;$('s4Prev').disabled=k===0;$('s4Next').disabled=k===ST.length-1}
+$('s4Prev').onclick=()=>{if(k>0){k--;show()}};$('s4Next').onclick=()=>{if(k<ST.length-1){k++;show()}};show();})();
 </script>
 <script>(function(){const subs=()=>[...document.querySelectorAll('details.sub')];
 const o=document.getElementById('xOpen'),c=document.getElementById('xClose');
