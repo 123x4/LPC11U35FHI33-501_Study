@@ -71,12 +71,27 @@ details.cd[open]>summary{margin-bottom:.3rem}
 .prog{position:sticky;top:0;z-index:5;background:var(--bg);padding:6px 0;border-bottom:1px solid var(--line);font-size:.82rem;color:var(--muted);display:flex;gap:10px;align-items:center}
 .prog .bar{flex:1;height:6px;background:var(--soft);border-radius:3px;overflow:hidden}
 .prog .bar i{display:block;height:100%;width:0;background:var(--good);transition:width .3s}
+.px{border:1.5px solid var(--per);border-radius:8px;padding:8px 12px;margin:.8rem 0;background:color-mix(in srgb,var(--per) 6%,var(--panel))}
+.px .pxh{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.px .pxh b{color:var(--per)}
+.px .pxs{font-size:.82rem;color:var(--muted)}
+.px .pxq{margin:.3rem 0;font-weight:600}
+.px .pxtag{display:inline-block;font-family:var(--font-m);font-size:.72rem;font-weight:400;border:1px solid var(--line);border-radius:4px;padding:0 6px;margin-right:6px;color:var(--muted)}
+.px .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.px input{font:inherit;width:120px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.px button{font:inherit;font-size:.9rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer;text-align:left}
+.px button.on{border-color:var(--fg)}
+.px .pxNext{border-color:var(--per);color:var(--per)}
+.px .fb{display:none;padding:6px 10px;border-radius:6px;background:var(--soft)}
+.px .fb.ok{display:block;border-left:4px solid var(--good)}
+.px .fb.no{display:block;border-left:4px solid var(--bad)}
+.mixbox{border-top:4px solid var(--gold)}
 </style>
 <div class="wrap">
 <div class="eyebrow">轻松版 · 读代码 · ADC 串讲（重讲版）</div>
 <h1>ADC 串讲：从“手指按下”到“按着 / 松着”</h1>
-<p class="lede">一共 10 关，每关只讲一件事，顺序都一样：<b>要解决什么问题 → 一句话规则 → 数字例子 → 你自己算一题 → 对上代码</b>（代码默认收起）。每一行改了哪个寄存器的哪一位、全程模拟器、所有坑，都在 <a href="https://claude.ai/artifact/HCgkuzBx81QJ9H9jpG2Xr5">参考版</a>里，需要时再查。</p>
-<div class="prog" aria-live="polite"><span id="pTxt">已答对 0 / 0 题</span><div class="bar"><i id="pBar"></i></div></div>
+<p class="lede">一共 10 关，每关只讲一件事，顺序都一样：<b>要解决什么问题 → 一句话规则 → 数字例子 → 你自己算一题 → 对上代码</b>（代码默认收起）。每关最后有<b>“练习”</b>：数字每次随机，能一直做下去，做完看讲解；页面最后有<b>综合练习</b>，10 关混在一起，做错的题会再回来。每一行改了哪个寄存器的哪一位、全程模拟器、所有坑，都在 <a href="https://claude.ai/artifact/HCgkuzBx81QJ9H9jpG2Xr5">参考版</a>里，需要时再查。</p>
+<div class="prog" aria-live="polite"><span id="pTxt">固定题 已答对 0 / 0 题</span><div class="bar"><i id="pBar"></i></div></div>
 
 <div class="box"><b>🧭 本质</b>：整条链是 <b>手指按下 → 挡住红外光 → 接收管电压变低 → ADC 把电压变成一个数 → 程序把这个数变成“按着 / 松着”</b>。
 <p>前 4 关是<b>芯片厂商给的抽象</b>：按手册设好寄存器，芯片就把电压变成数，你学的是“这层抽象怎么用”。后 6 关是<b>项目自己写的软件算法</b>，和寄存器无关，只是对一串数做计算。两半分开学。</p>
@@ -90,7 +105,8 @@ details.cd[open]>summary{margin-bottom:.3rem}
 <a href="#L7" style="--c:var(--pc)"><b>7</b>开机学基线</a><span>→</span>
 <a href="#L8" style="--c:var(--pc)"><b>8</b>滤波</a><span>→</span>
 <a href="#L9" style="--c:var(--pc)"><b>9</b>快速触发</a><span>→</span>
-<a href="#L10" style="--c:var(--pc)"><b>10</b>合起来</a>
+<a href="#L10" style="--c:var(--pc)"><b>10</b>合起来</a><span>→</span>
+<a href="#LMix" style="--c:var(--gold)"><b>★</b>综合练习</a>
 </div></div>
 
 <div class="part" style="--c:var(--per)">上半：电压 → 数（驱动层，src/my_adc.c）</div>
@@ -118,6 +134,7 @@ details.cd[open]>summary{margin-bottom:.3rem}
 27  MyADC_ts leftAdcInst  = { .ch = 2, .port = LB_ADC_PORT, .pin = LB_ADC_PIN, .pFuncReg = &amp;(LPC_IOCON-&gt;LB_ADC) };
 33  MyADC_ts rightAdcInst = { .ch = 3, .port = RB_ADC_PORT, .pin = RB_ADC_PIN, .pFuncReg = &amp;(LPC_IOCON-&gt;RB_ADC) };</pre>
 <p class="note">第 120 行有一句注释掉的换算：<code>voltage = 读数 × 3.3 / 1023</code>，就是上面公式反过来。</p></details>
+<div class="px" data-lv="1"></div>
 </section>
 
 <section class="lv" id="L2" style="--c:var(--per)">
@@ -145,6 +162,7 @@ details.cd[open]>summary{margin-bottom:.3rem}
 56      LPC_ADC-&gt;CR &amp;= ~(0x7U &lt;&lt; 17);              // CLKS = 0（只在连续模式有用，这里不起作用）
 57    }
 58  }</pre></details>
+<div class="px" data-lv="2"></div>
 </section>
 
 <section class="lv" id="L3" style="--c:var(--per)">
@@ -168,6 +186,7 @@ details.cd[open]>summary{margin-bottom:.3rem}
 75    return 0;
 76  }</pre>
 <p class="note">这里用“对象 + 函数”的写法：同一个函数，传 <code>&amp;leftAdcInst</code> 就配左键那只脚，传 <code>&amp;rightAdcInst</code> 就配右键那只脚（“C 语言里的面向对象”那页讲过）。</p></details>
+<div class="px" data-lv="3"></div>
 </section>
 
 <section class="lv" id="L4" style="--c:var(--per)">
@@ -204,6 +223,7 @@ details.cd[open]>summary{margin-bottom:.3rem}
 116  *pVal = (LPC_ADC-&gt;DR[ch] &gt;&gt; 6) &amp; 0x3FF;   // ⑤ 取第 15~6 位
 117  LPC_ADC-&gt;CR &amp;= ~(1u &lt;&lt; ch);               // ⑥ 取消选通道</pre>
 <div class="warn">小坑：111 行超时直接 <code>return</code>，跳过了 117 行，通道没取消。下次读另一个通道时会同时选中两个。只有超时才发生（参考版第 5 节）。</div></details>
+<div class="px" data-lv="4"></div>
 </section>
 
 <div class="part" style="--c:var(--pc)">下半：数 → 按着 / 松着（算法层，src/my_misc.c）</div>
@@ -228,6 +248,7 @@ details.cd[open]>summary{margin-bottom:.3rem}
 523    temp[k] = MAX_VALUE_10BIT - temp[k];   // 1023 − 读数
      #endif</pre>
 <p class="note">k = 0 是右键，k = 1 是左键。</p></details>
+<div class="px" data-lv="5"></div>
 </section>
 
 <section class="lv" id="L6" style="--c:var(--pc)">
@@ -250,6 +271,7 @@ else
 }
 return nodeCaliTable[tmp];                        // 0~255 查表变成 0~100</pre>
 <p class="note">和公式是一回事，只是先换成 0~255 再查表变 0~100。用 <code>step</code> 和右移，是因为这颗芯片（Cortex-M0）没有除法指令，除法很慢，所以只在基线变化时除一次。</p></details>
+<div class="px" data-lv="6"></div>
 </section>
 
 <section class="lv" id="L7" style="--c:var(--pc)">
@@ -285,6 +307,7 @@ return nodeCaliTable[tmp];                        // 0~255 查表变成 0~100</p
 153    if(counter[keyIndex] &gt;= 100) { ...; return 0; }  // 学好了
 158  }</pre>
 <p class="note">调用处 my_misc.c:441~456：返回 0 时把 <code>cali_init_cnt</code> 清 0，学习阶段结束。</p></details>
+<div class="px" data-lv="7"></div>
 </section>
 
 <section class="lv" id="L8" style="--c:var(--pc)">
@@ -317,6 +340,7 @@ return nodeCaliTable[tmp];                        // 0~255 查表变成 0~100</p
 544    temp[k] = raw_data_filter[k];                 // 后面都用滤波后的值
 545  }</pre>
 <p class="note">542 行减的是结果的整数部分，所以和精确算法有一点点差别，不影响使用。滤波器的逐毫秒演示和模拟器在参考版 ④。</p></details>
+<div class="px" data-lv="8"></div>
 </section>
 
 <section class="lv" id="L9" style="--c:var(--pc)">
@@ -350,6 +374,7 @@ else                                                // 现在松着
   else if(segment &gt;= 记着的 + rt_press &amp;&amp; segment &gt;= ap)  按下, 记着的 = segment;
 }</pre>
 <p class="note">“记着的”就是函数里的 static 数组 <code>current_node_update[]</code>。结论写进 <code>gbKeyState[k]</code>：1 按着，0 松着。</p></details>
+<div class="px" data-lv="9"></div>
 </section>
 
 <section class="lv" id="L10" style="--c:var(--pc)">
@@ -381,6 +406,15 @@ else                        // 正常工作
 <div class="row"><input type="number" inputmode="numeric" aria-label="答案"><button type="button" class="chk">检查</button></div>
 <div class="fb" data-ok="对。左键是第 0 位，只有它是 1，返回 1。右键按着左键松着就是 2，两个都按着是 3。" data-no="左键对应第 0 位，右键对应第 1 位。"></div></div>
 <p>想看完整的：<a href="https://claude.ai/artifact/HCgkuzBx81QJ9H9jpG2Xr5">参考版</a>里有寄存器逐行面板、全程模拟器（可以拖手感参数）、开机学基线模拟器、所有坑。</p>
+<div class="px" data-lv="10"></div>
+</section>
+
+<section class="lv mixbox" id="LMix" style="--c:var(--gold)">
+<div class="no">综合练习</div><h2>10 关混在一起，错题会回来</h2>
+<p>每题随机来自某一关。<b>答错或点了“看答案”的题，过 3 题会再出一次</b>，直到你做对为止。下表是你每关的正确率（只存在你这台设备的浏览器里），低于 70% 的标出来了，回那一关多练几题。</p>
+<div class="px" id="pxMix"></div>
+<div class="scroll"><table id="pxTbl"></table></div>
+<p><button type="button" id="pxReset" style="font:inherit;font-size:.85rem;padding:2px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer">清空做题记录</button></p>
 </section>
 
 <div class="think"><b>💡 想法上</b>：这一页的每一关都是同一个套路：<b>问题 → 规则 → 例子 → 自己算 → 代码</b>。以后自己读任何一段代码，也按这个顺序问自己：它要解决什么问题？规则一句话怎么说？拿几个数算一遍对不对？最后再去对每一行。<b>算不出来的地方，就是没懂的地方</b>，把它说出来，比“整体看不懂”有用得多。</div>
@@ -388,7 +422,7 @@ else                        // 正常工作
 <script>
 (function(){
 const qs=[...document.querySelectorAll('.qz')];const done=new Set();
-function prog(){document.getElementById('pTxt').textContent=`已答对 ${done.size} / ${qs.length} 题`;document.getElementById('pBar').style.width=(done.size/qs.length*100)+'%'}
+function prog(){document.getElementById('pTxt').textContent=`固定题 已答对 ${done.size} / ${qs.length} 题`;document.getElementById('pBar').style.width=(done.size/qs.length*100)+'%'}
 qs.forEach((q,i)=>{const fb=q.querySelector('.fb');
  const show=ok=>{fb.className='fb '+(ok?'ok':'no');fb.innerHTML=(ok?'✓ ':'✗ ')+(ok?fb.dataset.ok:fb.dataset.no);if(ok){done.add(i);prog()}};
  if(q.dataset.ans!=null){const inp=q.querySelector('input'),ans=+q.dataset.ans,tol=+(q.dataset.tol||0);
@@ -396,4 +430,185 @@ qs.forEach((q,i)=>{const fb=q.querySelector('.fb');
   q.querySelector('.chk').onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter')go()})}
  else{const c=+q.dataset.choice;[...q.querySelectorAll('.opt')].forEach((b,j)=>b.onclick=()=>{q.querySelectorAll('.opt').forEach(x=>x.classList.remove('on'));b.classList.add('on');show(j===c)})}
 });prog();})();
+</script>
+<script>(function(){
+const TBL=[0,0,1,1,1,2,2,3,3,3,4,4,5,5,5,6,6,7,7,7,8,8,9,9,9,10,10,11,11,11,12,12,13,13,13,14,14,15,15,15,16,16,17,17,17,18,18,19,19,19,20,20,20,21,21,22,22,22,23,23,24,24,24,25,25,26,26,26,27,27,28,28,28,29,29,30,30,30,31,31,32,32,32,33,33,34,34,34,35,35,36,36,36,37,37,38,38,38,39,39,39,40,40,41,41,41,42,42,43,43,43,44,44,45,45,45,46,46,47,47,47,48,48,49,49,49,50,50,51,51,51,52,52,53,53,53,54,54,55,55,55,56,56,57,57,57,58,58,59,59,59,60,60,60,61,61,62,62,62,63,63,64,64,64,65,65,66,66,66,67,67,68,68,68,69,69,70,70,70,71,71,72,72,72,73,73,74,74,74,75,75,76,76,76,77,77,78,78,78,79,79,79,80,80,81,81,81,82,82,83,83,83,84,84,85,85,85,86,86,87,87,87,88,88,89,89,89,90,90,91,91,91,92,92,93,93,93,94,94,95,95,95,96,96,97,97,97,98,98,99,100,100,100,100,100,100];
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const hx=(v,w)=>'0x'+v.toString(16).toUpperCase().padStart(w||2,'0');
+const f3=x=>(+x.toFixed(3)).toString();
+function seg(v,t,b){if(t>=b||b-t<100)return 0;if(v<=t)return 0;if(v>=b)return TBL[255];const st=Math.floor(2097152/(b-t));return TBL[Math.floor((v-t)*st*255/2097152)&255]}
+function shuffleMC(q,opts,ans,sol){const idx=opts.map((_,i)=>i);for(let i=idx.length-1;i>0;i--){const j=ri(0,i);[idx[i],idx[j]]=[idx[j],idx[i]]}return{q,type:'mc',opts:idx.map(i=>opts[i]),ans:idx.indexOf(ans),sol}}
+const mc=pool=>()=>{const p=pick(pool);return shuffleMC(p[0],p[1],p[2],p[3])};
+const num=(q,ans,sol,tol)=>({q,type:'num',ans,tol:tol||0,sol});
+const G={
+1:[
+ ()=>{const V=ri(1,32)/10,a=Math.round(V/3.3*1023);return num(`电压 ${V} V，ADC 读数大约是多少？`,a,`${V} ÷ 3.3 × 1023 ≈ <b>${a}</b>`,3)},
+ ()=>{const n=ri(50,1000),V=n*3.3/1023;return num(`ADC 读数 ${n}，电压大约多少 V？（保留两位小数）`,+V.toFixed(2),`${n} ÷ 1023 × 3.3 ≈ <b>${V.toFixed(2)}</b> V`,0.02)},
+ mc([
+  ['手指按下去，ADC 读数变大还是变小？',['变大','变小'],1,'挡光越多，接收管电压越低，读数越小。'],
+  ['10 位 ADC 最大能读出多少？',['255','1023','1024','4095'],1,'10 位有 2¹⁰ = 1024 个数：0 ~ 1023。'],
+  ['左键接哪只脚、哪个通道？',['PIO0_13 / AD2','PIO0_14 / AD3','PIO0_19 / AD5'],0,'my_board.h:263 LB_ADC_PIN = 13；my_adc.c:28 .ch = 2。'],
+  ['右键接哪个通道？',['AD2','AD3','AD0'],1,'PIO0_14 = AD3（my_adc.c:34 .ch = 3）。'],
+  ['红外发射管的电由哪只脚控制？',['PIO0_19（IR_EN）','PIO0_13','PIO0_14'],0,'IR_EN = PIO0_19，开机后一直是高电平。'],
+  ['ADC 读数 1023 对应多少伏？',['3.3 V','5 V','1.023 V'],0,'满量程就是参考电压 3.3 V。'],
+  ['ADC 本质上在干什么？',['把一个电压变成一个数','把一个数变成电压','判断按键按没按'],0,'判断按没按是后面软件算法的事，ADC 只负责电压 → 数。']])],
+2:[
+ ()=>{const n=pick([7,9,10,11,15,23,47]),f=48/(n+1),ok=f<=4.5;return num(`CLKDIV = ${n}，ADC 时钟是多少 MHz？（保留两位小数）`,+f.toFixed(2),`48 ÷ (${n} + 1) = <b>${f.toFixed(2)}</b> MHz，${ok?'不超过 4.5 MHz，能用':'超过 4.5 MHz，<b>不能用</b>'}。`,0.01)},
+ ()=>{const t=pick([1,2,3,4]),a=48/t-1;return num(`想让 ADC 时钟是 ${t} MHz，CLKDIV 写几？`,a,`48 ÷ (CLKDIV + 1) = ${t} → CLKDIV + 1 = ${48/t} → <b>${a}</b>`)},
+ ()=>{const n=pick([10,11,15,23]),us=11*(n+1)/48;return num(`CLKDIV = ${n}，转换一次要 11 个 ADC 时钟，大约多少 µs？（保留一位小数）`,+us.toFixed(1),`ADC 时钟 = 48 ÷ ${n+1} = ${(48/(n+1)).toFixed(2)} MHz，一个时钟 ${((n+1)/48).toFixed(3)} µs，× 11 ≈ <b>${us.toFixed(1)}</b> µs`,0.1)},
+ mc([
+  ['让 ADC 通电：PDRUNCFG 第 4 位写几？',['0','1'],0,'PDRUNCFG 是“掉电配置”：1 = 掉电，0 = 通电（my_adc.c:51）。'],
+  ['给 ADC 时钟：SYSAHBCLKCTRL 第几位写 1？',['第 4 位','第 13 位','第 24 位'],1,'my_adc.c:52：(1u &lt;&lt; 13)。'],
+  ['CLKDIV 在 CR 的哪几位？',['第 7~0 位','第 15~8 位','第 26~24 位'],1,'第 7~0 位是选通道，第 26~24 位是 START，第 15~8 位是 CLKDIV。'],
+  ['左右两个通道都调 MyADC_Init()，开电开时钟真正做几次？',['1 次','2 次'],0,'hwInitFlag（my_adc.c:45、48~50）保证 MyADC_HwInit() 只做一次。'],
+  ['手册要求 ADC 时钟不超过多少？',['4.5 MHz','48 MHz','12 MHz'],0,'所以 CLKDIV 最小写 10，项目写 15（3 MHz）。'],
+  ['为什么上电时 ADC 是关的？',['为了省电','因为它坏了','因为没接引脚'],0,'不用的外设默认断电、没时钟，用的时候自己打开。'],
+  ['项目里 ADC 时钟是多少？',['3 MHz','4.5 MHz','48 MHz'],0,'CLKDIV = 15：48 ÷ 16 = 3 MHz（my_adc.c:55）。']])],
+3:[
+ ()=>{const func=ri(0,3),mode=ri(0,3),hys=ri(0,1),adm=ri(0,1);const v=func|(mode<<3)|(hys<<5)|(adm<<7);const a=((v&~0x18&~0x80&~0x07)|2)>>>0;
+  return {q:`某只脚的 IOCON 原来是 <code>${hx(v)}</code>，执行完 MyADC_Init() 后是多少？（十六进制，例如 0x02）`,type:'hex',ans:a,sol:`原来：FUNC = ${func}，MODE = ${mode}，第 5 位 = ${hys}，ADMODE = ${adm}。<br>71 行清第 4、3 位（MODE = 0）；73 行清第 7 位（ADMODE = 0）；74 行 FUNC = 2；第 5 位不动。<br>结果 <b>${hx(a)}</b>`}},
+ mc([
+  ['当 AD 用，FUNC（第 2~0 位）写几？',['0','1','2','3'],2,'PIO0_13：0 = TDO，1 = GPIO，2 = AD2（MYADC_FUNC_AS_AD = 2）。'],
+  ['MODE 两位写 0 是什么意思？',['不上拉也不下拉','上拉','下拉'],0,'MODE：0 无，1 下拉，2 上拉，3 中继。'],
+  ['ADMODE（第 7 位）写 0 是什么意思？',['模拟输入，断开数字输入电路','数字输入','输出'],0,'1 = 数字，0 = 模拟。'],
+  ['忘了去掉上拉电阻，读数会？',['偏大','偏小','不变'],0,'上拉把电压往 3.3 V 拉。'],
+  ['忘了去掉下拉电阻，读数会？',['偏大','偏小','不变'],1,'下拉把电压往 0 V 拉。'],
+  ['PIO0_13 上电默认是什么功能？',['TDO（调试口）','AD2','GPIO'],0,'所以引脚名叫 TDO_PIO0_13。'],
+  ['MyADC_Init() 为什么传一个指针 p？',['同一个函数配不同的脚，差异放在对象里','C 语言规定必须传指针','为了更快'],0,'传 &amp;leftAdcInst 配左键，传 &amp;rightAdcInst 配右键。'],
+  ['MyADC_Init() 一共被调用几次？',['1 次','2 次','每毫秒一次'],1,'device.c:485~486，左右各一次。']])],
+4:[
+ ()=>{const r=ri(0,1023),lo=(r<<6)&0xFFFF;return {q:`DR = <code>0x8000${lo.toString(16).toUpperCase().padStart(4,'0')}</code>，结果是多少（十进制）？`,type:'num',ans:r,tol:0,sol:`低 16 位 ${hx(lo,4)} = ${lo}，右移 6 位（÷ 64）= <b>${r}</b>`}},
+ ()=>{const r=ri(0,1023),lo=r<<6;return {q:`结果是 ${r}，DR 的低 16 位是多少？（十六进制）`,type:'hex',ans:lo,sol:`${r} 左移 6 位（× 64）= ${lo} = <b>${hx(lo,4)}</b>`}},
+ ()=>{const done=ri(0,1),r=ri(0,1023),hi=done?'8000':'0000',lo=((r<<6)&0xFFFF).toString(16).toUpperCase().padStart(4,'0');return shuffleMC(`DR = <code>0x${hi}${lo}</code>，这次转换做完了吗？`,['做完了','还没做完'],done?0:1,`看第 31 位（最高位）：${done?'0x8… 最高位是 1，做完了':'0x0… 最高位是 0，还没做完'}。`)},
+ ()=>{const ch=ri(0,7);return num(`要读通道 ${ch}，CR 的第几位置 1？`,ch,`选通道就是 CR 的第 ch 位：<b>${ch}</b>（my_adc.c:97）`)},
+ mc([
+  ['开始转换要把 CR 的第几位置 1？',['第 24 位','第 31 位','第 8 位'],0,'START 在第 26~24 位，写 001（my_adc.c:100）。'],
+  ['为什么开始前先读一次 DR？',['清掉上次留下的 DONE 标志','读出上次的结果','让 ADC 通电'],0,'读 DR 会自动清 DONE，避免把上次的“完成”当成这次的。'],
+  ['最多等多久就算超时？',['20 µs','2 µs','1 ms'],0,'每 2 µs 看一次，最多 10 次。'],
+  ['超时返回什么？',['−2','−1','0'],0,'−1 是参数错，0 是成功。'],
+  ['读完为什么要把选通道那一位清掉？',['下次选别的通道时不会同时选中两个','为了省电','为了清 DONE'],0,'超时那条路（111 行）跳过了这一步，是个小坑。'],
+  ['结果在 DR 的哪几位？',['第 15~6 位','第 9~0 位','第 31~22 位'],0,'所以要 (DR &gt;&gt; 6) &amp; 0x3FF。'],
+  ['谁每 1 ms 调 MyADC_GetValue()？',['LR_GetState()','main()','中断'],0,'app/button.c:320~321。'],
+  ['hall_spi_rx[0]、[1] 放的是？',['右键的高字节、低字节','左键的高字节、低字节','左右键各一个字节'],0,'button.c:327~330：[0][1] 右键，[2][3] 左键。'],
+  ['DONE 是 DR 的第几位？',['第 31 位','第 0 位','第 24 位'],0,'最高位。']])],
+5:[
+ ()=>{const x=ri(300,950);return num(`读数 ${x}，取反后是多少？`,1023-x,`1023 − ${x} = <b>${1023-x}</b>`)},
+ ()=>{const y=ri(60,700);return num(`取反后是 ${y}，原来的读数是多少？`,1023-y,`1023 − ${y} = <b>${1023-y}</b>（取反两次就回来了）`)},
+ ()=>{const a=ri(700,900),b=ri(350,550);return shuffleMC(`没按时读数 ${a}，按到底时读数 ${b}。取反以后，哪个数大？`,['按到底的大','没按的大'],0,`取反后：没按 ${1023-a}，按到底 ${1023-b}。按得越深，数越大。`)},
+ mc([
+  ['为什么要取反？',['让“按得越深数越大”，和霍尔板型共用一套算法','让读数更准','为了滤波'],0,'红外按下变小，霍尔按下变大；取反后统一。'],
+  ['取反用的是哪个数减？',['1023','1024','4095'],0,'MAX_VALUE_10BIT = 1023。'],
+  ['ana_rd_buff[2*k] 是什么？',['第 k 个键的高字节','第 k 个键的低字节'],0,'先放高字节、左移 8 位，再或上低字节。']])],
+6:[
+ ()=>{const t=ri(150,300);let b,v;const r=Math.random();
+  if(r<0.15){b=t+ri(20,95);v=ri(t,b);const s=seg(v,t,b);return num(`顶 ${t}、底 ${b}，当前 ${v}，段位是多少？`,s,`底 − 顶 = ${b-t} &lt; 100，两条线没拉开，段位一律 <b>0</b>。`)}
+  b=t+ri(150,450);
+  if(r<0.25)v=t-ri(1,30);else if(r<0.35)v=b+ri(1,40);else v=ri(t+5,b-5);
+  const s=seg(v,t,b);let sol;
+  if(v<=t)sol=`当前 ≤ 顶，段位 <b>0</b>。`;else if(v>=b)sol=`当前 ≥ 底，段位 <b>100</b>。`;
+  else sol=`(${v} − ${t}) ÷ (${b} − ${t}) = ${v-t} ÷ ${b-t} ≈ ${((v-t)/(b-t)).toFixed(3)}，× 100 ≈ <b>${s}</b>（代码查表的结果）`;
+  return num(`顶 ${t}、底 ${b}，当前 ${v}，段位是多少？`,s,sol,1)},
+ ()=>{const t=ri(150,300),b=t+ri(200,450),s=pick([10,20,25,40,50,60,75,80]),v=Math.round(t+s/100*(b-t));return num(`顶 ${t}、底 ${b}，段位正好 ${s} 时，当前值大约是多少？`,v,`${t} + ${s}% × (${b} − ${t}) = ${t} + ${(s/100*(b-t)).toFixed(1)} ≈ <b>${v}</b>`,2)},
+ mc([
+  ['顶部基线是什么？',['没按时的数','按到底时的数','两者的平均'],0,'取反后，没按时数最小，叫顶部。'],
+  ['底部基线是什么？',['按到底时的数','没按时的数','1023'],0,''],
+  ['为什么不直接写死“超过 400 算按下”？',['每只鼠标、每对红外管的数都不一样','因为 400 太大','因为要省内存'],0,'所以让程序自己学两条基线。'],
+  ['底 − 顶 &lt; 100 时段位是多少？',['0','50','100'],0,'两条线没拉开，算不准，干脆返回 0。'],
+  ['代码为什么用 step 和右移，而不是每次直接除？',['芯片（Cortex-M0）没有除法指令，除法很慢','除法会出错','为了好看'],0,'只在基线变化时除一次。'],
+  ['nodeCaliTable 干什么用？',['把 0~255 换成 0~100','存基线','存滤波结果'],0,'my_misc.c:16~44，IRPT_V4 版接近直线。']])],
+7:[
+ ()=>{const b=ri(200,300),d=ri(-35,35),r=b+d,out=Math.abs(d)>20;const a=out?r:Math.floor((b+r)/2);
+  return num(`开机学基线：基线 ${b}，新读数 ${r}。基线变成多少？`,a,out?`${r} 跳出了 ${b-20} ~ ${b+20}，直接换成 <b>${r}</b>，稳定次数清 0。`:`${r} 在 ${b-20} ~ ${b+20} 以内，(${b} + ${r}) ÷ 2 = <b>${a}</b>，稳定次数 +1。`)},
+ ()=>{let b=ri(200,300);const b0=b,rs=[0,0,0].map(()=>b0+ri(-30,30));const steps=[];
+  rs.forEach(r=>{if(r>b+20||r<b-20){steps.push(`${r} 跳出 → ${r}`);b=r}else{const n=Math.floor((b+r)/2);steps.push(`${r} 在范围内 → (${b}+${r})÷2 = ${n}`);b=n}});
+  return num(`基线 ${b0}，接下来三个读数 ${rs.join('、')}。最后基线是多少？`,b,steps.join('<br>')+`<br>最后 <b>${b}</b>`)},
+ ()=>{const n=ri(0,99),inr=ri(0,1);return num(`稳定次数现在是 ${n}，新读数${inr?'在':'跳出了'} ±20 ${inr?'以内':''}。稳定次数变成多少？`,inr?n+1:0,inr?`在范围内 +1 → <b>${n+1}</b>${n+1>=100?'，到 100 了，学好！':''}`:`跳出就清 0 → <b>0</b>`)},
+ mc([
+  ['基线初值为什么是 10000？',['故意的不可能值，让第一个读数一定跳出、直接拿来开局','是红外管的典型值','随便写的'],0,'10 位 ADC 最大 1023。'],
+  ['连续稳定多少次算学好？',['100 次（100 ms）','600 次','10 次'],0,'counter ≥ 100 返回 0（my_misc.c:153）。'],
+  ['开机学习最长多久？',['600 ms','100 ms','1 s'],0,'cali_init_cnt 初值 600，每 ms 减 1。'],
+  ['学好时底部基线是多少？',['等于顶部基线','603','6000'],0,'还没拉开，要靠以后按键时学。'],
+  ['左键学好了，右键还没学好，会怎样？',['学习阶段一起结束','右键继续学','左键等右键'],0,'两个键共用一个 cali_init_cnt（待上板验证影响）。'],
+  ['开机时手指搭在键上，会怎样？',['把“按着”的数学成“没按”','没有影响','开机失败'],0,'由代码推出，待上板验证。'],
+  ['学习阶段要判断按键吗？',['不判断，只学基线，返回 0','要判断'],0,'两个阶段是 if / else 互斥的。']])],
+8:[
+ ()=>{const r=ri(250,400),d=ri(-25,25),v=r+d,j=Math.abs(d)>10;const a=j?v:r+d/16;
+  return num(`滤波：结果 ${r}，新读数 ${v}。新结果是多少？（小数照写，例如 300.375）`,+a.toFixed(4),j?`差 ${Math.abs(d)} &gt; 10，直接跳：<b>${v}</b>`:`差 ${d} 的绝对值 ≤ 10，走 ${d} ÷ 16 = ${f3(d/16)}：${r} ${d<0?'−':'+'} ${f3(Math.abs(d)/16)} = <b>${f3(a)}</b>`,0.001)},
+ ()=>{const f=ri(250,400),rem=ri(0,15),s=16*f+rem,d=ri(-15,15),v=f+d,j=Math.abs(d)>10;const a=j?v*16:s+v-f;
+  return num(`sum = ${s}（交出去的结果是 ${s} ÷ 16 = ${f}），新读数 ${v}。sum 变成多少？`,a,j?`差 ${Math.abs(d)} &gt; 10，直接跳：sum = ${v} × 16 = <b>${a}</b>`:`差 ${d} 的绝对值 ≤ 10：sum + 读数 − 结果 = ${s} + ${v} − ${f} = <b>${a}</b>（就是 sum 加上差 ${d}）`)},
+ ()=>{const f=ri(250,400),rem=ri(0,15),s=16*f+rem,d=ri(-10,10),v=f+d,ns=s+v-f,o=ns>>4;
+  return num(`sum = ${s}（结果 ${f}），新读数 ${v}。这一毫秒<b>交出去</b>的结果是多少？`,o,`差 ${d} ≤ 10：新 sum = ${s} + ${d} = ${ns}，${ns} ÷ 16 = ${f3(ns/16)}，只交整数 <b>${o}</b>`)},
+ mc([
+  ['差 ≤ 10 时，结果往读数走多少？',['1/16','全部','一半'],0,'抖动推不动，真变化慢慢推过去。'],
+  ['差 &gt; 10 时怎么办？',['直接跳到读数','走 1/16','不动'],0,'真按键时读数变化大，不能等。'],
+  ['sum 是什么？',['结果 × 16（把小数存成整数）','最近 16 个读数之和','读数 × 16'],0,'300.375 × 16 = 4806。'],
+  ['&gt;&gt; 4 是什么意思？',['除以 16，只留整数','乘 16','减 4'],0,'右移 n 位 = 除以 2ⁿ。'],
+  ['为什么不能写 结果 += (读数 − 结果) &gt;&gt; 4？',['差最多 10，10 &gt;&gt; 4 = 0，结果永远不动','会溢出','太慢'],0,'小数被扔掉了，所以要存 sum。'],
+  ['开机学习阶段做滤波吗？',['不做','做'],0,'441~484 行没有这段代码。'],
+  ['在 sum 上走一步，就是？',['sum 加上差','sum 加上读数','sum 除以 16'],0,'差的 1/16，按 1/16 来数正好是“差”个。'],
+  ['把 1/16 改成 1/2 会怎样？',['跟得快，但抖动滤不掉','更稳','没区别'],0,'走得越多，结果越像读数本身。']])],
+9:[
+ ()=>{const ap=10,rp=30,rr=20;const pressed=ri(0,1);let c,g,key=pressed,nc,why;
+  if(pressed){c=ri(40,100);g=Math.max(0,Math.min(100,c-ri(-10,35)));if(Math.random()<0.1)g=0;
+   if(g===0){key=0;nc=0;why='段位回到 0，松开'}else if(g>c){nc=g;why=`${g} 比最深 ${c} 还深，更新最深点，还按着`}else if(c>g+rr){key=0;nc=g;why=`从最深 ${c} 抬到 ${g}，抬了 ${c-g} &gt; 20，松开，记最浅 ${g}`}else{nc=c;why=`只抬了 ${c-g}，没超过 20，还按着`}}
+  else{c=ri(0,40);g=Math.max(0,Math.min(100,c+ri(-10,42)));if(Math.random()<0.08)g=100;
+   if(g>=100){key=1;nc=g;why='段位到 100，按下'}else if(g<c){nc=g;why=`${g} 比最浅 ${c} 还浅，更新最浅点，还松着`}else if(g>=c+rp&&g>=ap){key=1;nc=g;why=`从最浅 ${c} 按到 ${g}，按了 ${g-c} ≥ 30（且 ≥ 10），按下，记最深 ${g}`}else{nc=c;why=`只按了 ${g-c}，${g-c<rp?'不到 30':'但段位不到 10'}，还松着`}}
+  return shuffleMC(`现在<b>${pressed?'按着':'松着'}</b>，记着的${pressed?'最深':'最浅'}是 ${c}，这一毫秒段位是 ${g}。之后是？`,['按着','松着'],key?0:1,why+'。（rt_press 30、rt_release 20、ap 10）')},
+ ()=>{let key=0,c=0,n=0;const seq=[];let g=0;for(let i=0;i<7;i++){g=Math.max(0,Math.min(100,g+ri(-30,40)));seq.push(g);
+   if(key){if(g===0){key=0;c=g}else if(g>c)c=g;else if(c>g+20){key=0;c=g}}else{if(g>=100){key=1;c=g;n++}else if(g<c)c=g;else if(g>=c+30&&g>=10){key=1;c=g;n++}}}
+  return num(`一开始松着，记着的最浅是 0。段位依次是 ${seq.join('、')}。一共判了几次“按下”？`,n,`逐个走一遍：按着时看从最深点抬没抬够 20，松着时看从最浅点按没按够 30。共 <b>${n}</b> 次。`)},
+ mc([
+  ['rt_press 默认是多少？',['30','20','10'],0,'从最浅点往下按 30 段判按下（my_misc.h:42~44）。'],
+  ['rt_release 默认是多少？',['20','30','10'],0,'从最深点往回抬超过 20 段判松开。'],
+  ['ap（触发点）默认是多少？',['10','30','100'],0,'段位至少 10 才有资格判按下，防止轻轻搭着误触。'],
+  ['松着时段位到 100，会？',['直接判按下','要再按 30 段','不变'],0,''],
+  ['按着时段位回到 0，会？',['直接判松开','要再抬 20 段','不变'],0,''],
+  ['快速触发的好处是？',['不用抬到顶也能再按，连点更快','更省电','滤掉抖动'],0,'只看相对转折点走了多少。'],
+  ['这三个手感参数从哪来？',['EEPROM 里的设置，GUI 能改','写死在代码里改不了','ADC 读出来的'],0,'Hall_UpdateParam()（my_misc.c:101）。'],
+  ['结论存在哪个变量里？',['gbKeyState[k]','cali_init_cnt','gwTopBaseline[k]'],0,'1 按着，0 松着。']])],
+10:[
+ ()=>{const L=ri(0,1),R=ri(0,1),a=L|(R<<1);return num(`左键${L?'按着':'松着'}、右键${R?'按着':'松着'}，返回值是几？`,a,`左键 → 第 0 位，右键 → 第 1 位：${R}${L}（二进制）= <b>${a}</b>`)},
+ ()=>{const a=ri(0,3);const opts=['都松着','只有左键按着','只有右键按着','两个都按着'];return shuffleMC(`返回值是 ${a}，按键状态是？`,opts,a,`${a} 的二进制是 ${(a>>1)&1}${a&1}：第 0 位是左键，第 1 位是右键。`)},
+ mc([
+  ['正常工作时，滤波在算段位之前还是之后？',['之前','之后'],0,'取反 → 滤波 → 段位 → 快速触发 → 校准。'],
+  ['线圈在震时，这个键会怎样？',['跳过所有步骤，沿用上次结论','照常计算','直接判松开'],0,'震动让读数乱跳，不可信。'],
+  ['开机学习阶段做哪些事？',['取反 + 学顶部基线','取反 + 滤波 + 段位','什么都不做'],0,''],
+  ['ProcessRecvSampleRawData() 多久调用一次？',['1 ms','10 ms','100 µs'],0,'由 LR_GetState() 调用。'],
+  ['开机后第一下快速轻点为什么可能不响应？',['底 = 顶，差 &lt; 100，段位一律 0','ADC 没开','滤波太慢'],0,'要靠按住让底部基线学开（待上板验证）。'],
+  ['底部基线什么时候学？',['刚判定按下后的 100 ms 内','开机时','一直在学'],0,'所以要点好几次才学到真正的“按到底”。'],
+  ['顶部基线什么时候校准？',['松着的时候','按着的时候'],0,'跟着温度、环境光慢慢挪。'],
+  ['先判断还是先校准？',['先判断，再校准（校准下一毫秒才起作用）','先校准再判断'],0,''],
+  ['返回值第 0 位是哪个键？',['左键','右键'],0,'gbKeyState[1]（左）→ bit0，gbKeyState[0]（右）→ bit1。']])]
+};
+const NAME={1:'电压→数',2:'开电开时钟',3:'引脚切模拟',4:'读一次',5:'取反',6:'基线和段位',7:'开机学基线',8:'滤波',9:'快速触发',10:'合起来'};
+/* stats (per-viewer convenience only) */
+let ST={};try{ST=JSON.parse(localStorage.getItem('adcPx')||'{}')}catch(e){ST={}}
+const save=()=>{try{localStorage.setItem('adcPx',JSON.stringify(ST))}catch(e){}};
+const stat=l=>ST[l]||(ST[l]={n:0,ok:0});
+function parseAns(t,s){s=(s||'').trim();if(!s)return NaN;if(t==='hex'){return /^0x/i.test(s)?parseInt(s,16):parseInt(s,16)}return parseFloat(s)}
+function mount(box,getQ,onDone){
+ box.innerHTML=`<div class="pxh"><b>练习</b><span class="pxs"></span></div><div class="pxq"></div><div class="row pxa"></div><div class="fb"></div><div class="row"><button type="button" class="pxShow">看答案</button><button type="button" class="pxNext">下一题 →</button></div>`;
+ const qEl=box.querySelector('.pxq'),aEl=box.querySelector('.pxa'),fb=box.querySelector('.fb');let cur,answered;
+ function next(){const r=getQ();cur=r.q;cur.lv=r.lv;answered=false;fb.className='fb';fb.innerHTML='';
+  qEl.innerHTML=(r.tag?`<span class="pxtag">${r.tag}</span>`:'')+cur.q;aEl.innerHTML='';
+  if(cur.type==='mc'){cur.opts.forEach((o,j)=>{const b=document.createElement('button');b.type='button';b.className='opt';b.innerHTML=o;b.onclick=()=>{aEl.querySelectorAll('.opt').forEach(x=>x.classList.remove('on'));b.classList.add('on');judge(j===cur.ans)};aEl.appendChild(b)})}
+  else{const inp=document.createElement('input');inp.type='text';inp.inputMode=cur.type==='hex'?'text':'decimal';inp.setAttribute('aria-label','答案');inp.autocomplete='off';const c=document.createElement('button');c.type='button';c.textContent='检查';
+   const go=()=>{const v=parseAns(cur.type,inp.value);if(isNaN(v))return;judge(Math.abs(v-cur.ans)<=(cur.tol||0)+1e-9)};c.onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter'){if(answered&&fb.classList.contains('ok'))next();else go()}});aEl.append(inp,c);inp.focus({preventScroll:true})}
+  upd()}
+ function judge(ok){const s=stat(cur.lv);if(!answered){s.n++;if(ok)s.ok++;save();onDone&&onDone(cur,ok)}answered=true;fb.className='fb '+(ok?'ok':'no');fb.innerHTML=(ok?'✓ 对。':'✗ 不对，再想想，或者点“看答案”。')+(ok?'<br>'+cur.sol:'');upd()}
+ box.querySelector('.pxShow').onclick=()=>{if(!answered){const s=stat(cur.lv);s.n++;save();onDone&&onDone(cur,false)}answered=true;fb.className='fb no';fb.innerHTML='答案：'+(cur.type==='mc'?cur.opts[cur.ans]:(cur.type==='hex'?'0x'+cur.ans.toString(16).toUpperCase():cur.ans))+'<br>'+cur.sol;upd()};
+ box.querySelector('.pxNext').onclick=next;
+ function upd(){const l=box.dataset.lv;const el=box.querySelector('.pxs');if(l){const s=stat(+l);el.textContent=`本关已做 ${s.n} 题，对 ${s.ok} 题`}else{el.textContent=box._label?box._label():''}refreshAll()}
+ box._next=next;box._cur=()=>cur;next()}
+function genFor(l){const g=pick(G[l]);return{q:g(),lv:l}}
+document.querySelectorAll('.px[data-lv]').forEach(b=>{const l=+b.dataset.lv;mount(b,()=>genFor(l))});
+/* mixed review: wrong ones come back after 3 questions */
+const mix=document.getElementById('pxMix');let queue=[],count=0;
+if(mix){mix._label=()=>`已做 ${count} 题，待重做 ${queue.length} 题`;
+ mount(mix,()=>{count++;const due=queue.find(x=>x.at<=count);if(due){queue=queue.filter(x=>x!==due);return{q:due.q,lv:due.q.lv,tag:'错题重做'}}const l=ri(1,10);const r=genFor(l);r.tag='第 '+l+' 关';return r},(q,ok)=>{if(!ok)queue.push({q:Object.assign({},q),at:count+3})})}
+function refreshAll(){const tb=document.getElementById('pxTbl');if(!tb)return;let h='<tr><th>关</th><th>做了</th><th>对了</th><th>正确率</th></tr>';for(let l=1;l<=10;l++){const s=stat(l);const p=s.n?Math.round(s.ok/s.n*100):null;h+=`<tr><td class="l"><a href="#L${l}">${l} ${NAME[l]}</a></td><td>${s.n}</td><td>${s.ok}</td><td${p!==null&&p<70?' class="hl"':''}>${p===null?'—':p+'%'}</td></tr>`}tb.innerHTML=h}
+const rs=document.getElementById('pxReset');if(rs)rs.onclick=()=>{ST={};save();document.querySelectorAll('.px').forEach(b=>b._next&&b._next())};
+refreshAll();
+})();
 </script>
