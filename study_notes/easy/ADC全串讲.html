@@ -255,11 +255,72 @@ if(MyADC_GetValue(&amp;batAdcInst, &amp;v) == 0)   // 3. 要用时读
 .simlog{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:6px 10px;white-space:pre-wrap;max-height:220px;overflow:auto}
 </style>
 <p class="big">🧭 本质：把“一个电压数”变成“按着 / 松着”。难点在于<b>每只鼠标、每对红外管、每个温度下，没按时和按到底的电压都不一样</b>，所以不能写死一个阈值，而是让程序<b>自己学</b>两条基线，再看当前值落在两条线之间的哪里。</p>
-<p>整个模块在 <code>src/my_misc.c</code>（本项目 chengjie 写，2026-03），入口是 <code>ProcessRecvSampleRawData()</code>（418 行），每 1 ms 被 <code>LR_GetState()</code> 调一次，左右两个键各走一遍下面这条流水线（点一格跳到说明）：</p>
+<p>整个模块在 <code>src/my_misc.c</code>（本项目 chengjie 写，2026-03），入口是 <code>ProcessRecvSampleRawData()</code>（418 行），每 1 ms 被 <code>LR_GetState()</code> 调一次，左右两个键各走一遍下面这条流水线（点一格跳到说明；<a href="#k0">先看函数的整体骨架</a>）：</p>
 <div class="pipe2">
 <a href="#k1" style="--c:var(--per)">① 拼数、取反</a><span>→</span><a href="#k2" style="--c:var(--gold)">② 开机学基线（≤ 600 ms）</a><span>→</span><a href="#k3" style="--c:var(--pc)">③ 线圈在震就冻结</a><span>→</span><a href="#k4" style="--c:var(--sw)">④ 滤波</a><span>→</span><a href="#k5" style="--c:var(--sw)">⑤ 算按下程度 0~100</a><span>→</span><a href="#k6" style="--c:var(--pc)">⑥ 快速触发：按着 / 松着</a><span>→</span><a href="#k7" style="--c:var(--gold)">⑦ 校准两条基线</a><span>→</span><a href="#k8" style="--c:var(--muted)">⑧ 交出结果</a>
 </div>
 <div class="def"><b>两条基线</b>（取反之后，数越大 = 按得越深）：<br><b>顶部基线 <code>gwTopBaseline</code></b> = 没按时的数值；<b>底部基线 <code>gwBottomBaseline</code></b> = 按到底时的数值。<br><b>按下程度（段位，0~100）</b> = 当前值在两条线之间的位置：贴着顶部是 0，到底部是 100。下标 0 = 右键，1 = 左键。</div>
+
+<div class="sub" id="k0" style="--c:var(--per)"><h3>先看全局：ProcessRecvSampleRawData() 的宏观结构</h3>
+<p><b>它是什么</b>：一个“每 1 ms 被调用一次”的函数。<b>输入</b>是 4 个字节（两个键的原始读数）；<b>输出</b>是一个字节，第 0 位 = 左键按着、第 1 位 = 右键按着。中间做的事情，就是上面那条流水线。</p>
+<div class="scroll"><table>
+<thead><tr><th></th><th>内容</th></tr></thead>
+<tbody>
+<tr><td><b>签名</b></td><td><code>uint8_t ProcessRecvSampleRawData(uint8_t* pData, uint16_t length)</code>（my_misc.c:418）</td></tr>
+<tr><td><b>参数</b></td><td><code>pData</code> 指向 <code>hall_spi_rx[4]</code>：[0][1] 右键、[2][3] 左键，各 2 字节、高字节在前。<code>length</code> = 4，但<b>函数里没用到</b></td></tr>
+<tr><td><b>返回值</b></td><td>bit0 = 左键按着，bit1 = 右键按着（注意左右和数组顺序是交叉的）</td></tr>
+<tr><td><b>谁调用</b></td><td><code>LR_GetState()</code>（button.c:350），每 1 ms 一次</td></tr>
+<tr><td><b>它的“记忆”</b><br>（调用之间保留的数据）</td><td>函数内 static：<code>raw_data_filter[2]</code>、<code>raw_data_filter_sum[2]</code>（滤波器）、<code>previousKeySta[2]</code>（上次结论）。<br>全局：<code>cali_init_cnt</code>（学习倒计时）、<code>gwTopBaseline[2]</code>、<code>gwBottomBaseline[2]</code>（两条基线）、<code>gbKeyState[2]</code>（结论）</td></tr>
+</tbody></table></div>
+
+<p><b>整体只有两层结构</b>：外层 <code>if / else</code> 把函数分成“学习阶段”和“工作阶段”，每个阶段里用 <code>for</code> 把左右两个键各处理一遍。</p>
+<pre class="code">uint8_t ProcessRecvSampleRawData(uint8_t* pData, uint16_t length)        // 418
+{
+    准备：滤波参数宏、static 记忆、局部变量                              // 420~439
+
+    if(cali_init_cnt)            // ── 阶段 A：开机学习（最多 600 次 = 600 ms）── 441~484
+    {
+        cali_init_cnt--;
+        for(k = 0 右, 1 左)
+        {
+            拼数、取反
+            学顶部基线 Hall_InitBaseline()；学好了就 cali_init_cnt = 0       → ②
+        }
+    }
+    else                         // ── 阶段 B：正常工作 ────────────────── 485~654
+    {
+        for(k = 0 右, 1 左)
+        {
+            线圈在震？→ 沿用上次结论，continue（跳过下面所有步骤）           → ③  489~513
+            拼数、取反                                                     → ①  515~533
+            滤波                                                           → ④  534~545
+            段位   = Hall_CalculateNode()          （0~100）                → ⑤  547
+            结论   = Hall_HandleKeyRapidTrigger()  （按着 / 松着）          → ⑥  548
+            校准两条基线 Hall_CalibrateTop/BottomBaseline()                 → ⑦  549~550
+            告诉线圈段位、记下这次结论、存给 GUI                           → ⑧  552~610
+        }
+        调试打印（MYDEBUG_ENABLE = 0，不编译）                                  613~653
+    }
+
+    把 gbKeyState[] 拼成返回值：右 → bit1，左 → bit0                      → ⑧  656~667
+    return ret;
+}</pre>
+<p><b>几个关键点</b>：</p>
+<ul>
+<li><b>两个阶段互斥</b>：学习阶段的那一毫秒，只学基线、不判断按键，直接跳到最后返回（这时 <code>gbKeyState</code> 都是 0，返回 0）。<code>cali_init_cnt</code> 一旦变成 0，以后每次都走工作阶段，再也不回学习阶段。</li>
+<li><b>左右两个键完全独立</b>：<code>for</code> 循环里每个键用自己的那一份数据（下标 <code>k</code>），互不影响。唯一的联系是学习阶段“一个学好就一起结束”（见 ②）。</li>
+<li><b>工作阶段每个键的顺序是固定的</b>：先“能不能信”（③）→ 再“读多少”（①④）→ 再“按到哪”（⑤）→ 再“算不算按下”（⑥）→ 最后“顺手更新基线、通知别人”（⑦⑧）。<b>先判断、再校准</b>：这一次的校准，要到下一毫秒才起作用。</li>
+<li><b>真正干活的是 5 个小函数</b>：<code>Hall_InitBaseline</code>、<code>Hall_CalculateNode</code>、<code>Hall_HandleKeyRapidTrigger</code>、<code>Hall_CalibrateTopBaseline</code>、<code>Hall_CalibrateBottomBaseline</code>。这个大函数本身只负责“按顺序调用它们”和“搬数据”。</li>
+</ul>
+<div class="card"><b class="t">为什么源码看起来比这复杂得多</b><br>这个函数 251 行，但 IRPT_V4 真正编译的只有大约一半。剩下的是：<code>#else</code> 里给霍尔板型的分支（14 位、校验）、<code>#if 0</code> 里注释掉的老代码、<code>MYDEBUG_ENABLE</code> 的调试打印、<code>PUSH_VIBRATING_HALL_VALUE_TO_GUI</code> 的另一种推 GUI 方式。这些都是“IRPT_V4 下不存在”的代码，读的时候先在脑子里把它们划掉。在 VS Code 里，如果 IntelliSense 认得 <code>IRPT_V4</code>，不生效的 <code>#if</code> 分支会显示成灰色。</div>
+<div class="card"><b class="t">💡 想法上：怎么读一个长函数</b><br>
+① 先看<b>签名</b>：输入什么、输出什么、谁调用；<br>
+② 划掉<b>不生效的 #if 分支</b>和调试代码；<br>
+③ 只看<b>控制结构</b>（if / else / for / return），画出骨架，像上面这样；<br>
+④ 列出它碰到的 <b>static 和全局变量</b>：这是它在两次调用之间的“记忆”；<br>
+⑤ 最后再逐段看细节。<br>
+这次你主动要求“先讲整体”，这个直觉是对的：以后读任何长函数，都先自己按这 5 步画一张骨架图，画不出来再问我。</div>
+</div>
 
 <div class="box try"><div class="tag">动手 · 逐毫秒模拟（和 C 代码同一套算法，左键一路）</div>
 <div class="modes" id="scSel"></div>
