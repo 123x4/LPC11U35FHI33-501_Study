@@ -459,6 +459,25 @@ details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
 <tr><td>*buf_rd = LPC_SSP1-&gt;DR;</td><td>从接收队列拿出刚收到的字节，放进 rx 的当前位置。</td></tr>
 <tr><td>buf_wr++;<br>buf_rd++;</td><td>两个指针都往后挪一格，下一圈处理 tx[1] / rx[1]，依此类推。</td></tr>
 </tbody></table></div>
+<div class="box" style="border-color:var(--hw)"><b>常见疑问：写完 DR、打完 8 下时钟以后，是芯片把 SCK 拉低的吗？</b>
+<p><b>不是。SCK 从头到尾都只由 MCU（SPI1）控制。</b>霍尔芯片的 SCK 脚是<b>输入脚</b>（霍尔手册表 1：SCK 是 “I = Input，Clock input”），它只能“听”这根线是高是低，<b>没有能力</b>把它拉高或拉低。</p>
+<ul>
+<li>8 下时钟里的<b>每一次拉高、每一次拉低，都是 SPI1 做的</b>。</li>
+<li>第 8 下的下降沿之后，SPI1 让 SCK <b>停在低电平</b>：这是它的“空闲电平”，由 CPOL = 0 决定（芯片手册表 260）。下一次写 DR 之前，它一直保持低。</li>
+<li>芯片能控制的只有自己的 <b>SDO</b>（数据出）这一根线。</li>
+</ul>
+<svg id="drvSvg" viewBox="0 0 860 170" role="img" aria-label="谁驱动 SCK" style="display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px"></svg>
+<p><b>每根线由谁“驱动”（谁输出、谁只读）</b>：</p>
+<div class="scroll"><table>
+<thead><tr><th>线（原理图网络名）</th><th>谁驱动（输出）</th><th>谁只读（输入）</th><th>依据</th></tr></thead>
+<tbody>
+<tr><td><code>SCLK_0</code> 时钟</td><td><b>MCU</b>：下命令时 PIO1_15 当普通输出脚；搬数据时 SPI1 的 SCK1</td><td>两颗芯片的 SCK（第 3 脚）</td><td>霍尔手册表 1：SCK = I</td></tr>
+<tr><td><code>MOSI_0</code></td><td><b>MCU</b>（SPI1 的 MOSI，PIO0_21）</td><td>左键芯片 SDI（第 2 脚）</td><td>表 1：SDI = I</td></tr>
+<tr><td><code>SDO_0</code></td><td><b>左键芯片</b> SDO（第 4 脚）</td><td>右键芯片 SDI</td><td>表 1：SDO = O</td></tr>
+<tr><td><code>MISO_0</code></td><td><b>右键芯片</b> SDO</td><td>MCU（SPI1 的 MISO，PIO0_22）</td><td>表 1：SDO = O</td></tr>
+</tbody></table></div>
+<p class="note">这种“一方发时钟、另一方跟着时钟走”的关系叫<b>主机 / 从机</b>：MCU 是<b>主机</b>（发时钟，决定什么时候开始、什么时候停），芯片是<b>从机</b>（只跟着时钟挪位）。SPI1 在开机时被设成主机模式（第 3 课下讲）。所以“什么时候打时钟、打几下、打完停在哪”，全部由 MCU 决定。</p>
+</div>
 <div class="qz" data-choice="0"><div class="qt">你来算：此时 SR = <code>0x03</code>（二进制 0000 0011），第一个“等”会结束吗？</div>
 <div class="row"><button type="button" class="opt">会结束（能放、不忙）</button><button type="button" class="opt">还要等</button></div>
 <div class="fb" data-ok="对。0x03 &amp; 0x12 = 0x02，等于 0x02，跳出。（0x03 是 TFE=1、TNF=1：发送队列空、没满，BSY=0 不忙）" data-no="算 0x03 &amp; 0x12：0000 0011 和 0001 0010 按位与。"></div></div>
@@ -788,4 +807,15 @@ bs.forEach(b=>b.onclick=()=>set(b.dataset.f));set('');})();
   [...sel.children].forEach((x,j)=>x.setAttribute('aria-pressed',j===i));
   document.getElementById('fxLog').textContent=`上一次读完：两颗芯片的格子里都是 ${hx(a)} ${hx(b)}（上一次推进去的 tx）。\n这次没下命令，直接写 DR 读 4 个字节 → rx = ${rx.map(hx).join(' ')}\n校验：高字节最高 2 位 = ${hx(rx[0]&0xC0)}，算出来应是 ${hx(BE2[rx[0]&0x3F]^BE2[rx[1]])} → ${ok?'相等，校验通过！':'不相等，校验不通过'}\n${ok?`算法会把 ${v} 当成真实读数用（左右键都是 ${v}）——读错了。`:'算法丢掉这次数据（CRC_ERROR），这 1 ms 不更新，下 1 ms 再读。'}`}
  opts.forEach((o,i)=>{const b=document.createElement('button');b.type='button';b.textContent=o[2];b.onclick=()=>run(i);sel.appendChild(b)});run(0);})();
+
+/* ---- who drives SCK ---- */
+(function(){const s=document.getElementById('drvSvg');if(!s)return;const NS='http://www.w3.org/2000/svg';const el=(p,t,at,x)=>{const e=document.createElementNS(NS,t);for(const k in at)e.setAttribute(k,at[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e};
+ const hi=50,lo=90,x0=60;el(s,'text',{x:8,y:74,'font-size':12,'font-weight':600,fill:'var(--hw)'},'SCK');
+ let d=`M${x0},${lo} H140`;let x=140;const W=60;for(let i=0;i<8;i++){d+=` V${hi} H${x+W/2} V${lo} H${x+W}`;
+  el(s,'text',{x:x+W/4,y:hi-6,'text-anchor':'middle','font-size':10,fill:'var(--hw)'},'↑');el(s,'text',{x:x+3*W/4,y:lo+14,'text-anchor':'middle','font-size':10,fill:'var(--hw)'},'↓');x+=W}
+ d+=` H850`;el(s,'path',{d,fill:'none',stroke:'var(--hw)','stroke-width':2.5});
+ el(s,'text',{x:100,y:lo+32,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'空闲：低');
+ el(s,'text',{x:140+4*W,y:hi-20,'text-anchor':'middle','font-size':12,fill:'var(--fg)'},'8 次拉高（↑）、8 次拉低（↓）：全部由 SPI1 输出');
+ el(s,'text',{x:852,y:lo+32,'text-anchor':'end','font-size':11,fill:'var(--muted)'},'第 8 下之后：SPI1 让它停在低（CPOL = 0）');
+ el(s,'text',{x:430,y:160,'text-anchor':'middle','font-size':11.5,fill:'var(--fg)'},'两颗芯片的 SCK 脚只是“听”：看到 ↑ 换上下一位到 SDO，看到 ↓ 时 MCU 读走那一位');})();
 </script>
