@@ -196,6 +196,7 @@ const G=[
   ['第 1 课','T1A 全景地图','板子框图、引脚表（原理图对照代码）、固件骨架、学习路线、引脚练习题',A('UKS8dvoYJWBQPnUPaS4sXA'),'主线'],
   ['第 2 课','一次左键点击全程','读 → 判 → 震 → 报，12 步逐步走、数据接力表、随机练习',A('3pr9UvqxTKk3jFx1QUzg71'),'主线'],
   ['第 3 课（上）','读一次霍尔芯片','下命令（SCK 拉高 5 µs）+ SPI1 搬 32 位；逐行逐变量；菊花链模拟器、校验位工具、练习',A('RSTQPaAEsAcNwHQ3aaUgSa'),'主线'],
+  ['第 3 课（下）①','开机准备 SPI1','InitSPI1Master 12 行：每行寄存器位变化 + 准备情况；位运算工具、时钟链、速度计算器、练习',A('K8jtZ8wuzFac7dAVtqgwkR'),'主线'],
  ]},
  {k:'base',t:'二、基础课',d:'第 0~13 课：电、单片机、各个外设，和代码版本无关',c:'sw',items:[
   ['第 0 课','这只鼠标的地图','整个项目有哪几块、谁负责什么',A('M2RnYCfavarnoiBEjJ9Eky'),'课'],
@@ -253,6 +254,6 @@ function draw(){const q=$('q').value.trim().toLowerCase(),hide=$('hideRead').che
  $('groups').querySelectorAll('input[data-id]').forEach(c=>c.onchange=()=>{read[c.dataset.id]=c.checked;save();draw()});
  $('cnt').textContent=`显示 ${shown} 项 · 已读 ${done} / ${total}`;$('bar').style.width=(total?done/total*100:0)+'%';
  const nx=G.slice(0,3).flatMap(g=>g.items).find(it=>!read[it[3]]&&it[4]!=='旧'&&it[4]!=='速查');
- $('next').innerHTML=nx?`<b>下一篇建议读：</b><a href="${nx[3]}" target="_blank" rel="noopener">${nx[0]} · ${nx[1]}</a>（${nx[2]}）<br><span class="note">接下来要写的：T1A 第 3 课（下）“开机怎么准备好 SPI1 和霍尔芯片”，之后是按键算法、PWM、波形、线圈状态机、USB 上报、GUI 协议。</span>`:'<b>列表里的都读完了。</b>下一步：T1A 第 3 课（下）。'}
+ $('next').innerHTML=nx?`<b>下一篇建议读：</b><a href="${nx[3]}" target="_blank" rel="noopener">${nx[0]} · ${nx[1]}</a>（${nx[2]}）<br><span class="note">接下来要写的：T1A 第 3 课（下）②“开机怎么准备好霍尔芯片”（上电、校准、写 25 个寄存器），之后是按键算法、PWM、波形、线圈状态机、USB 上报、GUI 协议。</span>`:'<b>列表里的都读完了。</b>下一步：T1A 第 3 课（下）②。'}
 $('q').oninput=draw;$('hideRead').onchange=draw;draw();
 </script>
