@@ -486,17 +486,77 @@ details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
 <div class="fb" data-ok="对。0x13 &amp; 0x12 = 0x12，不等于 0x02，继续等。" data-no="算 0x13 &amp; 0x12 = ?"></div></div>
 
 <h2>5. 收到之后：4 个字节变成两个读数</h2>
-<p>这一步在按键算法 <code>ProcessRecvSampleRawData()</code> 里做（第 4 课细讲），这里只看“字节怎么拼回读数”。每颗芯片的 16 位是：<b>最高 2 位是校验位 CRC1、CRC0，后面 14 位是读数 D13 ~ D0</b>（霍尔手册 7.2 节）。</p>
-<div class="rule"><b>拼回读数</b>：<code>读数 = (高字节 &amp; 0x3F) × 256 + 低字节</code>　（<code>&amp; 0x3F</code> 去掉最高 2 位校验位）<br>
-<b>校验</b>：<code>CRC0 = D0 ^ D2 ^ D4 ^ … ^ D12</code>（偶数位异或），<code>CRC1 = D1 ^ D3 ^ … ^ D13</code>（奇数位异或）。“异或 ^”：两个位相同得 0、不同得 1；一串位异或起来 = 里面 1 的个数是奇数就得 1，偶数就得 0。<br>
-代码里的 <code>bit_error</code> 表（app/button.c:125）就是把这个计算提前算好存起来，查表比现算快（我用全部 16384 个值核对过，和公式完全一致）。</div>
-<h3>动手：输入一个读数，看它变成哪两个字节</h3>
-<div class="box ctl"><label>读数（0~16383）：<input type="number" id="cV" min="0" max="16383" value="8935"></label>
-<div class="bitrow" id="cBits"></div>
-<div class="log" id="cLog"></div></div>
+<p>现在 <code>hall_spi_rx</code> 里有 4 个字节：<code>A4 54 E2 E7</code>。前 2 个是右键芯片的 16 位，后 2 个是左键芯片的 16 位。这一节分 5 小步，讲清楚“16 位里装了什么、怎么检查有没有传错、怎么拼回读数”。代码在 <code>src/my_misc.c:398~416</code> 的 <code>ana_phy_bit_error_checker2()</code>，被按键算法调用（第 4 课）。</p>
+
+<h3>5.1 为什么要“校验”</h3>
+<p>数据在线上传的时候可能被干扰：比如线圈震动产生的电磁干扰，让某一位本来是 1，MCU 读成了 0。读数就错了，而 MCU 自己并不知道。<b>校验</b>就是发送方顺便多发一点“检查信息”，接收方用它判断这次有没有传错。</p>
+
+<h3>5.2 最简单的校验：奇偶位</h3>
+<div class="rule" style="--c:var(--gold)"><b>规则</b>：数一数一组位里有几个 1。<b>奇数个 → 校验位写 1；偶数个 → 写 0</b>。发送方把这个校验位和数据一起发出去；接收方收到后自己再数一遍，算出来的和收到的校验位不一样，就说明传错了。</div>
+<p><b>例子</b>：要发 4 位数据 <code>1 0 1 1</code>：1 有 3 个（奇数）→ 校验位 = 1。</p>
+<ul>
+<li>没出错：收到 <code>1 0 1 1</code> + 校验 1。接收方数：3 个 1 → 应该是 1，和收到的 1 一样 → <b>通过</b>。</li>
+<li>出错了：第 2 位被干扰，收到 <code>1 <b>1</b> 1 1</code> + 校验 1。接收方数：4 个 1 → 应该是 0，和收到的 1 不一样 → <b>发现出错</b>。</li>
+</ul>
+<p class="note">这个“数 1 的个数是奇是偶”的运算，就是<b>异或</b>（符号 <code>^</code>）：把一串位挨个异或，1 的个数是奇数结果就是 1，偶数就是 0。0^0=0，0^1=1，1^0=1，1^1=0。</p>
+<div class="qz" data-ans="0"><div class="qt">你来算：数据 <code>1 1 0 0 1 1</code>，校验位应该写几？</div>
+<div class="row"><input type="text" inputmode="numeric" aria-label="答案"><button type="button" class="chk">检查</button></div>
+<div class="fb" data-ok="对。1 有 4 个，偶数 → 0。" data-no="数一数 1 有几个：奇数写 1，偶数写 0。"></div></div>
+
+<h3>5.3 这颗芯片的做法：14 位读数 + 2 个校验位 = 16 位</h3>
+<p>读数是 14 位，从高到低叫 <b>D13、D12、……、D1、D0</b>（D 后面的数字就是这一位的位号）。芯片把它们分成两组，各算一个校验位（霍尔手册 7.2 节）：</p>
+<ul>
+<li><b>CRC0</b> = 偶数号位的奇偶：<code>D0 ^ D2 ^ D4 ^ D6 ^ D8 ^ D10 ^ D12</code>（7 位）</li>
+<li><b>CRC1</b> = 奇数号位的奇偶：<code>D1 ^ D3 ^ D5 ^ D7 ^ D9 ^ D11 ^ D13</code>（7 位）</li>
+</ul>
+<p>然后把两个校验位放在最前面，排成 16 位：</p>
+<div class="bitrow" style="margin:.4rem 0">
+<div class="c">CRC1</div><div class="c">CRC0</div><div class="o">D13</div><div class="e">D12</div><div class="o">D11</div><div class="e">D10</div><div class="o">D9</div><div class="e">D8</div><div class="o">D7</div><div class="e">D6</div><div class="o">D5</div><div class="e">D4</div><div class="o">D3</div><div class="e">D2</div><div class="o">D1</div><div class="e">D0</div></div>
+<p class="note">颜色：黄 = 校验位；绿 = 偶数号位（参与算 CRC0）；红 = 奇数号位（参与算 CRC1）。</p>
+<p><b>为什么分两组？</b>只有一个校验位时，如果<b>相邻两位同时</b>被干扰（干扰常常连着打坏两位），1 的个数奇偶不变，查不出来。分成奇、偶两组后，相邻的两位一个在奇组、一个在偶组，两组各错一位，两个校验位都能发现。（这是我的理解，手册只给了公式。）</p>
+
+<h3>5.4 16 位怎么分成 2 个字节</h3>
+<p>SPI 一次搬 8 位（1 个字节）。16 位从左往右切两刀：</p>
+<div class="scroll"><table>
+<tr><th>字节</th><th>装的是</th><th>例：左键 8935</th></tr>
+<tr><td><b>高字节</b>（先收到，rx[2]）</td><td>CRC1、CRC0、D13、D12、D11、D10、D9、D8</td><td><code>1 1 1 0 0 0 1 0</code> = <code>0xE2</code></td></tr>
+<tr><td><b>低字节</b>（后收到，rx[3]）</td><td>D7、D6、D5、D4、D3、D2、D1、D0</td><td><code>1 1 1 0 0 1 1 1</code> = <code>0xE7</code></td></tr>
+</table></div>
+<p>所以：<b>高字节的最高 2 位是校验位，低 6 位是读数的 D13~D8；低字节整个是读数的 D7~D0。</b></p>
+
+<h3>5.5 拼回读数</h3>
+<div class="rule"><b>一句话</b>：<code>读数 = (高字节 &amp; 0x3F) × 256 + 低字节</code></div>
+<ol style="padding-left:1.4em">
+<li><b><code>&amp; 0x3F</code>：去掉最高 2 位校验位。</b><code>0x3F</code> = 二进制 <code>0011 1111</code>。“按位与 &amp;”：两边都是 1 才得 1。所以和 <code>0011 1111</code> 一与，最高 2 位一定变 0，低 6 位原样留下。<br>例：<code>0xE2</code> = <code>1110 0010</code>，&amp; <code>0011 1111</code> = <code>0010 0010</code> = <code>0x22</code> = <b>34</b>（这就是 D13~D8）。</li>
+<li><b><code>× 256</code>：把 D13~D8 挪到前面去。</b>像十进制：要把“12”和“34”拼成“1234”，算法是 12 × 100 + 34。100 是因为后面要空出 2 位十进制。二进制里后面要空出 8 位，就乘 2<sup>8</sup> = 256。<br>例：34 × 256 = <b>8704</b>。</li>
+<li><b><code>+ 低字节</code>：把 D7~D0 填进空出来的 8 位。</b><br>例：8704 + 0xE7（= 231）= <b>8935</b>。</li>
+</ol>
+<p class="note">代码里写的是 <code>(sample_hi_shade &lt;&lt; 8) | sample_lo</code>：<code>&lt;&lt; 8</code>（左移 8 位）就是 × 256，<code>|</code>（按位或）在这里和 + 效果一样（因为低 8 位本来全是 0，不会进位）。</p>
 <div class="qz" data-ans="9300"><div class="qt">你来算：rx[0] = <code>0xA4</code>，rx[1] = <code>0x54</code>，右键读数是多少？</div>
 <div class="row"><input type="text" inputmode="numeric" aria-label="答案"><button type="button" class="chk">检查</button></div>
-<div class="fb" data-ok="对。0xA4 &amp; 0x3F = 0x24 = 36，36 × 256 + 0x54(84) = 9300。" data-no="先 0xA4 &amp; 0x3F，再 × 256，再加 0x54。"></div></div>
+<div class="fb" data-ok="对。0xA4 = 1010 0100，&amp; 0x3F = 0010 0100 = 36；36 × 256 = 9216；+ 0x54(84) = 9300。" data-no="一步一步来：① 0xA4 &amp; 0x3F；② 结果 × 256；③ 再加 0x54（= 84）。"></div></div>
+
+<h3>5.6 代码怎么做校验，失败了怎么办</h3>
+<pre class="code">398  static unsigned short ana_phy_bit_error_checker2(unsigned char sample_hi, unsigned char sample_lo)
+400    unsigned char sample_hi_shade = sample_hi &amp; 0x3f;          // 高字节去掉校验位：D13~D8
+402    if((sample_hi &amp; 0xC0) == (bit_error[sample_hi_shade] ^ bit_error[sample_lo]))
+406      return (sample_hi_shade &lt;&lt; 8) | sample_lo;               // 校验通过：返回 14 位读数
+413    else
+414      return CRC_ERROR;                                       // 校验失败：返回 0xFFFF（button.h:64）</pre>
+<ul>
+<li><code>sample_hi &amp; 0xC0</code>：<code>0xC0</code> = <code>1100 0000</code>，只留下<b>收到的</b>两个校验位。</li>
+<li><code>bit_error[…] ^ bit_error[…]</code>：用数据位<b>重新算出</b>两个校验位应该是多少，放在同样的最高 2 位。<code>bit_error</code> 是一张 256 格的“答案表”（app/button.c:125）：查任意一个字节，直接得到它的奇数号位、偶数号位各自的奇偶，省得每次一位一位数。高字节、低字节各查一次再异或，就是 14 位合起来的结果。</li>
+<li>两者相等 → 返回读数；不相等 → 返回 <code>CRC_ERROR</code>（0xFFFF）。按键算法看到 0xFFFF，<b>这 1 ms 就不用这个键的数据</b>（my_misc.c:521 <code>if (temp[k] != CRC_ERROR)</code>），下 1 ms 再读。</li>
+</ul>
+
+<h3>动手：输入一个读数，再“干扰”它试试</h3>
+<p>输入读数，看它变成哪 16 位、哪两个字节。<b>点任意一个格子，就把那一位翻转</b>（模拟传输中被干扰），看校验能不能发现。</p>
+<div class="box ctl"><label>读数（0~16383）：<input type="number" id="cV" min="0" max="16383" value="8935"></label> <button type="button" id="cRst" style="font:inherit;font-size:.85rem;padding:2px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer">恢复成没被干扰</button>
+<div class="bitrow" id="cBits"></div>
+<div class="log" id="cLog" aria-live="polite"></div></div>
+<div class="qz" data-choice="1"><div class="qt">你来想：如果 D3 和 D5 同时被干扰翻转了，校验能发现吗？（提示：它们都是奇数号位）</div>
+<div class="row"><button type="button" class="opt">能发现</button><button type="button" class="opt">发现不了</button></div>
+<div class="fb" data-ok="对。两个都在奇数组里，奇数组 1 的个数奇偶不变，CRC1 算出来一样，查不出来。在上面的动手区点 D3 和 D5 试试。所以校验能发现大部分错误，但不是全部。" data-no="两个都在奇数组：奇数组里翻了两位，1 的个数的奇偶会变吗？可以在上面的动手区点点看。"></div></div>
 
 <h2>6. 一次读取花多少时间（估算）</h2>
 <table>
@@ -688,12 +748,23 @@ show();})();
  ar('M394,66 V183 H286','收满 8 位，自动',350,200,true);ar('M170,183 H118','软件：读 DR',143,163,true);
  el(s,'text',{x:450,y:258,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'实线：40 格的圈，时钟每跳一下挪一格（硬件）；虚线：整字节进出（写 DR、读 DR 是软件，FIFO 和移位寄存器之间是 SPI1 自动搬）');
  el(s,'text',{x:450,y:278,'text-anchor':'middle','font-size':11,fill:'var(--bad)'},'格子里的数字是位号：每段左端是高位（最先出去，MSB），右端是低位（LSB）；从上一段来的位从右端（低位）进来');})();
-/* ---- crc tool ---- */
-function crcShow(){let v=Math.max(0,Math.min(16383,parseInt($('cV').value)||0));const w=word(v),hi=w>>8,lo=w&0xFF;let h='';
- for(let i=15;i>=0;i--){const b=(w>>i)&1;const cls=i>=14?'c':(i%2===0?'e':'o');const nm=i===15?'CRC1':i===14?'CRC0':'D'+i;h+=`<div class="${cls}">${b}<small>${nm}</small></div>`}$('cBits').innerHTML=h;
- const ev=[0,2,4,6,8,10,12].map(i=>(v>>i)&1),od=[1,3,5,7,9,11,13].map(i=>(v>>i)&1);
- $('cLog').textContent=`偶数位 D0,D2,…,D12 = ${ev.join(' ')} → 1 的个数 ${ev.filter(x=>x).length} → CRC0 = ${ev.reduce((a,b)=>a^b,0)}\n奇数位 D1,D3,…,D13 = ${od.join(' ')} → 1 的个数 ${od.filter(x=>x).length} → CRC1 = ${od.reduce((a,b)=>a^b,0)}\n16 位 = 0x${w.toString(16).toUpperCase().padStart(4,'0')} → 高字节 0x${hi.toString(16).toUpperCase().padStart(2,'0')}、低字节 0x${lo.toString(16).toUpperCase().padStart(2,'0')}\n反过来：(0x${hi.toString(16).toUpperCase()} & 0x3F) × 256 + 0x${lo.toString(16).toUpperCase()} = ${(hi&0x3F)} × 256 + ${lo} = ${v}`}
-$('cV').oninput=crcShow;crcShow();
+/* ---- crc tool with bit flipping ---- */
+(function(){let flip=0;const box=$('cBits');
+function show(){let v=Math.max(0,Math.min(16383,parseInt($('cV').value)||0));const w0=word(v),w=w0^flip,hi=w>>8,lo=w&0xFF;let h='';
+ for(let i=15;i>=0;i--){const b=(w>>i)&1;const cls=i>=14?'c':(i%2===0?'e':'o');const nm=i===15?'CRC1':i===14?'CRC0':'D'+i;const fl=(flip>>i)&1;
+  h+=`<div class="${cls}" data-i="${i}" role="button" tabindex="0" style="cursor:pointer${fl?';outline:2px solid var(--bad);outline-offset:-2px':''}" aria-label="${nm}，点击翻转">${b}<small>${nm}</small></div>`}
+ box.innerHTML=h;
+ const d=w&0x3FFF;const ev=[0,2,4,6,8,10,12].map(i=>(d>>i)&1),od=[1,3,5,7,9,11,13].map(i=>(d>>i)&1);const c0=ev.reduce((a,b)=>a^b,0),c1=od.reduce((a,b)=>a^b,0);
+ const r0=(w>>14)&1,r1=(w>>15)&1;const ok=(c0===r0&&c1===r1);const read=((hi&0x3F)<<8)|lo;
+ const nf=[...Array(16).keys()].filter(i=>(flip>>i)&1).map(i=>i===15?'CRC1':i===14?'CRC0':'D'+i);
+ $('cLog').textContent=(nf.length?`被干扰（翻转）的位：${nf.join('、')}\n`:'没有被干扰（点格子可以翻转某一位）\n')+
+ `收到 16 位 = 0x${w.toString(16).toUpperCase().padStart(4,'0')} → 高字节 0x${hi.toString(16).toUpperCase().padStart(2,'0')}、低字节 0x${lo.toString(16).toUpperCase().padStart(2,'0')}\n`+
+ `重新算：偶数号位 D0,D2,…,D12 = ${ev.join(' ')} → 1 有 ${ev.filter(x=>x).length} 个 → CRC0 应为 ${c0}；收到的 CRC0 = ${r0} ${c0===r0?'✓':'✗'}\n`+
+ `　　　　奇数号位 D1,D3,…,D13 = ${od.join(' ')} → 1 有 ${od.filter(x=>x).length} 个 → CRC1 应为 ${c1}；收到的 CRC1 = ${r1} ${c1===r1?'✓':'✗'}\n`+
+ (ok?`校验通过 → 读数 = (0x${hi.toString(16).toUpperCase()} & 0x3F) × 256 + 0x${lo.toString(16).toUpperCase()} = ${hi&0x3F} × 256 + ${lo} = ${read}`+(nf.length&&read!==v?`\n⚠ 但真实读数是 ${v}：这次被干扰了却没查出来（同一组里错了偶数位）`:''):`校验失败 → 函数返回 CRC_ERROR（0xFFFF），按键算法这 1 ms 不用这个键的数据`)}
+box.addEventListener('click',e=>{const t=e.target.closest('[data-i]');if(!t)return;flip^=(1<<+t.dataset.i);show()});
+box.addEventListener('keydown',e=>{if(e.key!=='Enter'&&e.key!==' ')return;const t=e.target.closest('[data-i]');if(!t)return;e.preventDefault();flip^=(1<<+t.dataset.i);show()});
+$('cV').oninput=()=>{flip=0;show()};$('cRst').onclick=()=>{flip=0;show()};show();})();
 /* ---- fixed quiz ---- */
 document.querySelectorAll('.qz').forEach(q=>{const fb=q.querySelector('.fb');const show=ok=>{fb.className='fb '+(ok?'ok':'no');fb.innerHTML=(ok?'✓ ':'✗ ')+(ok?fb.dataset.ok:fb.dataset.no)};
  if(q.dataset.ans!=null){const inp=q.querySelector('input'),ans=+q.dataset.ans;const go=()=>{const s=inp.value.trim();if(!s)return;const v=/^0x/i.test(s)?parseInt(s,16):parseFloat(s);if(isNaN(v))return;show(Math.abs(v-ans)<1e-9)};q.querySelector('.chk').onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter')go()})}
