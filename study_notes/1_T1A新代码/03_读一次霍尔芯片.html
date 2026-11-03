@@ -349,26 +349,51 @@ details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
 <tr><td><b>两颗霍尔芯片</b></td><td>各有 <b>16 个格子</b></td><td>不管进来的是什么，每听到一下时钟，就整体挪一格：排头从 SDO 出去，SDI 进来的一位站到队尾。</td></tr>
 </tbody></table></div>
 <p><b>关键</b>：MOSI → 左键芯片 → 右键芯片 → MISO → 又回到 SPI1，<b>8 + 16 + 16 = 40 个格子首尾连成一个圈</b>。时钟每跳一下，圈上所有的位一起往前挪一格。所以 SPI1 每推出去一位（tx 的位），就一定有一位从另一头进来（芯片的读数）。<b>tx 的位“进了芯片”，正是因为它被推进了这个圈</b>：想把芯片里的位挤出来，就得从另一头塞东西进去，塞进去的就是 tx。</p>
-<svg id="ring" viewBox="0 0 860 210" role="img" aria-label="40 个格子连成一个圈" style="display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px"></svg>
-<p class="note">像一条传送带围成的圈：传送带转一格，排头的东西掉进下一段，最后一段掉回第一段。软件只在第一段（SPI1）“放上一箱、取下一箱”。</p>
+<svg id="ring" viewBox="0 0 900 250" role="img" aria-label="40 个格子连成一个圈" style="display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px"></svg>
+<p class="note">图里把数据经过的<b>所有容器</b>都画上了：RAM 里的两个数组（软件的变量）、SPI1 的数据寄存器 DR、发送 FIFO、移位寄存器、接收 FIFO（SPI1 的硬件），两颗芯片的 16 格（芯片的硬件）。FIFO = 先进先出的小队列，SPI1 的发送、接收各有一个，各能排 8 个字节（芯片手册 13.1 节）。<b>写 DR 其实是把字节放进发送 FIFO；读 DR 其实是从接收 FIFO 取出最早的那个字节</b>（表 262）。中间那个 40 格的圈像一条传送带，转一格，每段排头的位掉进下一段。</p>
 </div>
-<div class="sim">
-<div class="btns">
-<button type="button" id="mCmd">① 下命令（芯片装读数）</button>
-<button type="button" id="mW">② 软件：写 DR</button>
-<button type="button" id="m1">③ 硬件：打 1 下时钟</button>
-<button type="button" id="m8">③ 打 8 下</button>
-<button type="button" id="mR">④ 软件：读 DR</button>
-<button type="button" id="mRe">重来</button></div>
-<div class="reg" style="--c:var(--pc)"><div class="nm">MCU 里 SPI1 的 8 个格子（左边排头 → 从 MOSI 出去；从 MISO 进来的站到右边队尾）</div><div class="bits" id="vS" style="grid-template-columns:repeat(8,minmax(0,1fr))"></div></div>
+<style>
+.sim2 .row2{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;margin:.3rem 0}
+.sim2 .cont{border:2px solid var(--c);border-radius:6px;padding:4px 8px;background:color-mix(in srgb,var(--c) 6%,var(--panel));min-width:0}
+.sim2 .cont .nm{font-size:.76rem;font-weight:600;color:var(--c)}
+.sim2 .cont .sub{font-size:.7rem;color:var(--muted)}
+.sim2 .arr{display:flex;gap:3px;font-family:var(--font-m);font-size:.78rem}
+.sim2 .arr span{border:1px solid var(--line);border-radius:3px;padding:1px 5px;background:var(--soft);position:relative}
+.sim2 .arr span.ptr{outline:2px solid var(--bad);outline-offset:1px}
+.sim2 .arr span.T{background:color-mix(in srgb,var(--muted) 25%,var(--panel))}
+.sim2 .arr span.R{background:color-mix(in srgb,var(--per) 35%,var(--panel))}
+.sim2 .arr span.L{background:color-mix(in srgb,var(--sw) 35%,var(--panel))}
+.sim2 .fifo{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:2px;font-family:var(--font-m);font-size:.7rem;text-align:center;min-width:180px}
+.sim2 .fifo span{border:1px dashed var(--line);border-radius:3px;padding:1px 0;min-height:1.5em}
+.sim2 .fifo span.f{border-style:solid;background:color-mix(in srgb,var(--pc) 22%,var(--panel))}
+.sim2 .sr{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;font-family:var(--font-m);font-size:.7rem;text-align:center;min-width:220px}
+.sim2 .sr span{border:1px solid var(--line);border-radius:3px;padding:1px 2px}
+.sim2 .sr span.on{background:color-mix(in srgb,var(--good) 30%,var(--panel));font-weight:700}
+.sim2 .sr small{display:block;font-size:.6rem;color:var(--muted)}
+.sim2 .cpu{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-left:4px solid var(--per);padding:4px 8px;border-radius:0 6px 6px 0;overflow-wrap:anywhere}
+.sim2 .who{display:inline-block;font-size:.72rem;color:var(--bg);background:var(--c);border-radius:4px;padding:0 6px;margin-right:6px}
+</style>
+<div class="sim sim2">
+<div class="btns"><button type="button" id="sP">上一步</button><button type="button" id="sN">下一步</button><button type="button" id="sB">跳到这个字节结束</button><button type="button" id="sR">重来</button><span class="note" id="sC"></span></div>
+<div class="cpu" id="sCpu"></div>
+<div class="row2">
+<div class="cont" style="--c:var(--per)"><div class="nm">RAM：hall_spi_tx[4]（要发的）</div><div class="arr" id="sTx"></div><div class="sub">红框 = 指针 buf_wr 现在指着的那格</div></div>
+<div class="cont" style="--c:var(--per)"><div class="nm">RAM：hall_spi_rx[4]（收到的）</div><div class="arr" id="sRx"></div><div class="sub">红框 = 指针 buf_rd 现在指着的那格</div></div>
+<div class="cont" style="--c:var(--per)"><div class="nm">length</div><div class="arr" id="sLen"></div><div class="sub">还剩几圈</div></div>
+</div>
+<div class="row2">
+<div class="cont" style="--c:var(--pc)"><div class="nm">SPI1 发送 FIFO（写 DR 放进这里）</div><div class="fifo" id="sTF"></div></div>
+<div class="cont" style="--c:var(--pc)"><div class="nm">SPI1 接收 FIFO（读 DR 从这里取）</div><div class="fifo" id="sRF"></div></div>
+<div class="cont" style="--c:var(--gold)"><div class="nm">LPC_SSP1->SR（状态寄存器）= <span id="sSRv"></span></div><div class="sr" id="sSR"></div><div class="sub" id="sSRc"></div></div>
+</div>
+<div class="reg" style="--c:var(--pc)"><div class="nm">SPI1 移位寄存器 8 格（左边排头 → 从 MOSI 出去；从 MISO 进来的站到右边队尾）</div><div class="bits" id="vS" style="grid-template-columns:repeat(8,minmax(0,1fr))"></div></div>
 <div class="arrow">↓ MOSI（PIO0_21）→ 左键芯片 SDI</div>
-<div class="reg" style="--c:var(--sw)"><div class="nm">左键芯片的 16 个格子（左边排头，先出去）</div><div class="bits" id="vL"></div></div>
-<div class="arrow">↓ 左键芯片 SDO → SDO_0 → 右键芯片 SDI</div>
-<div class="reg" style="--c:var(--per)"><div class="nm">右键芯片的 16 个格子</div><div class="bits" id="vR"></div></div>
-<div class="arrow">↓ 右键芯片 SDO → MISO（PIO0_22）→ 回到最上面 SPI1 的队尾（圈闭合）</div>
-<p style="margin:.4rem 0 .2rem"><b>软件这边：</b></p><div class="rx" id="vRx"></div>
+<div class="reg" style="--c:var(--sw)"><div class="nm">左键芯片的 16 格（左边排头）</div><div class="bits" id="vL"></div></div>
+<div class="arrow">↓ SDO_0 → 右键芯片 SDI</div>
+<div class="reg" style="--c:var(--per)"><div class="nm">右键芯片的 16 格</div><div class="bits" id="vR"></div></div>
+<div class="arrow">↓ MISO（PIO0_22）→ 回到 SPI1 移位寄存器的队尾（圈闭合）</div>
 <div class="log" id="mLog" aria-live="polite"></div>
-<p class="note">颜色：蓝 = 右键芯片的读数位，绿 = 左键芯片的读数位，灰 = tx 的位（软件交给 SPI1 的“填充物”）。</p>
+<p class="note">颜色：蓝 = 右键读数的位，绿 = 左键读数的位，灰 = tx 的位。SR 里绿色的位 = 1。</p>
 </div>
 <div class="rule"><b>看出来的规律</b>：右键芯片在出口那头，所以<b>前 16 下时钟出来的是右键</b>（变成 rx[0]、rx[1]），<b>后 16 下出来的是左键</b>（rx[2]、rx[3]）。左键的位要先穿过右键芯片的 16 个格子才能出来。</div>
 <div class="qz" data-ans="64"><div class="qt">你来算：如果链上串了 4 颗芯片，要打几下时钟才能把所有读数都挤出来？</div>
@@ -537,41 +562,65 @@ show(0);
  el(z,'path',{d,fill:'none',stroke:'var(--hw)','stroke-width':2.5});el(z,'path',{d:dm,fill:'none',stroke:'var(--pc)','stroke-width':2.5});
  el(z,'text',{x:x0+W/2,y:lo+18,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'一位 = 0.5 µs（2 MHz）');
 })();
-/* ---- ring simulator ---- */
-const TX=[0xA7,0x00,0xA7,0x00];
-let S,L,R,clk,bi,rx,st,swlog;
+/* ---- full data-path simulator ---- */
+(function(){
+const TX=[0xA7,0x00,0xA7,0x00];const hx=v=>'0x'+v.toString(16).toUpperCase().padStart(2,'0');
 const bitsOf=(v,n,c)=>{const a=[];for(let i=n-1;i>=0;i--)a.push({v:(v>>i)&1,c});return a};
-function reset(){S=Array(8).fill(null);L=Array(16).fill(null);R=Array(16).fill(null);clk=0;bi=0;rx=[];st='idle';swlog=[];
- say('现在：两颗芯片的格子里是上一次留下的东西（?），SPI1 的格子空着。\n第一步点“① 下命令”：让两颗芯片把最新读数装进格子。');draw()}
-function say(t){$('mLog').textContent=t}
-function cmd(){L=bitsOf(word(8935),16,'L');R=bitsOf(word(9300),16,'R');st='w';
- say('【软件】执行 Hall_CLK_Command_SET()：把 SCK 拉高约 5 µs 再拉低。\n【两颗芯片】认出“读按键”命令 → 把最新读数装进自己的 16 个格子：左键 0xE2E7（8935 + 校验），右键 0xA454（9300 + 校验）。\n下一步点“② 软件：写 DR”。');draw()}
-function wr(){S=bitsOf(TX[bi],8,'T');st='c';clk=0;swlog.push(`写 DR = 0x${TX[bi].toString(16).toUpperCase().padStart(2,'0')}`);
- say(`【软件】第 ${bi+1} 圈：执行 LPC_SSP1->DR = hall_spi_tx[${bi}]（0x${TX[bi].toString(16).toUpperCase().padStart(2,'0')}）。\n【SPI1】把这个字节放进自己的 8 个格子（灰色），准备打 8 下时钟。\n【软件】接着卡在 while 里查 SR，等 SPI1 干完，这期间什么也不干。\n下一步点“③ 打 1 下时钟”（或“打 8 下”）。`);draw()}
-function tick(){if(st!=='c')return;const s=S.shift(),l=L.shift(),r=R.shift();S.push(r);L.push(s);R.push(l);clk++;
- let t=`【SPI1】第 ${bi+1} 个字节的第 ${clk} 下时钟（全过程第 ${bi*8+clk} 下）：\n【SPI1】排头的位 ${s.v}（${s.c==='T'?'tx 的位':s.c==='R'?'右键读数的位':'左键读数的位'}）从 MOSI 出去 → 进了左键芯片队尾。\n【左键芯片】整体挪一格：排头的位 ${l.v} 从 SDO 出去 → 进了右键芯片队尾。\n【右键芯片】整体挪一格：排头的位 ${r.v} 从 SDO 出去 → 经 MISO 进了 SPI1 队尾。\n【软件】还卡在 while 里等（SR 的 BSY = 1，RNE = 0）。`;
- if(clk===8){st='r';t+=`\n8 下打完：SPI1 的 8 个格子里现在全是收进来的位；SR 变成 RNE = 1、BSY = 0，软件的 while 结束。下一步点“④ 软件：读 DR”。`}
- say(t);draw()}
-function rd(){const b=S.reduce((a,x)=>a*2+x.v,0);rx.push({b,c:S[0].c});swlog.push(`读 DR → rx[${bi}] = 0x${b.toString(16).toUpperCase().padStart(2,'0')}`);S=Array(8).fill(null);bi++;
- let t=`【软件】执行 hall_spi_rx[${bi-1}] = LPC_SSP1->DR：拿走 SPI1 收到的这个字节 = 0x${b.toString(16).toUpperCase().padStart(2,'0')}，然后两个指针 ++。`;
- if(bi<4){st='w';t+=`\n第 ${bi} 圈结束。注意：发出去的 tx 位已经被推进了左键芯片的队尾（灰色），芯片不会用它们。\n下一步：再点“② 软件：写 DR”，开始第 ${bi+1} 圈。`}
- else{st='done';t+='\n4 圈结束，SSP_Send_Receive() 返回。rx = A4 54 E2 E7（前两个右键，后两个左键）。\n这时两颗芯片的格子里装的全是 tx 的位（A7 00 A7 00），没关系：下一次“下命令”会重新装读数。'}
- say(t);draw()}
+const cp=o=>JSON.parse(JSON.stringify(o));
+let st={L:Array(16).fill(null),R:Array(16).fill(null),SH:Array(8).fill(null),TF:[],RF:[],rx:[null,null,null,null],bw:0,br:0,len:4,busy:false};
+const F=[];
+const sr=s=>(s.TF.length===0?1:0)|(s.TF.length<8?2:0)|(s.RF.length>0?4:0)|(s.RF.length>=8?8:0)|((s.busy||s.TF.length>0)?16:0);
+const push=(cpu,who,txt,byte)=>F.push({s:cp(st),cpu,who,txt,byte});
+push('hall_get_sample() 开始（button.c:858）','软件','准备读一次。两颗芯片的格子里是上一次留下的东西（?）；SPI1 空闲：两个 FIFO 都空，SR = 0x03（TFE = 1 发送队列空，TNF = 1 没满）。',-1);
+st.L=bitsOf(word(8935),16,'L');st.R=bitsOf(word(9300),16,'R');
+push('Hall_CLK_Command_SET(4, 4);（button.c:860）','软件 + 芯片','【软件】把 SCK 当普通引脚拉高约 5 µs 再拉低（上半节讲过）。\n【两颗芯片】认出“读按键”命令，把最新结果复制进自己的 16 格：左键 0xE2E7，右键 0xA454。\n【SPI1】没动，还是空闲。',-1);
+for(let i=0;i<4;i++){
+ st.len--;push(`while(length--)（SPI.c:439）`,'软件',`【软件】length 是 ${st.len+1}，不是 0 → 进入第 ${i+1} 圈，length 减成 ${st.len}。`,i);
+ push(`while((LPC_SSP1->SR & 0x12) != 0x02){}（SPI.c:441）`,'软件',`【软件】读 SR = ${hx(sr(st))}，${hx(sr(st))} & 0x12 = ${hx(sr(st)&0x12)}，等于 0x02（TNF = 1 能放、BSY = 0 不忙）→ 不用等，往下走。`,i);
+ st.TF.push({b:TX[i],c:'T'});push(`LPC_SSP1->DR = *buf_wr;（SPI.c:442）`,'软件',`【软件】buf_wr 指着 hall_spi_tx[${i}] = ${hx(TX[i])}，把它写进 DR → <b>实际是放进了发送 FIFO</b>。这是软件这一圈的“交”。`,i);
+ st.TF.shift();st.SH=bitsOf(TX[i],8,'T');st.busy=true;
+ push(`while((LPC_SSP1->SR & 0x14) != 0x04){}（SPI.c:444）← CPU 卡在这里`,'SPI1 硬件',`【SPI1】发现发送 FIFO 里有字节，自动把它搬进移位寄存器（8 格），发送 FIFO 又空了；BSY = 1，开始打时钟。\n【软件】已经走到第二个 while：读 SR = ${hx(sr(st))}，& 0x14 = ${hx(sr(st)&0x14)} ≠ 0x04 → 原地等。`,i);
+ for(let k=1;k<=8;k++){const s=st.SH.shift(),l=st.L.shift(),r=st.R.shift();st.SH.push(r);st.L.push(s);st.R.push(l);
+  push(`while((LPC_SSP1->SR & 0x14) != 0x04){}（SPI.c:444）← CPU 卡在这里`,'SPI1 + 芯片',`【SPI1】第 ${k} 下时钟：移位寄存器排头的 ${s.v}（${s.c==='T'?'tx 的位':s.c==='R'?'右键的位':'左键的位'}）从 MOSI 出去 → 左键芯片队尾。\n【左键芯片】排头 ${l.v} 从 SDO 出去 → 右键芯片队尾。\n【右键芯片】排头 ${r.v} 从 SDO 出去 → MISO → SPI1 移位寄存器队尾。\n【软件】还在等（SR = ${hx(sr(st))}）。`,i)}
+ const rb=st.SH.reduce((a,x)=>a*2+x.v,0),rc=st.SH[0].c;st.RF.push({b:rb,c:rc});st.busy=false;st.SH=Array(8).fill(null);
+ push(`while((LPC_SSP1->SR & 0x14) != 0x04){}（SPI.c:444）`,'SPI1 硬件',`【SPI1】8 下打完：移位寄存器里收满 8 位 = ${hx(rb)}，自动搬进<b>接收 FIFO</b>；BSY = 0，RNE = 1。SR = ${hx(sr(st))}。`,i);
+ push(`while((LPC_SSP1->SR & 0x14) != 0x04){}（SPI.c:444）`,'软件',`【软件】读 SR = ${hx(sr(st))}，& 0x14 = ${hx(sr(st)&0x14)}，等于 0x04（RNE = 1 有收到的、BSY = 0 不忙）→ 等待结束。`,i);
+ st.RF.shift();st.rx[i]={b:rb,c:rc};push(`*buf_rd = LPC_SSP1->DR;（SPI.c:447）`,'软件',`【软件】读 DR → <b>实际是从接收 FIFO 取出最早的字节</b> ${hx(rb)}，放进 buf_rd 指着的 hall_spi_rx[${i}]。这是软件这一圈的“拿”。接收 FIFO 又空了，SR = ${hx(sr(st))}。`,i);
+ st.bw++;st.br++;push(`buf_wr++; buf_rd++;（SPI.c:449~450）`,'软件',`【软件】两个指针都往后挪一格：buf_wr → hall_spi_tx[${Math.min(3,i+1)}]${i===3?'（已经超出最后一格，但不会再用）':''}，buf_rd → hall_spi_rx[${Math.min(3,i+1)}]${i===3?'（同左）':''}。第 ${i+1} 圈结束。`,i)}
+push(`while(length--)（SPI.c:439）`,'软件','【软件】length 是 0 → 循环结束，SSP_Send_Receive() 返回。\nhall_spi_rx = A4 54 E2 E7（前两个右键，后两个左键）。两颗芯片格子里剩下的是 tx 的位，没关系，下次命令会重新装。',-1);
+let k=0;
 function cells(arr,n){let h='';for(let i=0;i<n;i++){const x=arr[i];h+=x?`<span class="${x.c}">${x.v}</span>`:'<span>?</span>'}return h}
-function draw(){$('vS').innerHTML=cells(S,8).replace(/<span>\?<\/span>/g,'<span>·</span>');$('vL').innerHTML=cells(L,16);$('vR').innerHTML=cells(R,16);
- let h='';for(let i=0;i<4;i++){const r=rx[i];h+=r?`<span class="${r.c}">rx[${i}] = 0x${r.b.toString(16).toUpperCase().padStart(2,'0')}</span>`:`<span>rx[${i}] = ?</span>`}
- h+=`<span style="flex-basis:100%;border:0;background:none;padding:0;font-size:.8rem;color:var(--muted)">软件做过的事：${swlog.length?swlog.join(' → '):'（还没有）'}</span>`;$('vRx').innerHTML=h;
- $('mCmd').disabled=st!=='idle';$('mW').disabled=st!=='w';$('m1').disabled=$('m8').disabled=st!=='c';$('mR').disabled=st!=='r'}
-$('mCmd').onclick=cmd;$('mW').onclick=wr;$('m1').onclick=tick;$('m8').onclick=()=>{for(let i=0;i<8&&st==='c';i++)tick()};$('mR').onclick=rd;$('mRe').onclick=reset;reset();
-/* ring picture */
+function show(){const f=F[k],s=f.s;
+ $('sCpu').innerHTML=`<span class="who" style="--c:var(--${f.who.startsWith('软件')?'per':f.who.startsWith('SPI1')?'pc':'sw'})">${f.who}</span>CPU 正在执行：${f.cpu.replace(/</g,'&lt;')}`;
+ const len=Math.max(0,Math.min(4,s.bw));
+ $('sTx').innerHTML=TX.map((b,i)=>`<span class="T${i===s.bw&&s.bw<4?' ptr':''}">[${i}] ${hx(b)}</span>`).join('');
+ $('sRx').innerHTML=s.rx.map((r,i)=>`<span class="${r?r.c:''}${i===s.br&&s.br<4?' ptr':''}">[${i}] ${r?hx(r.b):'?'}</span>`).join('');
+ $('sLen').innerHTML=`<span>${s.len}</span>`;
+ const fifo=q=>{let h='';for(let i=0;i<8;i++){const x=q[i];h+=x?`<span class="f">${hx(x.b)}</span>`:'<span></span>'}return h};
+ $('sTF').innerHTML=fifo(s.TF);$('sRF').innerHTML=fifo(s.RF);
+ const v=sr(s);$('sSRv').textContent=hx(v);
+ $('sSR').innerHTML=[['BSY',4,'忙'],['RFF',3,'收满'],['RNE',2,'有收到'],['TNF',1,'发没满'],['TFE',0,'发空']].map(([n,b,d])=>`<span class="${(v>>b)&1?'on':''}">${(v>>b)&1}<small>第${b}位 ${n}<br>${d}</small></span>`).join('');
+ $('sSRc').textContent=`第一个等待：SR & 0x12 = ${hx(v&0x12)} ${(v&0x12)===2?'= 0x02 → 通过':'≠ 0x02 → 等'}；第二个等待：SR & 0x14 = ${hx(v&0x14)} ${(v&0x14)===4?'= 0x04 → 通过':'≠ 0x04 → 等'}`;
+ $('vS').innerHTML=cells(s.SH,8).replace(/<span>\?<\/span>/g,'<span>·</span>');$('vL').innerHTML=cells(s.L,16);$('vR').innerHTML=cells(s.R,16);
+ $('mLog').innerHTML=f.txt.replace(/\n/g,'<br>');$('sC').textContent=`第 ${k+1} / ${F.length} 步`;
+ $('sP').disabled=k===0;$('sN').disabled=$('sB').disabled=k===F.length-1}
+$('sN').onclick=()=>{if(k<F.length-1){k++;show()}};$('sP').onclick=()=>{if(k>0){k--;show()}};$('sR').onclick=()=>{k=0;show()};
+$('sB').onclick=()=>{if(k<F.length-1&&(F[k].byte<0||F[k+1].byte!==F[k].byte))k++;while(k<F.length-1&&F[k].byte<0)k++;while(k<F.length-1&&F[k+1].byte===F[k].byte)k++;show()};
+show();})();
+/* ring picture with all containers */
 (function(){const s=$('ring');if(!s)return;
- const box=(x,y,n,w,lab,col,sub)=>{el(s,'rect',{x,y,width:n*w,height:26,rx:4,fill:`color-mix(in srgb,var(--${col}) 15%,var(--panel))`,stroke:`var(--${col})`,'stroke-width':2});for(let i=1;i<n;i++)el(s,'line',{x1:x+i*w,x2:x+i*w,y1:y,y2:y+26,stroke:`var(--${col})`,'stroke-opacity':.5});
-  el(s,'text',{x:x+n*w/2,y:y-8,'text-anchor':'middle','font-size':12,'font-weight':600,fill:`var(--${col})`},lab);if(sub)el(s,'text',{x:x+n*w/2,y:y+44,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},sub)};
- box(40,40,8,18,'SPI1（MCU 里）8 格','pc');box(300,40,16,18,'左键芯片 16 格','sw');box(300,140,16,18,'右键芯片 16 格','per');
- const ar=(d,lab,x,y)=>{el(s,'path',{d,fill:'none',stroke:'var(--fg)','stroke-width':1.8,'marker-end':'url(#ah)'});if(lab)el(s,'text',{x,y,'text-anchor':'middle','font-size':11,fill:'var(--fg)'},lab)};
  const defs=el(s,'defs',{});const m=el(defs,'marker',{id:'ah',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:7,markerHeight:7,orient:'auto-start-reverse'});el(m,'path',{d:'M0,0 L10,5 L0,10 z',fill:'var(--fg)'});
- ar('M184,53 H296','MOSI',240,47);ar('M588,53 H640 V153 H592','SDO_0',680,108);ar('M300,153 H170 V70','MISO（回到 SPI1 队尾）',235,147);
- el(s,'text',{x:430,y:200,'text-anchor':'middle','font-size':11.5,fill:'var(--muted)'},'时钟每跳一下，40 个格子里的位一起沿箭头挪一格；软件只在 SPI1 那 8 格“放进去（写 DR）、拿出来（读 DR）”');})();
+ const box=(x,y,n,w,lab,col,sub)=>{el(s,'rect',{x,y,width:n*w,height:26,rx:4,fill:`color-mix(in srgb,var(--${col}) 15%,var(--panel))`,stroke:`var(--${col})`,'stroke-width':2});for(let i=1;i<n;i++)el(s,'line',{x1:x+i*w,x2:x+i*w,y1:y,y2:y+26,stroke:`var(--${col})`,'stroke-opacity':.5});
+  el(s,'text',{x:x+n*w/2,y:y-8,'text-anchor':'middle','font-size':11.5,'font-weight':600,fill:`var(--${col})`},lab);if(sub)el(s,'text',{x:x+n*w/2,y:y+40,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},sub)};
+ const ar=(d,lab,x,y,dash)=>{const a={d,fill:'none',stroke:'var(--fg)','stroke-width':1.6,'marker-end':'url(#ah)'};if(dash)a['stroke-dasharray']='4 3';el(s,'path',a);if(lab)el(s,'text',{x,y,'text-anchor':'middle','font-size':10.5,fill:'var(--fg)'},lab)};
+ /* row 1 */
+ box(10,40,4,26,'hall_spi_tx[4]','per','RAM（软件的变量）');box(170,40,8,14,'发送 FIFO','pc','SPI1');box(330,40,8,16,'SPI1 移位寄存器','pc');box(560,40,16,19,'左键芯片 16 格','sw');
+ ar('M114,53 H166','软件：写 DR',140,33,true);ar('M282,53 H326','自动',304,33,true);ar('M458,53 H556','MOSI',507,47);
+ /* row 2 */
+ box(10,170,4,26,'hall_spi_rx[4]','per','RAM（软件的变量）');box(170,170,8,14,'接收 FIFO','pc','SPI1');box(560,170,16,19,'右键芯片 16 格','per');
+ ar('M864,53 H884 V183 H868','SDO_0',872,120);ar('M560,183 H446 V70','MISO',505,177);
+ ar('M394,66 V183 H286','收满 8 位，自动',350,200,true);ar('M170,183 H118','软件：读 DR',143,163,true);
+ el(s,'text',{x:450,y:240,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'实线：40 格的圈，时钟每跳一下挪一格（硬件）；虚线：整字节进出（写 DR、读 DR 是软件，FIFO 和移位寄存器之间是 SPI1 自动搬）');})();
 /* ---- crc tool ---- */
 function crcShow(){let v=Math.max(0,Math.min(16383,parseInt($('cV').value)||0));const w=word(v),hi=w>>8,lo=w&0xFF;let h='';
  for(let i=15;i>=0;i--){const b=(w>>i)&1;const cls=i>=14?'c':(i%2===0?'e':'o');const nm=i===15?'CRC1':i===14?'CRC0':'D'+i;h+=`<div class="${cls}">${b}<small>${nm}</small></div>`}$('cBits').innerHTML=h;
