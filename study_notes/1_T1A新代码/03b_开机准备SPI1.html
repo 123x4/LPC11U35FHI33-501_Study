@@ -119,6 +119,29 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <div class="log" id="sSt"></div>
 </div>
 
+<div class="box" id="rstBox" style="border-color:var(--gold)"><b>什么是“复位”（PRESETCTRL 这一行在干什么）</b>
+<p><b>复位</b>就是<b>把一块电路强制拉回“出厂状态”</b>：它里面所有的寄存器、FIFO、正在进行的动作，全部回到默认值（芯片手册给的“复位值”，比如 CR0 = 0、CR1 = 0、FIFO 空）。</p>
+<p>它靠一根叫“<b>复位信号</b>”的线来控制，这根线有两种状态：</p>
+<div class="scroll"><table>
+<thead><tr><th>PRESETCTRL 第 2 位</th><th>手册的说法</th><th>白话</th><th>SPI1 这时的样子</th></tr></thead>
+<tbody>
+<tr><td><b>0</b>（上电后默认）</td><td>Resets the SSP1 peripheral</td><td><b>按住复位</b></td><td>被一直摁在出厂状态：写进它寄存器的值留不住，它也不能工作</td></tr>
+<tr><td><b>1</b></td><td>SSP1 reset de-asserted（撤销复位）</td><td><b>放开复位</b></td><td>“松手”了：从默认值出发，写进去的设置能留住，可以工作</td></tr>
+</tbody></table></div>
+<p><b>打个比方</b>：秒表上有个“清零”键。<b>一直按着</b>清零键，屏幕永远是 00:00，按“开始”也没用；<b>松开</b>以后，秒表从 00:00 出发，才能正常计时。PRESETCTRL 第 2 位就是 SPI1 的“清零键”：0 = 按着，1 = 松开。</p>
+<svg id="rstSvg" class="fig" viewBox="0 0 860 170" role="img" aria-label="复位信号和 SPI1 状态"></svg>
+<p><b>名字里的 “_N”</b>：<code>SSP1_RST_N</code> 末尾的 N 是 Negative（低电平有效）的意思：<b>写 0 才是“复位生效”</b>，写 1 是“不复位”。所以这一位叫“复位控制”，但写 1 反而是“让它工作”。</p>
+<p><b>为什么上电时要按住、要软件来放开？</b>手册这一节的 Remark 原文：“<i>Before accessing the SSP and I2C peripherals, write a 1 to this register to ensure that the reset signals to the SSP and I2C are de-asserted.</i>”（访问 SSP、I2C 之前，往这个寄存器写 1，确保它们的复位已经撤销。）芯片上电后让这几块电路都处在复位里，保证它们从一个干净、确定的状态开始；软件要用哪一块，就放开哪一块。不用的（比如本项目没用的 I2C，第 1 位）就一直按着，也不会乱动。</p>
+<p><b>和别的“复位”区别</b>：第 12 课讲的“上电复位、看门狗复位”是<b>整颗芯片</b>重新开始（CPU 也从头执行）；这里的 PRESETCTRL 只复位<b>某一块外设</b>，CPU 和别的外设照常运行。</p>
+<div class="tool"><b>动手：按住 / 放开复位，再往 CR0 写值</b>（演示上面说的行为）
+<div class="btns"><button type="button" id="rHold">PRESETCTRL 第 2 位 = 0（按住）</button><button type="button" id="rRel">= 1（放开）</button><button type="button" id="rWr">软件：CR0 = 0x0287</button></div>
+<div class="log" id="rLog" aria-live="polite"></div>
+<p class="note">这是按“复位”的一般行为做的示意：按住时寄存器被强制保持在复位值，写入不生效。（真实芯片里，没开 SYSAHBCLKCTRL 时钟时也写不进去，这里只演示复位这一件事。）</p></div>
+<div class="qz" data-choice="1"><div class="qt">你来想：SPI1 已经设好（CR0 = 0x0287），这时软件又把 PRESETCTRL 第 2 位写成 0，再写回 1。CR0 现在是多少？</div>
+<div class="qrow"><button type="button" class="opt">还是 0x0287</button><button type="button" class="opt">变回 0（复位值）</button></div>
+<div class="fb" data-ok="对。按了一下“清零键”，SPI1 里的寄存器全回到复位值，要重新设置一遍。这也是“外设卡住了”时的一种恢复办法：复位一下再重新初始化。" data-no="复位 = 拉回出厂状态。按了一下，之前的设置还在吗？"></div></div>
+</div>
+
 <h2>4. 重点：<code>CR0 = 0x0287</code> 和速度怎么算</h2>
 <p><code>CR0</code> 是 SPI1 的“规则”寄存器（芯片手册表 260）。<code>0x0287</code> 拆成二进制，每几位管一件事：</p>
 <div id="cr0"></div>
@@ -201,7 +224,7 @@ function lightChain(on){for(const k in CH){CH[k].setAttribute('stroke',on.has(k)
 const LAMPS=[['rst','复位已放开'],['clk','寄存器有时钟'],['pclk','工作时钟 48 MHz'],['mosi','MOSI 脚接好'],['miso','MISO 脚接好'],['sck','SCK 脚接好'],['fmt','格式定好（8 位 SPI）'],['spd','速度定好（2 MHz）'],['fifo','接收 FIFO 清空'],['en','总开关打开']];
 const S=[
  {cl:'void InitSPI1Master(void)　（device.c:441 调用）',who:'软件',t:'开始。上电复位后：SPI1 被按住复位、没有寄存器时钟、工作时钟分频是 0（关）、三只脚还是普通引脚、CR0 / CPSR / CR1 都是 0。',on:[],reg:null,chain:['sys']},
- {cl:'LPC_SYSCON->PRESETCTRL |= (0x1<<2);　（SPI.c:211）',who:'软件 → SYSCON',t:'把 PRESETCTRL 第 2 位（SSP1_RST_N）置 1：<b>放开 SPI1 的复位</b>。0 = 按住复位（芯片手册表 8，复位值 0）。<br>(0x1&lt;&lt;2) = 0000 0100；|= 只改第 2 位，第 0 位（SSP0）、第 1 位（I2C）不动。',on:['rst'],reg:[4,0,4,{2:'SSP1',1:'I2C',0:'SSP0',3:'-'},'gold'],note:'其他位原来是什么不确定，这里画成 0；“|=”保证它们不变。',chain:['sys','rst']},
+ {cl:'LPC_SYSCON->PRESETCTRL |= (0x1<<2);　（SPI.c:211）',who:'软件 → SYSCON',t:'把 PRESETCTRL 第 2 位（SSP1_RST_N）置 1：<b>放开 SPI1 的复位</b>。0 = 按住复位（芯片手册表 8，复位值 0）。<b>“复位”是什么、按住和放开有什么区别，见本节下面的方框“什么是复位”。</b><br>(0x1&lt;&lt;2) = 0000 0100；|= 只改第 2 位，第 0 位（SSP0）、第 1 位（I2C）不动。',on:['rst'],reg:[4,0,4,{2:'SSP1',1:'I2C',0:'SSP0',3:'-'},'gold'],note:'其他位原来是什么不确定，这里画成 0；“|=”保证它们不变。',chain:['sys','rst']},
  {cl:'LPC_SYSCON->SYSAHBCLKCTRL |= (1<<18);　（SPI.c:212）',who:'软件 → SYSCON',t:'把 SYSAHBCLKCTRL 第 18 位（SSP1）置 1：<b>给 SPI1 的寄存器通上时钟</b>，从现在起才能正常读写 SPI1 的寄存器（表 24，复位值 0）。',on:['rst','clk'],reg:[4,2,3,{3:'b21',2:'b20',1:'b19',0:'b18'},'gold'],note:'只画了第 21~18 位。第 19 位（PINT，引脚中断的时钟）在前面的 InitGPIO() 里已经被置 1（GPIO.c:311）；这一行只把第 18 位 0 → 1，“|=”保证第 19 位等其他位不变。',chain:['sys','rst','clk']},
  {cl:'LPC_SYSCON->SSP1CLKDIV = 0x01;　（SPI.c:213）',who:'软件 → SYSCON',t:'SSP1CLKDIV = 1：SPI1 的<b>工作时钟</b> SSP1_PCLK = 48 MHz ÷ 1 = 48 MHz。复位值 0 表示“关掉这个时钟”（表 27）。注意：上一行是“寄存器能读写的时钟”，这一行是“打 SCK 用的原料时钟”，是两回事。',on:['rst','clk','pclk'],reg:[8,0,1,null,'gold'],chain:['sys','rst','clk','div']},
  {cl:'LPC_IOCON->PIO0_21 &= ~0x07;　LPC_IOCON->PIO0_21 |= 0x02;　（SPI.c:216~217）',who:'软件 → IOCON',t:'先把低 3 位 FUNC 清 0，再设成 2：<b>PIO0_21 这只脚接到 SPI1 的 MOSI1</b>（表 97：0 = 普通引脚，1 = CT16B1_MAT0，2 = MOSI1）。只改低 3 位，上拉等其他设置不动。',on:['rst','clk','pclk','mosi'],reg:[3,0,2,{2:'F2',1:'F1',0:'F0'},'sw'],chain:['sys','rst','clk','div']},
@@ -233,6 +256,7 @@ function spd(){const d=+$('vD').value||0,c=+$('vC').value||0,s=+$('vS').value;le
 ['vD','vC','vS'].forEach(i=>$(i).oninput=spd);spd();
 /* ---- fixed quiz ---- */
 document.querySelectorAll('.qz').forEach(q=>{const fb=q.querySelector('.fb');const show=ok=>{fb.className='fb '+(ok?'ok':'no');fb.innerHTML=(ok?'✓ ':'✗ ')+(ok?fb.dataset.ok:fb.dataset.no)};
+ if(q.dataset.choice!=null){const c=+q.dataset.choice;[...q.querySelectorAll('.opt')].forEach((b,j)=>b.onclick=()=>{q.querySelectorAll('.opt').forEach(x=>x.classList.remove('on'));b.classList.add('on');show(j===c)});return}
  const inp=q.querySelector('input');const hex=!!q.dataset.hex,ans=hex?parseInt(q.dataset.ans,16):+q.dataset.ans,tol=+(q.dataset.tol||0);
  const go=()=>{const s=inp.value.trim();if(!s)return;const v=hex||/^0x/i.test(s)?parseInt(s,16):parseFloat(s);if(isNaN(v))return;show(Math.abs(v-ans)<=tol+1e-9)};q.querySelector('.chk').onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter')go()})});
 /* ---- practice ---- */
@@ -267,4 +291,22 @@ function next(){cur=pick(GEN)();done=false;$('pxq').innerHTML=cur.q;$('pxfb').cl
 $('pxShow').onclick=()=>{if(!done)n++;done=true;$('pxfb').className='fb no';$('pxfb').innerHTML='答案：'+(cur.type==='mc'?cur.opts[cur.ans]:cur.type==='hex'?hx(cur.ans):cur.ans)+'<br>'+cur.sol;upd()};
 $('pxNext').onclick=next;next();box._cur=()=>cur;
 })();
+
+/* ---- reset explainer ---- */
+(function(){const s=document.getElementById('rstSvg');if(!s)return;const NS='http://www.w3.org/2000/svg';const el=(p,t,at,x)=>{const e=document.createElementNS(NS,t);for(const k in at)e.setAttribute(k,at[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e};
+ const X=t=>140+t*7;el(s,'text',{x:8,y:52,'font-size':12,'font-weight':600,fill:'var(--gold)'},'PRESETCTRL 第 2 位');
+ el(s,'path',{d:`M${X(0)},70 H${X(40)} V30 H${X(100)}`,fill:'none',stroke:'var(--gold)','stroke-width':2.5});
+ el(s,'text',{x:X(0)-6,y:74,'text-anchor':'end','font-size':10,fill:'var(--muted)'},'0');el(s,'text',{x:X(0)-6,y:34,'text-anchor':'end','font-size':10,fill:'var(--muted)'},'1');
+ el(s,'rect',{x:X(0),y:92,width:X(40)-X(0),height:34,rx:6,fill:'color-mix(in srgb,var(--bad) 18%,var(--panel))',stroke:'var(--bad)'});
+ el(s,'text',{x:(X(0)+X(40))/2,y:113,'text-anchor':'middle','font-size':12},'按住复位：SPI1 被摁在出厂状态，不能用');
+ el(s,'rect',{x:X(40),y:92,width:X(100)-X(40),height:34,rx:6,fill:'color-mix(in srgb,var(--good) 18%,var(--panel))',stroke:'var(--good)'});
+ el(s,'text',{x:(X(40)+X(100))/2,y:113,'text-anchor':'middle','font-size':12},'放开复位：从默认值出发，写进去的设置能留住');
+ el(s,'text',{x:8,y:113,'font-size':12,'font-weight':600,fill:'var(--fg)'},'SPI1 的状态');
+ el(s,'text',{x:X(0)+4,y:152,'font-size':11,fill:'var(--muted)'},'上电 →');el(s,'text',{x:X(40),y:152,'text-anchor':'middle','font-size':11,fill:'var(--fg)'},'↑ SPI.c:211 写 1');})();
+(function(){if(!document.getElementById('rLog'))return;let rst=true,cr0=0;
+ const say=t=>document.getElementById('rLog').textContent=t+`\n现在：复位 ${rst?'按住（第 2 位 = 0）':'已放开（第 2 位 = 1）'}，CR0 = 0x${cr0.toString(16).toUpperCase().padStart(4,'0')}`;
+ document.getElementById('rHold').onclick=()=>{rst=true;cr0=0;say('把第 2 位写成 0：SPI1 被按回出厂状态，CR0 被强制变回复位值 0。')};
+ document.getElementById('rRel').onclick=()=>{rst=false;say('把第 2 位写成 1：松手了。CR0 还是复位值 0（放开不会自动设好任何东西），等软件来写。')};
+ document.getElementById('rWr').onclick=()=>{if(rst){say('往 CR0 写 0x0287……但复位还按着，写进去马上又被拉回 0：写入无效。')}else{cr0=0x0287;say('往 CR0 写 0x0287：复位已放开，值留住了。')}};
+ say('上电后：复位是按住的。试试先写 CR0，再放开复位，再写 CR0。');})();
 </script>
