@@ -117,6 +117,88 @@ details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
 <div style="--c:var(--pc)"><b class="w">两个数组：hall_spi_tx[4]、hall_spi_rx[4]</b>定义在 app/button.c:12~13：<br><code>UINT8 hall_spi_tx[4] = {0};</code>　要发出去的 4 个字节<br><code>UINT8 hall_spi_rx[4] = {0};</code>　收回来的 4 个字节<br>全局变量（任何函数都能用），每个元素 1 字节（UINT8 = 0~255）。读数据时 tx 的内容没用（后面解释），我们要的是 rx。</div>
 </div>
 
+<h3>MCU 和两颗霍尔芯片怎么接（照原理图画）</h3>
+<p>来自原理图第 1 页“Hall IC to LB &amp; RB”和 MCU 部分。线旁边写的是原理图上的<b>网络名</b>（一根线在图纸上的名字）；括号里是 MCU 的脚号、芯片的脚号。点下面的按钮，看每类线干什么。</p>
+<style>
+#wire{display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+#wire text{font-family:var(--font-b);fill:var(--fg)}
+#wire .pn{font-family:var(--font-m);font-size:11px}
+#wire .net{font-family:var(--font-m);font-size:11px;font-weight:600}
+#wire .w{fill:none;stroke-width:2.5;transition:opacity .2s}
+#wire.f-data .w:not(.data),#wire.f-clk .w:not(.clk),#wire.f-pwr .w:not(.pwr){opacity:.15}
+#wire.f-data .w.data{stroke-dasharray:8 5;animation:flow 1s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-13}}
+@media (prefers-reduced-motion: reduce){#wire.f-data .w.data{animation:none}}
+.wbtn{display:flex;flex-wrap:wrap;gap:8px;margin:.4rem 0}
+.wbtn button{font:inherit;font-size:.86rem;padding:3px 12px;border:1.5px solid var(--c);border-radius:999px;background:var(--panel);color:var(--fg);cursor:pointer}
+.wbtn button[aria-pressed="true"]{background:color-mix(in srgb,var(--c) 25%,var(--panel))}
+</style>
+<div class="wbtn" id="wbtn">
+<button type="button" style="--c:var(--muted)" data-f="" aria-pressed="true">全部</button>
+<button type="button" style="--c:var(--pc)" data-f="data" aria-pressed="false">数据怎么流</button>
+<button type="button" style="--c:var(--hw)" data-f="clk" aria-pressed="false">时钟线</button>
+<button type="button" style="--c:var(--gold)" data-f="pwr" aria-pressed="false">电源</button>
+</div>
+<svg id="wire" viewBox="0 0 880 470" role="img" aria-label="MCU 与两颗霍尔芯片接线图">
+ <!-- MCU -->
+ <rect x="30" y="50" width="200" height="310" rx="10" fill="color-mix(in srgb,var(--per) 10%,var(--panel))" stroke="var(--per)" stroke-width="2"/>
+ <text x="130" y="80" text-anchor="middle" font-size="16" font-weight="700">MCU</text>
+ <text x="130" y="98" text-anchor="middle" font-size="11" fill="var(--muted)">LPC11U35（U6）</text>
+ <text class="pn" x="222" y="114" text-anchor="end">PIO0_21 MOSI（12）</text>
+ <text class="pn" x="222" y="184" text-anchor="end">PIO1_15 SCK1（28）</text>
+ <text class="pn" x="222" y="254" text-anchor="end">PIO0_22 MISO（20）</text>
+ <text class="pn" x="134" y="350" text-anchor="middle">PIO0_16（26）</text>
+ <circle cx="230" cy="110" r="3.5" fill="var(--fg)"/><circle cx="230" cy="180" r="3.5" fill="var(--fg)"/><circle cx="230" cy="250" r="3.5" fill="var(--fg)"/><circle cx="130" cy="360" r="3.5" fill="var(--fg)"/>
+ <!-- chips -->
+ <rect x="470" y="50" width="170" height="150" rx="8" fill="color-mix(in srgb,var(--sw) 12%,var(--panel))" stroke="var(--sw)" stroke-width="2"/>
+ <text x="555" y="152" text-anchor="middle" font-size="15" font-weight="700">左键芯片 H1</text>
+ <text x="555" y="170" text-anchor="middle" font-size="11" fill="var(--muted)">GTRY154（原理图标 LB）</text>
+ <text class="pn" x="478" y="109">SDI（2）</text><text class="pn" x="478" y="139">SCK（3）</text><text class="pn" x="478" y="192">SDO（4）</text>
+ <text class="pn" x="555" y="70" text-anchor="middle">VDD（1）</text>
+ <rect x="470" y="240" width="170" height="150" rx="8" fill="color-mix(in srgb,var(--per) 12%,var(--panel))" stroke="var(--per)" stroke-width="2"/>
+ <text x="555" y="342" text-anchor="middle" font-size="15" font-weight="700">右键芯片 H2</text>
+ <text x="555" y="360" text-anchor="middle" font-size="11" fill="var(--muted)">GTRY154（原理图标 RB）</text>
+ <text class="pn" x="478" y="289">SDI（2）</text><text class="pn" x="478" y="319">SCK（3）</text><text class="pn" x="478" y="382">SDO（4）</text>
+ <text class="pn" x="555" y="260" text-anchor="middle">VDD（1）</text>
+ <text class="pn" x="648" y="130" fill="var(--muted)">PWM1~4（5~8）</text><text class="pn" x="648" y="145" fill="var(--muted)">不接（给 LED 用）</text>
+ <text class="pn" x="648" y="320" fill="var(--muted)">PWM1~4 不接</text>
+ <text class="pn" x="648" y="190" fill="var(--muted)">GND（9）接地</text><text class="pn" x="648" y="380" fill="var(--muted)">GND（9）接地</text>
+ <!-- data wires -->
+ <path class="w data" d="M230,110 H350 V105 H470" stroke="var(--pc)"/>
+ <text class="net" x="290" y="100" fill="var(--pc)">MOSI_0</text>
+ <path class="w data" d="M470,188 H420 V285 H470" stroke="var(--pc)"/>
+ <text class="net" x="424" y="240" fill="var(--pc)">SDO_0</text>
+ <path class="w data" d="M470,378 H330 V250 H230" stroke="var(--pc)"/>
+ <text class="net" x="270" y="244" fill="var(--pc)">MISO_0</text>
+ <!-- clock -->
+ <path class="w clk" d="M230,180 H380 V135 H470" stroke="var(--hw)"/>
+ <path class="w clk" d="M380,180 V315 H470" stroke="var(--hw)"/>
+ <circle cx="380" cy="180" r="4" fill="var(--hw)"/>
+ <text class="net" x="290" y="174" fill="var(--hw)">SCLK_0</text>
+ <!-- power -->
+ <path class="w pwr" d="M130,360 V440 H680" stroke="var(--gold)"/>
+ <text class="net" x="250" y="434" fill="var(--gold)">Hall_PWR_EN（高 = 通电）</text>
+ <rect x="680" y="405" width="180" height="55" rx="8" fill="color-mix(in srgb,var(--gold) 12%,var(--panel))" stroke="var(--gold)" stroke-width="2"/>
+ <text x="770" y="428" text-anchor="middle" font-size="13" font-weight="600">电源开关</text>
+ <text x="770" y="446" text-anchor="middle" font-size="11" fill="var(--muted)">三极管 Q3 + MOS 管 MOS1</text>
+ <path class="w pwr" d="M770,405 V25 H555 V50" stroke="var(--gold)"/>
+ <path class="w pwr" d="M770,215 H555 V240" stroke="var(--gold)"/>
+ <circle cx="770" cy="215" r="4" fill="var(--gold)"/>
+ <text class="net" x="780" y="120" fill="var(--gold)">VDD_Hall</text><text class="net" x="780" y="136" fill="var(--gold)">（3.3 V）</text>
+</svg>
+<div class="log" id="wInfo" aria-live="polite"></div>
+<div class="scroll"><table>
+<thead><tr><th>原理图网络名</th><th>从（MCU 脚）</th><th>到（芯片脚）</th><th>干什么</th></tr></thead>
+<tbody>
+<tr><td><code>MOSI_0</code></td><td>PIO0_21（第 12 脚），SPI1 的 MOSI</td><td>左键芯片 H1 的 SDI（第 2 脚）</td><td>MCU 发出的数据进左键芯片</td></tr>
+<tr><td><code>SDO_0</code></td><td>左键芯片 H1 的 SDO（第 4 脚）</td><td>右键芯片 H2 的 SDI（第 2 脚）</td><td>两颗芯片串起来的那根线（不经过 MCU）</td></tr>
+<tr><td><code>MISO_0</code></td><td>右键芯片 H2 的 SDO（第 4 脚）</td><td>PIO0_22（第 20 脚），SPI1 的 MISO</td><td>数据回到 MCU</td></tr>
+<tr><td><code>SCLK_0</code></td><td>PIO1_15（第 28 脚），SPI1 的 SCK1</td><td>两颗芯片的 SCK（第 3 脚）</td><td>时钟 + 命令，两颗共用</td></tr>
+<tr><td><code>Hall_PWR_EN</code></td><td>PIO0_16（第 26 脚），普通引脚</td><td>电源开关（Q3、MOS1）</td><td>高电平 → 开关打开 → 两颗芯片通电</td></tr>
+<tr><td><code>VDD_Hall</code></td><td>电源开关输出（来自 3.3 V）</td><td>两颗芯片的 VDD（第 1 脚）</td><td>芯片的电源；每颗旁边还有一个 0.1 µF 电容（C33、C42）滤波</td></tr>
+</tbody></table></div>
+<p class="note">芯片上没有“片选”脚：霍尔手册 5.3 节说这颗芯片“默认使能，没有片选信号”，所以一共只要 3 根信号线。</p>
+
 <h2>2. 读一次的全貌（先看图）</h2>
 <p>下图是时钟线 SCK 和回来的数据线 MISO 在一次读取中的样子（时间没按比例画）：</p>
 <svg class="tl" id="tl" viewBox="0 0 860 200" role="img" aria-label="一次读取的时序图"></svg>
@@ -364,4 +446,14 @@ function next(){cur2=pick(GEN)();done=false;$('pxq').innerHTML=cur2.q;$('pxfb').
 $('pxShow').onclick=()=>{if(!done)n++;done=true;$('pxfb').className='fb no';$('pxfb').innerHTML='答案：'+(cur2.type==='mc'?cur2.opts[cur2.ans]:cur2.ans)+'<br>'+cur2.sol;upd()};
 $('pxNext').onclick=next;next();box._cur=()=>cur2;
 })();
+
+/* ---- wiring diagram ---- */
+(function(){const svg=document.getElementById('wire'),info=document.getElementById('wInfo');if(!svg)return;
+const T={'':'三类线：橙色是数据（3 根），紫色是时钟（1 根分两路），黄色是电源。点上面的按钮分别看。',
+ data:'数据怎么流：MCU 的 MOSI → 左键芯片 SDI →（芯片里 16 个格子）→ 左键芯片 SDO → 右键芯片 SDI →（16 个格子）→ 右键芯片 SDO → MCU 的 MISO。一条单行道，走一圈回到 MCU。所以右键芯片离出口近，它的数据先回来。',
+ clk:'时钟线 SCLK_0 从 MCU 的 PIO1_15 出来，分成两路，同时接到两颗芯片的 SCK。所以两颗芯片“同时听到”命令（拉高 5 µs），也“同时”每跳一下挪一格。',
+ pwr:'电源：MCU 的 PIO0_16 输出高电平 → 打开电源开关（三极管 Q3 再控制 MOS 管 MOS1）→ 3.3 V 送到 VDD_Hall → 两颗芯片同时通电。PIO0_16 拉低就断电，开机时代码先拉低 50 ms 再拉高，相当于让芯片重启一次（第 3 课下讲）。'};
+const bs=[...document.querySelectorAll('#wbtn button')];
+function set(f){svg.setAttribute('class',f?'f-'+f:'');bs.forEach(b=>b.setAttribute('aria-pressed',b.dataset.f===f));info.textContent=T[f]}
+bs.forEach(b=>b.onclick=()=>set(b.dataset.f));set('');})();
 </script>
