@@ -85,7 +85,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <div class="wrap">
 <div class="eyebrow">T1A 主线 · 第 3 课（下）① · 开机怎么把 SPI1 准备好 · 代码 src/SPI.c:204~248 · 芯片手册 UM10462 · 霍尔手册 GTRY154</div>
 <h1>开机怎么把 SPI1 准备好</h1>
-<p class="lede">第 3 课（上）讲了“每 1 ms 怎么用 SPI1 读芯片”。用之前，SPI1 得先被准备好：开机时 <code>Device_Init()</code> 调一次 <code>InitSPI1Master()</code>（device.c:441），一共 12 行有效代码。这一课一行一行讲：每行改了哪个寄存器的哪几位、改完 SPI1 处于什么状态。霍尔芯片本身的开机准备（上电、校准、写寄存器）在下一课 ②。</p>
+<p class="lede">第 3 课（上）讲了“每 1 ms 怎么用 SPI1 读芯片”。用之前，SPI1 得先被准备好：开机时 <code>Device_Init()</code> 调一次 <code>InitSPI1Master()</code>（device.c:441），一共 12 行有效代码。这一课一行一行讲：每行改了哪个寄存器的哪几位、改完 SPI1 处于什么状态。霍尔芯片本身的开机准备（上电、校准、写寄存器）在<a href="https://claude.ai/artifact/TfZtAngPnE5Vrxp7SuzAim">下一课 ②</a>。</p>
 
 <div class="box" style="border-color:var(--gold)"><b>这一课为什么这样安排（根据你前面的提问）</b>
 <p>你前面问的“tx 发出去后怎么进来东西”“是不是芯片拉低 SCLK”“切回 SCK1 就打时钟了吗”“写 DR 就启动转换吗”，说明最需要先补的是：<b>分清谁在做事、做的是“准备”还是“动作”</b>。所以下面先给“角色表”；逐行讲解时，每行都给出寄存器改之前 / 改之后的位，并用一排“状态灯”告诉你：这一行只是把某样东西准备好了，还是 SPI1 已经开始动作。</p>
@@ -224,6 +224,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <div class="px" id="px"></div>
 
 <div class="think"><b>💡 想法上</b>：这一课的 12 行，其实就是第 3 课（基础课）讲过的“外设七步”：<b>通电 → 时钟 → 解锁（放开复位）→ 引脚 → 配置 → 中断 → 使用</b>（这里没用中断，“使用”在第 3 课上）。以后读任何外设的初始化函数，都先按这七步把每一行归类：这一行属于哪一步？漏了哪一步？顺序对不对？这样读一个陌生的初始化函数也不会乱。</div>
+<div class="box" style="border-color:var(--good)"><b>下一课</b>：<a href="https://claude.ai/artifact/TfZtAngPnE5Vrxp7SuzAim">第 3 课（下）② 开机准备霍尔芯片</a>：给芯片通电、校准芯片时钟、写 25 个设置。</div>
 </div>
 <script>
 (function(){
