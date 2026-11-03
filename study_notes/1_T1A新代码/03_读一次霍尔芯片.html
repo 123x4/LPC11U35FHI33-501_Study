@@ -57,6 +57,7 @@ svg.tl{display:block;width:100%;height:auto;background:var(--panel);border:1px s
 .bits span{display:block;padding:2px 0;border-radius:2px;background:var(--soft);min-width:13px}
 .bits span.L{background:color-mix(in srgb,var(--sw) 35%,var(--panel))}
 .bits span.R{background:color-mix(in srgb,var(--per) 35%,var(--panel))}
+.bits.idx span{background:none;color:var(--muted);font-size:.58rem;padding:0;min-width:0;overflow:hidden}
 .bits span.T{background:color-mix(in srgb,var(--muted) 25%,var(--panel))}
 .arrow{color:var(--muted);font-size:.85rem}
 .rx{display:flex;gap:6px;flex-wrap:wrap;font-family:var(--font-m);font-size:.85rem}
@@ -350,7 +351,7 @@ details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
 <tr><td><b>两颗霍尔芯片</b></td><td>各有 <b>16 个格子</b></td><td>不管进来的是什么，每听到一下时钟，就整体挪一格：排头从 SDO 出去，SDI 进来的一位站到队尾。</td></tr>
 </tbody></table></div>
 <p><b>关键</b>：MOSI → 左键芯片 → 右键芯片 → MISO → 又回到 SPI1，<b>8 + 16 + 16 = 40 个格子首尾连成一个圈</b>。时钟每跳一下，圈上所有的位一起往前挪一格。所以 SPI1 每推出去一位（tx 的位），就一定有一位从另一头进来（芯片的读数）。<b>tx 的位“进了芯片”，正是因为它被推进了这个圈</b>：想把芯片里的位挤出来，就得从另一头塞东西进去，塞进去的就是 tx。</p>
-<svg id="ring" viewBox="0 0 900 250" role="img" aria-label="40 个格子连成一个圈" style="display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px"></svg>
+<svg id="ring" viewBox="0 0 900 290" role="img" aria-label="40 个格子连成一个圈" style="display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px"></svg>
 <p class="note">图里把数据经过的<b>所有容器</b>都画上了：RAM 里的两个数组（软件的变量）、SPI1 的数据寄存器 DR、发送 FIFO、移位寄存器、接收 FIFO（SPI1 的硬件），两颗芯片的 16 格（芯片的硬件）。FIFO = 先进先出的小队列，SPI1 的发送、接收各有一个，各能排 8 个字节（芯片手册 13.1 节）。<b>写 DR 其实是把字节放进发送 FIFO；读 DR 其实是从接收 FIFO 取出最早的那个字节</b>（表 262）。中间那个 40 格的圈像一条传送带，转一格，每段排头的位掉进下一段。</p>
 </div>
 <style>
@@ -387,11 +388,11 @@ details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
 <div class="cont" style="--c:var(--pc)"><div class="nm">SPI1 接收 FIFO（读 DR 从这里取）</div><div class="fifo" id="sRF"></div></div>
 <div class="cont" style="--c:var(--gold)"><div class="nm">LPC_SSP1->SR（状态寄存器）= <span id="sSRv"></span></div><div class="sr" id="sSR"></div><div class="sub" id="sSRc"></div></div>
 </div>
-<div class="reg" style="--c:var(--pc)"><div class="nm">SPI1 移位寄存器 8 格（左边排头 → 从 MOSI 出去；从 MISO 进来的站到右边队尾）</div><div class="bits" id="vS" style="grid-template-columns:repeat(8,minmax(0,1fr))"></div></div>
+<div class="reg" style="--c:var(--pc)"><div class="nm">SPI1 移位寄存器 8 格（左边 bit7 高位 → 最先从 MOSI 出去；从 MISO 进来的站到右边 bit0 低位）</div><div class="bits idx" style="grid-template-columns:repeat(8,minmax(0,1fr))"><span>b7</span><span>b6</span><span>b5</span><span>b4</span><span>b3</span><span>b2</span><span>b1</span><span>b0</span></div><div class="bits" id="vS" style="grid-template-columns:repeat(8,minmax(0,1fr))"></div></div>
 <div class="arrow">↓ MOSI（PIO0_21）→ 左键芯片 SDI</div>
-<div class="reg" style="--c:var(--sw)"><div class="nm">左键芯片的 16 格（左边排头）</div><div class="bits" id="vL"></div></div>
+<div class="reg" style="--c:var(--sw)"><div class="nm">左键芯片的 16 格（位号 b15 ~ b0，左边 b15 是高位，最先出去。刚下完命令时：b15 = CRC1、b14 = CRC0、b13 ~ b0 = 读数 D13 ~ D0；开始挪以后，格子里换成了别的位，位号只表示“位置”）</div><div class="bits idx"><span>b15</span><span>b14</span><span>b13</span><span>b12</span><span>b11</span><span>b10</span><span>b9</span><span>b8</span><span>b7</span><span>b6</span><span>b5</span><span>b4</span><span>b3</span><span>b2</span><span>b1</span><span>b0</span></div><div class="bits" id="vL"></div></div>
 <div class="arrow">↓ SDO_0 → 右键芯片 SDI</div>
-<div class="reg" style="--c:var(--per)"><div class="nm">右键芯片的 16 格</div><div class="bits" id="vR"></div></div>
+<div class="reg" style="--c:var(--per)"><div class="nm">右键芯片的 16 格（同上：位号表示位置；刚下完命令时 b15 = CRC1 … b0 = D0）</div><div class="bits idx"><span>b15</span><span>b14</span><span>b13</span><span>b12</span><span>b11</span><span>b10</span><span>b9</span><span>b8</span><span>b7</span><span>b6</span><span>b5</span><span>b4</span><span>b3</span><span>b2</span><span>b1</span><span>b0</span></div><div class="bits" id="vR"></div></div>
 <div class="arrow">↓ MISO（PIO0_22）→ 回到 SPI1 移位寄存器的队尾（圈闭合）</div>
 <div class="log" id="mLog" aria-live="polite"></div>
 <p class="note">颜色：蓝 = 右键读数的位，绿 = 左键读数的位，灰 = tx 的位。SR 里绿色的位 = 1。</p>
@@ -631,17 +632,21 @@ show();})();
 /* ring picture with all containers */
 (function(){const s=$('ring');if(!s)return;
  const defs=el(s,'defs',{});const m=el(defs,'marker',{id:'ah',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:7,markerHeight:7,orient:'auto-start-reverse'});el(m,'path',{d:'M0,0 L10,5 L0,10 z',fill:'var(--fg)'});
- const box=(x,y,n,w,lab,col,sub)=>{el(s,'rect',{x,y,width:n*w,height:26,rx:4,fill:`color-mix(in srgb,var(--${col}) 15%,var(--panel))`,stroke:`var(--${col})`,'stroke-width':2});for(let i=1;i<n;i++)el(s,'line',{x1:x+i*w,x2:x+i*w,y1:y,y2:y+26,stroke:`var(--${col})`,'stroke-opacity':.5});
-  el(s,'text',{x:x+n*w/2,y:y-8,'text-anchor':'middle','font-size':11.5,'font-weight':600,fill:`var(--${col})`},lab);if(sub)el(s,'text',{x:x+n*w/2,y:y+40,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},sub)};
+ const box=(x,y,n,w,lab,col,sub,nums,ends)=>{el(s,'rect',{x,y,width:n*w,height:26,rx:4,fill:`color-mix(in srgb,var(--${col}) 15%,var(--panel))`,stroke:`var(--${col})`,'stroke-width':2});for(let i=1;i<n;i++)el(s,'line',{x1:x+i*w,x2:x+i*w,y1:y,y2:y+26,stroke:`var(--${col})`,'stroke-opacity':.5});
+  if(nums)nums.forEach((t,i)=>el(s,'text',{x:x+i*w+w/2,y:y+17,'text-anchor':'middle','font-size':w<16?7.5:9,'font-family':'var(--font-m)',fill:'var(--fg)'},t));
+  el(s,'text',{x:x+n*w/2,y:y-8,'text-anchor':'middle','font-size':11.5,'font-weight':600,fill:`var(--${col})`},lab);if(sub)el(s,'text',{x:x+n*w/2,y:y+40,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},sub);
+  if(ends){el(s,'text',{x:x,y:y+40,'text-anchor':'start','font-size':10,'font-weight':600,fill:'var(--bad)'},ends[0]);el(s,'text',{x:x+n*w,y:y+40,'text-anchor':'end','font-size':10,fill:'var(--muted)'},ends[1])}};
+ const bn=n=>Array.from({length:n},(_,i)=>String(n-1-i));
  const ar=(d,lab,x,y,dash)=>{const a={d,fill:'none',stroke:'var(--fg)','stroke-width':1.6,'marker-end':'url(#ah)'};if(dash)a['stroke-dasharray']='4 3';el(s,'path',a);if(lab)el(s,'text',{x,y,'text-anchor':'middle','font-size':10.5,fill:'var(--fg)'},lab)};
  /* row 1 */
- box(10,40,4,26,'hall_spi_tx[4]','per','RAM（软件的变量）');box(170,40,8,14,'发送 FIFO','pc','SPI1');box(330,40,8,16,'SPI1 移位寄存器','pc');box(560,40,16,19,'左键芯片 16 格','sw');
+ box(10,40,4,26,'hall_spi_tx[4]','per','RAM（[0] 先发）',['[0]','[1]','[2]','[3]']);box(170,40,8,14,'发送 FIFO','pc','SPI1（按字节排队）');box(330,40,8,16,'SPI1 移位寄存器','pc','',bn(8),['b7 高位 先出','']);box(560,40,16,19,'左键芯片 16 格','sw','',bn(16),['bit15 高位 CRC1 先出','bit0 低位 D0']);
  ar('M114,53 H166','软件：写 DR',140,33,true);ar('M282,53 H326','自动',304,33,true);ar('M458,53 H556','MOSI',507,47);
  /* row 2 */
- box(10,170,4,26,'hall_spi_rx[4]','per','RAM（软件的变量）');box(170,170,8,14,'接收 FIFO','pc','SPI1');box(560,170,16,19,'右键芯片 16 格','per');
+ box(10,170,4,26,'hall_spi_rx[4]','per','RAM（[0] 先收）',['[0]','[1]','[2]','[3]']);box(170,170,8,14,'接收 FIFO','pc','SPI1（按字节排队）');box(560,170,16,19,'右键芯片 16 格','per','',bn(16),['bit15 高位 CRC1 先出','bit0 低位 D0']);
  ar('M864,53 H884 V183 H868','SDO_0',872,120);ar('M560,183 H446 V70','MISO',505,177);
  ar('M394,66 V183 H286','收满 8 位，自动',350,200,true);ar('M170,183 H118','软件：读 DR',143,163,true);
- el(s,'text',{x:450,y:240,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'实线：40 格的圈，时钟每跳一下挪一格（硬件）；虚线：整字节进出（写 DR、读 DR 是软件，FIFO 和移位寄存器之间是 SPI1 自动搬）');})();
+ el(s,'text',{x:450,y:258,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'实线：40 格的圈，时钟每跳一下挪一格（硬件）；虚线：整字节进出（写 DR、读 DR 是软件，FIFO 和移位寄存器之间是 SPI1 自动搬）');
+ el(s,'text',{x:450,y:278,'text-anchor':'middle','font-size':11,fill:'var(--bad)'},'格子里的数字是位号：每段左端是高位（最先出去，MSB），右端是低位（LSB）；从上一段来的位从右端（低位）进来');})();
 /* ---- crc tool ---- */
 function crcShow(){let v=Math.max(0,Math.min(16383,parseInt($('cV').value)||0));const w=word(v),hi=w>>8,lo=w&0xFF;let h='';
  for(let i=15;i>=0;i--){const b=(w>>i)&1;const cls=i>=14?'c':(i%2===0?'e':'o');const nm=i===15?'CRC1':i===14?'CRC0':'D'+i;h+=`<div class="${cls}">${b}<small>${nm}</small></div>`}$('cBits').innerHTML=h;
