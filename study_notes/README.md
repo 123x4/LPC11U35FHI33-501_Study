@@ -32,6 +32,7 @@ study_notes/
 | 第 3 课（上） | [读一次霍尔芯片](https://claude.ai/artifact/RSTQPaAEsAcNwHQ3aaUgSa) | 下命令（SCK 拉高 5 µs）+ SPI1 搬 32 位；逐行逐变量；菊花链模拟器、校验位工具、练习 |
 | 第 3 课（下）① | [开机准备 SPI1](https://claude.ai/artifact/K8jtZ8wuzFac7dAVtqgwkR) | InitSPI1Master 12 行：每行寄存器位变化 + 准备情况；位运算工具、时钟链、速度计算器、练习 |
 | 第 3 课（下）② | [开机准备霍尔芯片](https://claude.ai/artifact/TfZtAngPnE5Vrxp7SuzAim) | 通电（PIO0_16 开关）→ 校准时钟（30 次 128 µs）→ 写 25 个设置（寄信 + 填表）；A7 00 的来历、练习 |
+| 第 4 课 | [按键算法](https://claude.ai/artifact/YaUD1PcZQkwvNyPqJHBRLg) | 翻转 → 滤波（>60 跳、≤60 走 1/64）→ 段位 0~100 → 快速触发（30 / 20）；基线学习；综合模拟器、练习 |
 
 ## 2. 基础课（第 0~13 课，按顺序读）
 

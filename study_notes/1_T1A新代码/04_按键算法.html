@@ -1,0 +1,459 @@
+<title>按键算法</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --hw:#7a5ea8; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.8}
+.wrap{max-width:880px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);line-height:1.3;text-wrap:balance}
+h1{font-size:1.9rem;margin:0}
+h2{font-size:1.3rem;margin:2.4rem 0 .4rem;padding-top:.6rem;border-top:1px solid var(--line)}
+h3{font-size:1.06rem;margin:1.3rem 0 .3rem}
+p{margin:.6rem 0}
+a{color:var(--per)}
+code{font-family:var(--font-m);font-size:.88em;background:var(--soft);padding:.05em .35em;border-radius:3px;overflow-wrap:anywhere}
+pre.code{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:10px 12px;overflow-x:auto;line-height:1.55;margin:.5rem 0}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.06em;color:var(--muted)}
+.lede{color:var(--muted)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:1rem 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-size:.88rem;margin:.4rem 0}
+td,th{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600}
+.note{font-size:.88rem;color:var(--muted)}
+.think{border-left:4px solid var(--per);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.8rem 0}
+.rule{border-left:4px solid var(--c,var(--per));background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.6rem 0}
+.log{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:6px 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.btns button,.tool button{font:inherit;font-size:.88rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer}
+.btns button:disabled{opacity:.4;cursor:default}
+.btns button[aria-pressed="true"]{border-color:var(--fg);font-weight:700}
+/* bit strip */
+.bstrip{display:inline-grid;gap:2px;font-family:var(--font-m);font-size:.74rem;text-align:center;margin:.2rem 0}
+.bstrip span{border:1px solid var(--line);border-radius:3px;padding:1px 3px;min-width:1.6em;background:var(--panel)}
+.bstrip span.ch{background:color-mix(in srgb,var(--bad) 28%,var(--panel));border-color:var(--bad);font-weight:700}
+.bstrip span.k{background:none;border:0;color:var(--muted);font-size:.6rem}
+.bstrip span.f{background:color-mix(in srgb,var(--c,var(--per)) 18%,var(--panel))}
+/* lamps */
+.lamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:.5rem 0}
+.lamps div{border:1.5px solid var(--line);border-radius:6px;padding:4px 8px;font-size:.82rem;background:var(--panel)}
+.lamps div::before{content:"○ ";color:var(--muted)}
+.lamps div.on{border-color:var(--good);background:color-mix(in srgb,var(--good) 15%,var(--panel))}
+.lamps div.on::before{content:"● ";color:var(--good)}
+.lamps div.new{outline:2px solid var(--bad)}
+.stp{border:2px solid var(--per);border-radius:8px;padding:10px 14px;background:var(--panel);margin:.6rem 0}
+.stp .cl{font-family:var(--font-m);font-size:.85rem;background:var(--soft);border-left:4px solid var(--per);padding:4px 8px;border-radius:0 6px 6px 0;overflow-wrap:anywhere}
+.stp .who{display:inline-block;font-size:.72rem;color:var(--bg);background:var(--c);border-radius:4px;padding:0 6px;margin-right:6px}
+.stp h3{margin:.5rem 0 .2rem}
+svg.fig{display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+/* tools */
+.tool{border:1.5px solid var(--hw);border-radius:8px;padding:8px 12px;background:color-mix(in srgb,var(--hw) 5%,var(--panel));margin:.6rem 0}
+.tool input,.tool select{font:inherit;font-size:.88rem;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.tool .row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:.3rem 0}
+/* quiz & practice */
+.qz,.px{border-radius:8px;padding:8px 12px;margin:.7rem 0}
+.qz{border:1.5px dashed var(--gold);background:color-mix(in srgb,var(--gold) 6%,var(--panel))}
+.px{border:1.5px solid var(--per);background:color-mix(in srgb,var(--per) 6%,var(--panel))}
+.qz .qt,.px .pxq{font-weight:600;margin:.2rem 0}
+.qrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.qz input,.px input{font:inherit;width:120px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.qz button,.px button{font:inherit;font-size:.9rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer;text-align:left}
+.qz button.on,.px button.on{border-color:var(--fg)}
+.px .pxh{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.px .pxh b{color:var(--per)}
+.px .pxs{font-size:.82rem;color:var(--muted)}
+.px .pxNext{border-color:var(--per);color:var(--per)}
+.fb{display:none;padding:6px 10px;border-radius:6px;background:var(--soft);margin-top:.3rem}
+.fb.ok{display:block;border-left:4px solid var(--good)}
+.fb.no{display:block;border-left:4px solid var(--bad)}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.wrap{max-width:1300px}
+.rd{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:.4rem 0}
+.rd div{border:1px solid var(--line);border-radius:6px;padding:3px 8px;background:var(--panel);font-size:.82rem}
+.rd div b{display:block;font-family:var(--font-m);font-size:1.05rem}
+.rd div.hot{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--panel))}
+table.calc td{font-family:var(--font-m);font-size:.84rem}
+table.calc tr.cur td{background:color-mix(in srgb,var(--bad) 10%,var(--panel))}
+input[type=range]{width:min(420px,100%)}
+.pill{display:inline-block;border-radius:10px;padding:0 8px;font-size:.8rem;font-weight:700}
+.pill.on{background:var(--good);color:var(--bg)}.pill.off{background:var(--soft);color:var(--muted)}
+</style>
+<div class="wrap">
+<div class="eyebrow">T1A 主线 · 第 4 课 · 按键算法：从读数到“按下 / 松开” · 代码 src/my_misc.c:418~668（ProcessRecvSampleRawData）、app/button.c:311、605</div>
+<h1>按键算法：一个读数怎么变成“按下了”</h1>
+<p class="lede">第 3 课拿到了两颗霍尔芯片的读数（每 1 ms 一次，14 位，0 ~ 16383）。这一课讲 MCU 拿到读数以后怎么判断左右键是按下还是松开：<b>校验 → 翻转 → 滤波 → 换算成 0 ~ 100 的“段位” → 快速触发判定</b>，旁边还有两条一直在“学习”的基线。全部是软件计算，不涉及新的硬件。</p>
+
+<div class="box" style="border-color:var(--gold)"><b>这一课为什么这样安排（根据你前面的提问）</b>
+<p>你之前学旧板的滤波时卡了好几次（“为什么差 ≤ 10 就只走 1/16”）。这次每一站都先用<b>图</b>讲清“它要解决什么问题”，再用<b>一步一步的数字</b>算给你看，最后才对代码。每一站的画法按内容来：按键画成剖面图，滤波画成“两条曲线 + 一条宽度为 ±60 的带子”，段位画成一把尺子，快速触发画成“记录最低点 / 最高点的曲线”。最后有一个<b>综合模拟器</b>：用滑块当手指按键，所有数字和曲线实时跟着变。</p>
+</div>
+
+<div class="box"><b>🧭 本质</b>：读数本身不会告诉你“按没按”。软件要先知道两个参照：<b>松开时读数是多少</b>（顶部基线）和<b>按到底时读数是多少</b>（底部基线），然后看当前读数在两者之间的哪个位置，换算成 0 ~ 100 的“按下深度”（段位）。再根据段位<b>变化的方向和幅度</b>判断按下 / 松开：往下走够 30 就算按下，往回走够 20 就算松开，不用等按到底或者完全松开（这叫“快速触发”）。</div>
+
+<h2>1. 全流程：每 1 ms，每个键走一遍这条流水线</h2>
+<p>点任意一站，下面的说明会跳到那一站。数字是 T1A 的实际参数。</p>
+<div class="scroll"><svg id="pipe" class="fig" viewBox="0 0 1260 330" style="min-width:1000px" role="img" aria-label="按键算法流水线"></svg></div>
+<div class="log" id="pipeLog"></div>
+<div class="scroll"><table>
+<thead><tr><th>谁</th><th>这一课里做什么</th></tr></thead>
+<tbody>
+<tr><td><b>主循环</b></td><td>每 1 ms：<code>Device_Scan()</code>（device.c:887 调用）→ <code>Device_Button_Scan()</code> → <code>Button_Scan()</code>（button.c:605）→ <code>Button_GetState()</code> → <code>LR_GetState()</code>（button.c:311）</td></tr>
+<tr><td><b>第 3 课的读取</b></td><td><code>LR_GetState()</code> 里先 <code>hall_get_sample()</code>，得到 <code>hall_spi_rx[4]</code></td></tr>
+<tr><td><b>本课的算法</b></td><td><code>ProcessRecvSampleRawData(hall_spi_rx, 4)</code>（my_misc.c:418）：两个键各走一遍流水线，返回 2 位结果：第 0 位 = 左键，第 1 位 = 右键</td></tr>
+<tr><td><b>结果去哪</b></td><td><code>Button_Scan()</code> 发现某位变了 → 调 <code>Ele_LeftKeyPressProcess()</code> 等让线圈振动（后面的课）、标记要通过 USB 上报；段位通过 <code>Ele_UpadteSegment()</code> 给线圈、<code>Hall_SyncParam()</code> 给 GUI</td></tr>
+</tbody></table></div>
+<p class="note">下标：代码里 <code>k = 0</code> 是<b>右键</b>（rx[0..1]），<code>k = 1</code> 是<b>左键</b>（rx[2..3]），和第 3 课一样。返回值却是第 0 位 = 左键（my_misc.c:657~665），别弄混。</p>
+
+<h2>2. 按键里发生了什么：为什么要“翻转”</h2>
+<p>每个键下面有一块磁铁，霍尔芯片在它正下方。按下时磁铁靠近芯片，磁场变强。手册第 12 节：南极靠近时读数<b>变小</b>（无磁场约 8192）。T1A 的磁铁装法是“按下读数变小”，代码用 <code>PRESS_KEY_AND_VALUE_DECREASE = 1</code>（my_misc.h:40~49）表示，于是第一步把读数翻过来：</p>
+<div class="rule" style="--c:var(--per)"><code>temp = 16383 − 读数</code>（my_misc.c:531）。翻过来以后，<b>按得越深，temp 越大</b>，后面所有计算都按这个方向来想。</div>
+<div class="tool"><b>动手：拖动按键，看读数和 temp</b>
+<div class="row"><label>按下深度：<input type="range" id="kyT" min="0" max="100" value="0"></label><b id="kyV"></b></div>
+<div class="scroll"><svg id="ky" class="fig" viewBox="0 0 1100 270" style="min-width:800px" role="img" aria-label="按键剖面、磁铁和霍尔芯片"></svg></div>
+<p class="note">读数是<b>示意值</b>：松开时取第 3 课的例子 9300，按到底取 6000。真实数值和磁铁、安装距离有关；磁场随距离不是均匀变化的，越靠近芯片变化越快，所以曲线是弯的。</p></div>
+
+<h2>3. 滤波：小抖动慢慢跟，大变化立刻跟</h2>
+<h3>3.1 它要解决什么问题</h3>
+<p>手指不动时，读数也会在几个数之间跳（噪声）。如果直接拿来判断，段位会抖，按键可能误触发。但如果滤得太狠，真正按下时又反应慢。代码的办法是<b>分两种情况</b>：</p>
+<div class="scroll"><table>
+<thead><tr><th>新 temp 和上一次滤波值差多少</th><th>当作什么</th><th>怎么处理（my_misc.c:534~545）</th></tr></thead>
+<tbody>
+<tr><td><b>差 &gt; 60</b></td><td>手指真的在动</td><td><b>直接跳到新值</b>：滤波值 = temp，并把“总和”重设成 temp × 64</td></tr>
+<tr><td><b>差 ≤ 60</b></td><td>噪声</td><td><b>只走 1/64</b>：总和 = 总和 + temp − 滤波值；滤波值 = 总和 ÷ 64；后面用滤波值代替 temp</td></tr>
+</tbody></table></div>
+<p><b>“只走 1/64”是什么意思</b>：总和始终约等于“滤波值 × 64”。加上 temp、减去旧滤波值，总和就多了 (temp − 滤波值)；再除以 64，滤波值就只往 temp 那边挪了<b>差值的 1/64</b>。比如滤波值 7083，新 temp 7123（差 40，≤ 60）：滤波值只变成约 7083 + 40 ÷ 64 ≈ 7083.6，取整还是 7083。连续很多次都是 7123，才会一点点爬上去。偶尔跳一下的噪声就被“摊薄”了。</p>
+<p><b>为什么“只挪 0.6，取整后没动”也有意义</b>：取整只发生在“滤波值 = 总和 ÷ 64”这一步，<b>总和本身没有丢掉零头</b>。下面工具里可以看到：喂了几个比 7083 大的数以后，滤波值一直显示 7083，但总和从 453312 慢慢涨到 453367，零头攒够 64 时滤波值才 +1。</p>
+<div class="tool"><b>动手：一个一个喂 temp，看滤波值怎么变</b>
+<div class="row"><label>下一个 temp：<input type="number" id="fiIn" value="7123" style="width:7em"></label><button type="button" id="fiGo">喂进去</button><button type="button" id="fiN">加一个小噪声</button><button type="button" id="fiJ">模拟按下（+300）</button><button type="button" id="fiR">重来</button></div>
+<div class="scroll"><svg id="fiSvg" class="fig" viewBox="0 0 1100 250" style="min-width:800px" role="img" aria-label="temp 和滤波值随时间"></svg></div>
+<div class="scroll"><table class="calc" id="fiTab"></table></div></div>
+<div class="qz" data-ans="7083" data-tol="0"><div class="qt">你来算：滤波值 = 7083，总和 = 7083 × 64 = 453312。新 temp = 7100（差 17）。算完后滤波值是多少？（总和 ÷ 64 去掉小数）</div>
+<div class="qrow"><input type="text" inputmode="decimal" aria-label="答案"><button type="button" class="chk">检查</button></div>
+<div class="fb" data-ok="对。差 17 ≤ 60，走 1/64：总和 = 453312 + 7100 − 7083 = 453329，÷ 64 = 7083.27，取整 7083。只挪了 0.27，被“摊薄”了。" data-no="差 17 ≤ 60，所以：总和 = 453312 + 7100 − 7083 = ?，再 ÷ 64 取整。"></div></div>
+<div class="qz" data-ans="7400" data-tol="0"><div class="qt">接上题：下一个 temp = 7400（真的按了）。滤波值变成多少？</div>
+<div class="qrow"><input type="text" inputmode="decimal" aria-label="答案"><button type="button" class="chk">检查</button></div>
+<div class="fb" data-ok="对。差 317 &gt; 60，直接跳：滤波值 = 7400，总和 = 7400 × 64。按下的动作一点都没被拖慢。" data-no="7400 和 7083 差多少？超过 60 吗？"></div></div>
+<p class="note">一个副作用（推论）：如果手指<b>非常慢</b>地按，每 1 ms 只变不到 60，滤波值就会一直落在后面（每次只追 1/64）。综合模拟器里可以试“慢慢按”。</p>
+
+<h2>4. 段位：把 temp 换算成 0 ~ 100 的按下深度</h2>
+<p>有了两条基线：<b>顶部基线</b>（松开时的 temp）和<b>底部基线</b>（按到底时的 temp），当前 temp 在它们之间的位置就是“按下了百分之几”。代码分两步（my_misc.c:288~327 <code>Hall_CalculateNode()</code>）：</p>
+<ol>
+<li><b>线性换算成 0 ~ 255 的格号</b>：<code>格号 = (temp − 顶部) × 255 ÷ (底部 − 顶部)</code>。代码用“先算 step = 2²¹ ÷ 差值，再乘、再右移 21 位”的写法，避免每次做除法（除法在这颗芯片上慢）；结果和直接除基本一样。temp ≤ 顶部 → 0；temp ≥ 底部 → 255。</li>
+<li><b>查表变成段位</b>：<code>nodeCaliTable[256]</code>（my_misc.c:46）把 0 ~ 255 格号变成 0 ~ 100。表的<b>前 10 格都是 0</b>（顶部有一小段“死区”，轻轻碰一下不算），<b>第 220 格以后都是 100</b>（离底还有一点就算到底）。</li>
+</ol>
+<p>还有两条保护：底部 ≤ 顶部，或两者差 &lt; 100（基线还没学好）→ 段位一律 0。</p>
+<div class="tool"><b>动手：拖动 temp，看格号和段位</b>
+<div class="row"><label>顶部基线 <input type="number" id="ndT" value="7083" style="width:6em"></label><label>底部基线 <input type="number" id="ndB" value="10383" style="width:6em"></label><label>temp：<input type="range" id="ndR" min="6800" max="10700" value="8000"></label><b id="ndV" style="font-family:var(--font-m)"></b></div>
+<div class="scroll"><svg id="ndSvg" class="fig" viewBox="0 0 1100 300" style="min-width:800px" role="img" aria-label="temp 在两条基线之间的位置和段位查表"></svg></div>
+<div class="log" id="ndLog"></div></div>
+
+<h2>5. 快速触发：看段位“往哪走、走了多少”</h2>
+<h3>5.1 它要解决什么问题</h3>
+<p>普通按键是“过了某个深度就算按下，回到这个深度以上就算松开”。快速触发（Rapid Trigger）更灵敏：<b>按下后只要往回抬一点就算松开，松开后只要再往下按一点就又算按下</b>，不用每次都完全松开。做法是一直记住一个“极点”：</p>
+<div class="scroll"><table>
+<thead><tr><th>当前状态</th><th>记住什么</th><th>什么时候翻转（my_misc.c:330~416）</th></tr></thead>
+<tbody>
+<tr><td><b>松开</b></td><td>松开以来段位的<b>最低点</b></td><td>段位 ≥ 最低点 + <b>30</b>（按下灵敏度 RTP），并且段位 ≥ <b>10</b>（触发点 AP）→ <b>按下</b>；或者段位到 100 → 直接按下</td></tr>
+<tr><td><b>按下</b></td><td>按下以来段位的<b>最高点</b></td><td>段位 ≤ 最高点 − 20 以下（最高点 &gt; 段位 + <b>20</b>，松开灵敏度 RTR）→ <b>松开</b>；或者段位回到 0 → 直接松开</td></tr>
+</tbody></table></div>
+<p>30、20、10 是默认值（my_misc.h:52~54）。开机时 <code>Init_CfgParamToRun()</code>（my_protocol_mouse.c:98）会把 GUI 存的配置交给 <code>Hall_UpdateParam()</code>；配置里“启用”位没开就用默认值。</p>
+<div class="rule" style="--c:var(--gold)"><b>一个容易看漏的地方</b>：从完全松开（最低点 0）开始，要段位 ≥ 0 + 30 才按下。触发点 10 比 30 小，所以默认参数下<b>第一次按下实际是在段位 30</b>，触发点 10 不起作用。只有 RTP 设得比 AP 小时，AP 才会起作用。</div>
+<div class="tool"><b>动手：选一种按法，一步一步看极点和状态</b>
+<div class="row"><label>按法：<select id="rtSel"><option value="0">普通点一下</option><option value="1">按下后半松再按（快速触发）</option><option value="2">轻轻碰一下（不够 30）</option><option value="3">按到底（100）</option><option value="4">按住时手指抖</option></select></label>
+<label>AP <input type="number" id="rtAP" value="10" style="width:4em"></label><label>RTP <input type="number" id="rtP" value="30" style="width:4em"></label><label>RTR <input type="number" id="rtR" value="20" style="width:4em"></label></div>
+<div class="btns"><button type="button" id="rtPrev">上一步</button><button type="button" id="rtNext">下一步</button><button type="button" id="rtPlay">自动播放</button><button type="button" id="rtReset">重来</button><span class="note" id="rtC"></span></div>
+<div class="scroll"><svg id="rtSvg" class="fig" viewBox="0 0 1100 300" style="min-width:800px" role="img" aria-label="段位、极点和按下状态随时间"></svg></div>
+<div class="log" id="rtLog"></div></div>
+
+<h2>6. 两条基线怎么来、怎么跟着变</h2>
+<p>基线不是写死的。磁铁、芯片的安装差异、温度都会让读数整体偏移，所以代码一直在“学习”：</p>
+<div class="scroll"><table>
+<thead><tr><th>什么时候</th><th>函数</th><th>规则（MAGNETIC_NOISE = 60，ONE_MS_COUNT = 1）</th></tr></thead>
+<tbody>
+<tr><td><b>开机后</b>（最多 600 ms）</td><td><code>Hall_InitBaseline()</code><br>my_misc.c:135</td><td>temp 和顶部基线差 ≤ 60：顶部 = (顶部 + temp) ÷ 2，计数 + 1；差 &gt; 60：顶部 = temp，计数清零。<b>连续 100 次</b>（100 ms）都稳定就学完。学完时<b>底部 = 顶部</b>。这期间按键不处理。<br>注意：任意一个键学完，两个键都结束学习阶段（my_misc.c:478）。</td></tr>
+<tr><td><b>平时，松开状态</b></td><td><code>Hall_CalibrateTopBaseline()</code><br>my_misc.c:162</td><td>temp 比顶部低 60 以上，<b>连续 300 ms</b> → 顶部 − 60<br>temp 比顶部低一点（0 ~ 60），<b>连续 100 ms</b> → 顶部 − 5<br>temp 比顶部高一点（0 ~ 60），<b>连续 100 ms</b> → 顶部 + 2<br>按下状态不学。</td></tr>
+<tr><td><b>平时，松开或刚按下的前 100 ms</b></td><td><code>Hall_CalibrateBottomBaseline()</code><br>my_misc.c:222</td><td>temp 比底部高 240 以上，<b>连续 30 ms</b> → 底部 + 180<br>temp 比底部高 60 ~ 240，<b>连续 30 ms</b> → 底部 + 30<br><b>只会往上加，不会往下减</b>。按下超过 100 ms 后不学。</td></tr>
+</tbody></table></div>
+<div class="box"><b>开机后第一下按键会怎样（推论，用综合模拟器的“开机后第一下”可以看到）</b>
+<p>学完时底部 = 顶部，差 &lt; 100，段位一律 0，按键没反应。手指按下去，temp 比底部高 240 以上，<b>连续按住 30 ms</b> 底部才 + 180，差够 100，段位开始有数；这时 temp 远高于底部，段位直接是 100 → 按下。所以开机后第一下要<b>按住约 30 ms</b>才响应，太快的轻点可能没反应。之后每次按下的前 100 ms 底部继续往上学，几次之后才学到真正的“按到底”；学到之前，段位偏大（还没按到底就显示 100）。</p></div>
+
+<h2>7. 综合模拟器：所有站连起来</h2>
+<p>下面用 JavaScript <b>照搬了 my_misc.c 的算法</b>（滤波、段位、快速触发、三条学习规则、开机学习），模拟一个键。拖滑块当手指（或者选一个预设动作），点“运行”，每 1 ms 走一遍流水线。读数是示意值（松开 9300，按到底 6000，加随机噪声）。</p>
+<div class="tool">
+<div class="row"><label>手指按下深度：<input type="range" id="smT" min="0" max="100" value="0"></label><b id="smTV" style="font-family:var(--font-m)"></b>
+<label>噪声 ±<input type="number" id="smN" value="15" style="width:4em"></label>
+<label>速度 <select id="smSp"><option value="0.25">慢放 ¼</option><option value="1" selected>实时</option><option value="4">快进 ×4</option></select></label></div>
+<div class="btns"><button type="button" id="smRun">运行</button><button type="button" id="smBoot">重新开机</button>
+<span class="note">预设动作：</span><button type="button" class="smP" data-p="click">点一下</button><button type="button" class="smP" data-p="rt">半松再按</button><button type="button" class="smP" data-p="slow">慢慢按</button><button type="button" class="smP" data-p="first">开机后第一下</button><button type="button" class="smP" data-p="rest">开机时手指搭着</button></div>
+<div class="rd" id="smRd"></div>
+<svg id="smSvg" class="fig" viewBox="0 0 1240 430" role="img" aria-label="模拟器：temp、基线、段位、状态随时间"></svg>
+<div class="log" id="smLog"></div></div>
+
+<h2>8. 对照代码：ProcessRecvSampleRawData() 一行行在哪</h2>
+<div class="scroll"><table>
+<thead><tr><th>行号（my_misc.c）</th><th>做什么</th><th>对应本课</th></tr></thead>
+<tbody>
+<tr><td>423~425</td><td>T1A：<code>length_filter_bit = 6</code>（÷ 64），<code>FILTER_SKIP_VALUE = 60</code></td><td>第 3 节</td></tr>
+<tr><td>427~428</td><td><code>raw_data_filter[2]</code>、<code>raw_data_filter_sum[2]</code>：每个键的滤波值和总和（static，一直保留）</td><td>第 3 节</td></tr>
+<tr><td>441~482</td><td>开机学习阶段：<code>cali_init_cnt</code> 从 600 往下减；校验、翻转、<code>Hall_InitBaseline()</code>；任一键返回 0 就把计数清零结束</td><td>第 6 节</td></tr>
+<tr><td>488~512</td><td>这一侧线圈正在振动 → 跳过这个键，状态保持上一次（线圈的磁场会干扰读数，<code>USE_HALL_VALUE_DURING_VIBRATION = 0</code>）</td><td>疑问 Q3</td></tr>
+<tr><td>520~521</td><td>校验、拼读数（第 3 课）；<code>CRC_ERROR</code> 时整段跳过，这 1 ms 这个键什么都不变</td><td>第 1 节</td></tr>
+<tr><td>530~532</td><td>翻转：<code>temp = 16383 − temp</code></td><td>第 2 节</td></tr>
+<tr><td>534~545</td><td>滤波：差 &gt; 60 跳，≤ 60 走 1/64</td><td>第 3 节</td></tr>
+<tr><td>547</td><td><code>node = Hall_CalculateNode(temp, 底部, 顶部)</code></td><td>第 4 节</td></tr>
+<tr><td>548</td><td><code>Hall_HandleKeyRapidTrigger(k, node)</code> → 改 <code>gbKeyState[k]</code></td><td>第 5 节</td></tr>
+<tr><td>549~550</td><td>顶部、底部基线学习（用的是这次判定后的状态）</td><td>第 6 节</td></tr>
+<tr><td>552~559</td><td><code>Ele_UpadteSegment()</code>：段位交给线圈模块（后面的课）</td><td>—</td></tr>
+<tr><td>600~607</td><td><code>Hall_SyncParam()</code>：基线、temp、段位交给 GUI 协议（后面的课）</td><td>—</td></tr>
+<tr><td>657~665</td><td>组返回值：<code>gbKeyState[0]</code>（右）→ 第 1 位，<code>gbKeyState[1]</code>（左）→ 第 0 位</td><td>第 1 节</td></tr>
+</tbody></table></div>
+
+<h2>9. 常见疑问</h2>
+<div class="box"><b>Q1：左右键没有“消抖”吗？</b><p>中键、侧键这种机械按键有消抖（button.c:673、678：按下等 5 ms、松开等 8 ms）。左右键是霍尔，<code>Button_Scan()</code> 里左右键的消抖被注释掉了（button.c:621、626），因为滤波和快速触发本身已经起到防抖作用：段位要变化 30 / 20 才翻转。</p></div>
+<div class="box"><b>Q2：校验失败（CRC_ERROR）那 1 ms 怎么办？</b><p>这个键整段跳过：不滤波、不算段位、不改状态、不学基线，下 1 ms 再读。所以偶尔一次干扰不会造成误按。</p></div>
+<div class="box"><b>Q3：线圈振动时为什么不用读数？</b><p>线圈通电会产生磁场，霍尔芯片就在旁边，读数会被干扰。所以振动期间这个键的状态保持振动前的值（my_misc.c:488~512），振动结束再恢复判断。线圈什么时候振动是后面几课的内容。</p></div>
+<div class="box"><b>Q4：开机时手指搭在键上会怎样？</b><p>推论：开机学到的“顶部”是半按下的值。松开后 temp 比顶部低很多，顶部每 300 ms 才 − 60；在这之前 temp ≤ 顶部，段位一直 0，这个键按不出来。要等的时间约 (偏了多少 ÷ 60) × 0.3 秒，比如偏 600 就要约 3 秒。模拟器“开机时手指搭着”可以看到。</p></div>
+<div class="box"><b>Q5：为什么 1 ms 才算一次，够快吗？</b><p>手指按一下通常几十毫秒，1 ms 一次足够细。代码里 <code>MAGNETIC_SCAN_RATE = 1</code>（my_hallkey_func.h:26）表示 1 kHz，<code>ONE_MS_COUNT</code> 就是 1，所以上面所有“连续 N ms”就是“连续 N 次”。</p></div>
+
+<h2>10. 本课所有变量和常数</h2>
+<div class="scroll"><table>
+<thead><tr><th>名字</th><th>在哪</th><th>值</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>temp[2]</code></td><td>my_misc.c:431 局部</td><td>0 ~ 16383</td><td>这 1 ms 的读数：先翻转，再被滤波值替换</td></tr>
+<tr><td><code>raw_data_filter[2]</code> / <code>raw_data_filter_sum[2]</code></td><td>my_misc.c:427~428 static</td><td>—</td><td>滤波值 / 滤波值 × 64 的总和</td></tr>
+<tr><td><code>gwTopBaseline[2]</code> / <code>gwBottomBaseline[2]</code></td><td>my_misc.c:74~75</td><td>初值 10000 / 6000（开机学习会改）</td><td>顶部 / 底部基线</td></tr>
+<tr><td><code>node[2]</code></td><td>局部</td><td>0 ~ 100</td><td>段位</td></tr>
+<tr><td><code>gbKeyState[2]</code></td><td>my_misc.c:71</td><td>0 / 1</td><td>按下状态（[0] 右，[1] 左）</td></tr>
+<tr><td><code>current_node_update[2]</code></td><td>my_misc.c:332 static</td><td>0 ~ 100</td><td>快速触发记住的极点（松开时最低点、按下时最高点）</td></tr>
+<tr><td><code>ap_value / rt_press_value / rt_release_value</code></td><td>my_misc.c:67~69</td><td>默认 10 / 30 / 20</td><td>触发点 / 按下灵敏度 / 松开灵敏度</td></tr>
+<tr><td><code>cali_init_cnt</code></td><td>my_misc.c:72</td><td>600 → 0</td><td>开机学习阶段剩余次数</td></tr>
+<tr><td><code>MAGNETIC_NOISE</code></td><td>my_hallkey_func.h:24</td><td>60</td><td>基线学习的“噪声宽度”</td></tr>
+<tr><td><code>length_filter_bit / FILTER_SKIP_VALUE</code></td><td>my_misc.c:424~425</td><td>6 / 60</td><td>滤波 ÷ 64 / 跳变门限</td></tr>
+<tr><td><code>nodeCaliTable[256]</code></td><td>my_misc.c:46</td><td>前 10 个 0，第 220 个起 100</td><td>格号 → 段位</td></tr>
+<tr><td><code>PRESS_KEY_AND_VALUE_DECREASE</code></td><td>my_misc.h:49</td><td>1</td><td>按下读数变小 → 要翻转</td></tr>
+</tbody></table></div>
+
+<h2>11. 练习（随机出题，可以一直做）</h2>
+<div class="px" id="px"></div>
+</div>
+<script>
+(function(){
+const $=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
+const el=(p,t,a,x)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e};
+/* ===== shared algorithm (ported from my_misc.c) ===== */
+const TBL=[0,0,0,0,0,0,0,0,0,0,5,6,7,8,9,10,11,12,13,14,14,15,15,16,16,17,17,18,18,19,19,20,21,22,22,23,23,24,24,25,25,26,26,27,27,28,28,29,29,30,31,31,32,32,33,33,34,34,35,35,36,36,37,37,38,38,39,39,40,40,41,41,42,42,43,43,44,44,45,45,46,46,47,47,48,48,49,49,50,50,51,51,52,52,53,53,54,54,55,55,56,56,57,57,58,58,58,59,59,59,60,60,61,61,62,62,63,63,64,64,65,65,66,66,66,67,67,67,68,68,68,69,69,69,70,70,71,71,72,72,73,73,74,74,74,75,75,75,76,76,76,77,77,77,78,78,78,79,79,79,80,80,81,81,82,82,82,83,83,83,84,84,84,85,85,85,86,86,86,87,87,87,88,88,88,89,89,89,90,90,90,91,91,91,92,92,92,93,93,93,94,94,94,95,95,95,96,96,96,97,97,97,98,98,98,98,99,99,99,99].concat(Array(36).fill(100));
+function nodeIdx(t,b,top){if(top>=b||b-top<100)return null;if(t<=top)return 0;if(t>=b)return 255;const step=Math.floor((1<<21)/(b-top));return Math.floor(((t-top)*step*255)/2097152)}
+function node(t,b,top){const i=nodeIdx(t,b,top);return i==null?0:TBL[i]}
+const RAW0=9300,RAW1=6000;
+const rawOf=x=>{const d0=1.6,d=d0-x,f=(Math.pow(1/d,3)-Math.pow(1/d0,3))/(Math.pow(1/0.6,3)-Math.pow(1/d0,3));return Math.round(RAW0-(RAW0-RAW1)*f)};
+/* ===== pipeline ===== */
+(function(){const s=$('pipe');const st=[
+ ['rx[4]','第 3 课读到的 4 字节','muted','每 1 ms 由 hall_get_sample() 读回。k = 0 右键用 rx[0..1]，k = 1 左键用 rx[2..3]。'],
+ ['① 校验拼数','14 位读数','per','ana_phy_bit_error_checker2()：校验不过返回 0xFFFF，这个键这 1 ms 整段跳过（第 3 课 5 节）。'],
+ ['② 翻转','temp = 16383 − 读数','per','按下读数变小，翻过来变成“按得越深越大”（第 2 节）。'],
+ ['③ 滤波','差 >60 跳；≤60 走 1/64','sw','小抖动摊薄，大变化立刻跟上（第 3 节）。'],
+ ['④ 段位','0 ~ 100','gold','temp 在顶部基线、底部基线之间的位置，查表换成 0 ~ 100（第 4 节）。'],
+ ['⑤ 快速触发','按下 / 松开','bad','松开时：段位比最低点高 30 且 ≥ 10 → 按下；按下时：比最高点低 20 → 松开（第 5 节）。'],
+ ['返回 2 位','bit0 左，bit1 右','pc','Button_Scan() 比较前后变化 → 线圈振动、USB 上报（后面的课）。']];
+ const W=150,G=26,X=i=>20+i*(W+G),Y=60;
+ st.forEach((a,i)=>{const g=el(s,'g',{style:'cursor:pointer',tabindex:0,role:'button','aria-label':a[0]});
+  el(g,'rect',{x:X(i),y:Y,width:W,height:70,rx:10,style:`fill:color-mix(in srgb,var(--${a[2]}) 18%,var(--panel));stroke:var(--${a[2]});stroke-width:2`});
+  el(g,'text',{x:X(i)+W/2,y:Y+30,'text-anchor':'middle','font-size':15,'font-weight':700,fill:'var(--fg)'},a[0]);
+  el(g,'text',{x:X(i)+W/2,y:Y+52,'text-anchor':'middle','font-size':12,fill:'var(--muted)'},a[1]);
+  g.onclick=()=>{$('pipeLog').textContent=a[0]+'：'+a[3]};
+  if(i<st.length-1)el(s,'path',{d:`M${X(i)+W+3},${Y+35} h${G-6} m-7,-6 l7,6 l-7,6`,fill:'none',stroke:'var(--muted)','stroke-width':2})});
+ /* baselines loop */
+ const bx=X(3)+10,bw=W*2+G-20;
+ el(s,'rect',{x:bx,y:190,width:bw,height:62,rx:10,style:'fill:color-mix(in srgb,var(--hw) 14%,var(--panel));stroke:var(--hw);stroke-width:2;stroke-dasharray:6 4'});
+ el(s,'text',{x:bx+bw/2,y:215,'text-anchor':'middle','font-size':14,'font-weight':700,fill:'var(--fg)'},'⑥ 基线学习：顶部 / 底部');
+ el(s,'text',{x:bx+bw/2,y:236,'text-anchor':'middle','font-size':12,fill:'var(--muted)'},'用滤波后的 temp 和按下状态，慢慢修正两条基线');
+ el(s,'path',{d:`M${X(3)+W/2},${Y+70} V190`,stroke:'var(--hw)','stroke-width':2,fill:'none'});el(s,'path',{d:`M${X(4)+W/2},190 V${Y+76} m-6,8 l6,-8 l6,8`,stroke:'var(--hw)','stroke-width':2,fill:'none'});
+ el(s,'path',{d:`M${X(5)+W/2},${Y+70} V221 H${bx+bw}`,stroke:'var(--hw)','stroke-width':2,fill:'none','stroke-dasharray':'4 3'});
+ el(s,'text',{x:X(5)+W/2+6,y:180,'font-size':11,fill:'var(--hw)'},'状态也用于学习');
+ /* startup */
+ el(s,'rect',{x:X(1),y:270,width:W*2+G,height:46,rx:10,style:'fill:var(--soft);stroke:var(--line)'});
+ el(s,'text',{x:X(1)+(W*2+G)/2,y:290,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--fg)'},'开机后先走“学习阶段”（≤ 600 ms）');
+ el(s,'text',{x:X(1)+(W*2+G)/2,y:308,'text-anchor':'middle','font-size':11.5,fill:'var(--muted)'},'只学顶部基线，不做 ③ ~ ⑤');
+ el(s,'text',{x:20,y:36,'font-size':13,'font-weight':700,fill:'var(--fg)'},'每 1 ms、每个键：');
+ el(s,'text',{x:X(1),y:36,'font-size':12,fill:'var(--muted)'},'线圈正在振动的那一侧：跳过 ① ~ ⑥，状态保持不变');
+ $('pipeLog').textContent='点任意一站看说明。';})();
+/* ===== key physics ===== */
+function drawKey(){const s=$('ky'),x=+$('kyT').value/100;s.innerHTML='';const raw=rawOf(x),t=16383-raw;$('kyV').textContent=Math.round(x*100)+'%';
+ const cy=40+x*70;
+ el(s,'rect',{x:60,y:cy,width:200,height:30,rx:8,style:'fill:color-mix(in srgb,var(--pc) 30%,var(--panel));stroke:var(--pc)'});el(s,'text',{x:160,y:cy+20,'text-anchor':'middle','font-size':13,fill:'var(--fg)','font-weight':700},'按键（鼠标左键）');
+ el(s,'path',{d:`M90,${cy+30} l10,8 l-20,8 l20,8 l-20,8 l10,8`,fill:'none',stroke:'var(--muted)','stroke-width':2});
+ el(s,'rect',{x:135,y:cy+30,width:50,height:30,rx:4,style:'fill:var(--bad);opacity:.85'});el(s,'text',{x:160,y:cy+50,'text-anchor':'middle','font-size':12,fill:'var(--bg)','font-weight':700},'磁铁');
+ el(s,'rect',{x:110,y:190,width:100,height:30,rx:4,style:'fill:var(--soft);stroke:var(--fg)'});el(s,'text',{x:160,y:210,'text-anchor':'middle','font-size':12,fill:'var(--fg)'},'霍尔芯片');
+ el(s,'line',{x1:40,x2:280,y1:222,y2:222,stroke:'var(--sw)','stroke-width':4});el(s,'text',{x:40,y:242,'font-size':11,fill:'var(--muted)'},'电路板');
+ for(let i=0;i<3;i++){el(s,'path',{d:`M${150+i*10},${cy+62} V188`,stroke:'var(--bad)','stroke-width':1.2,opacity:.3+x*.6,'stroke-dasharray':'3 3'})}
+ el(s,'text',{x:300,y:cy+50,'font-size':12,fill:'var(--muted)'},'距离越近，磁场越强');
+ /* curve */
+ const X0=470,W=560,Y0=62,H=160,Xp=p=>X0+p*W,Yr=r=>Y0+(r-5600)/(16383-5600)*0+ (9700-r)/(9700-5600)*H;
+ const Yt=v=>Y0+H-(v-6500)/(10800-6500)*H;
+ el(s,'line',{x1:X0,x2:X0+W,y1:Y0+H,y2:Y0+H,stroke:'var(--line)'});el(s,'line',{x1:X0,x2:X0,y1:Y0,y2:Y0+H,stroke:'var(--line)'});
+ el(s,'text',{x:X0+W/2,y:Y0+H+30,'text-anchor':'middle','font-size':11.5,fill:'var(--muted)'},'按下深度 0% → 100%');
+ let d1='',d2='';for(let i=0;i<=50;i++){const p=i/50,r=rawOf(p);d1+=(i?' L':'M')+Xp(p)+','+(Y0+H-(r-5600)/(9700-5600)*H);d2+=(i?' L':'M')+Xp(p)+','+Yt(16383-r)}
+ el(s,'path',{d:d1,fill:'none',stroke:'var(--muted)','stroke-width':2,'stroke-dasharray':'5 4'});el(s,'path',{d:d2,fill:'none',stroke:'var(--per)','stroke-width':2.5});
+ el(s,'circle',{cx:Xp(x),cy:Y0+H-(raw-5600)/(9700-5600)*H,r:6,fill:'var(--muted)'});el(s,'circle',{cx:Xp(x),cy:Yt(t),r:6,fill:'var(--per)'});
+ el(s,'text',{x:X0+8,y:20,'font-size':12,fill:'var(--muted)'},'虚线：芯片读数（按下变小）');el(s,'text',{x:X0+8,y:40,'font-size':12,fill:'var(--per)','font-weight':700},'实线：temp = 16383 − 读数（按下变大）');
+ el(s,'text',{x:300,y:120,'font-size':13,fill:'var(--fg)','font-weight':700},'读数 '+raw);el(s,'text',{x:300,y:142,'font-size':13,fill:'var(--per)','font-weight':700},'temp '+t)}
+$('kyT').oninput=drawKey;drawKey();
+/* ===== filter tool ===== */
+let FI=[];function fiReset(){FI=[{t:7083,f:7083,s:7083*64,how:'起点'}];[7101,7069,7110,7092,7058,7123].forEach(v=>fiFeed(v))}
+function fiFeed(t){t=Math.round(t);const p=FI[FI.length-1];let f,s,how;if(p.f>t+60||p.f+60<t){f=t;s=t*64;how=`差 ${Math.abs(t-p.f)} > 60 → 跳：滤波 = ${t}，总和 = ${t} × 64 = ${s}`}else{s=p.s+t-p.f;f=Math.floor(s/64);how=`差 ${Math.abs(t-p.f)} ≤ 60 → 总和 = ${p.s} + ${t} − ${p.f} = ${s}；滤波 = ${s} ÷ 64 = ${(s/64).toFixed(2)} → ${f}`}FI.push({t,f,s,how});fiDraw()}
+function fiDraw(){const s=$('fiSvg');s.innerHTML='';const n=Math.max(FI.length,20),X=i=>70+i*(1000/(n-1||1));const all=FI.flatMap(o=>[o.t,o.f]);let lo=Math.min(...all)-80,hi=Math.max(...all)+80;const Y=v=>220-(v-lo)/(hi-lo)*200;
+ for(let k=0;k<5;k++){const v=Math.round(lo+(hi-lo)*k/4);el(s,'line',{x1:70,x2:1080,y1:Y(v),y2:Y(v),stroke:'var(--grid)'});el(s,'text',{x:64,y:Y(v)+4,'text-anchor':'end','font-size':10.5,fill:'var(--muted)'},v)}
+ let band='';FI.forEach((o,i)=>{band+=(i?' L':'M')+X(i)+','+Y(o.f+60)});for(let i=FI.length-1;i>=0;i--)band+=' L'+X(i)+','+Y(FI[i].f-60);
+ el(s,'path',{d:band+'Z',style:'fill:color-mix(in srgb,var(--sw) 14%,transparent)'});
+ el(s,'polyline',{points:FI.map((o,i)=>X(i)+','+Y(o.t)).join(' '),fill:'none',stroke:'var(--muted)','stroke-width':1.5,'stroke-dasharray':'4 3'});
+ el(s,'polyline',{points:FI.map((o,i)=>X(i)+','+Y(o.f)).join(' '),fill:'none',stroke:'var(--sw)','stroke-width':2.5});
+ FI.forEach((o,i)=>{el(s,'circle',{cx:X(i),cy:Y(o.t),r:3.5,fill:'var(--muted)'});el(s,'circle',{cx:X(i),cy:Y(o.f),r:3.5,fill:'var(--sw)'})});
+ el(s,'text',{x:80,y:16,'font-size':12,fill:'var(--muted)'},'灰虚线 = 喂进去的 temp　绿线 = 滤波值　浅绿带 = 滤波值 ± 60（落在带里就只走 1/64）');
+ $('fiTab').innerHTML='<thead><tr><th>#</th><th>temp</th><th>怎么算</th><th>滤波值</th></tr></thead><tbody>'+FI.slice(-8).map((o,i,a)=>`<tr class="${i===a.length-1?'cur':''}"><td>${FI.length-a.length+i}</td><td>${o.t}</td><td>${o.how}</td><td><b>${o.f}</b></td></tr>`).join('')+'</tbody>'}
+$('fiGo').onclick=()=>{const v=+$('fiIn').value;if(!isNaN(v))fiFeed(v)};$('fiN').onclick=()=>{const p=FI[FI.length-1];const base=FI.length>1?FI[FI.length-1].t:7083;fiFeed(Math.round((p.f>7300?p.f:7083)+(Math.random()-.5)*60))};
+$('fiJ').onclick=()=>{fiFeed(FI[FI.length-1].f+300)};$('fiR').onclick=fiReset;fiReset();
+/* ===== node tool ===== */
+function drawND(){const s=$('ndSvg');s.innerHTML='';const top=+$('ndT').value,bot=+$('ndB').value,t=+$('ndR').value;$('ndV').textContent=t;
+ const X0=60,W=980,lo=Math.min(top,bot)-300,hi=Math.max(top,bot)+300,X=v=>X0+(v-lo)/(hi-lo)*W;
+ el(s,'line',{x1:X0,x2:X0+W,y1:60,y2:60,stroke:'var(--line)','stroke-width':6,'stroke-linecap':'round'});
+ if(bot>top){el(s,'rect',{x:X(top),y:52,width:X(bot)-X(top),height:16,rx:4,style:'fill:color-mix(in srgb,var(--gold) 35%,var(--panel))'})}
+ [[top,'顶部基线（松开）','sw'],[bot,'底部基线（按到底）','bad']].forEach(([v,n,c],i)=>{el(s,'line',{x1:X(v),x2:X(v),y1:40,y2:80,stroke:`var(--${c})`,'stroke-width':3});el(s,'text',{x:X(v),y:i?96:32,'text-anchor':'middle','font-size':12,fill:`var(--${c})`,'font-weight':700},n+' '+v)});
+ el(s,'path',{d:`M${X(t)},40 l-7,-12 h14 z`,fill:'var(--per)'});el(s,'text',{x:X(t)+10,y:30,'font-size':12,fill:'var(--per)','font-weight':700},'temp '+t);
+ /* table curve */
+ const tx=X0,ty=120,tw=W,th=150,Xi=i=>tx+i/255*tw,Yn=n=>ty+th-n/100*th;
+ el(s,'rect',{x:tx,y:ty,width:tw,height:th,style:'fill:none;stroke:var(--line)'});
+ el(s,'polyline',{points:TBL.map((n,i)=>Xi(i)+','+Yn(n)).join(' '),fill:'none',stroke:'var(--gold)','stroke-width':2.5});
+ el(s,'rect',{x:Xi(0),y:ty,width:Xi(10)-Xi(0),height:th,style:'fill:color-mix(in srgb,var(--muted) 18%,transparent)'});el(s,'text',{x:Xi(10)+4,y:ty+th-6,'font-size':11,fill:'var(--muted)'},'死区：格号 0~9 → 0');
+ el(s,'rect',{x:Xi(220),y:ty,width:Xi(255)-Xi(220),height:th,style:'fill:color-mix(in srgb,var(--bad) 12%,transparent)'});el(s,'text',{x:Xi(220)-4,y:ty+14,'text-anchor':'end','font-size':11,fill:'var(--bad)'},'格号 ≥ 220 → 100');
+ el(s,'text',{x:tx,y:ty+th+18,'font-size':11,fill:'var(--muted)'},'格号 0');el(s,'text',{x:tx+tw,y:ty+th+18,'text-anchor':'end','font-size':11,fill:'var(--muted)'},'格号 255');el(s,'text',{x:tx-6,y:ty+8,'text-anchor':'end','font-size':11,fill:'var(--muted)'},'100');el(s,'text',{x:tx-6,y:ty+th,'text-anchor':'end','font-size':11,fill:'var(--muted)'},'0');
+ const idx=nodeIdx(t,bot,top);let msg;
+ if(idx==null){msg=`底部 − 顶部 = ${bot-top}${bot<=top?'（底部 ≤ 顶部）':' < 100'} → 基线还没学好，段位一律 0。`}
+ else{const n=TBL[idx];el(s,'line',{x1:Xi(idx),x2:Xi(idx),y1:ty,y2:ty+th,stroke:'var(--per)','stroke-dasharray':'4 3'});el(s,'circle',{cx:Xi(idx),cy:Yn(n),r:6,fill:'var(--per)'});
+  const step=Math.floor((1<<21)/(bot-top));
+  msg=t<=top?`temp ${t} ≤ 顶部 ${top} → 格号 0 → 段位 ${n}`:t>=bot?`temp ${t} ≥ 底部 ${bot} → 格号 255 → 段位 100`:`差值 = temp − 顶部 = ${t-top}；范围 = 底部 − 顶部 = ${bot-top}\nstep = 2²¹ ÷ ${bot-top} = ${step}\n格号 = (${t-top} × ${step} × 255) >> 21 = ${idx}（直接除：${t-top} × 255 ÷ ${bot-top} = ${((t-top)*255/(bot-top)).toFixed(1)}）\n查表 nodeCaliTable[${idx}] = 段位 ${n}`}
+ $('ndLog').textContent=msg}
+['ndT','ndB','ndR'].forEach(i=>$(i).oninput=drawND);drawND();
+/* ===== rapid trigger tool ===== */
+const RTS=[[0,5,15,30,50,75,95,100,100,90,70,45,20,5,0,0],[0,10,25,40,60,70,72,65,55,48,55,65,75,80,70,58,50,40,25,10,0],[0,4,9,14,18,20,18,12,6,0],[0,20,45,70,90,100,100,100,85,60,30,0],[0,15,35,55,70,78,74,79,73,77,72,60,40,15,0]];
+let rtI=0,rtTimer=null;
+function rtRun(seq,AP,P,R){let st=0,cur=0;const out=[];seq.forEach(seg=>{let ev='',why='';const pst=st,pcur=cur;
+ if(st){if(seg===0){st=0;cur=seg;ev='松开';why='段位回到 0 → 直接松开'}else if(seg>cur){cur=seg;why=`按下中：段位 ${seg} 比最高点 ${pcur} 高 → 最高点 = ${seg}`}else if(cur>seg+R){st=0;why=`按下中：最高点 ${pcur} > 段位 ${seg} + ${R} → 松开`;ev='松开';cur=seg}else why=`按下中：最高点 ${pcur}，段位 ${seg}，只回落 ${pcur-seg} ≤ ${R} → 保持`}
+ else{if(seg>=100){st=1;cur=seg;ev='按下';why='段位到 100 → 直接按下'}else if(seg<cur){cur=seg;why=`松开中：段位 ${seg} 比最低点 ${pcur} 低 → 最低点 = ${seg}`}else if(seg>=cur+P&&seg>=AP){st=1;cur=seg;ev='按下';why=`松开中：段位 ${seg} ≥ 最低点 ${pcur} + ${P}，且 ≥ AP ${AP} → 按下`}else why=`松开中：最低点 ${pcur}，段位 ${seg}，${seg>=cur+P?`够 ${P} 了但 < AP ${AP}`:`只高 ${seg-pcur} < ${P}`} → 保持`}
+ out.push({seg,st,cur,ev,why})});return out}
+function rtDraw(){const seq=RTS[+$('rtSel').value],AP=+$('rtAP').value,P=+$('rtP').value,R=+$('rtR').value;const r=rtRun(seq,AP,P,R);rtI=Math.min(rtI,r.length-1);
+ const s=$('rtSvg');s.innerHTML='';const X0=70,W=990,X=i=>X0+i*(W/(seq.length-1)),Y=v=>230-v*2;
+ for(let v=0;v<=100;v+=20){el(s,'line',{x1:X0,x2:X0+W,y1:Y(v),y2:Y(v),stroke:'var(--grid)'});el(s,'text',{x:X0-6,y:Y(v)+4,'text-anchor':'end','font-size':10.5,fill:'var(--muted)'},v)}
+ el(s,'line',{x1:X0,x2:X0+W,y1:Y(AP),y2:Y(AP),stroke:'var(--gold)','stroke-dasharray':'5 4'});el(s,'text',{x:X0+W,y:Y(AP)-4,'text-anchor':'end','font-size':10.5,fill:'var(--gold)'},'AP '+AP);
+ for(let i=0;i<=rtI;i++){if(r[i].st)el(s,'rect',{x:X(i)-W/(seq.length-1)/2,y:250,width:W/(seq.length-1),height:16,style:'fill:var(--good);opacity:.7'})}
+ el(s,'text',{x:8,y:263,'font-size':11,fill:'var(--good)','font-weight':700},'按下状态');
+ el(s,'polyline',{points:r.slice(0,rtI+1).map((o,i)=>X(i)+','+Y(o.seg)).join(' '),fill:'none',stroke:'var(--per)','stroke-width':2.5});
+ el(s,'polyline',{points:r.slice(0,rtI+1).map((o,i)=>X(i)+','+Y(o.cur)).join(' '),fill:'none',stroke:'var(--bad)','stroke-width':1.8,'stroke-dasharray':'5 4'});
+ r.slice(0,rtI+1).forEach((o,i)=>{el(s,'circle',{cx:X(i),cy:Y(o.seg),r:4,fill:'var(--per)'});if(o.ev)el(s,'text',{x:X(i),y:Y(o.seg)-10,'text-anchor':'middle','font-size':12,'font-weight':700,fill:o.ev==='按下'?'var(--good)':'var(--bad)'},o.ev)});
+ const o=r[rtI];const thr=o.st?o.cur-R:Math.max(o.cur+P,AP);el(s,'line',{x1:X(rtI)-30,x2:X(rtI)+30,y1:Y(thr),y2:Y(thr),stroke:o.st?'var(--bad)':'var(--good)','stroke-width':3});
+ el(s,'text',{x:X(rtI)+34,y:Y(thr)+4,'font-size':11,fill:'var(--fg)'},o.st?`低于 ${thr} 就松开`:`到 ${thr} 就按下`);
+ el(s,'text',{x:X0,y:20,'font-size':12,fill:'var(--muted)'},'蓝线 = 段位　红虚线 = 记住的极点（松开时最低点 / 按下时最高点）　短粗线 = 下一次翻转的门槛');
+ $('rtLog').textContent=`第 ${rtI+1} ms：段位 ${o.seg}。${o.why}。`;$('rtC').textContent=`第 ${rtI+1} / ${r.length} 步`;$('rtPrev').disabled=rtI===0;$('rtNext').disabled=rtI===r.length-1}
+const rtStop=()=>{if(rtTimer){clearInterval(rtTimer);rtTimer=null;$('rtPlay').textContent='自动播放'}};
+$('rtNext').onclick=()=>{rtStop();rtI++;rtDraw()};$('rtPrev').onclick=()=>{rtStop();rtI=Math.max(0,rtI-1);rtDraw()};$('rtReset').onclick=()=>{rtStop();rtI=0;rtDraw()};
+$('rtPlay').onclick=()=>{if(rtTimer){rtStop();return}const n=RTS[+$('rtSel').value].length;if(rtI>=n-1)rtI=0;$('rtPlay').textContent='暂停';rtTimer=setInterval(()=>{if(rtI>=RTS[+$('rtSel').value].length-1){rtStop();return}rtI++;rtDraw()},600)};
+['rtSel','rtAP','rtP','rtR'].forEach(i=>$(i).onchange=()=>{rtStop();if(i==='rtSel')rtI=0;rtDraw()});rtI=0;rtDraw();
+/* ===== simulator ===== */
+let K,T=0,H=[],run=false,acc=0,preset=null,last=0;
+function boot(){K={fil:0,sum:0,top:10000,bot:6000,icnt:0,cali:600,tc:[0,0,0],bc:[0,0],pc:0,pms:0,cur:0,st:0,phase:'学习'};T=0;H=[];preset=null}
+function stepSim(x){const nz=+$('smN').value||0;const raw=rawOf(x)+Math.round((Math.random()+Math.random()-1)*nz);let t=16383-raw;const k=K;let node_=0,ev='';
+ if(k.cali>0){k.cali--;const up=k.top+60,lo=k.top-60;if(t>up||t<lo){k.top=t;k.bot=t;k.icnt=0}else{k.top=Math.floor((k.top+t)/2);k.bot=k.top;k.icnt++;if(k.icnt>=100){k.icnt=100;k.cali=0}}k.phase=k.cali>0?'学习':'正常';H.push({t,f:t,top:k.top,bot:k.bot,n:0,st:0,cur:0,x,learn:1});return}
+ if(k.fil>t+60||k.fil+60<t){k.fil=t;k.sum=t*64}else{k.sum+=t-k.fil;k.fil=Math.floor(k.sum/64);t=k.fil}
+ node_=node(t,k.bot,k.top);
+ const P=30,R=20,AP=10;const pst=k.st;
+ if(k.st){if(node_===0){k.st=0;k.cur=node_}else if(node_>k.cur)k.cur=node_;else if(k.cur>node_+R){k.st=0;k.cur=node_}}
+ else{if(node_>=100){k.st=1;k.cur=node_}else if(node_<k.cur)k.cur=node_;else if(node_>=k.cur+P&&node_>=AP){k.st=1;k.cur=node_}}
+ if(pst!==k.st)ev=k.st?'按下':'松开';
+ /* top */
+ if(k.st){k.tc=[0,0,0]}else{const tb=k.top;if(t<tb-60){k.tc[0]++;k.tc[1]++;k.tc[2]=0;if(k.tc[0]>=300){k.tc[0]=0;k.tc[1]=0;k.top=tb-60}}else if(t<tb){k.tc[1]++;k.tc[0]=0;k.tc[2]=0;if(k.tc[1]>=100){k.tc[1]=0;k.top=tb-5}}else if(t<=tb+60&&t>tb){k.tc[2]++;k.tc[0]=0;k.tc[1]=0;if(k.tc[2]>=100){k.tc[2]=0;k.top=tb+2}}else k.tc=[0,0,0]}
+ /* bottom */
+ if(k.st){k.pc++;if(k.pc>=1){k.pc=0;if(k.pms<255)k.pms++}}else{k.pc=0;k.pms=0}
+ if(k.pms>100){k.bc=[0,0]}else{const bb=k.bot;if(t>bb+240){k.bc[0]++;k.bc[1]++;if(k.bc[0]>=30){k.bc=[0,0];k.bot=bb+180}}else if(t>bb+60){k.bc[1]++;k.bc[0]=0;if(k.bc[1]>=30){k.bc[1]=0;k.bot=bb+30}}else k.bc=[0,0]}
+ H.push({t:16383-raw,f:t,top:k.top,bot:k.bot,n:node_,st:k.st,cur:k.cur,x,ev})}
+const PRE={click:t=>t<80?0:t<120?(t-80)/40:t<200?1:t<240?1-(t-200)/40:0,
+ rt:t=>t<60?0:t<110?(t-60)/50*0.9:t<200?0.9:t<240?0.9-(t-200)/40*0.35:t<300?0.55:t<340?0.55+(t-300)/40*0.35:t<420?0.9:t<470?0.9-(t-420)/50*0.9:0,
+ slow:t=>t<50?0:t<1250?(t-50)/1200:t<1400?1:t<1600?1-(t-1400)/200:0,
+ first:null,rest:null};
+function presetX(){if(!preset)return +$('smT').value/100;const pt=T-preset.t0;const f=preset.f;if(!f)return +$('smT').value/100;const v=f(pt);if(pt>preset.len){preset=null}return Math.max(0,Math.min(1,v))}
+function simDraw(){const s=$('smSvg');s.innerHTML='';const N=1500,hs=H.slice(-N),X0=80,W=1140,X=i=>X0+(i+(N-hs.length))*(W/N);
+ const vals=hs.flatMap(o=>[o.t,o.f,o.top,o.bot]).filter(v=>v>2000&&v<16000);let lo=Math.min(...vals,6800)-150,hi=Math.max(...vals,10600)+150;const Y=v=>20+(1-(v-lo)/(hi-lo))*230;
+ for(let k=0;k<6;k++){const v=Math.round(lo+(hi-lo)*k/5);el(s,'line',{x1:X0,x2:X0+W,y1:Y(v),y2:Y(v),stroke:'var(--grid)'});el(s,'text',{x:X0-6,y:Y(v)+4,'text-anchor':'end','font-size':10.5,fill:'var(--muted)'},v)}
+ const pl=(key,c,w,dash,yf)=>{const yy=yf||(v=>Y(Math.max(lo,Math.min(hi,v))));if(hs.length>1)el(s,'polyline',{points:hs.map((o,i)=>X(i)+','+yy(o[key])).join(' '),fill:'none',stroke:`var(--${c})`,'stroke-width':w,'stroke-dasharray':dash||''})};
+ pl('t','muted',1,'2 2');pl('f','per',2);pl('top','sw',2.2);pl('bot','bad',2.2);
+ el(s,'text',{x:X0,y:14,'font-size':11.5,fill:'var(--muted)'},'灰点线 = 翻转后的 temp（未滤波）　蓝 = 滤波后　绿 = 顶部基线　红 = 底部基线');
+ const Y2=v=>390-v*1.1;el(s,'rect',{x:X0,y:Y2(100),width:W,height:110,style:'fill:none;stroke:var(--line)'});
+ [0,30,100].forEach(v=>{el(s,'text',{x:X0-6,y:Y2(v)+4,'text-anchor':'end','font-size':10.5,fill:'var(--muted)'},v)});
+ hs.forEach((o,i)=>{if(o.st)el(s,'rect',{x:X(i),y:Y2(100),width:W/N+0.6,height:110,style:'fill:color-mix(in srgb,var(--good) 16%,transparent)'});if(o.learn)el(s,'rect',{x:X(i),y:Y2(100),width:W/N+0.6,height:110,style:'fill:color-mix(in srgb,var(--gold) 16%,transparent)'})});
+ pl('n','gold',2.4,'',Y2);pl('cur','bad',1.4,'4 3',Y2);
+ hs.forEach((o,i)=>{if(o.ev)el(s,'text',{x:X(i),y:Y2(100)-4,'text-anchor':'middle','font-size':11,'font-weight':700,fill:o.ev==='按下'?'var(--good)':'var(--bad)'},o.ev)});
+ el(s,'text',{x:X0,y:Y2(100)-18,'font-size':11.5,fill:'var(--muted)'},'金 = 段位 0~100　红虚线 = 快速触发记住的极点　绿底 = 按下状态　黄底 = 开机学习阶段　（横轴：最近 1.5 秒）');
+ const o=H[H.length-1]||{};const k=K;
+ const rd=[['时间',T+' ms'],['阶段',k.cali>0?`学习（剩 ${k.cali}，稳定 ${k.icnt}/100）`:'正常'],['手指',Math.round((o.x||0)*100)+'%'],['temp（翻转后）',o.t??'—'],['滤波后',o.f??'—'],['顶部基线',k.top],['底部基线',k.bot],['底部 − 顶部',k.bot-k.top],['段位',o.n??0],['极点',k.cur],['状态',k.st?'按下':'松开']];
+ $('smRd').innerHTML=rd.map(([a,b])=>`<div class="${a==='状态'&&k.st?'hot':''}">${a}<b>${b}</b></div>`).join('')}
+function loop(ts){if(!run){last=0;return}if(!last)last=ts;const dt=Math.min(100,ts-last);last=ts;acc+=dt*(+$('smSp').value);let n=0;while(acc>=1&&n<400){acc-=1;n++;stepSim(presetX());T++}if(n)simDraw();requestAnimationFrame(loop)}
+$('smRun').onclick=()=>{run=!run;$('smRun').textContent=run?'暂停':'运行';if(run)requestAnimationFrame(loop)};
+$('smBoot').onclick=()=>{boot();$('smT').value=0;$('smLog').textContent='重新开机：先进入学习阶段（黄底），最少 100 ms 稳定才学完。';simDraw()};
+$('smT').oninput=()=>{preset=null;$('smTV').textContent=$('smT').value+'%'};
+document.querySelectorAll('.smP').forEach(b=>b.onclick=()=>{const p=b.dataset.p;
+ if(p==='first'){boot();$('smT').value=0;preset={t0:700,len:900,f:t=>t<0?0:t<20?t/20:t<300?1:t<330?1-(t-300)/30:0};preset.t0=700;$('smLog').textContent='开机后第一下：开机学习约 100 ms 结束后，在 700 ms 时按到底停 300 ms。看底部基线（红）什么时候第一次跳上去、段位什么时候才有数。';}
+ else if(p==='rest'){boot();$('smT').value=20;preset=null;$('smLog').textContent='开机时手指搭在键上（20%）：学习阶段学到的“顶部”是半按下的值。等学习结束后把滑块拖回 0，看顶部基线要多久才降回去，在这之前按键按不出。';}
+ else{preset={t0:T,len:p==='slow'?1700:600,f:(f=>t=>f(t))(PRE[p])};$('smLog').textContent={click:'点一下：快速按到底、停 80 ms、松开。',rt:'半松再按：按到 90%，回到 55%（松开），再按回 90%（又按下）。',slow:'慢慢按：1.2 秒才按到底。看蓝线（滤波后）是不是落在灰线后面。'}[p]}
+ if(!run){run=true;$('smRun').textContent='暂停';requestAnimationFrame(loop)}});
+boot();simDraw();$('smTV').textContent='0%';$('smLog').textContent='点“运行”。先等黄底的开机学习结束（约 100 ms），再拖滑块或点预设动作。';
+/* ===== fixed quiz ===== */
+document.querySelectorAll('.qz').forEach(q=>{const fb=q.querySelector('.fb');const show=ok=>{fb.className='fb '+(ok?'ok':'no');fb.innerHTML=(ok?'✓ ':'✗ ')+(ok?fb.dataset.ok:fb.dataset.no)};
+ if(q.dataset.choice!=null){const c=+q.dataset.choice;[...q.querySelectorAll('.opt')].forEach((b,j)=>b.onclick=()=>{q.querySelectorAll('.opt').forEach(x=>x.classList.remove('on'));b.classList.add('on');show(j===c)});return}
+ const inp=q.querySelector('input');const ans=+q.dataset.ans,tol=+(q.dataset.tol||0);
+ const go=()=>{const v=parseFloat(inp.value);if(isNaN(v))return;show(Math.abs(v-ans)<=tol+1e-9)};q.querySelector('.chk').onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter')go()})});
+/* ===== practice ===== */
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),pick=a=>a[Math.floor(Math.random()*a.length)];
+function mc(q,opts,ans,sol){const idx=opts.map((_,i)=>i);for(let i=idx.length-1;i>0;i--){const j=ri(0,i);[idx[i],idx[j]]=[idx[j],idx[i]]}return{q,type:'mc',opts:idx.map(i=>opts[i]),ans:idx.indexOf(ans),sol}}
+const num=(q,ans,sol)=>({q,type:'num',ans,sol});
+const GEN=[
+ ()=>{const r=ri(5000,10000);return num(`芯片读数 ${r}，翻转后 temp 是多少？`,16383-r,`16383 − ${r} = <b>${16383-r}</b>`)},
+ ()=>{const f=ri(7000,9000),d=ri(-60,60),t=f+d,s=f*64,s2=s+t-f;return num(`滤波值 ${f}，总和 ${s}（= ${f} × 64）。新 temp ${t}，新的滤波值是多少？`,Math.floor(s2/64),`差 ${Math.abs(d)} ≤ 60：总和 = ${s} + ${t} − ${f} = ${s2}，÷ 64 = ${(s2/64).toFixed(2)} → <b>${Math.floor(s2/64)}</b>`)},
+ ()=>{const f=ri(7000,9000),d=pick([1,-1])*ri(61,500),t=f+d;return num(`滤波值 ${f}，新 temp ${t}，新的滤波值是多少？`,t,`差 ${Math.abs(d)} > 60，直接跳：<b>${t}</b>`)},
+ ()=>{const top=ri(6800,7300),bot=top+ri(2500,3500),t=ri(top+50,bot-50);const i=nodeIdx(t,bot,top);return num(`顶部 ${top}，底部 ${bot}，temp ${t}。格号（0~255）大约是多少？（按 (temp − 顶部) × 255 ÷ (底部 − 顶部) 取整，允许差 1）`,i,`(${t} − ${top}) × 255 ÷ ${bot-top} = ${((t-top)*255/(bot-top)).toFixed(1)}，代码算出 <b>${i}</b>，查表段位 ${TBL[i]}`)},
+ ()=>{const i=ri(0,255);return num(`格号 ${i}，查 nodeCaliTable 得段位多少？（提示：0~9 → 0，≥ 220 → 100，其余看第 4 节图）`,TBL[i],`nodeCaliTable[${i}] = <b>${TBL[i]}</b>`)},
+ ()=>{const m=ri(0,40),P=30;return num(`松开状态，记住的最低点是 ${m}，默认 RTP = 30、AP = 10。段位至少到多少才按下？`,Math.max(m+P,10),`max(${m} + 30, 10) = <b>${Math.max(m+P,10)}</b>`)},
+ ()=>{const m=ri(40,100);return num(`按下状态，记住的最高点是 ${m}，RTR = 20。段位低于多少（不含）就松开？（写出“最高点 − 20”）`,m-20,`最高点 > 段位 + 20，即段位 < ${m} − 20 = <b>${m-20}</b>`)},
+ ()=>{const d=pick([300,600,900,1200]);return num(`开机时手指搭在键上，学到的顶部比真实松开值高 ${d}。松开后顶部每 300 ms 降 60，大约要多少秒才降回来？`,+(d/60*0.3).toFixed(2),`${d} ÷ 60 × 0.3 = <b>${(d/60*0.3).toFixed(2)}</b> 秒`)},
+ ()=>mc('T1A 上为什么要 temp = 16383 − 读数？',['按下时读数变小，翻过来变成按得越深越大','让读数变成 14 位','为了校验'],0,'PRESS_KEY_AND_VALUE_DECREASE = 1。'),
+ ()=>mc('滤波时新 temp 和滤波值差 > 60 会怎样？',['直接跳到新值','只走 1/64','丢掉这个数'],0,'大变化当作真的在按，立刻跟上。'),
+ ()=>mc('底部 − 顶部 < 100 时段位是？',['一律 0','一律 100','照常计算'],0,'基线还没学好。'),
+ ()=>mc('默认参数下，从完全松开开始，段位到多少才第一次按下？',['30','10','100'],0,'要 ≥ 最低点 0 + 30 且 ≥ 10，所以是 30。'),
+ ()=>mc('底部基线会往下减吗？',['不会，只会往上加','会，和顶部一样','只在开机时减'],0,'Hall_CalibrateBottomBaseline 只有 + 180、+ 30 两条。'),
+ ()=>mc('校验失败（CRC_ERROR）的那 1 ms，这个键会怎样？',['整段跳过，状态不变','当作松开','当作按下'],0,'my_misc.c:520 的 if 把整段包住。'),
+ ()=>mc('返回值第 0 位是哪个键？',['左键（gbKeyState[1]）','右键（gbKeyState[0]）','中键'],0,'my_misc.c:657~665。'),
+ ()=>mc('线圈在振动时，这一侧的键怎么处理？',['跳过，保持振动前的状态','照常判断','强制松开'],0,'USE_HALL_VALUE_DURING_VIBRATION = 0。'),
+];
+let n=0,ok=0,cur=null,done=false;const pxb=$('px');
+pxb.innerHTML='<div class="pxh"><b>练习</b><span class="pxs" id="pxs"></span></div><div class="pxq" id="pxq"></div><div class="qrow" id="pxa"></div><div class="fb" id="pxfb"></div><div class="qrow"><button type="button" id="pxShow">看答案</button><button type="button" class="pxNext" id="pxNext">下一题 →</button></div>';
+const upd=()=>$('pxs').textContent=`已做 ${n} 题，对 ${ok} 题`;
+function judge(r){if(!done){n++;if(r)ok++}done=true;$('pxfb').className='fb '+(r?'ok':'no');$('pxfb').innerHTML=r?'✓ 对。'+cur.sol:'✗ 不对，再想想，或者点“看答案”。';upd()}
+function next(){cur=pick(GEN)();done=false;$('pxq').innerHTML=cur.q;$('pxfb').className='fb';$('pxfb').innerHTML='';const a=$('pxa');a.innerHTML='';
+ if(cur.type==='mc'){cur.opts.forEach((o,j)=>{const b=document.createElement('button');b.type='button';b.innerHTML=o;b.onclick=()=>{a.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');judge(j===cur.ans)};a.appendChild(b)})}
+ else{const inp=document.createElement('input');inp.type='text';inp.setAttribute('aria-label','答案');const c=document.createElement('button');c.type='button';c.textContent='检查';
+  const go=()=>{const v=parseFloat(inp.value);if(isNaN(v))return;judge(Math.abs(v-cur.ans)<=(/格号/.test(cur.q)?1:0.011))};c.onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter'){if(done&&$('pxfb').classList.contains('ok'))next();else go()}});a.append(inp,c)}
+ upd()}
+$('pxShow').onclick=()=>{if(!done)n++;done=true;$('pxfb').className='fb no';$('pxfb').innerHTML='答案：'+(cur.type==='mc'?cur.opts[cur.ans]:cur.ans)+'<br>'+cur.sol;upd()};
+$('pxNext').onclick=next;next();
+})();
+</script>
