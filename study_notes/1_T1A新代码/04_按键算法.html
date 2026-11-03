@@ -154,6 +154,15 @@ input[type=range]{width:min(420px,100%)}
 <li><b>线性换算成 0 ~ 255 的格号</b>：<code>格号 = (temp − 顶部) × 255 ÷ (底部 − 顶部)</code>。代码用“先算 step = 2²¹ ÷ 差值，再乘、再右移 21 位”的写法，避免每次做除法（除法在这颗芯片上慢）；结果和直接除基本一样。temp ≤ 顶部 → 0；temp ≥ 底部 → 255。</li>
 <li><b>查表变成段位</b>：<code>nodeCaliTable[256]</code>（my_misc.c:46）把 0 ~ 255 格号变成 0 ~ 100。表的<b>前 10 格都是 0</b>（顶部有一小段“死区”，轻轻碰一下不算），<b>第 220 格以后都是 100</b>（离底还有一点就算到底）。</li>
 </ol>
+<div class="box" style="border-color:var(--gold)"><b>“第 220 格以后都是 100”是怎么数出来的</b>
+<p>格号就是数组下标，从 0 开始数。代码里这张表每行个数不一样，<b>行尾的注释 <code>//15</code>、<code>//16</code>…… 写的就是这一行有几个数</b>。把前面各行的个数加起来，就知道每行第一个数是第几格：</p>
+<div class="scroll"><table>
+<thead><tr><th>代码里第几行</th><th>注释（本行个数）</th><th>本行第一个数的格号 = 前面各行个数之和</th><th>格号范围</th><th>段位</th></tr></thead>
+<tbody id="tbRows"></tbody></table></div>
+<p>所以最后一行（36 个 100）从第 <b>15 + 16 + 18 + 19 + 20 + 22 + 24 + 26 + 28 + 32 = 220</b> 格开始，到第 220 + 36 − 1 = <b>255</b> 格结束，正好 256 个。第一行的前 10 个 0 就是第 0 ~ 9 格（死区）。</p>
+<p>下面按代码的排法把 256 格画出来，每格上面的小字是格号。把鼠标放到任意一格上能看到它的格号和段位：</p>
+<div class="scroll"><div id="tbGrid" style="font-family:var(--font-m);font-size:.74rem;min-width:1150px"></div></div>
+<div class="log" id="tbLog">把鼠标放到某一格上。</div></div>
 <p>还有两条保护：底部 ≤ 顶部，或两者差 &lt; 100（基线还没学好）→ 段位一律 0。</p>
 <div class="tool"><b>动手：拖动 temp，看格号和段位</b>
 <div class="row"><label>顶部基线 <input type="number" id="ndT" value="7083" style="width:6em"></label><label>底部基线 <input type="number" id="ndB" value="10383" style="width:6em"></label><label>temp：<input type="range" id="ndR" min="6800" max="10700" value="8000"></label><b id="ndV" style="font-family:var(--font-m)"></b></div>
@@ -325,6 +334,15 @@ function fiDraw(){const s=$('fiSvg');s.innerHTML='';const n=Math.max(FI.length,2
  $('fiTab').innerHTML='<thead><tr><th>#</th><th>temp</th><th>怎么算</th><th>滤波值</th></tr></thead><tbody>'+FI.slice(-8).map((o,i,a)=>`<tr class="${i===a.length-1?'cur':''}"><td>${FI.length-a.length+i}</td><td>${o.t}</td><td>${o.how}</td><td><b>${o.f}</b></td></tr>`).join('')+'</tbody>'}
 $('fiGo').onclick=()=>{const v=+$('fiIn').value;if(!isNaN(v))fiFeed(v)};$('fiN').onclick=()=>{const p=FI[FI.length-1];const base=FI.length>1?FI[FI.length-1].t:7083;fiFeed(Math.round((p.f>7300?p.f:7083)+(Math.random()-.5)*60))};
 $('fiJ').onclick=()=>{fiFeed(FI[FI.length-1].f+300)};$('fiR').onclick=fiReset;fiReset();
+/* ===== table rows ===== */
+(function(){const L=[15,16,18,19,20,22,24,26,28,32,36];let st=0,rows='',g='';
+ L.forEach((n,r)=>{const vals=TBL.slice(st,st+n);rows+=`<tr${r===10?' class="chg"':''}><td>${r+1}</td><td>//${n}</td><td>${r?L.slice(0,r).join(' + ')+' = ':''}<b>${st}</b></td><td>${st} ~ ${st+n-1}</td><td>${vals[0]} ~ ${vals[n-1]}</td></tr>`;
+  g+=`<div style="display:flex;align-items:flex-end;gap:2px;margin:3px 0"><span style="width:84px;flex:none;color:var(--muted);white-space:nowrap">第 ${st} 格起</span>`;
+  vals.forEach((v,i)=>{const idx=st+i;const bg=v===0?'var(--soft)':v===100?'color-mix(in srgb,var(--bad) 22%,var(--panel))':'color-mix(in srgb,var(--gold) 22%,var(--panel))';
+   g+=`<span data-i="${idx}" style="width:28px;flex:none;text-align:center;border:1px solid var(--line);border-radius:3px;background:${bg};cursor:default"><span style="display:block;font-size:.58rem;color:var(--muted)">${idx}</span>${v}</span>`});
+  g+=`<span style="margin-left:6px;color:var(--muted)">//${n}</span></div>`;st+=n});
+ $('tbRows').innerHTML=rows;$('tbGrid').innerHTML=g;
+ $('tbGrid').addEventListener('mouseover',e=>{const c=e.target.closest('[data-i]');if(!c)return;const i=+c.dataset.i;$('tbLog').textContent=`格号 ${i} → nodeCaliTable[${i}] = 段位 ${TBL[i]}`+(i<10?'（死区）':i>=220?'（最后一行，都是 100）':'')})})();
 /* ===== node tool ===== */
 function drawND(){const s=$('ndSvg');s.innerHTML='';const top=+$('ndT').value,bot=+$('ndB').value,t=+$('ndR').value;$('ndV').textContent=t;
  const X0=60,W=980,lo=Math.min(top,bot)-300,hi=Math.max(top,bot)+300,X=v=>X0+(v-lo)/(hi-lo)*W;
