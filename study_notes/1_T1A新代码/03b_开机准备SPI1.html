@@ -81,6 +81,18 @@ svg.fig{display:block;width:100%;height:auto;background:var(--panel);border:1px 
 .fb.ok{display:block;border-left:4px solid var(--good)}
 .fb.no{display:block;border-left:4px solid var(--bad)}
 button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+#eView .rg{margin:.35rem 0}
+#eView .rg .nm{font-size:.78rem;font-weight:600;color:var(--c)}
+#eView .cells{display:grid;gap:2px;font-family:var(--font-m);font-size:.74rem;text-align:center}
+#eView .cells span{border:1px solid var(--line);border-radius:3px;padding:2px 0;background:var(--panel);min-width:0}
+#eView .cells span.k{border:0;background:none;color:var(--muted);font-size:.6rem;padding:0}
+#eView .cells span.hl{outline:2px solid var(--bad);outline-offset:-2px;font-weight:700}
+#eView .cells span.L{background:color-mix(in srgb,var(--sw) 30%,var(--panel))}
+#eView .cells span.R{background:color-mix(in srgb,var(--per) 30%,var(--panel))}
+#eView .cells span.T{background:color-mix(in srgb,var(--muted) 25%,var(--panel))}
+#eView .wire{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.82rem;margin:.1rem 0 .1rem 1em;color:var(--muted)}
+#eView .wire b{font-family:var(--font-m);border:1.5px solid var(--c);border-radius:4px;padding:0 8px;color:var(--fg)}
+#eView .wire b.hl{background:color-mix(in srgb,var(--bad) 25%,var(--panel))}
 </style>
 <div class="wrap">
 <div class="eyebrow">T1A 主线 · 第 3 课（下）① · 开机怎么把 SPI1 准备好 · 代码 src/SPI.c:204~248 · 芯片手册 UM10462 · 霍尔手册 GTRY154</div>
@@ -151,9 +163,29 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <tr><td>3:0</td><td>DSS 数据位数</td><td><code>0111</code> = 7</td><td>每帧 7 + 1 = <b>8 位</b>（一个字节）</td></tr>
 <tr><td>5:4</td><td>FRF 帧格式</td><td><code>00</code></td><td><b>SPI</b> 格式（还能选 TI、Microwire，这里不用）</td></tr>
 <tr><td>6</td><td>CPOL 时钟极性</td><td><code>0</code></td><td>空闲时 SCK 是<b>低</b>（第 3 课上：切换 SCK1 时不会产生跳变）</td></tr>
-<tr><td>7</td><td>CPHA 时钟相位</td><td><code>1</code></td><td>在每位的<b>第二个沿（下降沿）采样</b>，配合芯片“上升沿出数据”</td></tr>
+<tr><td>7</td><td>CPHA 时钟相位</td><td><code>1</code></td><td>在每位的<b>第二个沿（下降沿）采样</b>，配合芯片“上升沿出数据”。<b>具体谁在哪个沿干什么，见表下面的“半拍演示”。</b></td></tr>
 <tr><td>15:8</td><td>SCR 时钟分频</td><td><code>0000 0010</code> = 2</td><td>再分频 SCR + 1 = <b>3</b></td></tr>
 </tbody></table></div>
+<div class="box" id="edgeBox" style="border-color:var(--hw)"><b>半拍演示：上升沿、下降沿，各是谁在干什么、位从哪个格子到哪个格子</b>
+<p>先记住一条：<b>上升沿（↑）是“发送方把位摆到线上”，下降沿（↓）是“接收方把线上的位收进格子”</b>。两个动作隔开半个周期（0.25 µs），所以收的时候线早就稳定了。</p>
+<div class="scroll"><table>
+<thead><tr><th>时刻</th><th>谁</th><th>从哪</th><th>放到哪</th></tr></thead>
+<tbody>
+<tr><td rowspan="3"><b>↑ 上升沿</b><br>（发送方动作）</td><td>SPI1</td><td>自己移位寄存器的 <b>b7</b>（排头）</td><td><b>MOSI 线</b>（PIO0_21 输出这个电平）</td></tr>
+<tr><td>左键芯片</td><td>自己 16 格的 <b>b15</b></td><td><b>SDO 脚 → SDO_0 线</b></td></tr>
+<tr><td>右键芯片</td><td>自己 16 格的 <b>b15</b></td><td><b>SDO 脚 → MISO 线</b></td></tr>
+<tr><td rowspan="3"><b>↓ 下降沿</b><br>（接收方动作）</td><td>SPI1</td><td><b>MISO 线</b>上的电平（PIO0_22 读入）</td><td>自己移位寄存器的 <b>b0</b>（队尾），其余各格往高位挪一格</td></tr>
+<tr><td>左键芯片</td><td><b>MOSI 线</b>（它的 SDI 脚）</td><td>自己 16 格的 <b>b0</b>，其余往高位挪一格</td></tr>
+<tr><td>右键芯片</td><td><b>SDO_0 线</b>（它的 SDI 脚）</td><td>自己 16 格的 <b>b0</b>，其余往高位挪一格</td></tr>
+</tbody></table></div>
+<p>一下时钟 = 一个 ↑ + 一个 ↓。下面一步就是半下时钟，起点是第 3 课上“下完命令、软件刚写了 DR = 0xA7”那一刻：</p>
+<div class="btns"><button type="button" id="eP">上一步</button><button type="button" id="eN">下一步（半下时钟）</button><button type="button" id="eR">重来</button><span class="note" id="eC"></span></div>
+<svg id="eSck" class="fig" viewBox="0 0 860 70" role="img" aria-label="当前所在的时钟沿"></svg>
+<div id="eView"></div>
+<div class="log" id="eLog" aria-live="polite"></div>
+<p class="note">红框 = 这半拍被读走的格子（↑ 时是排头 b7 / b15）或被写进的格子（↓ 时是队尾 b0）；线上的值在 ↑ 时更新，在 ↓ 时被读走，读完线上保持不变，直到下一个 ↑。</p>
+</div>
+
 <div class="rule" style="--c:var(--hw)"><b>速度公式</b>（芯片手册表 260 SCR 说明）：<code>SCK 频率 = SSP1_PCLK ÷ (CPSR × (SCR + 1))</code><br>
 = 48 MHz ÷ (8 × (2 + 1)) = 48 ÷ 24 = <b>2 MHz</b>（每位 0.5 µs，一个字节 4 µs，和第 3 课上的时序图一致）。<br>
 <b>代码注释写的 8 MHz 是错的</b>（SPI.c:241 写成了 2 × (2 + 1)，把 CPSR 当成了 2，实际是 8）。</div>
@@ -309,4 +341,32 @@ $('pxNext').onclick=next;next();box._cur=()=>cur;
  document.getElementById('rRel').onclick=()=>{rst=false;say('把第 2 位写成 1：松手了。CR0 还是复位值 0（放开不会自动设好任何东西），等软件来写。')};
  document.getElementById('rWr').onclick=()=>{if(rst){say('往 CR0 写 0x0287……但复位还按着，写进去马上又被拉回 0：写入无效。')}else{cr0=0x0287;say('往 CR0 写 0x0287：复位已放开，值留住了。')}};
  say('上电后：复位是按住的。试试先写 CR0，再放开复位，再写 CR0。');})();
+
+/* ---- edge half-step demo ---- */
+(function(){const V=document.getElementById('eView');if(!V)return;const NS='http://www.w3.org/2000/svg';
+ const bits=(v,n,c)=>Array.from({length:n},(_,i)=>({v:(v>>(n-1-i))&1,c}));
+ const F=[];let S=bits(0xA7,8,'T'),L=bits(0xE2E7,16,'L'),R=bits(0xA454,16,'R'),W={mosi:null,sdo:null,miso:null};
+ const snap=(ph,clk,txt,hl)=>F.push({S:S.map(x=>({...x})),L:L.map(x=>({...x})),R:R.map(x=>({...x})),W:{...W},ph,clk,txt,hl});
+ snap('start',0,'起点：SPI1 移位寄存器里是 tx 的 0xA7（灰），左键芯片 16 格是 0xE2E7，右键芯片是 0xA454。SCK 是低，三根线上的电平还没人摆。',{});
+ for(let k=1;k<=8;k++){W={mosi:S[0],sdo:L[0],miso:R[0]};
+  snap('up',k,`第 ${k} 下 ↑ 上升沿（发送方摆位）：\n【SPI1】把移位寄存器 b7 的 ${S[0].v} 摆到 MOSI 线上。\n【左键芯片】把自己 b15 的 ${L[0].v} 摆到 SDO 脚 → SDO_0 线。\n【右键芯片】把自己 b15 的 ${R[0].v} 摆到 SDO 脚 → MISO 线。\n这时三根线上分别是 MOSI = ${W.mosi.v}、SDO_0 = ${W.sdo.v}、MISO = ${W.miso.v}，接下来 0.25 µs 保持不变。`,{S:[0],L:[0],R:[0],w:1});
+  const m=W.miso,mo=W.mosi,sd=W.sdo;S=S.slice(1).concat({...m});L=L.slice(1).concat({...mo});R=R.slice(1).concat({...sd});
+  snap('down',k,`第 ${k} 下 ↓ 下降沿（接收方收位）：\n【SPI1】读 MISO 线 = ${m.v}，存进移位寄存器的 b0；原来 b6~b0 往上挪到 b7~b1（原 b7 那位刚才已经摆到 MOSI 上，被挤出去了）。\n【左键芯片】读 SDI（= MOSI 线）= ${mo.v}，存进自己的 b0，其余往上挪一格。\n【右键芯片】读 SDI（= SDO_0 线）= ${sd.v}，存进自己的 b0，其余往上挪一格。`+(k===8?`\n8 下打完：SPI1 移位寄存器里是 0x${S.reduce((a,x)=>a*2+x.v,0).toString(16).toUpperCase()}（右键芯片的高字节），接着自动搬进接收 FIFO。`:''),{S:[7],L:[15],R:[15],w:2})}
+ let k=0;
+ const cells=(arr,hl,lab)=>{const n=arr.length;let h=`<div class="cells" style="grid-template-columns:repeat(${n},minmax(0,1fr))">`;for(let i=0;i<n;i++)h+=`<span class="k">b${n-1-i}</span>`;arr.forEach((x,i)=>h+=`<span class="${x.c}${hl&&hl.includes(i)?' hl':''}">${x.v}</span>`);return h+'</div>'};
+ const wire=(nm,from,to,x,hl,col)=>`<div class="wire" style="--c:var(--${col})">${from?from+' → ':''}<b class="${hl?'hl':''}">${nm} = ${x?x.v:'?'}</b> → ${to}</div>`;
+ function sck(f){const s=document.getElementById('eSck');s.innerHTML='';const el=(t,a,x)=>{const e=document.createElementNS(NS,t);for(const q in a)e.setAttribute(q,a[q]);if(x!=null)e.textContent=x;s.appendChild(e);return e};
+  const X0=60,W=95;let d=`M10,52 H${X0}`;for(let i=0;i<8;i++){const x=X0+i*W;d+=` V18 H${x+W/2} V52 H${x+W}`}d+=' H850';el('path',{d,fill:'none',stroke:'var(--hw)','stroke-width':2});
+  el('text',{x:8,y:14,'font-size':11,fill:'var(--hw)','font-weight':600},'SCK');
+  if(f.ph!=='start'){const x=X0+(f.clk-1)*W+(f.ph==='down'?W/2:0);el('line',{x1:x,x2:x,y1:4,y2:66,stroke:'var(--bad)','stroke-width':2.5});el('text',{x:x+4,y:66,'font-size':11,fill:'var(--bad)'},f.ph==='up'?`第 ${f.clk} 下 ↑`:`第 ${f.clk} 下 ↓`)}}
+ function show(){const f=F[k],up=f.ph==='up',dn=f.ph==='down';
+  V.innerHTML=`<div class="rg" style="--c:var(--pc)"><div class="nm">SPI1 移位寄存器（MCU 里）</div>${cells(f.S,f.hl.S)}</div>`+
+   wire('MOSI 线',up?'SPI1 的 b7 摆出':dn?'（线上保持）':'','左键芯片 SDI'+(dn?'：收进左键芯片 b0':up?'（等下降沿再收）':''),f.W.mosi,f.hl.w,'pc')+
+   `<div class="rg" style="--c:var(--sw)"><div class="nm">左键芯片 16 格</div>${cells(f.L,f.hl.L)}</div>`+
+   wire('SDO_0 线',up?'左键芯片的 b15 摆出':dn?'（线上保持）':'','右键芯片 SDI'+(dn?'：收进右键芯片 b0':up?'（等下降沿再收）':''),f.W.sdo,f.hl.w,'sw')+
+   `<div class="rg" style="--c:var(--per)"><div class="nm">右键芯片 16 格</div>${cells(f.R,f.hl.R)}</div>`+
+   wire('MISO 线',up?'右键芯片的 b15 摆出':dn?'（线上保持）':'','SPI1'+(dn?'：收进 SPI1 的 b0':up?'（等下降沿再收）':''),f.W.miso,f.hl.w,'per');
+  document.getElementById('eLog').textContent=f.txt;sck(f);document.getElementById('eC').textContent=`第 ${k+1} / ${F.length} 步`;
+  document.getElementById('eP').disabled=k===0;document.getElementById('eN').disabled=k===F.length-1}
+ document.getElementById('eN').onclick=()=>{if(k<F.length-1){k++;show()}};document.getElementById('eP').onclick=()=>{if(k>0){k--;show()}};document.getElementById('eR').onclick=()=>{k=0;show()};show();})();
 </script>
