@@ -28,6 +28,7 @@ study_notes/
 |---|---|---|
 | 第 1 课 | [T1A 全景地图](https://claude.ai/artifact/UKS8dvoYJWBQPnUPaS4sXA) | 板子框图、引脚表（原理图对照代码）、固件骨架、学习路线、引脚练习题 |
 | 第 2 课 | [一次左键点击全程](https://claude.ai/artifact/3pr9UvqxTKk3jFx1QUzg71) | 读 → 判 → 震 → 报，12 步逐步走、数据接力表、随机练习 |
+| 第 3 课总览 | [第 3 课总览](https://claude.ai/artifact/N5qkB75kwVQBia23M2hU1v) | **先看这页**：可点的电路地图 + 7 个场景、关键数字速查、问过的问题索引、搜索、综合练习 |
 | 第 3 课（上） | [读一次霍尔芯片](https://claude.ai/artifact/RSTQPaAEsAcNwHQ3aaUgSa) | 下命令（SCK 拉高 5 µs）+ SPI1 搬 32 位；逐行逐变量；菊花链模拟器、校验位工具、练习 |
 | 第 3 课（下）① | [开机准备 SPI1](https://claude.ai/artifact/K8jtZ8wuzFac7dAVtqgwkR) | InitSPI1Master 12 行：每行寄存器位变化 + 准备情况；位运算工具、时钟链、速度计算器、练习 |
 | 第 3 课（下）② | [开机准备霍尔芯片](https://claude.ai/artifact/TfZtAngPnE5Vrxp7SuzAim) | 通电（PIO0_16 开关）→ 校准时钟（30 次 128 µs）→ 写 25 个设置（寄信 + 填表）；A7 00 的来历、练习 |

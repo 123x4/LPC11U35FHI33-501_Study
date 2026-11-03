@@ -100,6 +100,8 @@ details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
 <div class="eyebrow">T1A 主线 · 第 3 课（上）· 读一次霍尔芯片 · 手册：materials/GTRY154_…V1.1.pdf（下称“霍尔手册”）、LPC11U3x 用户手册 UM10462（下称“芯片手册”）</div>
 <h1>读一次霍尔芯片：那 4 个字节是怎么来的</h1>
 <p class="lede">第 2 课里，第 ① 站只用一句话带过：“每 1 ms 通过 SPI1 读两颗霍尔芯片，拿到 4 个字节”。这一课把这一句话拆开，一步不跳：用到的每个零件、每个变量、每一行代码都解释。开机时怎么把芯片和 SPI1 准备好，放在第 3 课（下）。</p>
+<div class="box" style="border-color:var(--gold)"><b>📌 第 3 课总览</b>：三页内容合成的一张电路地图（点零件看名片、点场景看过程），外加关键数字速查、问过的问题索引和搜索：<a href="https://claude.ai/artifact/N5qkB75kwVQBia23M2hU1v">第 3 课总览</a></div>
+
 
 <div class="box"><b>🧭 本质</b>：MCU 和两颗霍尔芯片之间只有 3 根线（时钟、去的数据、回的数据）。这颗芯片用一个很特别的办法“说话”：
 <ol style="margin:.3rem 0;padding-left:1.4em">
@@ -256,11 +258,11 @@ details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
 <svg id="tdSvg" viewBox="0 0 860 250" role="img" aria-label="td1 和 td2 示意图" style="display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px"></svg>
 <ol style="margin:.4rem 0;padding-left:1.4em">
 <li><b>td1 = 开关“开着”多久</b>（高电平保持的时间）。霍尔芯片里有一块“秒表”，专门量 SCK 开了多久。<b>开了 5 µs，它就知道“MCU 要我读按键”</b>。开的时间长短不同，代表不同的命令（像摩斯电码用长短表示不同的字）。</li>
-<li><b>“± 5%” = 允许的误差</b>：5 µs 的 5% 是 0.25 µs，所以 4.75 ~ 5.25 µs 之间都算“5 µs”。开 4 µs 或 6 µs 就不在范围里了，芯片可能认不出、或认成别的命令。</li>
+<li><b>“± 5%” = 允许的误差</b>：5 µs 的 5% 是 0.25 µs，所以 4.75 ~ 5.25 µs 之间都算“5 µs”。这是手册对 <b>MCU 发出的宽度</b>的要求。芯片内部按多宽的范围去判定，手册没写；能确定的是，宽度越偏离 5 µs、越靠近别的命令，越可能被认错（详见第 3 课下② 4.1 节）。</li>
 <li><b>td2 = 关上以后，要先等多久才能开始打时钟</b>。手册写“&gt; 2”，意思是<b>至少等 2 µs，多等没关系</b>。这段时间芯片在把最新的读数放进它的 16 个格子（第 1 节“移位寄存器”）；没放好就开始挤，挤出来的是旧数据。代码实际等了约 5 µs，比 2 µs 长，没问题。</li>
 <li><b>代码里的 4 是怎么凑成 5 的</b>：作者的想法是“拉高引脚的函数自己约 1 µs + 等 4 µs ≈ 5 µs”。实际情况更复杂（等待函数里只数了 2 µs，其余是各种函数开销），下面的方框逐段算了一遍。</li>
 </ol>
-<p><b>动手：</b>拖动“开着多久”，看芯片会把它当成什么命令（各命令的时间来自霍尔手册 7.7 节）：</p>
+<p><b>动手：</b>拖动“开着多久”，看它落在哪个命令的 ±5% 范围里（各命令的时间来自霍尔手册 7.7 节；这里用 ±5% 只是示意，芯片真实的判定范围手册没写）：</p>
 <div class="tlctl"><label for="tdR">SCK 开着多久</label><button type="button" class="stp" id="tdM">−</button><input type="range" id="tdR" min="1" max="30" step="0.25" value="5"><button type="button" class="stp" id="tdP">+</button><output id="tdO">5 µs</output></div>
 <div class="log" id="tdL" aria-live="polite"></div>
 </div>
