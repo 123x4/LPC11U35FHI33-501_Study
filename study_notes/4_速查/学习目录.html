@@ -185,60 +185,61 @@ details.ans[open]{background:var(--soft)}
 <div class="srch"><input type="search" id="q" placeholder="搜索标题或说明，例如 USB、custom、引脚" aria-label="搜索"><label><input type="checkbox" id="hideRead">隐藏已读</label><span class="note" id="cnt"></span></div>
 <div class="prog" aria-hidden="true"><i id="bar"></i></div>
 <div id="groups"></div>
-<p class="note" style="margin-top:2rem">这一页本身也在仓库里：<code>study_notes/easy/学习目录.html</code>。新增讲解页时，这里和 <code>study_notes/easy/README.md</code> 一起更新。</p>
+<p class="note" style="margin-top:2rem">这一页本身也在仓库里：<code>study_notes/4_速查/学习目录.html</code>。新增讲解页时，这里和 <code>study_notes/README.md</code> 一起更新。</p>
 </div>
 <script>
 const V=n=>`var(--${n})`;const $=id=>document.getElementById(id);
 const A=id=>'https://claude.ai/artifact/'+id;
 const GH=p=>'https://github.com/123x4/LPC11U35FHI33-501_Study/blob/claude/focused-ptolemy-tmjyrp/'+encodeURI(p);
 const G=[
- {k:'base',t:'一、入门',d:'第 0~5 课：打地基，按顺序读',c:'sw',items:[
-  ['第 0 课','这只鼠标的地图','整个项目有哪几块、谁负责什么；24 课的完整路线也在这里',A('M2RnYCfavarnoiBEjJ9Eky'),'课'],
+ {k:'t1a',t:'一、T1A 新代码（现在学）',d:'杰哥 2026-11-03 的版本，板型 GT_LINA_T1A_H5_PWM',c:'pc',items:[
+  ['总览','杰哥最新代码总览','改了哪些文件、T1A 引脚表、按一下左键的新路线、线圈波形演示、待确认问题、学习顺序',A('UKS8dvoYJWBQPnUPaS4sXA'),'主线'],
+ ]},
+ {k:'base',t:'二、基础课',d:'第 0~13 课：电、单片机、各个外设，和代码版本无关',c:'sw',items:[
+  ['第 0 课','这只鼠标的地图','整个项目有哪几块、谁负责什么',A('M2RnYCfavarnoiBEjJ9Eky'),'课'],
   ['第 1 课','电怎么传信息','电压、高低电平、信号怎么表示 0 和 1',A('QAeSDfXisuYV89dGuqVqX2'),'课'],
   ['第 2 课','0 和 1：一排开关','位、字节、十六进制，寄存器就是一排开关',A('HwMr9Ng8ocHS9MBvvJD1bX'),'课'],
   ['第 3 课','单片机是什么','外设七步法；怎么查芯片手册',A('Df8iYXGpcqsQs45cVTXCQf'),'课'],
   ['第 4 课','程序怎么跑','从上电到 main、主循环、中断的完整过程',A('8avBhNLVJRzRPehvi6xtsN'),'课'],
   ['第 5 课','代码仓库怎么读','文件怎么分类、编译产物、map 文件、Flash 余量',A('DMHaAKpxifpv3aa1bAJoeM'),'课'],
- ]},
- {k:'per',t:'二、芯片外设',d:'第 6~13 课：每课一个外设，结合手册和项目代码',c:'per',items:[
   ['第 6 课','GPIO 与引脚配置','引脚功能选择、上下拉、开漏；按键和线圈脚',A('NHfRyw19iDqMJRYwhLUfTw'),'课'],
-  ['第 7 课','ADC','逐次逼近；左右键红外信号怎么变成数字',A('3CLVMetraYoANnCKhpJuC6'),'课'],
+  ['第 7 课','ADC','逐次逼近；红外信号怎么变成数字',A('3CLVMetraYoANnCKhpJuC6'),'课'],
   ['第 8 课','定时器','1 ms 节拍、五种计时方法、延时函数',A('RjnBzgLW6mYK5WRAY7Xviy'),'课'],
   ['第 9 课','SPI 与 PAW3950','移位寄存器、CPOL/CPHA、传感器读写时序',A('7HACF2oXVpWjSqS19giSyB'),'课'],
   ['第 10 课','USB','枚举、端点、HID 报告描述符',A('C5mHnxa8bSv88j9P2V7jvN'),'课'],
-  ['第 10 课配套','USB 接口与端点总表','3 个接口、各端点干什么、谁发谁收（速查）',A('Axd33DZ2jkDBAo9C5vSKac'),'速查'],
   ['第 11 课','EEPROM 与 IAP','ROM 里的 IAP 程序、EEPROM 地址分布、存设置',A('Q5ub7uZ9fE8dAmVVgaJvoy'),'课'],
-  ['第 11 课配套','芯片存储地址分布','ROM / Flash / RAM / USB RAM / EEPROM 每块放了什么',A('JoG6GLLsaj4RPKbny4Ea4i'),'速查'],
   ['第 12 课','看门狗、复位与掉电','看门狗、5 种复位原因、掉电检测 BOD',A('NhatmnbFU8ZA6ZF1UzLvws'),'课'],
   ['第 13 课','时钟、电源与低功耗','12 MHz 怎么变 48 MHz；挂起和深度睡眠',A('2Kw9ZtbCBu6cax3WLFieuv'),'课'],
+  ['专题','C 语言里的面向对象','struct + 句柄 + static + 函数指针，用本项目代码举例',A('1pZrKGuEwLFjCwAWh7nK8H'),'思想'],
  ]},
- {k:'code',t:'三、读代码',d:'按文件、按一次事件读项目代码；先看“全程”，再看文件',c:'pc',items:[
-  ['主线','一次左键点击：全程、所有函数、所有全局变量','17 步全程 + 26 个全局变量图鉴 + 24 个函数图鉴；读代码从这里开始',A('QoPZuz6jMfgBqK7WrEJL29'),'主线'],
-  ['模块','ADC 全串讲：每一行代码','上电 → InitGPIO → MyADC_Init → 每 1 ms MyADC_GetValue，逐行看寄存器变化',A('KM5wmiR61CJWKNEk68Xnfs'),'模块'],
-  ['全程','按下 DPI 键的完整流程','17 步：从手指按下到 GUI 收到通知，跨 9 个文件',A('7yhiDgMLCiZYLqHzKXnRVy'),'全程'],
-  ['文件夹','app 文件夹四份代码','button / scroll / custom / optical_3325 的来历、职责、按键接力',A('DQeECLZbqjbizU3wtk2zHv'),'文件'],
-  ['文件','custom.c 完全讲透','本质（键位映射层）、先猜设计、四条线、26 个函数附录、自测',A('VZVKafNhxDA6watP5e6RMT'),'文件'],
-  ['函数','Button_GetState()','给 6 个键拍快照：读 PIN[0]、取反、掩码、挪位；左右键走 ADC 和状态机',A('BMsC1ca4aV6Wh5QRUoTySZ'),'函数'],
-  ['专题','从内存看一次 IO','GUI 收发在 USB RAM 和 SRAM 之间怎么复制；指针是什么',A('6Z4TjTfoJmmkLUsBX27KDm'),'专题'],
-  ['思想','C 语言里的面向对象','struct + 句柄 + static + 函数指针；左右线圈复制粘贴的反例；红外 / 霍尔接口示意',A('1pZrKGuEwLFjCwAWh7nK8H'),'思想'],
-  ['早期版','函数讲解：Custom_Paramter_Init()','已并入“custom.c 完全讲透”第 7 节，留作参考',A('C2Pkz5eGpiTkeNkUvThqJJ'),'旧'],
+ {k:'code',t:'三、旧版 IRPT_V4 代码',d:'在旧板型上读代码；多数代码 T1A 没改，仍然适用（每张卡片写了 T1A 上的情况）',c:'per',items:[
+  ['主线','一次左键点击：全程、所有函数、所有全局变量','17 步全程 + 26 个全局变量 + 24 个函数。T1A：读数和线圈两段变了',A('QoPZuz6jMfgBqK7WrEJL29'),'主线'],
+  ['模块','ADC 串讲（10 关 + 练习题）','每关先算题再看代码，有无限随机练习。T1A：第 1~4 关不用，第 5~10 关算法照用',A('KM5wmiR61CJWKNEk68Xnfs'),'模块'],
+  ['模块','ADC 全串讲参考版','逐行寄存器面板、全程模拟器、坑表，查细节用',A('HCgkuzBx81QJ9H9jpG2Xr5'),'旧'],
+  ['全程','按下 DPI 键的完整流程','从手指按下到 GUI 收到通知，跨 9 个文件。T1A 适用',A('7yhiDgMLCiZYLqHzKXnRVy'),'全程'],
+  ['文件夹','app 文件夹四份代码','button / scroll / custom / optical_3325。T1A：button.c 有改动',A('DQeECLZbqjbizU3wtk2zHv'),'文件'],
+  ['文件','custom.c 完全讲透','键位映射层、26 个函数。T1A 适用',A('VZVKafNhxDA6watP5e6RMT'),'文件'],
+  ['函数','Button_GetState()','6 个键的快照。T1A：左右键改成霍尔',A('BMsC1ca4aV6Wh5QRUoTySZ'),'函数'],
+  ['专题','从内存看一次 IO','GUI 收发在 USB RAM 和 SRAM 之间怎么复制。T1A 适用',A('6Z4TjTfoJmmkLUsBX27KDm'),'专题'],
+  ['早期版','函数讲解：Custom_Paramter_Init()','已并入“custom.c 完全讲透”',A('C2Pkz5eGpiTkeNkUvThqJJ'),'旧'],
  ]},
- {k:'ref',t:'四、速查与清单',d:'随时翻的表；每学完一课会更新',c:'gold',items:[
-  ['速查','引脚总表','33 个脚：功能、配置在哪、哪课学过、T1A 用途',A('5PUa6UQrGCyzkQPpPrzByB'),'速查'],
-  ['清单','代码来源清单','每个文件最终是谁写的、每个函数在不在用（可筛选）',A('VPsyav56Zh3cacuF4xg6us'),'清单'],
-  ['进度','学习目标与覆盖','“熟悉代码 / 手册”的标准；每个文件、每章手册在哪课讲',A('Fe6KbvbH6bcSansEMkZds1'),'进度'],
-  ['速查','USB 接口与端点总表','（同第 10 课配套）',A('Axd33DZ2jkDBAo9C5vSKac'),'速查'],
-  ['速查','芯片存储地址分布','（同第 11 课配套）',A('JoG6GLLsaj4RPKbny4Ea4i'),'速查'],
+ {k:'ref',t:'四、速查',d:'随时翻的表',c:'gold',items:[
+  ['速查','引脚总表','33 个脚（按 IRPT_V4 写；T1A 引脚见“杰哥最新代码总览”）',A('5PUa6UQrGCyzkQPpPrzByB'),'速查'],
+  ['清单','代码来源清单','每个文件是谁写的、每个函数在不在用（按 IRPT_V4 生成）',A('VPsyav56Zh3cacuF4xg6us'),'清单'],
+  ['速查','芯片存储地址分布','ROM / Flash / RAM / USB RAM / EEPROM',A('JoG6GLLsaj4RPKbny4Ea4i'),'速查'],
+  ['速查','USB 接口与端点总表','3 个接口、各端点谁发谁收',A('Axd33DZ2jkDBAo9C5vSKac'),'速查'],
+  ['进度','学习目标与覆盖','“熟悉代码 / 手册”的标准和进度',A('Fe6KbvbH6bcSansEMkZds1'),'进度'],
+  ['问题','待确认问题','要问杰哥或上板验证的问题，按代码版本分开',GH('study_notes/待确认问题.md'),'md'],
  ]},
  {k:'old',t:'五、早期讲义（GitHub 里直接看）',d:'改版前的逐行精读，内容更细，当字典查',c:'muted',items:[
   ['图解','L1 USB 报文解剖','每一包的真实字节、CRC、D+/D- 波形',A('Qvima6yiNCJCzXs62oqyEC'),'图解'],
-  ['讲义','L1 USB 是怎么工作的','USB 原理版讲义',GH('study_notes/L1_USB是怎么工作的.md'),'md'],
-  ['讲义','L2 一次点击','ADC → 段数 → 状态机 → 报文',GH('study_notes/L2_一次点击.md'),'md'],
-  ['讲义','0-3 公司 Bootloader','升级标志 0x10001F00、bootloader 反汇编',GH('study_notes/0-3_公司Bootloader.md'),'md'],
-  ['讲义','0-4 启动文件','向量表、Reset_Handler',GH('study_notes/0-4_启动文件.md'),'md'],
-  ['讲义','1-1 ~ 1-14 逐行精读','看门狗、时钟、GPIO、线圈、USB 初始化与枚举、三个 Pointer_Init……',GH('study_notes/01_逐行精读路线图.md'),'md'],
-  ['清单','T1A 适配清单','T1A 和 IRPT_V4 的硬件差异、要改的代码',GH('study_notes/03_T1A适配清单.md'),'md'],
-  ['清单','芯片状态总表','每个外设初始化后的寄存器状态',GH('study_notes/02_芯片状态总表.md'),'md'],
+  ['讲义','L1 USB 是怎么工作的','USB 原理版讲义',GH('study_notes/5_早期讲义/L1_USB是怎么工作的.md'),'md'],
+  ['讲义','L2 一次点击','ADC → 段数 → 状态机 → 报文',GH('study_notes/5_早期讲义/L2_一次点击.md'),'md'],
+  ['讲义','0-3 公司 Bootloader','升级标志 0x10001F00、bootloader 反汇编',GH('study_notes/5_早期讲义/0-3_公司Bootloader.md'),'md'],
+  ['讲义','0-4 启动文件','向量表、Reset_Handler',GH('study_notes/5_早期讲义/0-4_启动文件.md'),'md'],
+  ['讲义','1-1 ~ 1-14 逐行精读','看门狗、时钟、GPIO、线圈、USB 初始化与枚举、三个 Pointer_Init……',GH('study_notes/5_早期讲义/01_逐行精读路线图.md'),'md'],
+  ['清单','T1A 适配清单','T1A 和 IRPT_V4 的硬件差异、要改的代码（早期整理）',GH('study_notes/5_早期讲义/03_T1A适配清单.md'),'md'],
+  ['清单','芯片状态总表','每个外设初始化后的寄存器状态',GH('study_notes/5_早期讲义/02_芯片状态总表.md'),'md'],
  ]},
 ];
 const KEY='hub_read_v1';let read={};try{read=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
@@ -250,6 +251,6 @@ function draw(){const q=$('q').value.trim().toLowerCase(),hide=$('hideRead').che
  $('groups').querySelectorAll('input[data-id]').forEach(c=>c.onchange=()=>{read[c.dataset.id]=c.checked;save();draw()});
  $('cnt').textContent=`显示 ${shown} 项 · 已读 ${done} / ${total}`;$('bar').style.width=(total?done/total*100:0)+'%';
  const nx=G.slice(0,3).flatMap(g=>g.items).find(it=>!read[it[3]]&&it[4]!=='旧'&&it[4]!=='速查');
- $('next').innerHTML=nx?`<b>下一篇建议读：</b><a href="${nx[3]}" target="_blank" rel="noopener">${nx[0]} · ${nx[1]}</a>（${nx[2]}）<br><span class="note">还没写的：第 14 课“一次点击”（先看手册猜代码），以及其余文件的精读。</span>`:'<b>列表里的都读完了。</b>下一步：第 14 课“一次点击”，或挑一个文件让我精读。'}
+ $('next').innerHTML=nx?`<b>下一篇建议读：</b><a href="${nx[3]}" target="_blank" rel="noopener">${nx[0]} · ${nx[1]}</a>（${nx[2]}）<br><span class="note">接下来要写的：T1A 的 PWM（my_pwm.c）→ 波形（my_waveform.c）→ 线圈状态机 → 霍尔 SPI 读数 → 协议新命令。</span>`:'<b>列表里的都读完了。</b>下一步：T1A 的 PWM（my_pwm.c）。'}
 $('q').oninput=draw;$('hideRead').onchange=draw;draw();
 </script>

@@ -1,6 +1,6 @@
 # 代码来源清单的生成脚本
 
-生成网页 `study_notes/easy/代码来源清单.html` 的数据。代码改动后重新编译一次（更新 `List/Sample.map`、`output/Sample.axf`），再跑一遍就能刷新清单。
+生成网页 `study_notes/4_速查/代码来源清单.html` 的数据。代码改动后重新编译一次（更新 `List/Sample.map`、`output/Sample.axf`），再跑一遍就能刷新清单。
 
 需要：Python 3、clang（只用来做预处理）、llvm-objdump / llvm-objcopy。在 Linux 上跑过；Windows 上没试过。
 
