@@ -166,7 +166,11 @@ IOCTRL_HighLevel(HALL_EN_PORT, HALL_EN_PIN);    // 584 输出高 → 开关闭�
 
 <h3>4.2 一次校准命令长什么样</h3>
 <p>校准命令就是把 SCK 拉高 <b>128 µs</b>，再拉低一小会儿，然后照常用 <code>SSP_Send_Receive()</code> 收发 4 个字节（32 下时钟），把两颗芯片的“频率值”读回来（手册图 8：读回 16 位，<b>低 8 位</b>有效）。下面是本项目代码发一次校准命令时 SCK 线上的样子（宽度没按比例画）：</p>
-<div class="scroll"><svg id="cal1" class="fig" viewBox="0 0 940 230" style="min-width:680px" role="img" aria-label="一次校准命令的 SCK 时序和对应代码"></svg></div>
+<div class="scroll"><svg id="cal1" class="fig" viewBox="0 0 940 295" style="min-width:680px" role="img" aria-label="一次校准命令的 SCK 时序和对应代码"></svg></div>
+<div class="box"><b>tx 里的 00 55 00 55 是干什么的？</b>
+<p><code>hall_spi_tx[4]</code> 是放在 RAM 里的一个普通数组（button.c:12），不是 SPI1 里面的硬件 FIFO。878~881 行在进 while 之前把它的第 2、4 个字节（下标 1、3）写成 0x55；下标 0、2 没人写过，是开机时 <code>= {0}</code> 清的 0。所以 tx = <b>00 55 00 55</b>，30 次校准都发它。</p>
+<p>每次 <code>SSP_Send_Receive()</code>，这 4 个字节从 MOSI 推进芯片链，进了两颗芯片的 16 位移位寄存器（上图 MOSI 那一行）。但<b>校准命令不用这些位</b>：手册图 8 里 SDI 那一行是空白的，芯片只是把自己的频率值从 SDO 送出来。所以这里填什么都不影响校准，你说的“没有用的数”是对的。</p>
+<p>为什么偏偏填 0x55，代码没写理由。厂商参考代码同一个位置填的是 0xE0（<code>ANA_INIT_VALUE</code>），也是随手给的值。0x55 = 0101 0101，是调试时常用的一种“01 交替”的图样，在示波器上容易认出来。这只是推测。</p></div>
 <div class="box"><b>为什么 32 下中间有停顿？</b> 和第 3 课（上）读按键时一样：<code>SSP_Send_Receive()</code>（SPI.c:439~450）是<b>一个字节一个字节</b>地做的：写 1 个字节进 DR → SPI1 打 8 下（2 MHz 下 4 µs）→ 等收到 → 读 DR → 指针加 1 → 再写下一个。CPU 跑“等、读、加 1、写”这几句的时候，SPI1 手里没有下一个字节，SCK 就停在低，所以每 8 下之间有一段停顿（估计约 1 µs）。4 个字节合计约 4 × 4 + 3 × 1 ≈ <b>19 µs</b>。之前这张图画成连续 32 下是画错了。</div>
 <pre class="code">void HALL_Read_Instru_cnt(void)                    // 865
 {
@@ -422,14 +426,20 @@ $('ruE').oninput=drawRU;$('ruM').onclick=()=>{$('ruE').value=+$('ruE').value-0.5
  el(s,'text',{x:xs[4]+160,y:hi-6,'text-anchor':'middle','font-size':12,fill:'var(--fg)','font-weight':600},'32 下 = 4 个字节 × 8 下，字节之间有停顿（≈19 µs）');
  for(let g=0;g<4;g++){el(s,'text',{x:xs[4]+g*80+32,y:lo+16,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},'第 '+(g+1)+' 字节');if(g<3)el(s,'text',{x:xs[4]+g*80+73,y:hi+22,'text-anchor':'middle','font-size':9.5,fill:'var(--bad)'},'停')}
  el(s,'text',{x:xs[5]+95,y:hi+20,'text-anchor':'middle','font-size':12,fill:'var(--muted)'},'空等 ≈60~100 µs → 下一次');
- el(s,'text',{x:8,y:128,'font-size':12,'font-weight':700,fill:'var(--per)'},'MISO');
- el(s,'rect',{x:xs[4],y:112,width:320,height:24,rx:3,fill:'color-mix(in srgb,var(--per) 22%,var(--panel))',stroke:'var(--per)'});
- el(s,'text',{x:xs[4]+160,y:129,'text-anchor':'middle','font-size':11,fill:'var(--fg)'},'右键 16 位 | 左键 16 位');
- el(s,'text',{x:xs[4]+160,y:152,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'各自低 8 位 = 频率值 → rx[1]、rx[3]');
- lab(xs[2],300,'button.c:867  Hall_CLK_Command_SET(127, 4)',178,'var(--pc)');
- lab(xs[4],320,'869  SSP_Send_Receive（一个字节一个字节地收发）',178,'var(--per)');
- lab(xs[5],190,'888  nsAPI_SSP_Delay1us(100)',178,'var(--muted)');
- el(s,'text',{x:470,y:222,'text-anchor':'middle','font-size':12,fill:'var(--fg)'},'这一整段 = 一次校准，重复 30 次（883 行 while）');})();
+ const row=(name,col,y,vals,labs,hl,note1,note2,left)=>{el(s,'text',{x:8,y:y+17,'font-size':12,'font-weight':700,fill:`var(--${col})`},name);
+  el(s,'line',{x1:40,x2:xs[4],y1:y+12,y2:y+12,stroke:'var(--line)','stroke-dasharray':'4 3'});
+  if(left)el(s,'text',{x:110,y:y+6,'font-size':10.5,fill:'var(--muted)'},left);
+  vals.forEach((v,g)=>{const bx=xs[4]+g*80;el(s,'rect',{x:bx,y,width:64,height:24,rx:3,style:`fill:${hl[g]?'color-mix(in srgb,var(--gold) 40%,var(--panel))':'var(--soft)'};stroke:${hl[g]?'var(--gold)':'var(--line)'}`});
+   el(s,'text',{x:bx+32,y:y+17,'text-anchor':'middle','font-size':12,'font-weight':700,fill:'var(--fg)',style:'font-family:var(--font-m)'},v);
+   el(s,'text',{x:bx+32,y:y+38,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},labs[g])});
+  el(s,'line',{x1:xs[4]+320,x2:xs[5]+190,y1:y+12,y2:y+12,stroke:'var(--line)','stroke-dasharray':'4 3'});
+  el(s,'text',{x:xs[5]+8,y:y+6,'font-size':10.5,fill:'var(--fg)'},note1);el(s,'text',{x:xs[5]+8,y:y+22,'font-size':10.5,fill:'var(--muted)'},note2)};
+ row('MOSI（发）','pc',96,['00','55','00','55'],['tx[0]','tx[1]','tx[2]','tx[3]'],[0,1,0,1],'推进芯片链，被芯片收进 16 位里','但校准命令不看它：发什么都行','hall_spi_tx[4] 在 878~881 行就填好了（进 while 之前）');
+ row('MISO（收）','per',162,['??','频率值','??','频率值'],['rx[0] 右键高','rx[1] 右键低 8 位','rx[2] 左键高','rx[3] 左键低 8 位'],[0,1,0,1],'手册：读回 16 位，低 8 位有效','本项目代码没看 rx（检查被注释）');
+ lab(xs[2],300,'button.c:867  Hall_CLK_Command_SET(127, 4)',236,'var(--pc)');
+ lab(xs[4],320,'869  SSP_Send_Receive（一个字节一个字节地收发）',236,'var(--per)');
+ lab(xs[5],190,'888  nsAPI_SSP_Delay1us(100)',236,'var(--muted)');
+ el(s,'text',{x:470,y:282,'text-anchor':'middle','font-size':12,fill:'var(--fg)'},'这一整段 = 一次校准，重复 30 次（883 行 while）。tx 一直是 00 55 00 55，30 次都一样');})();
 /* ---- cal2 sim ---- */
 let CE=[],CR=[],cn=0,ctimer=null;
 function cReset(){const r=()=>(Math.random()<.5?-1:1)*(3+Math.random()*6);CE=[r(),r()];CR=[[],[]];cn=0;cDraw()}
