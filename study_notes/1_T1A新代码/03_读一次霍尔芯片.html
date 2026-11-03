@@ -66,6 +66,7 @@ svg.tl{display:block;width:100%;height:auto;background:var(--panel);border:1px s
 .btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
 .btns button{font:inherit;font-size:.88rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer}
 .btns button:disabled{opacity:.4;cursor:default}
+.btns button[aria-pressed="true"]{border-color:var(--fg);font-weight:700}
 .log{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:6px 10px;white-space:pre-wrap;min-height:2.4em}
 /* crc tool */
 .bitrow{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;font-family:var(--font-m);font-size:.72rem;text-align:center;margin:.3rem 0}
@@ -405,6 +406,26 @@ details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
 <p><b>反过来用</b>：如果推进去之后<b>紧跟一条“写寄存器”命令</b>（SCK 拉高 24 µs），芯片就会把格子里的内容当成“要写的寄存器地址和数据”收下。开机配置芯片就是这样做的：同一个圈，先推数据、再下命令（第 3 课下讲）。读的时候是先下命令、再推。</p>
 <p>这时 <code>hall_spi_tx</code> 里是 <code>A7 00 A7 00</code>：是开机配置芯片寄存器时最后一次写进去的内容（第 3 课下讲），之后没人改过。内容无所谓，只是“陪跑”。</p>
 
+<div class="box" style="border-color:var(--gold)"><b>常见疑问：tx 里的数据可以随便填吗？随便往 DR 写个值就能“启动转换”吗？</b>
+<p><b>先把两个词分开</b>：</p>
+<div class="scroll"><table>
+<thead><tr><th>动作</th><th>谁做</th><th>结果</th></tr></thead>
+<tbody>
+<tr><td><b>转换</b>（测磁场 → 14 位的数）</td><td>芯片自己，每 124 µs 一次</td><td>结果放在芯片内部，不用 MCU 启动</td></tr>
+<tr><td><b>命令</b>（SCK 拉高 5 µs）</td><td>软件：Hall_CLK_Command_SET()</td><td>芯片把<b>最新结果复制进 16 格</b></td></tr>
+<tr><td><b>写 DR</b>（任意值）</td><td>软件：SSP_Send_Receive()</td><td>SPI1 打 8 下时钟，<b>把格子里现有的东西挤出来</b>；同时把写进去的值推进圈里</td></tr>
+</tbody></table></div>
+<p><b>所以：</b></p>
+<ol style="padding-left:1.4em">
+<li><b>写 DR 写什么值都会打出 8 下时钟</b>，值只决定 MOSI 上送出去哪 8 位。但写 DR <b>不会</b>让芯片测量，也<b>不会</b>让芯片把新结果放进格子。</li>
+<li><b>读数据时，tx 的值对芯片确实无所谓</b>：推进圈里的位后面没有跟命令，芯片不执行。代码也没有特意给 tx 赋值，它是开机写芯片寄存器后剩下的 <code>A7 00 A7 00</code>。</li>
+<li><b>但顺序不能乱：必须先下命令、再写 DR。</b>只写 DR、不下命令，挤出来的是格子里<b>上一次留下的东西</b>，也就是上一次推进去的 tx 填充物，不是读数。</li>
+</ol>
+<p><b>动手试：</b>假设某一次“忘了下命令”就直接读。上一次读完后，两颗芯片的格子里装的是上一次推进去的 tx。选一个 tx 填充值，看这次会读到什么、校验能不能拦住：</p>
+<div class="btns" id="fxSel"></div>
+<div class="log" id="fxLog" aria-live="polite"></div>
+<p class="note">发现：现在的 <code>A7 00</code> 恰好<b>校验不通过</b>，算法会丢掉这次数据（返回 CRC_ERROR），所以就算漏了命令也不会读错。但如果 tx 恰好是 <code>00 00</code> 或 <code>FF FF</code>，校验能通过，就会把 0 或 16383 当成真的读数。这不是设计出来的保护，是碰巧。正常流程每次都先下命令，所以不会发生（我的观察，不是 bug）。</p>
+</div>
 <h3>4.4 逐行看（src/SPI.c:436~451，T1A 分支）</h3>
 <p>调用：<code>SSP_Send_Receive(hall_spi_tx, hall_spi_rx, 4);</code></p>
 <table>
@@ -731,4 +752,13 @@ bs.forEach(b=>b.onclick=()=>set(b.dataset.f));set('');})();
   el(c,'text',{x:X(tc)+8,y:118,'font-size':11,fill:'var(--fg)'},'复制“最新一次”（第 3 次）的结果进 16 个格子 → 然后 32 下时钟搬走');
   el(c,'text',{x:X(0),y:180,'font-size':10.5,fill:'var(--muted)'},'时间（按比例）：每格竖线间隔 124 µs；MCU 每 1000 µs 才下一次命令');}
 })();
+
+/* ---- filler experiment ---- */
+(function(){const sel=document.getElementById('fxSel');if(!sel)return;const BE2=[0,64,128,192,64,0,192,128,128,192,0,64,192,128,64,0,64,0,192,128,0,64,128,192,192,128,64,0,128,192,0,64,128,192,0,64,192,128,64,0,0,64,128,192,64,0,192,128,192,128,64,0,128,192,0,64,64,0,192,128,0,64,128,192,64,0,192,128,0,64,128,192,192,128,64,0,128,192,0,64,0,64,128,192,64,0,192,128,128,192,0,64,192,128,64,0,192,128,64,0,128,192,0,64,64,0,192,128,0,64,128,192,128,192,0,64,192,128,64,0,0,64,128,192,64,0,192,128,128,192,0,64,192,128,64,0,0,64,128,192,64,0,192,128,192,128,64,0,128,192,0,64,64,0,192,128,0,64,128,192,0,64,128,192,64,0,192,128,128,192,0,64,192,128,64,0,64,0,192,128,0,64,128,192,192,128,64,0,128,192,0,64,192,128,64,0,128,192,0,64,64,0,192,128,0,64,128,192,128,192,0,64,192,128,64,0,0,64,128,192,64,0,192,128,64,0,192,128,0,64,128,192,192,128,64,0,128,192,0,64,0,64,128,192,64,0,192,128,128,192,0,64,192,128,64,0];
+ const hx=v=>'0x'+v.toString(16).toUpperCase().padStart(2,'0');
+ const opts=[[0xA7,0x00,'A7 00（现在实际的）'],[0x00,0x00,'00 00'],[0xFF,0xFF,'FF FF'],[0x55,0x55,'55 55'],[0x12,0x34,'12 34']];
+ function run(i){const [a,b]=opts[i];const rx=[a,b,a,b];const ok=(rx[0]&0xC0)===(BE2[rx[0]&0x3F]^BE2[rx[1]]);const v=((rx[0]&0x3F)<<8)|rx[1];
+  [...sel.children].forEach((x,j)=>x.setAttribute('aria-pressed',j===i));
+  document.getElementById('fxLog').textContent=`上一次读完：两颗芯片的格子里都是 ${hx(a)} ${hx(b)}（上一次推进去的 tx）。\n这次没下命令，直接写 DR 读 4 个字节 → rx = ${rx.map(hx).join(' ')}\n校验：高字节最高 2 位 = ${hx(rx[0]&0xC0)}，算出来应是 ${hx(BE2[rx[0]&0x3F]^BE2[rx[1]])} → ${ok?'相等，校验通过！':'不相等，校验不通过'}\n${ok?`算法会把 ${v} 当成真实读数用（左右键都是 ${v}）——读错了。`:'算法丢掉这次数据（CRC_ERROR），这 1 ms 不更新，下 1 ms 再读。'}`}
+ opts.forEach((o,i)=>{const b=document.createElement('button');b.type='button';b.textContent=o[2];b.onclick=()=>run(i);sel.appendChild(b)});run(0);})();
 </script>
