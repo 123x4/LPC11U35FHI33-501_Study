@@ -40,6 +40,7 @@
 | 页面 | 在线页面 |
 |---|---|
 | **主线：一次左键点击（全程 + 26 个全局变量 + 24 个函数）** | https://claude.ai/artifact/QoPZuz6jMfgBqK7WrEJL29 |
+| 杰哥最新代码总览（T1A 板，2026-11-03 导入） | https://claude.ai/artifact/UKS8dvoYJWBQPnUPaS4sXA |
 | 模块：ADC 串讲（重讲版，10 关，每关先算题再看代码） | https://claude.ai/artifact/KM5wmiR61CJWKNEk68Xnfs |
 | 模块：ADC 全串讲参考版（每一行代码 + 寄存器变化 + 模拟器 + 坑） | https://claude.ai/artifact/HCgkuzBx81QJ9H9jpG2Xr5 |
 | 全程：按下 DPI 键的完整流程（17 步） | https://claude.ai/artifact/7yhiDgMLCiZYLqHzKXnRVy |
@@ -134,3 +135,5 @@
 **ADC 全串讲第 4 节（按键算法）的推论，待上板验证**：开机学完顶部基线后底部 = 顶部，`Hall_CalculateNode()` 在两条线差 < 100 时一律返回 0，所以开机后第一下快速轻点可能不响应，需按住约 60 ms；底部基线每次按下只在判定按下后的前 100 ms 学习，要点好几次才学到真正的“按到底”，学到之前段位偏大。
 
 **Hall_InitBaseline 的两个推论（待上板验证）**：① 学习阶段在任意一个键学好时就整体结束（my_misc.c:455 在 for 循环里），另一个键可能没学稳；② 开机时手指搭在键上不动，会把“按下”的读数学成顶部基线，该键约 3 秒内按不出来，之后几秒基线才慢慢恢复。
+
+**杰哥最新代码（2026-11-03 导入，板型 GT_LINA_T1A_H5_PWM）待确认**：参数结构 `AllParam_ts` 加了驱动模式和 100 字节波形表后为 189 字节，从 EEPROM 0xF06 写到 0xFC2，超过代码注释和手册给的上限 0xFBF（最高 64 字节保留），写入返回值未检查，可能导致参数存不住（待问杰哥 / 上板验证）；GUI 下发的波形表 `gPwmWf`、驱动模式 `xDriveMode` 暂未接到线圈；MFG 命令只有定义；滚轮扫描暂关；SPI1 速度注释写 8 MHz，按寄存器算是 2 MHz。旧的 IRPT_V4 版本代码在提交 367ef40。

@@ -1,0 +1,220 @@
+<title>杰哥最新代码总览</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --hw:#7a5ea8; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:840px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);line-height:1.3;text-wrap:balance}
+h1{font-size:1.9rem;margin:0}
+h2{font-size:1.3rem;margin:2.2rem 0 .4rem}
+h3{font-size:1.05rem;margin:1.2rem 0 .3rem}
+p{margin:.6rem 0}
+a{color:var(--per)}
+code{font-family:var(--font-m);font-size:.88em;background:var(--soft);padding:.05em .35em;border-radius:3px;overflow-wrap:anywhere}
+pre.code{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:10px 12px;overflow-x:auto;line-height:1.55;margin:.5rem 0}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.06em;color:var(--muted)}
+.lede{color:var(--muted)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:1rem 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-size:.88rem;margin:.4rem 0}
+td,th{border:1px solid var(--line);padding:4px 9px;text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600}
+.nw td,.nw th{white-space:nowrap}
+.tag{display:inline-block;font-family:var(--font-m);font-size:.72rem;border-radius:4px;padding:0 6px;color:var(--bg);background:var(--c)}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:.6rem 0}
+.three>div{border:2px solid var(--c);border-radius:8px;padding:8px 10px;background:color-mix(in srgb,var(--c) 8%,var(--panel));min-width:0}
+.three b{font-family:var(--font-d);display:block}
+.three .was{font-size:.85rem;color:var(--muted);text-decoration:line-through}
+@media (max-width:700px){.three{grid-template-columns:minmax(0,1fr)}}
+.flow{display:flex;flex-direction:column;gap:4px;margin:.6rem 0}
+.flow div{border-left:4px solid var(--c);background:var(--soft);padding:5px 10px;border-radius:0 6px 6px 0;font-size:.92rem}
+.flow div b{font-family:var(--font-m);font-size:.85rem}
+.flow span.ar{color:var(--muted);padding-left:14px;font-size:.8rem}
+.warn{border-left:4px solid var(--bad);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.6rem 0}
+.think{border-left:4px solid var(--per);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.8rem 0}
+.note{font-size:.88rem;color:var(--muted)}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:.4rem 0}
+.ctl input[type=range]{width:180px}
+.ctl output{font-family:var(--font-m);font-weight:700}
+#wfSvg{display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px}
+.qz{border:1.5px dashed var(--gold);border-radius:8px;padding:8px 12px;margin:.8rem 0;background:color-mix(in srgb,var(--gold) 6%,var(--panel))}
+.qz .qt{font-weight:600}
+.qz .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.qz input{font:inherit;width:110px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.qz button{font:inherit;font-size:.9rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer}
+.qz button.on{border-color:var(--fg)}
+.qz .fb{display:none;margin-top:.3rem;padding:6px 10px;border-radius:6px;background:var(--soft)}
+.qz .fb.ok{display:block;border-left:4px solid var(--good)}
+.qz .fb.no{display:block;border-left:4px solid var(--bad)}
+button:focus-visible,input:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+details{margin:.5rem 0;border:1px solid var(--line);border-radius:6px;padding:4px 10px}
+details>summary{cursor:pointer;color:var(--muted);font-size:.92rem}
+</style>
+<div class="wrap">
+<div class="eyebrow">读代码 · 杰哥最新代码（EM_HapticMouse，2026-11-03 01:36 编译，0 错误 0 警告）</div>
+<h1>杰哥最新代码总览：同一套固件，换成 T1A 板</h1>
+<p class="lede">先看全局，不看细节。这一页回答四个问题：<b>他改了什么？T1A 板上哪只脚干什么？按一下左键现在走哪条路？还有哪些没做完？</b>最后给出接下来学什么的顺序。</p>
+
+<div class="box"><b>🧭 本质</b>：这不是一套新代码，而是在原来那套固件里<b>加了一个新板型</b>。<code>inc/my_board.h</code> 里打开的板型宏从我们学过的 <code>IRPT_V4</code> 换成了 <code>GT_LINA_T1A_H5_PWM</code>（T1A 板），然后在需要的地方加 <code>#if (defined(GT_LINA_T1A_H5))</code> 分支。改动只有 <b>2 个新文件 + 20 个文件里的一些分支</b>，其他（USB、custom.c、按键扫描、主循环）都没动。
+<p>所以学它的方法是：<b>先找“板型宏切换了哪些分支”</b>，再看两个新文件。</p></div>
+
+<h2>1. 三个大变化</h2>
+<div class="three">
+<div style="--c:var(--sw)"><span class="tag">左右键</span><b>霍尔芯片 + SPI1</b><span class="was">红外 + ADC</span><br>每 1 ms 通过 SPI1 读左右两个霍尔芯片，各 2 字节（14 位）。<code>my_adc.c</code> 在 T1A 上不编译了。</div>
+<div style="--c:var(--pc)"><span class="tag">线圈</span><b>200 kHz PWM + 波形表</b><span class="was">GPIO 拉高一段时间</span><br>震动不再是“开 → 等 → 关”，而是按一张 100 点的波形表，每 20 µs 改一次 PWM 占空比，力度先升后降。</div>
+<div style="--c:var(--per)"><span class="tag">GUI 协议</span><b>新增 3 类命令</b><span class="was">—</span><br>可以读写“驱动模式”和“PWM 波形表”；定义了生产测试（MFG）命令；去掉了一次读全部（0xFF）。</div>
+</div>
+
+<h2>2. T1A 板：哪只脚干什么（inc/my_board.h:332~374）</h2>
+<div class="scroll"><table class="nw">
+<thead><tr><th>功能</th><th>引脚</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td>左右键（霍尔）</td><td>SPI1：MOSI PIO0_21、MISO PIO0_22、SCK PIO1_15</td><td>SPI.c:204 起；读之前先把 SCK 当普通 GPIO 拉一个脉冲（button.c:800~830）</td></tr>
+<tr><td>霍尔电源</td><td>HALL_EN = PIO0_16</td><td>开机先拉低 50 ms（复位），再拉高（GPIO.c）</td></tr>
+<tr><td>线圈 PWM</td><td>PWM1 = PIO0_13（CT32B1_MAT0）、PWM2 = PIO0_14（CT32B1_MAT1）</td><td>就是 IRPT_V4 上当 ADC 用的那两只脚，现在当定时器输出</td></tr>
+<tr><td>线圈升压使能</td><td>HP_EN = PIO1_19</td><td>拉高 = 打开升压</td></tr>
+<tr><td>光学传感器 PAW3950</td><td>SPI0：PIO0_8 / 9 / 10；NCS = PIO0_20；MOTION = PIO0_2</td><td>SPI0 1 MHz（PAW3950.c 里自己初始化）</td></tr>
+<tr><td>侧键 / 中键 / DPI</td><td>前 PIO0_11、后 PIO0_12、中 PIO0_7、DPI PIO0_23</td><td>和以前一样走 <code>BUTTON_PORT0</code></td></tr>
+<tr><td>滚轮编码器</td><td>ZA = PIO0_17、ZB = PIO0_18</td><td><code>ENABLE_WHEEL_SCAN = 0</code>，<b>暂时关着</b></td></tr>
+</tbody></table></div>
+
+<h2>3. 改了哪些文件</h2>
+<div class="scroll"><table>
+<thead><tr><th>层</th><th>文件</th><th>改了什么</th></tr></thead>
+<tbody>
+<tr><td rowspan="4">板级配置</td><td><code>inc/my_board.h</code></td><td>打开 <code>GT_LINA_T1A_H5_PWM</code>（它会顺带定义 <code>GT_LINA_T1A_H5</code>）；加 T1A 引脚表；关滚轮扫描</td></tr>
+<tr><td><code>inc/my_misc.h</code></td><td>T1A PWM 版：按下读数变小（<code>PRESS_KEY_AND_VALUE_INCREASE = 0</code>）</td></tr>
+<tr><td><code>inc/my_debug.h</code></td><td>版本号 1121 → 1132；调试打印改走 USB（调试总开关仍是 0）</td></tr>
+<tr><td><code>Sample.uvproj</code></td><td>工程里加入 my_pwm.c、my_waveform.c</td></tr>
+<tr><td rowspan="5">驱动</td><td><code>src/my_pwm.c</code> <span class="tag" style="--c:var(--good)">新</span></td><td>用 32 位定时器 CT32B1 产生 200 kHz PWM，两路</td></tr>
+<tr><td><code>src/my_waveform.c</code> <span class="tag" style="--c:var(--good)">新</span></td><td>用 CT32B0 每 20 µs 中断一次，按波形表改占空比</td></tr>
+<tr><td><code>src/SPI.c</code></td><td>T1A 的 SPI0、SPI1 引脚和速度；霍尔读数改走 SSP1</td></tr>
+<tr><td><code>src/GPIO.c</code></td><td>T1A 的按键、传感器、霍尔电源、线圈引脚初始化</td></tr>
+<tr><td><code>src/PAW3950.c</code></td><td>T1A 上传感器走 SPI0；加了“初始化成功才读数据”的保护</td></tr>
+<tr><td rowspan="3">应用</td><td><code>src/my_electromagnet.c</code></td><td><b>改得最多</b>：按下 / 松开震动改成启动波形；关掉刹车和 Daemon；状态机改用毫秒计时</td></tr>
+<tr><td><code>app/button.c</code></td><td>霍尔芯片增益配置；T1A 读霍尔时的 SCK 脉冲改用 PIO1_15</td></tr>
+<tr><td><code>src/device.c</code> 等</td><td>只是在条件里加上 <code>GT_LINA_T1A_H5</code>（device.c、custom.c、suspend.c、usbhw.c、wnDrv_Pmu.c、button.h、PAW3950.h）</td></tr>
+<tr><td rowspan="2">协议</td><td><code>inc/my_protocol_common.h</code></td><td>新命令 MFG（0x07/0x08）、新配置 <code>CFG_COIL_DRIVE_MODE</code>（0x06）、<code>CFG_COIL_PWM</code>（0x07）；去掉 <code>INFO_ALL / CFG_ALL</code></td></tr>
+<tr><td><code>src/my_protocol_mouse.c</code></td><td>实现上面两个新配置的读写；参数结构 <code>AllParam_ts</code> 多了驱动模式（1 字节）和波形表（100 字节）</td></tr>
+</tbody></table></div>
+<p class="note">另外：他的代码是从最初的版本改的，所以我们之前删掉的 32 个“没编译的文件”又回来了，它们仍然不在 Keil 工程里。</p>
+
+<h2>4. 按一下左键，现在走哪条路</h2>
+<div class="flow">
+<div style="--c:var(--sw)"><b>每 1 ms</b>　<code>LR_GetState()</code> → <code>hall_get_sample()</code>（button.c:858）：SCK 脚先当 GPIO 拉一个脉冲，再用 SPI1 收 4 字节（右键 2 字节、左键 2 字节）</div>
+<span class="ar">↓</span>
+<div style="--c:var(--sw)"><b>算法</b>　<code>ProcessRecvSampleRawData()</code> 走 <code>#else</code>（霍尔）分支：校验 → 16383 − 读数 → 滤波 → 段位 → 快速触发 → 校准</div>
+<span class="ar">↓ 判定按下</span>
+<div style="--c:var(--pc)"><b>线圈</b>　<code>Ele_LeftKeyPressProcess()</code>（my_electromagnet.c:982）：按段位算出这次震动的时长 → <code>MyWaveform_StartGenerate(通道 0, 波形表, 时长, 1 遍)</code></div>
+<span class="ar">↓ 之后不占 CPU，在中断里自己跑</span>
+<div style="--c:var(--pc)"><b>每 20 µs</b>　CT32B0 中断 → 取波形表下一个点 → 改 CT32B1 的 MR0 → PIO0_13 上 200 kHz PWM 的占空比跟着变；放完一遍就停，引脚回到低电平</div>
+<span class="ar">↓</span>
+<div style="--c:var(--per)"><b>主循环</b>　<code>Ele_StatusTask()</code> 按毫秒计时：震动结束 → 进入 8 ms 的“震后消抖” → 回到“不震”</div>
+</div>
+<p>和 IRPT_V4 比：<b>读数来源</b>变了（ADC → 霍尔 SPI），<b>线圈驱动</b>变了（GPIO 忙等 100 µs → 定时器 PWM + 中断），中间的按键算法、USB 上报都没变。</p>
+
+<h3>线圈波形是什么样的（动手看）</h3>
+<p>波形表 <code>wfCustomTbl</code>（my_electromagnet.c 里）有 100 个点：从 60% 占空比升到 100%，再降回 60%。不管这次震动多长，<b>这 100 个点都会被均匀地放完</b>：震动越长，每 20 µs 往前走的点越少。拖动看看：</p>
+<div class="box">
+<div class="ctl"><label>震动时长 <input type="range" id="wfP" min="40" max="5000" step="20" value="1000"> <output id="wfPo">1000</output> µs</label></div>
+<svg id="wfSvg" viewBox="0 0 860 220" role="img" aria-label="波形占空比随时间变化"></svg>
+<div class="note" id="wfInfo"></div>
+<p class="note">照抄 my_waveform.c:155~259 的算法：每 20 µs 更新一次，<code>inc = (100 &lt;&lt; 15) / 更新次数</code>，每次 <code>acc += inc</code>，取第 <code>acc &gt;&gt; 15</code> 个点。时长被限制在 20 ~ 5000 µs。</p>
+</div>
+
+<h2>5. 还没做完 / 要问杰哥的</h2>
+<div class="warn"><b>⚠️ 参数存 EEPROM 可能越界（待问杰哥 / 上板验证）</b><br>
+参数结构 <code>AllParam_ts</code> 加了 101 字节后是 <b>189 字节</b>（我用同样的结构体定义编译算出来的），从 0xF06 开始写，结束在 <b>0xFC2</b>。<br>
+代码自己写着上限：<code>my_protocol_mouse.c:214</code> “Do not exceed 0xFBF”，<code>IAP_CMD.c:52~54</code> 也写着“4 kB EEPROM 最高 64 字节保留，不能写，范围 0x0 ~ 0xFBF”（用户手册 EEPROM Write 命令的说明也是这样）。<br>
+<code>my_protocol_mouse.c:138</code> 写 EEPROM 时没检查返回值。可能的后果：GUI 改的参数存不住，或者开机时校验和对不上、每次都恢复默认值。</div>
+<div class="scroll"><table>
+<thead><tr><th>项目</th><th>现状</th></tr></thead>
+<tbody>
+<tr><td>GUI 下发的波形表 <code>gPwmWf[100]</code>、驱动模式 <code>xDriveMode</code></td><td>能收、能存、能读回，但<b>线圈实际用的还是写死的 <code>wfCustomTbl</code></b>；<code>pressDriveMode / releaseDriveMode</code> 字段也还没用。看起来是下一步要接上</td></tr>
+<tr><td>MFG 命令（0x07 / 0x08，“振动零点”）</td><td>只定义了枚举和结构体，还没有处理代码</td></tr>
+<tr><td><code>INFO_ALL / CFG_ALL</code>（0xFF）</td><td>删掉了，GUI 不能再一次读写全部参数</td></tr>
+<tr><td>滚轮</td><td><code>ENABLE_WHEEL_SCAN = 0</code>，暂时关着</td></tr>
+<tr><td>刹车、Daemon（线圈最长通电保护）</td><td>PWM 版里关掉了（<code>BRAKE_FUNC_ENABLE = 0</code>）</td></tr>
+<tr><td>SPI1 速度注释</td><td>SPI.c:241 注释写 8 MHz，按寄存器算是 48 MHz ÷ (CPSR 8 × (SCR 2 + 1)) = <b>2 MHz</b>。小问题，可以顺便问</td></tr>
+</tbody></table></div>
+
+<h2>6. 和我们已经学过的关系</h2>
+<div class="scroll"><table>
+<thead><tr><th>学过的</th><th>在 T1A 上</th></tr></thead>
+<tbody>
+<tr><td>ADC 串讲 第 1~4 关（ADC 驱动）</td><td><b>不用了</b>：<code>my_adc.c</code> 只在 IRPT_V4 编译。但“读寄存器手册、算分频、看位”的方法完全一样，下面学 PWM 定时器时直接用上</td></tr>
+<tr><td>ADC 串讲 第 5~10 关（按键算法）</td><td><b>照样用</b>，走霍尔分支：14 位数据，取反用 16383，滤波改成走 1/64、分界线 60，学基线的范围 ±60，段位表换成霍尔版</td></tr>
+<tr><td>一次左键点击全程</td><td>读数来源和线圈两段变了，其余（Button_Scan、上报）不变</td></tr>
+<tr><td>custom.c、USB、DPI 键</td><td>基本没变</td></tr>
+</tbody></table></div>
+
+<h2>7. 接下来学什么（建议顺序）</h2>
+<ol>
+<li><b>PWM（my_pwm.c，150 行）</b>：新外设 CT32B1。问题：怎么让一只脚每秒开关 20 万次、并且能调“开”的比例？</li>
+<li><b>波形（my_waveform.c，320 行）</b>：CT32B0 中断 + 相位累加。问题：怎么让 100 个点在任意时长里均匀放完？</li>
+<li><b>线圈状态机（my_electromagnet.c 里 PWM 相关部分）</b>：按下 / 松开 → 启动波形 → 计时 → 消抖。</li>
+<li><b>霍尔读数（SPI1 + hall_get_sample）</b>：SPI 怎么收发、为什么先拉一个 SCK 脉冲。</li>
+<li><b>协议新命令</b>：GUI 怎么读写波形表。</li>
+</ol>
+<p>每一块都按“问题 → 一句话规则 → 数字例子 → 自己算 → 代码”来，附随机练习题。</p>
+
+<h2>8. 先做几道题</h2>
+<div class="qz" data-ans="2"><div class="qt">T1A 上，杰哥一共新加了几个 .c 文件？</div>
+<div class="row"><input type="text" inputmode="numeric" aria-label="答案"><button type="button" class="chk">检查</button></div>
+<div class="fb" data-ok="对：my_pwm.c 和 my_waveform.c。其余都是在原文件里加板型分支。" data-no="看第 3 节标“新”的。"></div></div>
+<div class="qz" data-choice="1"><div class="qt">T1A 上左右键的读数从哪来？</div>
+<div class="row"><button type="button" class="opt">ADC（PIO0_13 / 14）</button><button type="button" class="opt">霍尔芯片，SPI1</button><button type="button" class="opt">PAW3950</button></div>
+<div class="fb" data-ok="对。PIO0_13 / 14 在 T1A 上变成了线圈的 PWM 输出。" data-no="T1A 的 PIO0_13 / 14 已经改作线圈 PWM 了。"></div></div>
+<div class="qz" data-ans="5" data-tol="0"><div class="qt">PWM 频率 200 kHz，一个周期多少 µs？</div>
+<div class="row"><input type="text" inputmode="decimal" aria-label="答案"><button type="button" class="chk">检查</button></div>
+<div class="fb" data-ok="对：1 ÷ 200000 秒 = 5 µs。48 MHz 下就是数 240 下（MR3 = 240）。" data-no="周期 = 1 ÷ 频率。1 秒 = 1000000 µs。"></div></div>
+<div class="qz" data-ans="50"><div class="qt">震动时长 1000 µs，波形每 20 µs 更新一次，一共更新几次？</div>
+<div class="row"><input type="text" inputmode="numeric" aria-label="答案"><button type="button" class="chk">检查</button></div>
+<div class="fb" data-ok="对：1000 ÷ 20 = 50 次，100 个点平均每次走 2 个。上面的图可以拖到 1000 看。" data-no="时长 ÷ 每次间隔。"></div></div>
+<div class="qz" data-ans="0xFC2" data-hex="1"><div class="qt">参数从 0xF06 开始写，一共 189 字节，最后一个字节的地址是？（十六进制）</div>
+<div class="row"><input type="text" aria-label="答案"><button type="button" class="chk">检查</button></div>
+<div class="fb" data-ok="对：0xF06 + 189 − 1 = 0xF06 + 0xBC = 0xFC2，超过了 0xFBF。" data-no="189 = 0xBD。最后一个字节是 起点 + 长度 − 1。"></div></div>
+
+<div class="think"><b>💡 想法上</b>：接手别人的新版本，第一步不是从头读，而是<b>先做 diff</b>：拿他的代码和你手上的版本逐文件比，知道改了哪 22 个文件、每个改了什么，再决定先读哪里。这一页就是这样做出来的：他的 326 个文件里，真正需要新学的只有两个新文件和十几处分支。“改动有多大”先量清楚，心里就不慌了。</div>
+</div>
+<script>
+(function(){
+document.querySelectorAll('.qz').forEach(q=>{const fb=q.querySelector('.fb');
+ const show=ok=>{fb.className='fb '+(ok?'ok':'no');fb.innerHTML=(ok?'✓ ':'✗ ')+(ok?fb.dataset.ok:fb.dataset.no)};
+ if(q.dataset.ans!=null){const inp=q.querySelector('input');const hex=!!q.dataset.hex;const ans=hex?parseInt(q.dataset.ans,16):+q.dataset.ans,tol=+(q.dataset.tol||0);
+  const go=()=>{const s=inp.value.trim();if(!s)return;const v=hex?parseInt(s,16):parseFloat(s);if(isNaN(v))return;show(Math.abs(v-ans)<=tol+1e-9)};
+  q.querySelector('.chk').onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter')go()})}
+ else{const c=+q.dataset.choice;[...q.querySelectorAll('.opt')].forEach((b,j)=>b.onclick=()=>{q.querySelectorAll('.opt').forEach(x=>x.classList.remove('on'));b.classList.add('on');show(j===c)})}});
+/* waveform demo: same algorithm as my_waveform.c */
+const TBL=[60,61,62,62,63,64,65,66,67,67,68,69,70,71,72,72,73,74,75,76,77,77,78,79,80,81,82,82,83,84,85,86,87,87,88,89,90,91,92,92,93,94,95,96,97,97,98,99,100,100,100,100,99,98,97,97,96,95,94,93,92,92,91,90,89,88,87,87,86,85,84,83,82,82,81,80,79,78,77,77,76,75,74,73,72,72,71,70,69,68,67,67,66,65,64,63,62,62,61,60];
+const NS='http://www.w3.org/2000/svg',$=id=>document.getElementById(id);
+function el(p,t,a,x){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e}
+function run(P){P=Math.max(20,Math.min(5000,P));const n=Math.floor(P/20);const inc=Math.floor((100<<15)/n);let acc=inc>>1;const pts=[{t:0,d:TBL[acc>>15],i:acc>>15}];let t=0;
+ while(true){t+=20;acc+=inc;const i=acc>>15;if(i<100)pts.push({t,d:TBL[i],i});else{pts.push({t,d:0,i:-1});break}}return{pts,n,inc}}
+function draw(){const P=+$('wfP').value;$('wfPo').value=P;const {pts,n,inc}=run(P);const svg=$('wfSvg');svg.innerHTML='';
+ const W=860,H=220,L=44,R=12,T=10,B=28,pw=W-L-R,ph=H-T-B,tmax=pts[pts.length-1].t;const X=t=>L+t/tmax*pw,Y=d=>T+ph-d/100*ph;
+ for(let g=0;g<=100;g+=20){el(svg,'line',{x1:L,x2:W-R,y1:Y(g),y2:Y(g),stroke:'var(--grid)'});el(svg,'text',{x:L-6,y:Y(g)+4,'text-anchor':'end','font-size':11,fill:'var(--muted)'},g+'%')}
+ for(let k=0;k<=4;k++){const t=Math.round(tmax*k/4);el(svg,'text',{x:X(t),y:H-9,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},t+' µs')}
+ let d='M'+X(0)+','+Y(pts[0].d);for(let k=1;k<pts.length;k++){d+=' H'+X(pts[k].t).toFixed(1)+' V'+Y(pts[k].d).toFixed(1)}
+ el(svg,'path',{d,fill:'none',stroke:'var(--pc)','stroke-width':2});
+ if(pts.length<=60)pts.slice(0,-1).forEach(p=>el(svg,'circle',{cx:X(p.t),cy:Y(p.d),r:2.5,fill:'var(--pc)'}));
+ const step=(inc/32768).toFixed(2);
+ $('wfInfo').textContent=`时长 ${P} µs → 更新 ${n} 次（每 20 µs 一次），每次在表里往前走约 ${step} 个点。曲线是占空比；放完以后回到 0（引脚低电平）。${n<10?'时长很短时只能取到很少几个点，波形会很粗。':''}`}
+$('wfP').oninput=draw;draw();
+})();
+</script>
