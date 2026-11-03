@@ -373,6 +373,11 @@ details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
 .sim2 .sr span.on{background:color-mix(in srgb,var(--good) 30%,var(--panel));font-weight:700}
 .sim2 .sr small{display:block;font-size:.6rem;color:var(--muted)}
 .sim2 .cpu{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-left:4px solid var(--per);padding:4px 8px;border-radius:0 6px 6px 0;overflow-wrap:anywhere}
+#chainSvg path{fill:none;stroke-width:2.2}
+#chainSvg .flow{stroke-dasharray:7 5;animation:flow .8s linear infinite}
+@media (prefers-reduced-motion: reduce){#chainSvg .flow{animation:none}}
+#chainSvg text{font-family:var(--font-m);font-size:11px}
+.bits span.hit{outline:2px solid var(--bad);outline-offset:-2px}
 .sim2 .who{display:inline-block;font-size:.72rem;color:var(--bg);background:var(--c);border-radius:4px;padding:0 6px;margin-right:6px}
 </style>
 <div class="sim sim2">
@@ -388,12 +393,15 @@ details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
 <div class="cont" style="--c:var(--pc)"><div class="nm">SPI1 接收 FIFO（读 DR 从这里取）</div><div class="fifo" id="sRF"></div></div>
 <div class="cont" style="--c:var(--gold)"><div class="nm">LPC_SSP1->SR（状态寄存器）= <span id="sSRv"></span></div><div class="sr" id="sSR"></div><div class="sub" id="sSRc"></div></div>
 </div>
+<div id="chainW" style="position:relative;padding:0 34px 0 30px">
+<svg id="chainSvg" aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:visible"></svg>
 <div class="reg" style="--c:var(--pc)"><div class="nm">SPI1 移位寄存器 8 格（左边 bit7 高位 → 最先从 MOSI 出去；从 MISO 进来的站到右边 bit0 低位）</div><div class="bits idx" style="grid-template-columns:repeat(8,minmax(0,1fr))"><span>b7</span><span>b6</span><span>b5</span><span>b4</span><span>b3</span><span>b2</span><span>b1</span><span>b0</span></div><div class="bits" id="vS" style="grid-template-columns:repeat(8,minmax(0,1fr))"></div></div>
-<div class="arrow">↓ MOSI（PIO0_21）→ 左键芯片 SDI</div>
+<div class="gap" style="height:30px"></div>
 <div class="reg" style="--c:var(--sw)"><div class="nm">左键芯片的 16 格（位号 b15 ~ b0，左边 b15 是高位，最先出去。刚下完命令时：b15 = CRC1、b14 = CRC0、b13 ~ b0 = 读数 D13 ~ D0；开始挪以后，格子里换成了别的位，位号只表示“位置”）</div><div class="bits idx"><span>b15</span><span>b14</span><span>b13</span><span>b12</span><span>b11</span><span>b10</span><span>b9</span><span>b8</span><span>b7</span><span>b6</span><span>b5</span><span>b4</span><span>b3</span><span>b2</span><span>b1</span><span>b0</span></div><div class="bits" id="vL"></div></div>
-<div class="arrow">↓ SDO_0 → 右键芯片 SDI</div>
+<div class="gap" style="height:30px"></div>
 <div class="reg" style="--c:var(--per)"><div class="nm">右键芯片的 16 格（同上：位号表示位置；刚下完命令时 b15 = CRC1 … b0 = D0）</div><div class="bits idx"><span>b15</span><span>b14</span><span>b13</span><span>b12</span><span>b11</span><span>b10</span><span>b9</span><span>b8</span><span>b7</span><span>b6</span><span>b5</span><span>b4</span><span>b3</span><span>b2</span><span>b1</span><span>b0</span></div><div class="bits" id="vR"></div></div>
-<div class="arrow">↓ MISO（PIO0_22）→ 回到 SPI1 移位寄存器的队尾（圈闭合）</div>
+<div class="gap" style="height:30px"></div>
+</div>
 <div class="log" id="mLog" aria-live="polite"></div>
 <p class="note">颜色：蓝 = 右键读数的位，绿 = 左键读数的位，灰 = tx 的位。SR 里绿色的位 = 1。</p>
 </div>
@@ -592,7 +600,7 @@ const cp=o=>JSON.parse(JSON.stringify(o));
 let st={L:Array(16).fill(null),R:Array(16).fill(null),SH:Array(8).fill(null),TF:[],RF:[],rx:[null,null,null,null],bw:0,br:0,len:4,busy:false};
 const F=[];
 const sr=s=>(s.TF.length===0?1:0)|(s.TF.length<8?2:0)|(s.RF.length>0?4:0)|(s.RF.length>=8?8:0)|((s.busy||s.TF.length>0)?16:0);
-const push=(cpu,who,txt,byte)=>F.push({s:cp(st),cpu,who,txt,byte});
+const push=(cpu,who,txt,byte,mv)=>F.push({s:cp(st),cpu,who,txt,byte,mv});
 push('hall_get_sample() 开始（button.c:858）','软件','准备读一次。两颗芯片的格子里是上一次留下的东西（?）；SPI1 空闲：两个 FIFO 都空，SR = 0x03（TFE = 1 发送队列空，TNF = 1 没满）。',-1);
 st.L=bitsOf(word(8935),16,'L');st.R=bitsOf(word(9300),16,'R');
 push('Hall_CLK_Command_SET(4, 4);（button.c:860）','软件 + 芯片','【软件】把 SCK 当普通引脚拉高约 5 µs 再拉低（上半节讲过）。\n【两颗芯片】认出“读按键”命令，把最新结果复制进自己的 16 格：左键 0xE2E7，右键 0xA454。\n【SPI1】没动，还是空闲。',-1);
@@ -603,7 +611,7 @@ for(let i=0;i<4;i++){
  st.TF.shift();st.SH=bitsOf(TX[i],8,'T');st.busy=true;
  push(`while((LPC_SSP1->SR & 0x14) != 0x04){}（SPI.c:444）← CPU 卡在这里`,'SPI1 硬件',`【SPI1】发现发送 FIFO 里有字节，自动把它搬进移位寄存器（8 格），发送 FIFO 又空了；BSY = 1，开始打时钟。\n【软件】已经走到第二个 while：读 SR = ${hx(sr(st))}，& 0x14 = ${hx(sr(st)&0x14)} ≠ 0x04 → 原地等。`,i);
  for(let k=1;k<=8;k++){const s=st.SH.shift(),l=st.L.shift(),r=st.R.shift();st.SH.push(r);st.L.push(s);st.R.push(l);
-  push(`while((LPC_SSP1->SR & 0x14) != 0x04){}（SPI.c:444）← CPU 卡在这里`,'SPI1 + 芯片',`【SPI1】第 ${k} 下时钟：移位寄存器排头的 ${s.v}（${s.c==='T'?'tx 的位':s.c==='R'?'右键的位':'左键的位'}）从 MOSI 出去 → 左键芯片队尾。\n【左键芯片】排头 ${l.v} 从 SDO 出去 → 右键芯片队尾。\n【右键芯片】排头 ${r.v} 从 SDO 出去 → MISO → SPI1 移位寄存器队尾。\n【软件】还在等（SR = ${hx(sr(st))}）。`,i)}
+  push(`while((LPC_SSP1->SR & 0x14) != 0x04){}（SPI.c:444）← CPU 卡在这里`,'SPI1 + 芯片',`【SPI1】第 ${k} 下时钟：移位寄存器排头的 ${s.v}（${s.c==='T'?'tx 的位':s.c==='R'?'右键的位':'左键的位'}）从 MOSI 出去 → 左键芯片队尾。\n【左键芯片】排头 ${l.v} 从 SDO 出去 → 右键芯片队尾。\n【右键芯片】排头 ${r.v} 从 SDO 出去 → MISO → SPI1 移位寄存器队尾。\n【软件】还在等（SR = ${hx(sr(st))}）。`,i,{s:s.v,l:l.v,r:r.v})}
  const rb=st.SH.reduce((a,x)=>a*2+x.v,0),rc=st.SH[0].c;st.RF.push({b:rb,c:rc});st.busy=false;st.SH=Array(8).fill(null);
  push(`while((LPC_SSP1->SR & 0x14) != 0x04){}（SPI.c:444）`,'SPI1 硬件',`【SPI1】8 下打完：移位寄存器里收满 8 位 = ${hx(rb)}，自动搬进<b>接收 FIFO</b>；BSY = 0，RNE = 1。SR = ${hx(sr(st))}。`,i);
  push(`while((LPC_SSP1->SR & 0x14) != 0x04){}（SPI.c:444）`,'软件',`【软件】读 SR = ${hx(sr(st))}，& 0x14 = ${hx(sr(st)&0x14)}，等于 0x04（RNE = 1 有收到的、BSY = 0 不忙）→ 等待结束。`,i);
@@ -625,7 +633,21 @@ function show(){const f=F[k],s=f.s;
  $('sSRc').textContent=`第一个等待：SR & 0x12 = ${hx(v&0x12)} ${(v&0x12)===2?'= 0x02 → 通过':'≠ 0x02 → 等'}；第二个等待：SR & 0x14 = ${hx(v&0x14)} ${(v&0x14)===4?'= 0x04 → 通过':'≠ 0x04 → 等'}`;
  $('vS').innerHTML=cells(s.SH,8).replace(/<span>\?<\/span>/g,'<span>·</span>');$('vL').innerHTML=cells(s.L,16);$('vR').innerHTML=cells(s.R,16);
  $('mLog').innerHTML=f.txt.replace(/\n/g,'<br>');$('sC').textContent=`第 ${k+1} / ${F.length} 步`;
- $('sP').disabled=k===0;$('sN').disabled=$('sB').disabled=k===F.length-1}
+ $('sP').disabled=k===0;$('sN').disabled=$('sB').disabled=k===F.length-1;wires(f.mv)}
+
+function wires(mv){const W=$('chainW'),S=$('chainSvg');if(!W||!S)return;S.innerHTML='';const wr=W.getBoundingClientRect();
+ const cell=(id,i)=>{const c=$(id).children[i].getBoundingClientRect();return{l:c.left-wr.left,r:c.right-wr.left,y:c.top-wr.top+c.height/2,b:c.bottom-wr.top}};
+ const gaps=[...W.querySelectorAll('.gap')].map(g=>{const r=g.getBoundingClientRect();return r.top-wr.top+r.height/2});
+ const Lx=10,R1=wr.width-22,R2=wr.width-8;const NS='http://www.w3.org/2000/svg';
+ const mk=(d,col,lab,lx,ly,bit)=>{const p=document.createElementNS(NS,'path');p.setAttribute('d',d);p.setAttribute('stroke',`var(--${col})`);if(mv)p.setAttribute('class','flow');p.setAttribute('marker-end','url(#cah)');S.appendChild(p);
+  const t=document.createElementNS(NS,'text');t.setAttribute('x',lx);t.setAttribute('y',ly);t.setAttribute('fill',`var(--${col})`);const nar=wr.width<600;t.textContent=(nar?lab.split('（')[0]:lab)+(mv?(nar?` 送过去 ${bit}`:`：这一下送过去的位 = ${bit}`):'');S.appendChild(t)};
+ const defs=document.createElementNS(NS,'defs');defs.innerHTML='<marker id="cah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--fg)"/></marker>';S.appendChild(defs);
+ const s7=cell('vS',0),s0=cell('vS',7),l15=cell('vL',0),l0=cell('vL',15),r15=cell('vR',0),r0=cell('vR',15);
+ mk(`M${s7.l},${s7.y} H${Lx} V${gaps[0]} H${R1} V${l0.y} H${l0.r+2}`,'pc','MOSI（SPI1 的 b7 → 左键芯片的 b0）',Lx+6,gaps[0]-5,mv&&mv.s);
+ mk(`M${l15.l},${l15.y} H${Lx} V${gaps[1]} H${R1} V${r0.y} H${r0.r+2}`,'sw','SDO_0（左键芯片的 b15 → 右键芯片的 b0）',Lx+6,gaps[1]-5,mv&&mv.l);
+ mk(`M${r15.l},${r15.y} H${Lx} V${gaps[2]} H${R2} V${s0.y} H${s0.r+2}`,'per','MISO（右键芯片的 b15 → SPI1 的 b0）',Lx+6,gaps[2]+14,mv&&mv.r);
+ [['vS',7],['vL',15],['vR',15]].forEach(([id,i])=>$(id).children[i].classList.toggle('hit',!!mv));}
+window.addEventListener('resize',()=>wires(F[k].mv));
 $('sN').onclick=()=>{if(k<F.length-1){k++;show()}};$('sP').onclick=()=>{if(k>0){k--;show()}};$('sR').onclick=()=>{k=0;show()};
 $('sB').onclick=()=>{if(k<F.length-1&&(F[k].byte<0||F[k+1].byte!==F[k].byte))k++;while(k<F.length-1&&F[k].byte<0)k++;while(k<F.length-1&&F[k+1].byte===F[k].byte)k++;show()};
 show();})();
