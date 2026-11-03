@@ -256,6 +256,14 @@ while(times &lt; 30)                        // 883 发 30 次校准命令
 hall_spi_tx[j*2+1] = sensor_reg_init_array[i][1];       // 946 要写的值</pre>
 <p class="note"><code>bit_crc_write_reg[256]</code>（button.c:23）是一张提前算好的表：下标是要写的值，表里存的是 0x40（1 的个数为奇数，CRC = 1，放在 b6 = 第一个字节的 0x40 位）或 0。我把 256 个值逐个和手册公式核对过，全部一致。</p>
 
+<div class="box" style="border-color:var(--gold)"><b>读和写，“命令”和“打时钟”的先后是反的</b>
+<p>SCK 上的两种东西作用完全不同：</p>
+<ul>
+<li><b>打时钟（SPI1 写 DR 引起的 8 下 × 4）</b>：只是<b>搬位</b>。芯片没有片选线，只要 SCK 在打，它的 16 格就跟着挪，不管里面装的是什么，也不会因此做任何事。</li>
+<li><b>长高电平（命令）</b>：让芯片<b>做一件事</b>，做的是什么由宽度决定。</li>
+</ul>
+<svg id="rwSvg" class="fig" viewBox="0 0 940 200" role="img" aria-label="读按键和写设置时，命令和打时钟的先后顺序"></svg>
+<p><b>所以 932 行 <code>SSP_Send_Receive()</code> 返回时</b>：32 下已经全部打完（它每个字节都等收完才继续，最后一个字节收完才返回），两颗芯片的 16 位移位寄存器里已经装好了信：右键芯片装着 tx[0..1]，左键芯片装着 tx[2..3]（不是“16 位送进一颗芯片”，而是 32 位整排推进链里，先发的 16 位穿过左键芯片走到右键芯片）。<b>但设置表还没变</b>：芯片只是“收到了信”，不知道也不关心这是什么。要等 934 行把 SCK 拉高约 24 µs，芯片认出 WR_REG，才照着 16 位里的内容去改设置表。如果只执行 932 不执行 934，什么都不会被写进去，下一次读按键命令一来，16 位又被测量值覆盖。</p></div>
 <h3>5.2 写一行设置的全过程：寄信 + 填表</h3>
 <p>每写一行设置，分三拍：<b>① 软件填 tx</b> → <b>② SPI1 打 32 下，把两封“信”推进两颗芯片</b> → <b>③ SCK 拉高 24 µs，两颗芯片同时“拆信、填表”</b>。两颗芯片写一样的值，所以 tx 里两封信内容一样（<code>j</code> 循环 2 次）。先推出去的那封走得最远，进右键芯片；后推的那封停在左键芯片（和第 3 课上读数据时的顺序一样）。</p>
 <div class="stp">
@@ -425,6 +433,15 @@ function drawPW(){const s=$('pw');s.innerHTML='';const on=pwOn,live=on?'var(--ba
  el(s,'text',{x:X(68),y:hi-6,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'之后一直高');
  $('pw0').setAttribute('aria-pressed',!on);$('pw1').setAttribute('aria-pressed',!!on)}
 $('pw0').onclick=()=>{pwOn=0;drawPW()};$('pw1').onclick=()=>{pwOn=1;drawPW()};drawPW();
+/* ---- read vs write order ---- */
+(function(){const s=$('rwSvg');const blk=(x,y,w,t1,t2,col)=>{el(s,'rect',{x,y,width:w,height:44,rx:6,style:`fill:color-mix(in srgb,var(--${col}) 22%,var(--panel));stroke:var(--${col})`});el(s,'text',{x:x+w/2,y:y+19,'text-anchor':'middle','font-size':12.5,'font-weight':700,fill:'var(--fg)'},t1);el(s,'text',{x:x+w/2,y:y+36,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},t2)};
+ const ar=(x,y)=>{el(s,'path',{d:`M${x},${y} h22 m-7,-6 l7,6 l-7,6`,fill:'none',stroke:'var(--muted)','stroke-width':2})};
+ el(s,'text',{x:8,y:52,'font-size':13,'font-weight':700,fill:'var(--per)'},'读按键');el(s,'text',{x:8,y:68,'font-size':10.5,fill:'var(--muted)'},'第 3 课上，每 1 ms');
+ blk(130,30,250,'① 命令：SCK 高 5 µs','芯片把测量值装进自己的 16 位','pc');ar(388,52);blk(418,30,300,'② 打 32 下（SSP_Send_Receive）','16 位被搬出来 → MCU 的 rx','per');
+ el(s,'text',{x:730,y:57,'font-size':11.5,fill:'var(--fg)'},'先命令，后搬位');
+ el(s,'text',{x:8,y:142,'font-size':13,'font-weight':700,fill:'var(--sw)'},'写设置');el(s,'text',{x:8,y:158,'font-size':10.5,fill:'var(--muted)'},'本课，开机 25 次');
+ blk(130,120,300,'① 打 32 下（932 行）','tx 被搬进两颗芯片的 16 位（信到了）','per');ar(438,142);blk(468,120,250,'② 命令：SCK 高 24 µs（934 行）','芯片照 16 位里的内容改设置表','pc');
+ el(s,'text',{x:730,y:147,'font-size':11.5,fill:'var(--fg)'},'先搬位，后命令');})();
 /* ---- command bands ---- */
 const BC=[['HAL_CONVERT 读按键',5,'per'],['W_PWM_REG',9,'muted'],['SLEEP 睡眠',15,'muted'],['WR_REG 写设置',24,'sw'],['FREQ_Calibrate 校准',128,'hw']];
 function drawBD(){const s=$('bd'),E=+$('bdE').value/100;s.innerHTML='';const lnA=Math.log(1.5),lnB=Math.log(300),X=w=>190+(Math.log(w)-lnA)/(lnB-lnA)*720;
