@@ -19,7 +19,7 @@
 #include "Timer.h"
 #include "my_board.h"
 
-#if (defined(IRPT_V4) || defined(V4_HALL_HPTIC_V4))
+#if (defined(IRPT_V4) || defined(V4_HALL_HPTIC_V4) || defined(GT_LINA_T1A_H5))
 
 int32_t PAW3950_Init(void);
 void PAW3950_Exit(void);

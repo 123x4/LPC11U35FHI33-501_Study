@@ -135,6 +135,38 @@ void SSP1_IRQHandler(void)
 
 void InitSPI0Master(void)
 {
+#if (defined(GT_LINA_T1A_H5))
+    unsigned char I ;
+    unsigned int DUMMY = 0 ;
+    DUMMY=DUMMY;
+    //-----SPI0-----
+    LPC_SYSCON->PRESETCTRL |= (0x1<<0) ;                            //SPI0 Reset De-Asserted
+    LPC_SYSCON->SYSAHBCLKCTRL |= (1<<11) ;                          //Setup AHB Clock To The SPI0 Domain 
+    LPC_SYSCON->SSP0CLKDIV = 0x1 ;                                  //SPI0 Clock Divider 1(48MHz/1=48MHz)
+	//-----GPIO TO SPI0-----
+    LPC_IOCON->PIO0_8           &= ~0x07 ;                          //Select GPIO0_8 To MISO0
+    LPC_IOCON->PIO0_8           |= 0x01 ;
+    
+    LPC_IOCON->PIO0_9           &= ~0x07 ;                          //Select GPIO0_9 To MOSI0
+    LPC_IOCON->PIO0_9           |= 0x01 ;
+
+
+	LPC_IOCON->SWCLK_PIO0_10	&= ~0x07 ;							//Select GPIO0_10 To CLK0
+	LPC_IOCON->SWCLK_PIO0_10	|= 0x02 ;
+
+		
+	LPC_SSP0->CR0 = 0x01C7  ;                                        //CPOL = 1 CPHA = 1 8Bits
+    LPC_SSP0->CPSR = 0x18 ;
+    //SPI SPEED = ((MCU_OSC/SSP1CLKDIV)/(CPSR*[CR0 High Byte+1]))
+    //((48MHz/1)/(24*[1+1])) = 1Mhz
+
+    for ( I = 0; I < 8 ; I++ )
+    {
+        DUMMY = LPC_SSP0->DR ;
+  	}
+    LPC_SSP0->CR1 = SSPCR1_SSE ;                                    //Enable SSP0
+    return ;
+#else
     unsigned char I ;
     unsigned int DUMMY = 0 ;
     DUMMY=DUMMY;
@@ -166,10 +198,55 @@ void InitSPI0Master(void)
   	}
     LPC_SSP0->CR1 = SSPCR1_SSE ;                                    //Enable SSP0
     return ;
+#endif
 }
 //-----
 void InitSPI1Master(void)
 {
+#if (defined(GT_LINA_T1A_H5))
+    unsigned char I ;
+    unsigned int DUMMY = 0;
+    DUMMY=DUMMY;
+    //-----SPI1-----
+    LPC_SYSCON->PRESETCTRL |= (0x1<<2) ;                            //SPI1 Reset De-Asserted
+    LPC_SYSCON->SYSAHBCLKCTRL |= (1<<18) ;                          //Setup AHB Clock To The SPI1 Domain
+    LPC_SYSCON->SSP1CLKDIV = 0x01 ;                                 //SPI1 Clock Divider 1(48MHz/1=48MHz)
+	//-----GPIO TO SPI1-----
+    
+     LPC_IOCON->PIO0_21			&= ~0x07 ;							//Select GPIO0_21 To MOSI1
+     LPC_IOCON->PIO0_21			|= 0x02 ;
+//    LPC_IOCON->PIO1_22			&= ~0x07 ;							//Select GPIO1_22 To MOSI1
+//    LPC_IOCON->PIO1_22			|= 0x02 ;
+
+     LPC_IOCON->PIO0_22			&= ~0x07 ;							//Select GPIO0_22 To MISO1
+     LPC_IOCON->PIO0_22			|= 0x03 ;
+//    LPC_IOCON->PIO1_21			&= ~0x07 ;							//Select GPIO1_21 To MISO1
+//    LPC_IOCON->PIO1_21			|= 0x02 ;
+
+
+     LPC_IOCON->PIO1_15			&= ~0x07 ;							//Select GPIO1_15 To SCK1
+     LPC_IOCON->PIO1_15			|= 0x03 ;
+//   LPC_IOCON->PIO1_20			&= ~0x07 ;							//Select GPIO1_20 To SCK1
+//   LPC_IOCON->PIO1_20			|= 0x02 ;
+
+ //  LPC_IOCON->PIO1_23			&= ~0x07 ;							//Select GPIO1_23 To SSEL1  //  USE for segment
+ //  LPC_IOCON->PIO1_23			|= 0x02 ;
+ //  LPC_IOCON->PIO1_19			&= ~0x07 ;							//Select GPIO1_19 To SSEL1
+ //  LPC_IOCON->PIO1_19			|= 0x02 ;
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    LPC_SSP1->CR0 = 0x0287  ;                                        //CPOL = 0 CPHA = 1 8Bits 
+    LPC_SSP1->CPSR = 0x08 ;
+    //SPI SPEED = ((MCU_OSC/SSP0CLKDIV)/(CPSR*[CR0 High Byte+1]))
+    //((48MHz/1)/(2*[2+1])) = 8Mhz
+
+    for ( I = 0; I < 8; I++ )
+    {
+        DUMMY = LPC_SSP1->DR ;
+    }
+    LPC_SSP1->CR1 |= SSPCR1_SSE ;                               //Enable SSP1
+    return ;  
+#else
     unsigned char I ;
     unsigned int DUMMY = 0;
     DUMMY=DUMMY;
@@ -212,6 +289,7 @@ void InitSPI1Master(void)
     }
     LPC_SSP1->CR1 |= SSPCR1_SSE ;                               //Enable SSP1
     return ;    
+#endif
 }
 #if 0
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -357,6 +435,21 @@ void DrvSSP1Send(unsigned int DATA)
 
 void SSP_Send_Receive(U8 *buf_wr, U8 *buf_rd, U16 length)
 {
+#if (defined(GT_LINA_T1A_H5))
+	while(length--)
+	{
+		while((LPC_SSP1->SR & (SSP_SR_TNF_NOTFULL | SSP_SR_BSY_BUSY)) != SSP_SR_TNF_NOTFULL){}
+		LPC_SSP1->DR = *buf_wr;
+
+		while((LPC_SSP1->SR & (SSP_SR_BSY_BUSY|SSP_SR_RNE_NOTEMPTY)) != SSP_SR_RNE_NOTEMPTY){}
+		/* Whenever a byte is written, MISO FIFO counter increments, Clear FIFO
+		on MISO. Otherwise, when sspReceive is called, previous data byte is left in the FIFO. */
+		*buf_rd = LPC_SSP1->DR;
+			
+		buf_wr++;
+		buf_rd++;
+	}
+#else
 	while(length--)
 	{
 		while((LPC_SSP0->SR & (SSP_SR_TNF_NOTFULL | SSP_SR_BSY_BUSY)) != SSP_SR_TNF_NOTFULL){}
@@ -370,6 +463,7 @@ void SSP_Send_Receive(U8 *buf_wr, U8 *buf_rd, U16 length)
 		buf_wr++;
 		buf_rd++;
 	}
+#endif
 }
 
 void SSP_Send(U8 Ssp_Nums,U8 *buf, U16 length)

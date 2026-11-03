@@ -56,7 +56,8 @@ void Suspend_Check(void)
 			nsAPI_SSP_Delay1us(10);
 		}
 #if 1
-    #if ((!defined(IRPT_V4)) && (!defined(V4_HALL_HPTIC_V4)))
+    #if (defined(IRPT_V4) || defined(V4_HALL_HPTIC_V4) || defined(GT_LINA_T1A_H5))
+    #else
 		optical_init();
     #endif
 //		if(!ProductionLine_Start_Get())Led_Init();

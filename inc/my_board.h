@@ -18,11 +18,13 @@
 //#define HAPTIC_V4
 //#define P723_POC
 //#define GEN_2_H_V1
-#define IRPT_V4
+//#define IRPT_V4
 //#define P723_POC_PCB1_V07
 //#define V4_HALL_HPTIC_V4
-// #define V4_HALL_HPTIC_V4_G2_0923
-
+//#define V4_HALL_HPTIC_V4_G2_0923
+//#define GT_LINA_T1A_H5
+#define GT_LINA_T1A_H5_PWM
+//#define HAPTIC_V4_PWM
 
 
 #if (defined(P723_POC_PCB1_V07))
@@ -32,9 +34,17 @@
   #define V4_HALL_HPTIC_V4
 #endif
 
+#if (defined(GT_LINA_T1A_H5_PWM))
+  #define GT_LINA_T1A_H5
+#endif
+
+#if (defined(HAPTIC_V4_PWM))
+  #define HAPTIC_V4
+#endif
 
 
-#define ENABLE_WHEEL_SCAN   1
+
+#define ENABLE_WHEEL_SCAN   0
 
 #if (defined(HAPTIC_V2) || defined (HAPTIC_V3))
 //gpio define
@@ -318,6 +328,50 @@
 #define PWM2_PORT           0
 #define PWM2_PIN            5
 #define PWM2                PIO0_5
+
+#elif (defined(GT_LINA_T1A_H5))
+//gpio define
+#define FRONT_BUTTON_PORT   0
+#define FRONT_BUTTON_PIN    11
+#define FRONT_BUTTON        TDI_PIO0_11
+#define BACK_BUTTON_PORT    0
+#define BACK_BUTTON_PIN     12
+#define BACK_BUTTON         TMS_PIO0_12
+#define MIDDLE_BUTTON_PORT  0
+#define MIDDLE_BUTTON_PIN   7
+#define MIDDLE_BUTTON       PIO0_7
+#define DPI_BUTTON_PORT     0
+#define DPI_BUTTON_PIN      23
+#define DPI_BUTTON          PIO0_23
+//Sensor
+#define MOTION_PORT         0
+#define MOTION_PIN          2
+#define MOTION              PIO0_2
+#define NCS_PORT            0
+#define NCS_PIN             20
+#define NCS                 PIO0_20
+//Encoder
+#define ZA_PORT             0
+#define ZA_PIN              17
+#define ZA                  PIO0_17
+#define ZB_PORT             0
+#define ZB_PIN              18
+#define ZB                  PIO0_18
+//Hall
+#define HALL_EN_PORT        0
+#define HALL_EN_PIN         16
+#define HALL_EN             PIO0_16
+//Coil
+#define HP_EN_PORT          1
+#define HP_EN_PIN           19
+#define HP_EN               PIO1_19
+#define PWM1_PORT           0
+#define PWM1_PIN            13
+#define PWM1                TDO_PIO0_13
+#define PWM2_PORT           0
+#define PWM2_PIN            14
+#define PWM2                TRST_PIO0_14
+
 
 
 #else

@@ -619,6 +619,16 @@
               <FileType>1</FileType>
               <FilePath>.\src\my_adc.c</FilePath>
             </File>
+            <File>
+              <FileName>my_pwm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\my_pwm.c</FilePath>
+            </File>
+            <File>
+              <FileName>my_waveform.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\my_waveform.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -19,7 +19,11 @@
 #if (defined(HAPTIC_V2) || defined (HAPTIC_V3))
   #define PRESS_KEY_AND_VALUE_INCREASE  (1)
 #elif (defined(HAPTIC_V4))
+#if (defined(HAPTIC_V4_PWM))
   #define PRESS_KEY_AND_VALUE_INCREASE  (0)
+#else
+  #define PRESS_KEY_AND_VALUE_INCREASE  (1)
+#endif
 #elif (defined(P723_POC))
   #define PRESS_KEY_AND_VALUE_INCREASE  (0)
 #elif (defined(GEN_2_H_V1))
@@ -32,6 +36,12 @@
   #else
   #define PRESS_KEY_AND_VALUE_INCREASE  (0)
   #endif
+#elif (defined(GT_LINA_T1A_H5))
+#if (defined(GT_LINA_T1A_H5_PWM))
+    #define PRESS_KEY_AND_VALUE_INCREASE  (0)
+#else
+    #define PRESS_KEY_AND_VALUE_INCREASE  (1)
+#endif
 #else
   #define PRESS_KEY_AND_VALUE_INCREASE  (1)
 #endif

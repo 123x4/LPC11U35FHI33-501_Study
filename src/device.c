@@ -437,6 +437,8 @@ void Device_Init(void)
   //null
   #elif (defined(V4_HALL_HPTIC_V4))
   	InitSPI0Master(); //hall use
+  #elif (defined(GT_LINA_T1A_H5))
+  InitSPI1Master(); //hall use
   #else
 	InitSPI0Master();
 	InitSPI1Master();
@@ -466,7 +468,8 @@ void Device_Init(void)
 	FLASH_Communication_Check();
 	#endif
 	Device_check_Profile();
-  #if ((!defined(IRPT_V4)) && (!defined(V4_HALL_HPTIC_V4)))
+  #if (defined(IRPT_V4) || defined(V4_HALL_HPTIC_V4) || defined(GT_LINA_T1A_H5))
+  #else
 	optical_init();
   #endif
 	Custom_Init();
@@ -484,7 +487,7 @@ void Device_Init(void)
   PAW3950_Init();
   MyADC_Init(pLeftAdcHandle);
   MyADC_Init(pRightAdcHandle);
-  #elif (defined(V4_HALL_HPTIC_V4))
+  #elif (defined(V4_HALL_HPTIC_V4) || defined(GT_LINA_T1A_H5))
   PAW3950_Init();
   #endif
 	
@@ -579,7 +582,7 @@ void Device_Pack(void)
 	{
 		DEVICE_CLEAR_EVENT(OPTICAL_EVENT);
     
-  #if (defined(IRPT_V4) || defined(V4_HALL_HPTIC_V4))
+  #if (defined(IRPT_V4) || defined(V4_HALL_HPTIC_V4) || defined(GT_LINA_T1A_H5))
     manual_mouseReport[2] = x_value_delta.b.lo;
     manual_mouseReport[3] = x_value_delta.b.hi;
     manual_mouseReport[4] = y_value_delta.b.lo;
@@ -777,7 +780,7 @@ void Device_Macro_Scan(void)
 	}
 }
 
-#if (defined(IRPT_V4) || defined(V4_HALL_HPTIC_V4))
+#if (defined(IRPT_V4) || defined(V4_HALL_HPTIC_V4) || defined(GT_LINA_T1A_H5))
 void Device_Optical_Scan(void)
 {
 	//UINT8 reg_data;  // 20260508, the code was canceled.

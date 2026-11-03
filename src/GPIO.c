@@ -13,6 +13,7 @@
 #include "usbcore.h"
 #include "gloab.h"
 #include "my_board.h"
+#include "device.h"
 //***********************************************************************
 //*								REGISTER								*
 //***********************************************************************
@@ -538,6 +539,50 @@ void InitGPIO(void)
   IOCTRL_LowLevel(HALL_EN_PORT, HALL_EN_PIN);   //low: enable, open power.
   IOCTR_PushPull(HALL_EN);
   IOCTRL_CfgAsOutput(HALL_EN_PORT, HALL_EN_PIN);
+  
+  //Coil
+  IOCTRL_NoPull(HP_EN);
+  IOCTRL_LowLevel(HP_EN_PORT, HP_EN_PIN);    //low: Disable voltage conversion
+  IOCTR_PushPull(HP_EN);
+  IOCTRL_CfgAsOutput(HP_EN_PORT, HP_EN_PIN);
+  IOCTRL_NoPull(PWM1);
+  IOCTRL_LowLevel(PWM1_PORT, PWM1_PIN);
+  IOCTR_PushPull(PWM1);
+  IOCTRL_CfgAsOutput(PWM1_PORT, PWM1_PIN);
+  IOCTRL_NoPull(PWM2);
+  IOCTRL_LowLevel(PWM2_PORT, PWM2_PIN);
+  IOCTR_PushPull(PWM2);
+  IOCTRL_CfgAsOutput(PWM2_PORT, PWM2_PIN);
+  
+  #elif (defined(GT_LINA_T1A_H5))
+  //base
+  DrvGPIOInput(FRONT_BUTTON_PORT, FRONT_BUTTON_PIN);   //Front_BUTTON
+  DrvGPIOInput(BACK_BUTTON_PORT, BACK_BUTTON_PIN);  //Back_BUTTON
+  DrvGPIOInput(MIDDLE_BUTTON_PORT, MIDDLE_BUTTON_PIN);  //MID BUTTION
+  DrvGPIOInput(DPI_BUTTON_PORT, DPI_BUTTON_PIN);  //DPI BUTTION
+  //sensor
+  DrvGPIOInput(MOTION_PORT, MOTION_PIN) ;  //MOTION
+  IOCTRL_NoPull(NCS);
+  IOCTRL_HighLevel(NCS_PORT, NCS_PIN);      //NCS
+  IOCTR_PushPull(NCS);
+  IOCTRL_CfgAsOutput(NCS_PORT, NCS_PIN);
+  //Encoder
+  #if (ENABLE_WHEEL_SCAN)
+  DrvGPIOInput(ZA_PORT, ZA_PIN);    //ZA
+  DrvGPIOInput(ZB_PORT, ZB_PIN);    //ZB
+  #endif
+  
+  //HALL
+  IOCTRL_NoPull(HALL_EN);
+  IOCTRL_LowLevel(HALL_EN_PORT, HALL_EN_PIN); //reset
+  IOCTR_PushPull(HALL_EN);
+  IOCTRL_CfgAsOutput(HALL_EN_PORT, HALL_EN_PIN);
+  for(uint8_t i = 0; i < 50; i++)
+  {
+    nsAPI_SSP_Delay1us(1000);
+  }
+  IOCTRL_HighLevel(HALL_EN_PORT, HALL_EN_PIN);   //high: enable, open power.
+
   
   //Coil
   IOCTRL_NoPull(HP_EN);

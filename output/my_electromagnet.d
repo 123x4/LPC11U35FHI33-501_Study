@@ -3,7 +3,7 @@
 .\output\my_electromagnet.o: .\inc\LPC11Uxx.h
 .\output\my_electromagnet.o: .\inc\core_cm0.h
 .\output\my_electromagnet.o: .\inc\LPC11Uxx.h
-.\output\my_electromagnet.o: D:\Keil5\Core\ARM\ARMCC\Bin\..\include\stdint.h
+.\output\my_electromagnet.o: C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
 .\output\my_electromagnet.o: .\inc\core_cmInstr.h
 .\output\my_electromagnet.o: .\inc\core_cmFunc.h
 .\output\my_electromagnet.o: .\inc\system_LPC11Uxx.h
@@ -17,14 +17,14 @@
 .\output\my_electromagnet.o: .\inc\my_hallkey_func.h
 .\output\my_electromagnet.o: .\inc\button.h
 .\output\my_electromagnet.o: .\inc\device.h
-.\output\my_electromagnet.o: D:\Keil5\Core\ARM\ARMCC\Bin\..\include\stdbool.h
+.\output\my_electromagnet.o: C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
 .\output\my_electromagnet.o: .\inc\Type.h
 .\output\my_electromagnet.o: .\inc\gloab.h
 .\output\my_electromagnet.o: .\inc\usb.h
 .\output\my_electromagnet.o: .\inc\hiduser.h
-.\output\my_electromagnet.o: D:\Keil5\Core\ARM\ARMCC\Bin\..\include\stdlib.h
+.\output\my_electromagnet.o: C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
 .\output\my_electromagnet.o: .\inc\Led_Effect_H\test.h
-.\output\my_electromagnet.o: D:\Keil5\Core\ARM\ARMCC\Bin\..\include\string.h
+.\output\my_electromagnet.o: C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
 .\output\my_electromagnet.o: .\inc\Timer.h
 .\output\my_electromagnet.o: .\inc\Led_Effect_H\led1.h
 .\output\my_electromagnet.o: .\inc\LedControl.h
@@ -34,3 +34,4 @@
 .\output\my_electromagnet.o: .\inc\Led_Effect_H\led_effect_group_code.h
 .\output\my_electromagnet.o: .\inc\Led_Effect_H\external_configuration.h
 .\output\my_electromagnet.o: .\inc\Led_Effect_H\ram_malloc.h
+.\output\my_electromagnet.o: .\inc\my_waveform.h

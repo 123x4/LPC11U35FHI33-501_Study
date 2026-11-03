@@ -145,7 +145,7 @@
 #define BUTTON_PORT0 (U32) ((~LPC_GPIO->PIN[0])& (LEFT_BUTTON_MASK | RIGHT_BUTTON_MASK | MIDDLE_BUTTON_MASK |K4_BUTTON_MASK |\
                                                    K5_BUTTON_MASK |VOLUME_UP_BUTTON_MASK | VOLUME_DOWN_BUTTON_MASK |DPI_CYCLE_BUTTON_MASK ))
 */
-#if (defined(HAPTIC_V2) || defined (HAPTIC_V3) || defined (HAPTIC_V4) || defined (IRPT_V4) || defined(V4_HALL_HPTIC_V4))
+#if (defined(HAPTIC_V2) || defined (HAPTIC_V3) || defined (HAPTIC_V4) || defined (IRPT_V4) || defined(V4_HALL_HPTIC_V4) || defined(GT_LINA_T1A_H5))
 #define BUTTON_PORT0 (U32)((~LPC_GPIO->PIN[0])& (MIDDLE_BUTTON_MASK | DPI_CYCLE_BUTTON_MASK | K5_BUTTON_MASK | K4_BUTTON_MASK))
 #elif (defined(P723_POC))
 #define BUTTON_PORT0 (U32)((~LPC_GPIO->PIN[0])& (MIDDLE_BUTTON_MASK | DPI_CYCLE_BUTTON_MASK | K5_BUTTON_MASK))

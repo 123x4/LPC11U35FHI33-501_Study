@@ -27,6 +27,8 @@
 ".\output\ti_drv8833.o"
 ".\output\paw3950.o"
 ".\output\my_adc.o"
+".\output\my_pwm.o"
+".\output\my_waveform.o"
 ".\output\hiduser.o"
 ".\output\usbdesc.o"
 ".\output\usbhw.o"

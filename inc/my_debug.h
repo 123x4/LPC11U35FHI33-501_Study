@@ -13,7 +13,7 @@
 #include "my_board.h"
 
 #define MY_MAIN_VERSION 0x0011//product version
-#define DEBUG_VER  1121
+#define DEBUG_VER  1132
 
 /********************************/
 #define MYDEBUG_ENABLE          0
@@ -21,7 +21,7 @@
 
 #define MYDEBUG_UART_PRINTF_MASK      (0x01 << 0)
 #define MYDEBUG_USB_PRINTF_MASK       (0x01 << 1)
-#define MYDEBUG_PRINTF_ENABLE         (MYDEBUG_UART_PRINTF_MASK)
+#define MYDEBUG_PRINTF_ENABLE         (MYDEBUG_USB_PRINTF_MASK)
 #include "stdio.h"
 /*******1. uart print code begin*********************************/
 #if (MYDEBUG_PRINTF_ENABLE & MYDEBUG_UART_PRINTF_MASK)

@@ -666,8 +666,10 @@ void wnApi_Events_Suspend_Handler(void)
 		suspendFlag=1;
 
 		//PWM_Disable();
-    #if ((!defined(IRPT_V4)) && (!defined(V4_HALL_HPTIC_V4)))
-		optical_power_down();
+    #if (defined(IRPT_V4) || defined(V4_HALL_HPTIC_V4) || defined(GT_LINA_T1A_H5))
+    //paw3950
+    #else //paw3277
+		optical_power_down(); 
     #endif
 		Usb_Stop();
    

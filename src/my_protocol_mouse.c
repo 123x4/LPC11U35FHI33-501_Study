@@ -21,9 +21,27 @@
 #define EEPROM_ADDR_CHECKSUM  (EEPROM_ADDR_START + 0x04) //1bytes
 #define EEPROM_ADDR_PARAM     (EEPROM_ADDR_START + 0x06)
 
+
+typedef struct __attribute__((packed)) {
+  HallRawInfo_ts xRawInfo;
+  HallSegmentInfo_ts xSegmentInfo;
+  CoilInfo_ts xCoilInfo;
+}AllInfo_ts;
+
+typedef struct __attribute__((packed)) {
+  RapidTriggerConfig_ts xRtCfg; 
+  CoilConfig_ts xCoilCfg;
+  CoilReleaseConfig_ts xCoilReleaseCfg;
+  CoilBrakeConfig_ts xCoilBrakeCfg;
+  CoilBrakeRelConfig_ts xCoilBrakeRelCfg;
+}AllConfig_ts;
+
+
 typedef struct __attribute__((packed)) {
   AllInfo_ts xInfo[2];
   AllConfig_ts xConfig[2];
+  CoilDriveModeConfig_ts xDriveMode;
+  uint8_t gPwmWf[100];
 }AllParam_ts;
 
 AllParam_ts xgAllParam = {0};
@@ -357,30 +375,6 @@ static int8_t ProcessRequest_CMD_GET_INFO(uint8_t subCommand, uint8_t virtualKey
   if(virtualKeyCode != VK_LBUTTON && virtualKeyCode != VK_RBUTTON) {return 0;}
   switch(subCommand)
   {
-    case INFO_ALL:
-      {
-        uint8_t tmpBuff[sizeof(PacketHeader_ts) + sizeof(PayloadHeader_ts) + sizeof(AllInfo_ts)] = {0};
-        pxPack =  (Packet_ts *)tmpBuff;
-        pxPackHeader = &(pxPack->xPacketHeader);
-        pxPayloadHeader = &(pxPack->xPayload.xPayloadHeader);
-        
-        pxPackHeader->bPreamble = PACKET_PREAMBLER;
-        pxPackHeader->bDestination = ID_HOST;      // Destination(receiver).
-        pxPackHeader->bSource = ID_MOUSE;          // Source(Sender).
-        //pxPackHeader->bChecksum = 0;
-        pxPackHeader->wPayLoadLength = Protocol_ConvertWord(sizeof(PayloadHeader_ts) + sizeof(AllInfo_ts));
-        
-        pxPayloadHeader->bPayloadType = PAYLOADTYPE_RESPONSE;
-        pxPayloadHeader->bCommand = CMD_GET_INFO;
-        pxPayloadHeader->bSubCommand = INFO_ALL;
-        pxPayloadHeader->bValue = virtualKeyCode;
-        
-        AllInfo_ts *pxAllInfo = pxgAllInfo + ConvertVKeyToArrayIndex(virtualKeyCode);
-        memcpy(pxPayloadHeader + 1, pxAllInfo, sizeof(AllInfo_ts));
-        pxPackHeader->bChecksum = Protocol_CalculateChecksum(pxPack);
-        Protocol_Send(pxPack);
-      }
-      break;
     case INFO_HALL_RAW:
       {
         uint8_t tmpBuff[sizeof(PacketHeader_ts) + sizeof(PayloadHeader_ts) + sizeof(HallRawInfo_ts)] = {0};
@@ -459,39 +453,16 @@ static int8_t ProcessRequest_CMD_GET_INFO(uint8_t subCommand, uint8_t virtualKey
   return 0;
 }
 
-static int8_t ProcessRequest_CMD_GET_CONFIG(uint8_t subCommand, uint8_t virtualKeyCode)
+static int8_t ProcessRequest_CMD_GET_CONFIG(uint8_t subCommand, uint8_t virtualKeyCode, \
+                                            uint8_t *pData, uint16_t wDataLen)
 {
   Packet_ts *pxPack = 0;
   PacketHeader_ts *pxPackHeader = 0;
   PayloadHeader_ts *pxPayloadHeader = 0;
   
-  if(virtualKeyCode != VK_LBUTTON && virtualKeyCode != VK_RBUTTON) {return 0;}
+  //if(virtualKeyCode != VK_LBUTTON && virtualKeyCode != VK_RBUTTON) {return 0;}
   switch(subCommand)
   {
-    case CFG_ALL:
-      {
-        uint8_t tmpBuff[sizeof(PacketHeader_ts) + sizeof(PayloadHeader_ts) + sizeof(AllConfig_ts)] = {0};
-        pxPack =  (Packet_ts *)tmpBuff;
-        pxPackHeader = &(pxPack->xPacketHeader);
-        pxPayloadHeader = &(pxPack->xPayload.xPayloadHeader);
-        
-        pxPackHeader->bPreamble = PACKET_PREAMBLER;
-        pxPackHeader->bDestination = ID_HOST;      // Destination(receiver).
-        pxPackHeader->bSource = ID_MOUSE;          // Source(Sender).
-        //pxPackHeader->bChecksum = 0;
-        pxPackHeader->wPayLoadLength = Protocol_ConvertWord(sizeof(PayloadHeader_ts) + sizeof(AllConfig_ts));
-        
-        pxPayloadHeader->bPayloadType = PAYLOADTYPE_RESPONSE;
-        pxPayloadHeader->bCommand = CMD_GET_CONFIG;
-        pxPayloadHeader->bSubCommand = CFG_ALL;
-        pxPayloadHeader->bValue = virtualKeyCode;
-        
-        AllConfig_ts *pxAllConfig = pxgAllConfig + ConvertVKeyToArrayIndex(virtualKeyCode);
-        memcpy(pxPayloadHeader + 1, pxAllConfig, sizeof(AllConfig_ts));
-        pxPackHeader->bChecksum = Protocol_CalculateChecksum(pxPack);
-        Protocol_Send(pxPack);
-      }
-      break;
     case CFG_RAPID_TRIGGER:
       {
         uint8_t tmpBuff[sizeof(PacketHeader_ts) + sizeof(PayloadHeader_ts) + sizeof(RapidTriggerConfig_ts)] = {0};
@@ -612,6 +583,62 @@ static int8_t ProcessRequest_CMD_GET_CONFIG(uint8_t subCommand, uint8_t virtualK
         Protocol_Send(pxPack);
       }
       break;
+    case CFG_COIL_DRIVE_MODE:
+      {
+        uint8_t tmpBuff[sizeof(PacketHeader_ts) + sizeof(PayloadHeader_ts) + sizeof(CoilDriveModeConfig_ts)] = {0};
+        pxPack =  (Packet_ts *)tmpBuff;
+        pxPackHeader = &(pxPack->xPacketHeader);
+        pxPayloadHeader = &(pxPack->xPayload.xPayloadHeader);
+        
+        pxPackHeader->bPreamble = PACKET_PREAMBLER;
+        pxPackHeader->bDestination = ID_HOST;      // Destination(receiver).
+        pxPackHeader->bSource = ID_MOUSE;          // Source(Sender).
+        //pxPackHeader->bChecksum = 0;
+        pxPackHeader->wPayLoadLength = Protocol_ConvertWord(sizeof(PayloadHeader_ts) + sizeof(CoilDriveModeConfig_ts));
+        
+        pxPayloadHeader->bPayloadType = PAYLOADTYPE_RESPONSE;
+        pxPayloadHeader->bCommand = CMD_GET_CONFIG;
+        pxPayloadHeader->bSubCommand = CFG_COIL_DRIVE_MODE;
+        pxPayloadHeader->bValue = virtualKeyCode;
+        
+        CoilDriveModeConfig_ts *pxCoilDriveModeCfg = &(xgAllParam.xDriveMode);
+        memcpy(pxPayloadHeader + 1, pxCoilDriveModeCfg, sizeof(CoilDriveModeConfig_ts));
+        pxPackHeader->bChecksum = Protocol_CalculateChecksum(pxPack);
+        Protocol_Send(pxPack);
+      }
+      break;
+    case CFG_COIL_PWM:
+      {
+        if(0 == wDataLen || (*(pData) > (100 - 1)))
+        {
+          return 0;
+        }
+        
+        uint8_t dataLen =  (100 - *(pData)) > 50 ? 50 : (100 - *(pData));
+        
+        uint8_t tmpBuff[sizeof(PacketHeader_ts) + sizeof(PayloadHeader_ts) + 50] = {0};
+        pxPack =  (Packet_ts *)tmpBuff;
+        pxPackHeader = &(pxPack->xPacketHeader);
+        pxPayloadHeader = &(pxPack->xPayload.xPayloadHeader);
+        
+        pxPackHeader->bPreamble = PACKET_PREAMBLER;
+        pxPackHeader->bDestination = ID_HOST;      // Destination(receiver).
+        pxPackHeader->bSource = ID_MOUSE;          // Source(Sender).
+        //pxPackHeader->bChecksum = 0;
+        pxPackHeader->wPayLoadLength = Protocol_ConvertWord(sizeof(PayloadHeader_ts) + 1 + dataLen);
+        
+        pxPayloadHeader->bPayloadType = PAYLOADTYPE_RESPONSE;
+        pxPayloadHeader->bCommand = CMD_GET_CONFIG;
+        pxPayloadHeader->bSubCommand = CFG_COIL_PWM;
+        pxPayloadHeader->bValue = virtualKeyCode;
+        uint8_t *pTmp = (uint8_t *)(&(pxPayloadHeader->bValue));
+        *(pTmp + 1) =  *pData;
+        
+        memcpy(pTmp + 2, &(xgAllParam.gPwmWf[*(pData)]), dataLen);
+        pxPackHeader->bChecksum = Protocol_CalculateChecksum(pxPack);
+        Protocol_Send(pxPack);
+      }
+      break;
     default:
       break;
   }
@@ -626,7 +653,7 @@ static int8_t ProcessRequest_CMD_SET_CONFIG(uint8_t subCommand, uint8_t virtualK
   PacketHeader_ts *pxPackHeader = 0;
   PayloadHeader_ts *pxPayloadHeader = 0;
   
-  if(virtualKeyCode != VK_LBUTTON && virtualKeyCode != VK_RBUTTON) {return 0;}
+  //if(virtualKeyCode != VK_LBUTTON && virtualKeyCode != VK_RBUTTON) {return 0;}
   
   if(!pData || !wDataLen)
   {
@@ -635,49 +662,6 @@ static int8_t ProcessRequest_CMD_SET_CONFIG(uint8_t subCommand, uint8_t virtualK
   
   switch(subCommand)
   {
-    case CFG_ALL:
-      {
-        if(wDataLen >= sizeof(AllConfig_ts))
-        {
-          AllConfig_ts *pxAllConfig = pxgAllConfig + ConvertVKeyToArrayIndex(virtualKeyCode);
-          memcpy(pxAllConfig, pData, sizeof(AllConfig_ts));
-          statusResponse = STATUS_SUCCESS;
-          updateRtCfgFlag = 1;
-          updateCoilCfgFlagL = 1;
-          updateCoilCfgFlagR = 1;
-          updateCoilReleaseCfgFlagL = 1;
-          updateCoilReleaseCfgFlagR = 1;
-          updateCoilBrakeCfgFlagL = 1;
-          updateCoilBrakeCfgFlagR = 1;
-          updateCoilBrakeRelCfgFlagL = 1;
-          updateCoilBrakeRelCfgFlagR = 1;
-        }
-        else
-        {
-          statusResponse = STATUS_FAIL;
-        }
-        
-        uint8_t tmpBuff[sizeof(PacketHeader_ts) + sizeof(PayloadHeader_ts) + 1] = {0};
-        pxPack =  (Packet_ts *)tmpBuff;
-        pxPackHeader = &(pxPack->xPacketHeader);
-        pxPayloadHeader = &(pxPack->xPayload.xPayloadHeader);
-        
-        pxPackHeader->bPreamble = PACKET_PREAMBLER;
-        pxPackHeader->bDestination = ID_HOST;      // Destination(receiver).
-        pxPackHeader->bSource = ID_MOUSE;          // Source(Sender).
-        //pxPackHeader->bChecksum = 0;
-        pxPackHeader->wPayLoadLength = Protocol_ConvertWord(sizeof(PayloadHeader_ts) + 1);
-        
-        pxPayloadHeader->bPayloadType = PAYLOADTYPE_RESPONSE;
-        pxPayloadHeader->bCommand = CMD_SET_CONFIG;
-        pxPayloadHeader->bSubCommand = CFG_ALL;
-        pxPayloadHeader->bValue = virtualKeyCode;
-        
-        *(uint8_t*)(pxPayloadHeader + 1) = statusResponse;
-        pxPackHeader->bChecksum = Protocol_CalculateChecksum(pxPack);
-        Protocol_Send(pxPack);
-      }
-      break;
     case CFG_RAPID_TRIGGER:
       {
         if(wDataLen >= sizeof(RapidTriggerConfig_ts))
@@ -857,6 +841,82 @@ static int8_t ProcessRequest_CMD_SET_CONFIG(uint8_t subCommand, uint8_t virtualK
         Protocol_Send(pxPack);
       }
       break;
+    case CFG_COIL_DRIVE_MODE:
+      {
+        if(wDataLen >= sizeof(CoilDriveModeConfig_ts))
+        {
+          CoilDriveModeConfig_ts *pxCoilDriveModeCfg = &(xgAllParam.xDriveMode);
+          memcpy(pxCoilDriveModeCfg, pData, sizeof(CoilDriveModeConfig_ts));
+          statusResponse = STATUS_SUCCESS;
+          //if(virtualKeyCode == VK_LBUTTON) updateCoilBrakeRelCfgFlagL = 1;
+          //if(virtualKeyCode == VK_RBUTTON) updateCoilBrakeRelCfgFlagR = 1;
+        }
+        else
+        {
+          statusResponse = STATUS_FAIL;
+        }
+        
+        uint8_t tmpBuff[sizeof(PacketHeader_ts) + sizeof(PayloadHeader_ts) + 1] = {0};
+        pxPack =  (Packet_ts *)tmpBuff;
+        pxPackHeader = &(pxPack->xPacketHeader);
+        pxPayloadHeader = &(pxPack->xPayload.xPayloadHeader);
+        
+        pxPackHeader->bPreamble = PACKET_PREAMBLER;
+        pxPackHeader->bDestination = ID_HOST;      // Destination(receiver).
+        pxPackHeader->bSource = ID_MOUSE;          // Source(Sender).
+        //pxPackHeader->bChecksum = 0;
+        pxPackHeader->wPayLoadLength = Protocol_ConvertWord(sizeof(PayloadHeader_ts) + 1);
+        
+        pxPayloadHeader->bPayloadType = PAYLOADTYPE_RESPONSE;
+        pxPayloadHeader->bCommand = CMD_SET_CONFIG;
+        pxPayloadHeader->bSubCommand = CFG_COIL_DRIVE_MODE;
+        pxPayloadHeader->bValue = virtualKeyCode;
+        
+        *(uint8_t*)(pxPayloadHeader + 1) = statusResponse;
+        pxPackHeader->bChecksum = Protocol_CalculateChecksum(pxPack);
+        Protocol_Send(pxPack);
+      }
+      break;
+    case CFG_COIL_PWM:
+      {
+        uint8_t index = *(pData);
+        uint8_t validLen = wDataLen - 1;
+        uint8_t *pValid = pData + 1;
+        if((wDataLen >= 2) && (validLen <= 50) && (index < 100) && ((index + validLen) <= 100))
+        {
+          memcpy(&(xgAllParam.gPwmWf[index]), pValid, validLen);
+          statusResponse = STATUS_SUCCESS;
+          //if(virtualKeyCode == VK_LBUTTON) updateCoilBrakeRelCfgFlagL = 1;
+          //if(virtualKeyCode == VK_RBUTTON) updateCoilBrakeRelCfgFlagR = 1;
+        }
+        else
+        {
+          statusResponse = STATUS_FAIL;
+        }
+        
+        uint8_t tmpBuff[sizeof(PacketHeader_ts) + sizeof(PayloadHeader_ts) + 1 + 1] = {0};
+        pxPack =  (Packet_ts *)tmpBuff;
+        pxPackHeader = &(pxPack->xPacketHeader);
+        pxPayloadHeader = &(pxPack->xPayload.xPayloadHeader);
+        
+        pxPackHeader->bPreamble = PACKET_PREAMBLER;
+        pxPackHeader->bDestination = ID_HOST;      // Destination(receiver).
+        pxPackHeader->bSource = ID_MOUSE;          // Source(Sender).
+        //pxPackHeader->bChecksum = 0;
+        pxPackHeader->wPayLoadLength = Protocol_ConvertWord(sizeof(PayloadHeader_ts) + 1 + 1);
+        
+        pxPayloadHeader->bPayloadType = PAYLOADTYPE_RESPONSE;
+        pxPayloadHeader->bCommand = CMD_SET_CONFIG;
+        pxPayloadHeader->bSubCommand = CFG_COIL_PWM;
+        pxPayloadHeader->bValue = virtualKeyCode;
+        uint8_t *pTmp = (uint8_t *)(&(pxPayloadHeader->bValue));
+        *(pTmp + 1) =  *pData;
+        
+        *(pTmp + 2) = statusResponse;
+        pxPackHeader->bChecksum = Protocol_CalculateChecksum(pxPack);
+        Protocol_Send(pxPack);
+      }
+      break;
     default:
       break;
   }
@@ -872,11 +932,6 @@ static int8_t ProcessRequest_CMD_GET_DEBUG(uint8_t subCommand, uint8_t virtualKe
   if(virtualKeyCode != VK_LBUTTON && virtualKeyCode != VK_RBUTTON) {return 0;}
   switch(subCommand)
   {
-    case DEBUG_ALL:
-      {
-        ;
-      }
-      break;
     case DEBUG_COIL:
       {
         uint8_t tmpBuff[sizeof(PacketHeader_ts) + sizeof(PayloadHeader_ts) + sizeof(CoilDebug_ts)] = {0};
@@ -925,11 +980,6 @@ static int8_t ProcessRequest_CMD_SET_DEBUG(uint8_t subCommand, uint8_t virtualKe
   
   switch(subCommand)
   {
-    case DEBUG_ALL:
-      {
-        ;
-      }
-      break;
     case DEBUG_COIL:
       {
         if(wDataLen >= sizeof(CoilDebug_ts))
@@ -994,7 +1044,8 @@ static int8_t Protocol_ProcessReceivePayload(Payload_ts *pxPayload, uint16_t pay
                   ProcessRequest_CMD_GET_INFO(pxPayloadHeader->bSubCommand, pxPayloadHeader->bValue);
                   break;
               case CMD_GET_CONFIG:
-                  ProcessRequest_CMD_GET_CONFIG(pxPayloadHeader->bSubCommand, pxPayloadHeader->bValue);
+                  ProcessRequest_CMD_GET_CONFIG(pxPayloadHeader->bSubCommand, pxPayloadHeader->bValue, \
+                                            (uint8_t*)(pxPayloadHeader + 1), payloadLen - sizeof(PayloadHeader_ts));
                   break;
               case CMD_SET_CONFIG:
                   ProcessRequest_CMD_SET_CONFIG(pxPayloadHeader->bSubCommand, \

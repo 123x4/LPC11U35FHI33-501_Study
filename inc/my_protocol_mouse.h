@@ -22,8 +22,8 @@
                               nsAPI_USB_WriteEP(MYPROTOCOL_USB_EDP_NUM, pdata, len)
 
 
-extern AllInfo_ts *pxgAllInfo;
-extern AllConfig_ts *pxgAllConfig;
+//extern AllInfo_ts *pxgAllInfo;
+//extern AllConfig_ts *pxgAllConfig;
 
 /**************Function Declaration********************************************/
 void Hall_SyncParam(uint8_t index, HallRawInfo_ts *pxRawInfo, HallSegmentInfo_ts *pxSegInfo);

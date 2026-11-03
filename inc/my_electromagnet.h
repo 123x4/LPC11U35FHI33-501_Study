@@ -27,6 +27,8 @@ typedef enum
 #define DEFAULT_CFG_BRAKE_EN              0   //0: diable, 1: enable
 #define DEFAULT_CFG_BRAKE_DELAY_US        10  //10us
 #define DEFAULT_CFG_BRAKE_DURATION_US     10  //10us
+#define DEFAULT_CFG_PRESS_DRIVE_MODE      1   //false(0): level   true(1): waveform
+#define DEFAULT_CFG_RELEASE_DRIVE_MODE    1   //false(0): level   true(1): waveform
 
 #define USE_HALL_VALUE_DURING_VIBRATION   0
 #define PUSH_VIBRATING_HALL_VALUE_TO_GUI  0
@@ -45,7 +47,7 @@ void Ele_UpdateReleaseParam(uint8_t virtualKey, const CoilReleaseConfig_ts *pxCo
 void Ele_UpdateBrakeParam(uint8_t virtualKey, const CoilBrakeConfig_ts *pxCoilBrakeCfg);
 void Ele_UpdateRelBrakeParam(uint8_t virtualKey, const CoilBrakeRelConfig_ts *pxCoilBrakeRelCfg);
 
-uint8_t Ele_IsReleaseVibrating(Ele_Position_te pos);
+//uint8_t Ele_IsReleaseVibrating(Ele_Position_te pos);
 uint8_t Ele_IsVibrating(Ele_Position_te pos);
 uint8_t Ele_IsTureVibrating(Ele_Position_te pos);
 void Ele_PollingTask(void);
