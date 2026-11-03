@@ -146,8 +146,8 @@ IOCTRL_HighLevel(HALL_EN_PORT, HALL_EN_PIN);    // 584 输出高 → 开关闭�
 <div class="fb" data-ok="对。577~579 行已经把 PIO0_16 输出成低（开关断开），没有 584 行就一直断电。芯片不工作，SDO 线上没人驱动，读回来的数校验通不过。" data-no="看 577 行：先输出的是“低”，低 = 开关断开。谁把它变成高？"></div></div>
 
 <h2>4. 第二件事：校准芯片的时钟（button.c:872~907）</h2>
-<h3>4.1 不校准会怎样：芯片是靠“量时间”认命令的</h3>
-<p>第 3 课（上）讲过：MCU 和芯片之间<b>没有专门的命令线</b>，MCU 用“把 SCK 拉高多久”来告诉芯片要做什么。手册 7.7 节规定了每个命令的高电平宽度，误差只能有 ±5%：</p>
+<h3>4.1 芯片怎么认命令、为什么要校准</h3>
+<p>第 3 课（上）讲过：MCU 和芯片之间<b>没有专门的命令线</b>，MCU 用“把 SCK 拉高多久”来告诉芯片要做什么。手册 7.7 节规定了每个命令的高电平宽度，并要求 MCU 发出的宽度误差在 ±5% 以内：</p>
 <div class="scroll"><table>
 <thead><tr><th>命令</th><th>SCK 拉高多久</th><th>芯片收到后做什么</th></tr></thead>
 <tbody>
@@ -157,12 +157,21 @@ IOCTRL_HighLevel(HALL_EN_PORT, HALL_EN_PIN);    // 584 输出高 → 开关闭�
 <tr><td>WR_REG</td><td>td4 = 24 µs ± 5%</td><td>把 16 位里的数据写进设置表（本课第 5 节）</td></tr>
 <tr><td>FREQ_Calibrate</td><td>td7 = 128 µs ± 5%</td><td>校准自己的时钟（本节）</td></tr>
 </tbody></table></div>
-<p>芯片要量“高了多久”，只能用<b>它自己内部的时钟</b>去数。如果它的时钟偏快 10%，数出来的时间就会偏长 10%：MCU 明明拉高了 5 µs，它以为是 5.5 µs，超出了 5 µs ± 5% 的范围，就<b>认不出</b>这是“读按键”命令。拖动下面的滑块，看芯片时钟偏多少会出问题。</p>
-<div class="tool"><b>动手：芯片时钟的偏差</b>
-<div class="row"><label>芯片时钟偏快 / 偏慢：<input type="range" id="ruE" min="-15" max="15" step="0.5" value="0"></label><b id="ruV" style="font-family:var(--font-m)"></b><button type="button" id="ruM">−0.5%</button><button type="button" id="ruP">+0.5%</button></div>
-<div class="scroll"><svg id="ru" class="fig" viewBox="0 0 940 250" style="min-width:640px" role="img" aria-label="芯片量到的命令宽度和每个命令的允许范围"></svg></div>
-<p class="note">绿色竖条 = 手册允许的范围（±5%）。横条 = 芯片用自己的时钟量到的宽度。这是<b>示意</b>：手册只规定了 ±5%，没写芯片内部怎么量；这里按“芯片用自己的时钟数高电平有多长”来画，便于理解为什么要校准。</p></div>
-<div class="rule" style="--c:var(--hw)">所以手册第 9 节规定：<b>芯片上电后第一件事就是校准时钟</b>（Step1），然后才能配置参数（Step2）。原文：“Correct the frequency to ensure that the chips on the daisy chain are kept in sync”（校正频率，保证菊花链上的芯片保持同步）。</div>
+<p>芯片要知道“高了多久”，只能用<b>它自己内部的时钟</b>去数。这里有一个绕不开的问题：<b>校准之前芯片时钟不准，它怎么认得出哪一条是校准命令？</b>答案在于这 5 个宽度<b>隔得有多远</b>。</p>
+<p>假设芯片时钟最多偏 ±E%，那么一个宽度为 w 的命令，芯片数出来会落在 w × (1 − E) ~ w × (1 + E) 之间。只要两个命令的范围<b>不重叠</b>，芯片就不会把它们搞混，不需要时钟很准。拖动滑块，把偏差加大，看哪两个命令先混在一起：</p>
+<div class="tool"><b>动手：芯片时钟最多偏多少，命令还分得开</b>
+<div class="row"><label>芯片时钟最多偏 ±<input type="range" id="bdE" min="0" max="80" step="1" value="20"></label><b id="bdV" style="font-family:var(--font-m)"></b></div>
+<div class="scroll"><svg id="bd" class="fig" viewBox="0 0 940 290" style="min-width:680px" role="img" aria-label="5 个命令在芯片时钟有偏差时的范围"></svg></div>
+<div class="log" id="bdLog" aria-live="polite"></div>
+<p class="note">横轴是对数刻度（每一格是前一格的若干倍），这样 5 µs 和 128 µs 能画在一张图里。这里只比较“范围重不重叠”，芯片内部真正用什么规则判定，手册没写。</p></div>
+<div class="rule" style="--c:var(--hw)"><b>结论</b>：
+<ul style="margin:.2rem 0">
+<li><b>128 µs 和最接近的 24 µs 差了 5 倍多</b>。芯片时钟就算偏到 ±68%，也不会把它和别的命令混在一起。所以<b>校准前的芯片也能认出校准命令</b>：它不需要知道“这是 128 µs”，只要知道“这一段比其他命令长得多”。<i>（推测：正因为这样，才故意用一个特别长的脉冲做校准。）</i></li>
+<li>短命令之间靠得近：最近的一对是 15 µs 和 24 µs，只差 1.6 倍，偏差超过约 ±23% 就会混；其次 9 和 15（±25%）、5 和 9（±28.6%）。</li>
+<li>手册给的校准理由是第 9 节这句：“Correct the frequency to ensure that the chips on the daisy chain are kept in sync”（校正频率，保证菊花链上的芯片保持同步）。芯片的时钟还决定它多久测一次磁场（0x0A 设的 124 µs）等内部时间，时钟准了这些才准。</li>
+<li>手册<b>没写</b>：校准前芯片时钟最多偏多少、芯片判定命令的范围有多宽。所以“偏多少就会认错短命令”说不出确切数字。</li>
+</ul></div>
+<p class="note">更正：这一节之前的版本说“芯片时钟偏快 10%，5 µs 的命令就认不出”，那是假设芯片也按 ±5% 去判定，手册里没有这个说法，已删掉。</p>
 
 <h3>4.2 一次校准命令长什么样</h3>
 <p>校准命令就是把 SCK 拉高 <b>128 µs</b>，再拉低一小会儿，然后照常用 <code>SSP_Send_Receive()</code> 收发 4 个字节（32 下时钟），把两颗芯片的“频率值”读回来（手册图 8：读回 16 位，<b>低 8 位</b>有效）。下面是本项目代码发一次校准命令时 SCK 线上的样子（宽度没按比例画）：</p>
@@ -209,7 +218,7 @@ while(times &lt; 30)                        // 883 发 30 次校准命令
 <svg id="tk" class="fig" viewBox="0 0 940 210" role="img" aria-label="128 µs 高电平期间芯片数到的拍子"></svg>
 <p class="note">为了看得清，图上每画 1 根竖线代表芯片数 4 下。“推测按 1 µs 一下”是因为读回值目标正好是 0x80 = 128，手册没写芯片内部的拍子多快。</p></div>
 <p><b>推论：MCU 发的宽度不准，芯片会被“校歪”</b>。芯片把 MCU 给的这一段<b>当成</b> 128 µs。本项目实际拉高约 127 µs（4.2 节估算），芯片就会把自己调到“127 µs 数 128 下”，比真正的准快约 0.8%。这仍在 ±5% 以内，问题不大；但如果这个宽度偏得多，后面所有命令都会跟着认偏。</p>
-<p><b>它又是怎么认出“这是校准命令”的</b>：还没校准时它数得不准，但 128 µs 比其他命令长得多（最长的 WR_REG 才 24 µs），数偏 10% ~ 20% 也不会和别的命令搞混（见第 6 节 Q1）。</p></div>
+<p><b>它又是怎么认出“这是校准命令”的</b>：靠<b>长度差得远</b>，不靠量得准。128 µs 是第二长的命令（24 µs）的 5 倍多，芯片时钟偏得再厉害（±68% 以内），数出来也明显比其他命令长，只会被认成校准。认出来以后，再用“应该数到 128”去细调。可以回到 4.1 节的滑块，拖到 ±50% 看看。</p></div>
 <div class="tool"><b>动手：看 30 次校准怎么把两颗芯片拉进合格范围</b>（示意模型：每颗芯片上电时时钟随机偏几个百分点，每次校准偏差缩小一些）
 <div class="btns"><button type="button" id="cRe">重新上电（随机偏差）</button><button type="button" id="cOne">发 1 次校准</button><button type="button" id="cPlay">连发到 30 次</button><span class="note" id="cC"></span></div>
 <div class="scroll"><svg id="cal2" class="fig" viewBox="0 0 940 270" style="min-width:640px" role="img" aria-label="每次校准读回的频率值"></svg></div>
@@ -288,7 +297,7 @@ void ana_hall2_phy_set_mode(unsigned char length)    // 937，HallSensor_INIT �
 
 <h2>6. 常见疑问</h2>
 <div class="box"><b>Q1：校准之前芯片的时钟不准，它怎么认得出 128 µs 的校准命令？</b>
-<p>手册没写。可以看到 128 µs 比其他命令长得多（最长的 WR_REG 才 24 µs），就算芯片时钟偏 10% ~ 20%，也不会把它和别的命令搞混。<i>（推测：正因为这样，才选一个特别长的脉冲来做校准。）</i></p></div>
+<p>靠“长度差得远”。128 µs 是 24 µs 的 5 倍多，芯片时钟偏到 ±68% 以内都不会和别的命令混（见 4.1 节的滑块）。芯片不用知道它正好是 128 µs，只要知道它“比其他命令长得多”。手册没写芯片内部的判定规则，这是按各命令的宽度推出来的。</p></div>
 <div class="box"><b>Q2：为什么校准完要先等？代码在 device.c:457 等了 500 ms 才开始校准。</b>
 <p>500 ms 是在<b>校准之前</b>等的，不是之后。霍尔手册正文没写上电后要等多久；这 500 ms 是代码留的余量，让芯片电源稳定。这段时间 MCU 同时在做 USB 初始化等其他事情。</p></div>
 <div class="box"><b>Q3：写设置时 hall_spi_rx 收到了什么？</b>
@@ -416,19 +425,22 @@ function drawPW(){const s=$('pw');s.innerHTML='';const on=pwOn,live=on?'var(--ba
  el(s,'text',{x:X(68),y:hi-6,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'之后一直高');
  $('pw0').setAttribute('aria-pressed',!on);$('pw1').setAttribute('aria-pressed',!!on)}
 $('pw0').onclick=()=>{pwOn=0;drawPW()};$('pw1').onclick=()=>{pwOn=1;drawPW()};drawPW();
-/* ---- ruler ---- */
-const CMD=[['HAL_CONVERT 读按键',5,'per'],['W_PWM_REG',9,'muted'],['SLEEP 睡眠',15,'muted'],['WR_REG 写设置',24,'sw']];
-function drawRU(){const s=$('ru'),e=+$('ruE').value;s.innerHTML='';const X=u=>150+u*28,top=30,bot=232;
- $('ruV').textContent=(e>0?'偏快 +':e<0?'偏慢 ':'')+e+'%';
- for(let u=0;u<=27;u+=5){el(s,'line',{x1:X(u),x2:X(u),y1:top,y2:bot,stroke:'var(--grid)'});el(s,'text',{x:X(u),y:bot+14,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},u+' µs')}
- CMD.forEach(c=>{el(s,'rect',{x:X(c[1]*0.95),y:top,width:X(c[1]*1.05)-X(c[1]*0.95),height:bot-top,fill:'color-mix(in srgb,var(--good) 22%,transparent)'});
-  el(s,'text',{x:X(c[1]),y:top-8,'text-anchor':'middle','font-size':10.5,fill:'var(--good)','font-weight':600},c[1]+' µs')});
- CMD.forEach((c,i)=>{const y=58+i*46,m=c[1]*(1+e/100);const own=m>=c[1]*0.95&&m<=c[1]*1.05;const other=CMD.find(o=>o!==c&&m>=o[1]*0.95&&m<=o[1]*1.05);
-  el(s,'text',{x:8,y:y+5,'font-size':12,'font-weight':600,fill:'var(--fg)'},c[0]);el(s,'text',{x:8,y:y+20,'font-size':10.5,fill:'var(--muted)'},'MCU 发 '+c[1]+' µs');
-  el(s,'rect',{x:X(0),y:y-8,width:Math.max(0,X(m)-X(0)),height:16,rx:3,fill:own?'var(--good)':'var(--bad)',opacity:.85});
-  const t=own?`量到 ${m.toFixed(2)} µs → 认对 ✓`:other?`量到 ${m.toFixed(2)} µs → 认成 ${other[0].split(' ')[0]} ✗`:`量到 ${m.toFixed(2)} µs → 认不出 ✗`;
-  const far=X(m)>720,tx=far?X(m):X(m)+8;el(s,'text',{x:tx,y:far?y-13:y+5,'text-anchor':far?'end':'start','font-size':12,'font-weight':700,fill:own?'var(--good)':'var(--bad)'},t)})}
-$('ruE').oninput=drawRU;$('ruM').onclick=()=>{$('ruE').value=+$('ruE').value-0.5;drawRU()};$('ruP').onclick=()=>{$('ruE').value=+$('ruE').value+0.5;drawRU()};drawRU();
+/* ---- command bands ---- */
+const BC=[['HAL_CONVERT 读按键',5,'per'],['W_PWM_REG',9,'muted'],['SLEEP 睡眠',15,'muted'],['WR_REG 写设置',24,'sw'],['FREQ_Calibrate 校准',128,'hw']];
+function drawBD(){const s=$('bd'),E=+$('bdE').value/100;s.innerHTML='';const lnA=Math.log(1.5),lnB=Math.log(300),X=w=>190+(Math.log(w)-lnA)/(lnB-lnA)*720;
+ $('bdV').textContent=Math.round(E*100)+'%';
+ [2,3,5,10,20,30,50,100,200].forEach(u=>{el(s,'line',{x1:X(u),x2:X(u),y1:20,y2:262,stroke:'var(--grid)'});el(s,'text',{x:X(u),y:278,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},u+' µs')});
+ const lo=BC.map(c=>c[1]*(1-E)),hi=BC.map(c=>c[1]*(1+E));const bad=BC.map((c,i)=>(i>0&&hi[i-1]>=lo[i])||(i<BC.length-1&&hi[i]>=lo[i+1]));
+ BC.forEach((c,i)=>{const y=40+i*46;el(s,'text',{x:8,y:y+5,'font-size':12,'font-weight':600,fill:'var(--fg)'},c[0]);el(s,'text',{x:8,y:y+20,'font-size':10.5,fill:'var(--muted)'},'MCU 发 '+c[1]+' µs');
+  const x1=X(Math.max(lo[i],1.6)),x2=X(Math.min(hi[i],290));
+  el(s,'rect',{x:x1,y:y-10,width:Math.max(2,x2-x1),height:20,rx:4,style:`fill:color-mix(in srgb,var(--${bad[i]?'bad':'good'}) 30%,var(--panel));stroke:var(--${bad[i]?'bad':'good'})`});
+  el(s,'line',{x1:X(c[1]),x2:X(c[1]),y1:y-14,y2:y+14,stroke:'var(--fg)','stroke-width':2});
+  el(s,'text',{x:x2>780?x1-6:x2+6,y:y+4,'text-anchor':x2>780?'end':'start','font-size':11,fill:bad[i]?'var(--bad)':'var(--muted)'},`芯片数出 ${lo[i].toFixed(1)} ~ ${hi[i].toFixed(1)}`)});
+ const pairs=[];for(let i=0;i<BC.length-1;i++)if(hi[i]>=lo[i+1])pairs.push(BC[i][1]+' µs 和 '+BC[i+1][1]+' µs');
+ $('bdLog').textContent=(pairs.length?`偏差 ±${Math.round(E*100)}%：${pairs.join('、')} 的范围重叠了，芯片可能认错。`:`偏差 ±${Math.round(E*100)}%：5 个命令的范围都不重叠，都分得开。`)+
+  `\n128 µs 的范围是 ${lo[4].toFixed(0)} ~ ${hi[4].toFixed(0)}，24 µs 的最多到 ${hi[3].toFixed(1)}`+(hi[3]>=lo[4]?'：连校准命令也会混。':'：校准命令仍然一眼认得出。')+
+  `\n算一下临界点：15 和 24 在 15 × (1 + E) = 24 × (1 − E) 时碰上，E = 9 ÷ 39 ≈ 23%（最先碰上的一对）；24 和 128 要到 E = 104 ÷ 152 ≈ 68% 才碰上。`}
+$('bdE').oninput=drawBD;drawBD();
 /* ---- cal1 static ---- */
 (function(){const s=$('cal1');const lo=70,hi=30;const seg=[[20,'',0],[50,'',0],[250,'td7：高 ≈127 µs（FREQ_Calibrate）',1],[50,'td10 低',0],[320,'',2],[190,'',0]];
  el(s,'text',{x:8,y:22,'font-size':12,'font-weight':700,fill:'var(--hw)'},'SCK');
