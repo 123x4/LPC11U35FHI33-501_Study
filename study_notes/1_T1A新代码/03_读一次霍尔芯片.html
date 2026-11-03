@@ -318,20 +318,36 @@ details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
 
 <h3>4.2 先看效果：一位一位挤出来（动手）</h3>
 <p>例子：右键芯片的读数是 9300，左键是 8935（第 2 课的例子）。加上 2 位校验后，右键芯片要送出的 16 位是 <code>0xA454</code>，左键是 <code>0xE2E7</code>（怎么算出来的见第 5 节）。按按钮看：</p>
-<div class="sim">
-<div class="btns"><button type="button" id="mCmd">① 下命令（装读数）</button><button type="button" id="m1">打 1 下时钟</button><button type="button" id="m8">打 8 下（搬 1 个字节）</button><button type="button" id="mRe">重来</button></div>
-<div class="chain">
-<div class="reg" style="--c:var(--muted)"><div class="nm">MCU 发出（MOSI），tx 的位</div><div class="bits" id="vTx"></div></div>
+<div class="box" style="border-color:var(--per)"><b>先弄清楚：这个过程里，谁在动？</b>
+<p>一共三方，<b>真正一位一位搬数据的是硬件，软件只管“交一个字节、拿一个字节”</b>：</p>
+<div class="scroll"><table>
+<thead><tr><th>谁</th><th>是什么</th><th>在这个过程里做什么</th></tr></thead>
+<tbody>
+<tr><td><b>软件</b></td><td>CPU 执行 <code>SSP_Send_Receive()</code></td><td>每圈只做两件事：① 把 <code>tx[i]</code> 写进 <code>DR</code>（交给 SPI1）；② 等 SPI1 干完，读 <code>DR</code> 放进 <code>rx[i]</code>。<b>中间一位一位怎么走，软件看不到，也不用管。</b></td></tr>
+<tr><td><b>SPI1</b></td><td>MCU 里的一块电路，自己也有 <b>8 个格子</b>（移位寄存器）</td><td>软件一写 DR，它就把这个字节放进自己的 8 个格子，然后自动打 8 下时钟。每打一下：自己排头的那一位从 <b>MOSI</b> 出去；从 <b>MISO</b> 进来的一位站到自己队尾。8 下之后，8 个格子里装的全是收进来的位 → 软件读 DR 拿走。</td></tr>
+<tr><td><b>两颗霍尔芯片</b></td><td>各有 <b>16 个格子</b></td><td>不管进来的是什么，每听到一下时钟，就整体挪一格：排头从 SDO 出去，SDI 进来的一位站到队尾。</td></tr>
+</tbody></table></div>
+<p><b>关键</b>：MOSI → 左键芯片 → 右键芯片 → MISO → 又回到 SPI1，<b>8 + 16 + 16 = 40 个格子首尾连成一个圈</b>。时钟每跳一下，圈上所有的位一起往前挪一格。所以 SPI1 每推出去一位（tx 的位），就一定有一位从另一头进来（芯片的读数）。<b>tx 的位“进了芯片”，正是因为它被推进了这个圈</b>：想把芯片里的位挤出来，就得从另一头塞东西进去，塞进去的就是 tx。</p>
+<svg id="ring" viewBox="0 0 860 210" role="img" aria-label="40 个格子连成一个圈" style="display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px"></svg>
+<p class="note">像一条传送带围成的圈：传送带转一格，排头的东西掉进下一段，最后一段掉回第一段。软件只在第一段（SPI1）“放上一箱、取下一箱”。</p>
 </div>
-<div class="arrow">↓ 进入左键芯片 SDI</div>
-<div class="reg" style="--c:var(--sw)"><div class="nm">左键芯片的 16 个格子（左边是排头，先出去）</div><div class="bits" id="vL"></div></div>
-<div class="arrow">↓ 左键芯片 SDO → 右键芯片 SDI</div>
+<div class="sim">
+<div class="btns">
+<button type="button" id="mCmd">① 下命令（芯片装读数）</button>
+<button type="button" id="mW">② 软件：写 DR</button>
+<button type="button" id="m1">③ 硬件：打 1 下时钟</button>
+<button type="button" id="m8">③ 打 8 下</button>
+<button type="button" id="mR">④ 软件：读 DR</button>
+<button type="button" id="mRe">重来</button></div>
+<div class="reg" style="--c:var(--pc)"><div class="nm">MCU 里 SPI1 的 8 个格子（左边排头 → 从 MOSI 出去；从 MISO 进来的站到右边队尾）</div><div class="bits" id="vS" style="grid-template-columns:repeat(8,minmax(0,1fr))"></div></div>
+<div class="arrow">↓ MOSI（PIO0_21）→ 左键芯片 SDI</div>
+<div class="reg" style="--c:var(--sw)"><div class="nm">左键芯片的 16 个格子（左边排头，先出去）</div><div class="bits" id="vL"></div></div>
+<div class="arrow">↓ 左键芯片 SDO → SDO_0 → 右键芯片 SDI</div>
 <div class="reg" style="--c:var(--per)"><div class="nm">右键芯片的 16 个格子</div><div class="bits" id="vR"></div></div>
-<div class="arrow">↓ 右键芯片 SDO → MCU 的 MISO → SPI1 收到的位</div>
-<div class="reg" style="--c:var(--pc)"><div class="nm">SPI1 正在拼的这个字节</div><div class="bits" id="vS" style="grid-template-columns:repeat(8,minmax(0,1fr))"></div></div>
-<p style="margin:.4rem 0 .2rem"><b>hall_spi_rx[0..3]：</b></p><div class="rx" id="vRx"></div>
+<div class="arrow">↓ 右键芯片 SDO → MISO（PIO0_22）→ 回到最上面 SPI1 的队尾（圈闭合）</div>
+<p style="margin:.4rem 0 .2rem"><b>软件这边：</b></p><div class="rx" id="vRx"></div>
 <div class="log" id="mLog" aria-live="polite"></div>
-<p class="note">颜色：蓝 = 右键芯片的位，绿 = 左键芯片的位，灰 = MCU 从 MOSI 送进去的位（tx 的内容，这时没用）。</p>
+<p class="note">颜色：蓝 = 右键芯片的读数位，绿 = 左键芯片的读数位，灰 = tx 的位（软件交给 SPI1 的“填充物”）。</p>
 </div>
 <div class="rule"><b>看出来的规律</b>：右键芯片在出口那头，所以<b>前 16 下时钟出来的是右键</b>（变成 rx[0]、rx[1]），<b>后 16 下出来的是左键</b>（rx[2]、rx[3]）。左键的位要先穿过右键芯片的 16 个格子才能出来。</div>
 <div class="qz" data-ans="64"><div class="qt">你来算：如果链上串了 4 颗芯片，要打几下时钟才能把所有读数都挤出来？</div>
@@ -339,7 +355,8 @@ details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
 <div class="fb" data-ok="对。每颗 16 位，4 × 16 = 64 下，也就是 8 个字节。我们只有 2 颗：32 下、4 个字节。" data-no="每颗芯片 16 位，几颗就乘几。"></div></div>
 
 <h3>4.3 tx 里发出去的是什么？</h3>
-<p>SPI 发 1 个字节一定同时收 1 个字节，所以想收 4 个字节就得发 4 个字节。发出去的这 4 个字节会从 MOSI 进入左键芯片的队尾（上图灰色的位），但是<b>后面没有跟命令，芯片不理它们</b>，下一次“下命令”时格子会被新读数覆盖。</p>
+<p>上面那个圈说明了：SPI 发 1 个字节一定同时收 1 个字节，想收 4 个字节就得推 4 个字节进去。推进去的这 32 位最后停在两颗芯片的格子里（模拟器最后的灰色位），但是<b>后面没有跟命令，芯片不理它们</b>，下一次“下命令”时格子会被新读数覆盖。</p>
+<p><b>反过来用</b>：如果推进去之后<b>紧跟一条“写寄存器”命令</b>（SCK 拉高 24 µs），芯片就会把格子里的内容当成“要写的寄存器地址和数据”收下。开机配置芯片就是这样做的：同一个圈，先推数据、再下命令（第 3 课下讲）。读的时候是先下命令、再推。</p>
 <p>这时 <code>hall_spi_tx</code> 里是 <code>A7 00 A7 00</code>：是开机配置芯片寄存器时最后一次写进去的内容（第 3 课下讲），之后没人改过。内容无所谓，只是“陪跑”。</p>
 
 <h3>4.4 逐行看（src/SPI.c:436~451，T1A 分支）</h3>
@@ -499,23 +516,41 @@ show(0);
  el(z,'path',{d,fill:'none',stroke:'var(--hw)','stroke-width':2.5});el(z,'path',{d:dm,fill:'none',stroke:'var(--pc)','stroke-width':2.5});
  el(z,'text',{x:x0+W/2,y:lo+18,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'一位 = 0.5 µs（2 MHz）');
 })();
-/* ---- daisy chain simulator ---- */
+/* ---- ring simulator ---- */
 const TX=[0xA7,0x00,0xA7,0x00];
-let L,R,txBits,clk,cur,rx,loaded;
-function reset(){L=Array(16).fill(null);R=Array(16).fill(null);txBits=[];TX.forEach(b=>{for(let i=7;i>=0;i--)txBits.push({v:(b>>i)&1,c:'T'})});clk=0;cur=[];rx=[];loaded=false;
- $('mLog').textContent='还没下命令：两颗芯片的格子里是上一次留下的东西（?）。先点“① 下命令”。';draw()}
-function load(){const wl=word(8935),wr=word(9300);L=[];R=[];for(let i=15;i>=0;i--){L.push({v:(wl>>i)&1,c:'L'});R.push({v:(wr>>i)&1,c:'R'})}clk=0;cur=[];rx=[];loaded=true;
- $('mLog').textContent='下命令后：左键芯片装好 0xE2E7（8935 加校验），右键芯片装好 0xA454（9300 加校验）。排头（左边）先出去。现在点“打 1 下时钟”。';draw()}
-function tick(){if(!loaded||clk>=32)return;const out=R.shift();R.push(L.shift());L.push(txBits[clk]);cur.push(out);clk++;
- let msg=`第 ${clk} 下时钟：右键芯片排头的位（${out.v}）从 MISO 出去，进了 SPI1；左键芯片排头挪进右键芯片队尾；MOSI 送进一位 tx（${txBits[clk-1].v}）到左键芯片队尾。`;
- if(cur.length===8){const b=cur.reduce((a,x)=>a*2+x.v,0);rx.push({b,c:cur[0].c});msg+=`\n凑满 8 位 → hall_spi_rx[${rx.length-1}] = 0x${b.toString(16).toUpperCase().padStart(2,'0')}（SSP_Send_Receive 转完第 ${rx.length} 圈）`;cur=[]}
- if(clk===32)msg+='\n32 下打完：rx = A4 54 E2 E7。前两个字节是右键，后两个是左键。';$('mLog').textContent=msg;draw()}
+let S,L,R,clk,bi,rx,st,swlog;
+const bitsOf=(v,n,c)=>{const a=[];for(let i=n-1;i>=0;i--)a.push({v:(v>>i)&1,c});return a};
+function reset(){S=Array(8).fill(null);L=Array(16).fill(null);R=Array(16).fill(null);clk=0;bi=0;rx=[];st='idle';swlog=[];
+ say('现在：两颗芯片的格子里是上一次留下的东西（?），SPI1 的格子空着。\n第一步点“① 下命令”：让两颗芯片把最新读数装进格子。');draw()}
+function say(t){$('mLog').textContent=t}
+function cmd(){L=bitsOf(word(8935),16,'L');R=bitsOf(word(9300),16,'R');st='w';
+ say('【软件】执行 Hall_CLK_Command_SET()：把 SCK 拉高约 5 µs 再拉低。\n【两颗芯片】认出“读按键”命令 → 把最新读数装进自己的 16 个格子：左键 0xE2E7（8935 + 校验），右键 0xA454（9300 + 校验）。\n下一步点“② 软件：写 DR”。');draw()}
+function wr(){S=bitsOf(TX[bi],8,'T');st='c';clk=0;swlog.push(`写 DR = 0x${TX[bi].toString(16).toUpperCase().padStart(2,'0')}`);
+ say(`【软件】第 ${bi+1} 圈：执行 LPC_SSP1->DR = hall_spi_tx[${bi}]（0x${TX[bi].toString(16).toUpperCase().padStart(2,'0')}）。\n【SPI1】把这个字节放进自己的 8 个格子（灰色），准备打 8 下时钟。\n【软件】接着卡在 while 里查 SR，等 SPI1 干完，这期间什么也不干。\n下一步点“③ 打 1 下时钟”（或“打 8 下”）。`);draw()}
+function tick(){if(st!=='c')return;const s=S.shift(),l=L.shift(),r=R.shift();S.push(r);L.push(s);R.push(l);clk++;
+ let t=`【SPI1】第 ${bi+1} 个字节的第 ${clk} 下时钟（全过程第 ${bi*8+clk} 下）：\n【SPI1】排头的位 ${s.v}（${s.c==='T'?'tx 的位':s.c==='R'?'右键读数的位':'左键读数的位'}）从 MOSI 出去 → 进了左键芯片队尾。\n【左键芯片】整体挪一格：排头的位 ${l.v} 从 SDO 出去 → 进了右键芯片队尾。\n【右键芯片】整体挪一格：排头的位 ${r.v} 从 SDO 出去 → 经 MISO 进了 SPI1 队尾。\n【软件】还卡在 while 里等（SR 的 BSY = 1，RNE = 0）。`;
+ if(clk===8){st='r';t+=`\n8 下打完：SPI1 的 8 个格子里现在全是收进来的位；SR 变成 RNE = 1、BSY = 0，软件的 while 结束。下一步点“④ 软件：读 DR”。`}
+ say(t);draw()}
+function rd(){const b=S.reduce((a,x)=>a*2+x.v,0);rx.push({b,c:S[0].c});swlog.push(`读 DR → rx[${bi}] = 0x${b.toString(16).toUpperCase().padStart(2,'0')}`);S=Array(8).fill(null);bi++;
+ let t=`【软件】执行 hall_spi_rx[${bi-1}] = LPC_SSP1->DR：拿走 SPI1 收到的这个字节 = 0x${b.toString(16).toUpperCase().padStart(2,'0')}，然后两个指针 ++。`;
+ if(bi<4){st='w';t+=`\n第 ${bi} 圈结束。注意：发出去的 tx 位已经被推进了左键芯片的队尾（灰色），芯片不会用它们。\n下一步：再点“② 软件：写 DR”，开始第 ${bi+1} 圈。`}
+ else{st='done';t+='\n4 圈结束，SSP_Send_Receive() 返回。rx = A4 54 E2 E7（前两个右键，后两个左键）。\n这时两颗芯片的格子里装的全是 tx 的位（A7 00 A7 00），没关系：下一次“下命令”会重新装读数。'}
+ say(t);draw()}
 function cells(arr,n){let h='';for(let i=0;i<n;i++){const x=arr[i];h+=x?`<span class="${x.c}">${x.v}</span>`:'<span>?</span>'}return h}
-function draw(){$('vL').innerHTML=cells(L,16);$('vR').innerHTML=cells(R,16);$('vS').innerHTML=cells(cur,8);
- $('vTx').innerHTML=cells(txBits.slice(clk,clk+16).concat(Array(16).fill(null)).slice(0,16).map(x=>x||{v:'·',c:''}),16);
- let h='';for(let i=0;i<4;i++){const r=rx[i];h+=r?`<span class="${r.c}">rx[${i}] = 0x${r.b.toString(16).toUpperCase().padStart(2,'0')}</span>`:`<span>rx[${i}] = ?</span>`}$('vRx').innerHTML=h;
- $('m1').disabled=$('m8').disabled=!loaded||clk>=32}
-$('mCmd').onclick=load;$('m1').onclick=tick;$('m8').onclick=()=>{for(let i=0;i<8;i++)tick()};$('mRe').onclick=reset;reset();
+function draw(){$('vS').innerHTML=cells(S,8).replace(/<span>\?<\/span>/g,'<span>·</span>');$('vL').innerHTML=cells(L,16);$('vR').innerHTML=cells(R,16);
+ let h='';for(let i=0;i<4;i++){const r=rx[i];h+=r?`<span class="${r.c}">rx[${i}] = 0x${r.b.toString(16).toUpperCase().padStart(2,'0')}</span>`:`<span>rx[${i}] = ?</span>`}
+ h+=`<span style="flex-basis:100%;border:0;background:none;padding:0;font-size:.8rem;color:var(--muted)">软件做过的事：${swlog.length?swlog.join(' → '):'（还没有）'}</span>`;$('vRx').innerHTML=h;
+ $('mCmd').disabled=st!=='idle';$('mW').disabled=st!=='w';$('m1').disabled=$('m8').disabled=st!=='c';$('mR').disabled=st!=='r'}
+$('mCmd').onclick=cmd;$('mW').onclick=wr;$('m1').onclick=tick;$('m8').onclick=()=>{for(let i=0;i<8&&st==='c';i++)tick()};$('mR').onclick=rd;$('mRe').onclick=reset;reset();
+/* ring picture */
+(function(){const s=$('ring');if(!s)return;
+ const box=(x,y,n,w,lab,col,sub)=>{el(s,'rect',{x,y,width:n*w,height:26,rx:4,fill:`color-mix(in srgb,var(--${col}) 15%,var(--panel))`,stroke:`var(--${col})`,'stroke-width':2});for(let i=1;i<n;i++)el(s,'line',{x1:x+i*w,x2:x+i*w,y1:y,y2:y+26,stroke:`var(--${col})`,'stroke-opacity':.5});
+  el(s,'text',{x:x+n*w/2,y:y-8,'text-anchor':'middle','font-size':12,'font-weight':600,fill:`var(--${col})`},lab);if(sub)el(s,'text',{x:x+n*w/2,y:y+44,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},sub)};
+ box(40,40,8,18,'SPI1（MCU 里）8 格','pc');box(300,40,16,18,'左键芯片 16 格','sw');box(300,140,16,18,'右键芯片 16 格','per');
+ const ar=(d,lab,x,y)=>{el(s,'path',{d,fill:'none',stroke:'var(--fg)','stroke-width':1.8,'marker-end':'url(#ah)'});if(lab)el(s,'text',{x,y,'text-anchor':'middle','font-size':11,fill:'var(--fg)'},lab)};
+ const defs=el(s,'defs',{});const m=el(defs,'marker',{id:'ah',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:7,markerHeight:7,orient:'auto-start-reverse'});el(m,'path',{d:'M0,0 L10,5 L0,10 z',fill:'var(--fg)'});
+ ar('M184,53 H296','MOSI',240,47);ar('M588,53 H640 V153 H592','SDO_0',680,108);ar('M300,153 H170 V70','MISO（回到 SPI1 队尾）',235,147);
+ el(s,'text',{x:430,y:200,'text-anchor':'middle','font-size':11.5,fill:'var(--muted)'},'时钟每跳一下，40 个格子里的位一起沿箭头挪一格；软件只在 SPI1 那 8 格“放进去（写 DR）、拿出来（读 DR）”');})();
 /* ---- crc tool ---- */
 function crcShow(){let v=Math.max(0,Math.min(16383,parseInt($('cV').value)||0));const w=word(v),hi=w>>8,lo=w&0xFF;let h='';
  for(let i=15;i>=0;i--){const b=(w>>i)&1;const cls=i>=14?'c':(i%2===0?'e':'o');const nm=i===15?'CRC1':i===14?'CRC0':'D'+i;h+=`<div class="${cls}">${b}<small>${nm}</small></div>`}$('cBits').innerHTML=h;
