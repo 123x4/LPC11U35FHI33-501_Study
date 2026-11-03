@@ -222,7 +222,7 @@ details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
 <div class="tlctl"><label for="tlT">时刻</label><button type="button" class="stp" data-d="-1" aria-label="后退 1 微秒">−1 µs</button><button type="button" class="stp" data-d="-0.25" aria-label="后退 0.25 微秒">−</button><input type="range" id="tlT" min="0" max="31" step="0.25" value="0"><button type="button" class="stp" data-d="0.25" aria-label="前进 0.25 微秒">+</button><button type="button" class="stp" data-d="1" aria-label="前进 1 微秒">+1 µs</button><output id="tlO">0 µs</output>
 </div><div class="tlctl"><span class="note">跳到：</span><button type="button" data-t="0.2">开始</button><button type="button" data-t="3">下命令中</button><button type="button" data-t="8">芯片装读数</button><button type="button" data-t="13.1">搬第 1 字节</button><button type="button" data-t="15.6">rx[0] 到手</button><button type="button" data-t="30.8">结束</button></div>
 <dl class="tlinfo" id="tlInfo" aria-live="polite"></dl>
-<p class="note">时间是按代码估算的（DrvGPIOOutput 约 1 µs、SPI1 时钟 2 MHz 即每位 0.5 µs、每个字节之间约 1 µs 的“等待 + 读 DR + 写下一个 DR”），量级对，细节以示波器为准。MISO 上的位用的是本课例子：右键 9300（<code>0xA454</code>）、左键 8935（<code>0xE2E7</code>）；MOSI 上是 tx 的 <code>A7 00 A7 00</code>。</p>
+<p class="note">时间是按代码估算的（命令高电平按 5 µs 画、实际估计 4 ~ 5 µs；SPI1 时钟 2 MHz 即每位 0.5 µs、每个字节之间约 1 µs 的“等待 + 读 DR + 写下一个 DR”），量级对，细节以示波器为准。MISO 上的位用的是本课例子：右键 9300（<code>0xA454</code>）、左键 8935（<code>0xE2E7</code>）；MOSI 上是 tx 的 <code>A7 00 A7 00</code>。</p>
 <h3>放大看一个字节里的 3 位：哪个沿送、哪个沿收</h3>
 <svg id="zoom" viewBox="0 0 860 230" role="img" aria-label="放大的时钟沿"></svg>
 <div class="rule" style="--c:var(--hw)"><b>规则</b>：SPI1 空闲时 SCK 是<b>低</b>（CPOL = 0），在每一位的<b>第二个沿（下降沿）采样</b>（CPHA = 1，芯片手册 13.6.1 节表 260、13.7.2.1 节）；霍尔芯片在<b>上升沿</b>把下一位放到 SDO（霍尔手册第 7 节：“只支持上升沿输出数据、下降沿采样数据”）。所以：<b>上升沿 → 芯片换数据；下降沿 → MCU 读走</b>。中间隔了半个周期（0.25 µs），数据早就稳定了，读得准。这两个设置在 SPI1 初始化时定好（第 3 课下）。</div>
@@ -256,13 +256,36 @@ details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
 <li><b>td1 = 开关“开着”多久</b>（高电平保持的时间）。霍尔芯片里有一块“秒表”，专门量 SCK 开了多久。<b>开了 5 µs，它就知道“MCU 要我读按键”</b>。开的时间长短不同，代表不同的命令（像摩斯电码用长短表示不同的字）。</li>
 <li><b>“± 5%” = 允许的误差</b>：5 µs 的 5% 是 0.25 µs，所以 4.75 ~ 5.25 µs 之间都算“5 µs”。开 4 µs 或 6 µs 就不在范围里了，芯片可能认不出、或认成别的命令。</li>
 <li><b>td2 = 关上以后，要先等多久才能开始打时钟</b>。手册写“&gt; 2”，意思是<b>至少等 2 µs，多等没关系</b>。这段时间芯片在把最新的读数放进它的 16 个格子（第 1 节“移位寄存器”）；没放好就开始挤，挤出来的是旧数据。代码实际等了约 5 µs，比 2 µs 长，没问题。</li>
-<li><b>代码里的 4 是怎么凑成 5 的</b>：拉高引脚的函数 <code>DrvGPIOOutput()</code> 自己要花约 1 µs，再等 <code>CT16B1_DelayUs(4)</code> 的 4 µs，合起来约 5 µs，正好落在 4.75 ~ 5.25 里。</li>
+<li><b>代码里的 4 是怎么凑成 5 的</b>：作者的想法是“拉高引脚的函数自己约 1 µs + 等 4 µs ≈ 5 µs”。实际情况更复杂（等待函数里只数了 2 µs，其余是各种函数开销），下面的方框逐段算了一遍。</li>
 </ol>
 <p><b>动手：</b>拖动“开着多久”，看芯片会把它当成什么命令（各命令的时间来自霍尔手册 7.7 节）：</p>
 <div class="tlctl"><label for="tdR">SCK 开着多久</label><button type="button" class="stp" id="tdM">−</button><input type="range" id="tdR" min="1" max="30" step="0.25" value="5"><button type="button" class="stp" id="tdP">+</button><output id="tdO">5 µs</output></div>
 <div class="log" id="tdL" aria-live="polite"></div>
 </div>
-<p><b>为什么要减 1？</b>第 13 行注释说：拉高、拉低引脚的函数 <code>DrvGPIOOutput()</code> 本身大约要花 1 µs。所以等 4 µs + 函数自己的 1 µs ≈ 5 µs。</p>
+<div class="box" style="border-color:var(--gold)"><b>为什么要减 1？“DrvGPIOOutput() 要花约 1 µs”又是怎么来的？</b>
+<p><b>先说结论</b>：button.h 第 13 行的注释“DrvGPIOOutput() is expected to take 1 microsecond”（预计花 1 µs）是<b>写代码的人估计的</b>，代码里没有算过程。我把编译出来的程序（<code>output/Sample.axf</code>）反汇编，逐条数了 CPU 实际执行的指令，下面是真实情况。</p>
+<p><b>① 为什么执行函数要花时间</b>：CPU 一条一条地执行指令，每条要花 1 ~ 4 个“时钟拍”（读写一个寄存器 2 拍，跳转 3 ~ 4 拍）。我们的 CPU 跑 48 MHz，<b>1 拍 = 1 ÷ 48 µs ≈ 0.021 µs</b>，48 拍 = 1 µs。<code>DrvGPIOOutput()</code> 要做：保存现场、算出寄存器地址、把方向设成输出（读 DIR → 改 → 写回）、判断高还是低、写 SET 或 CLR、恢复现场返回，一共约 18 条指令、约 30 拍 ≈ 0.6 µs。</p>
+<p><b>② 高电平到底从哪到哪</b>：从第一次 <code>DrvGPIOOutput(1,15,1)</code> <b>写 SET 的那一条指令</b>（上升沿），到第二次 <code>DrvGPIOOutput(1,15,0)</code> <b>写 CLR 的那一条指令</b>（下降沿）。中间 CPU 执行的所有东西都算在高电平里：</p>
+<svg id="hiSvg" viewBox="0 0 860 150" role="img" aria-label="高电平时间组成" style="display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px"></svg>
+<div class="scroll"><table>
+<thead><tr><th>段</th><th>CPU 在干什么</th><th>拍数</th><th>约 µs</th></tr></thead>
+<tbody>
+<tr><td>A</td><td>第一次 DrvGPIOOutput 写完 SET 后，恢复现场、返回（POP）</td><td>6</td><td>0.13</td></tr>
+<tr><td>B</td><td>回到 Hall_CLK_Command_SET，准备参数、调用 CT16B1_DelayUs</td><td>5</td><td>0.10</td></tr>
+<tr><td>C</td><td>CT16B1_DelayUs 开头：停定时器、开时钟、清零、设分频 47、启动（17 条指令）</td><td>31</td><td>0.65</td></tr>
+<tr><td><b>D</b></td><td><b>定时器真正在数：</b><code>while(TC &lt; us - 2)</code>，传进来 4，只数到 <b>4 − 2 = 2</b>（Timer.c:222）</td><td>96 ~ 102</td><td><b>2.0</b></td></tr>
+<tr><td>E</td><td>停定时器、返回</td><td>8</td><td>0.17</td></tr>
+<tr><td>F</td><td>准备参数 (1,15,0)、调用第二次 DrvGPIOOutput</td><td>7</td><td>0.15</td></tr>
+<tr><td>G</td><td>第二次 DrvGPIOOutput 从开头到写 CLR（下降沿）</td><td>25</td><td>0.52</td></tr>
+<tr><td colspan="2"><b>合计</b>（按每条指令的标准拍数）</td><td><b>约 180</b></td><td><b>约 3.7 ~ 3.8</b></td></tr>
+</tbody></table></div>
+<p><b>③ 看出来的两件事</b>：</p>
+<ul>
+<li><code>CT16B1_DelayUs(4)</code> <b>并不是数 4 µs</b>，它只数 2 µs（<code>us - 2</code>）。减掉的 2 µs 是留给它自己设置定时器、进出函数的时间（C + E 段）。也就是说，这里有<b>两处“提前扣掉”</b>：宏 <code>DELAY_OUT(5)</code> 扣 1（给 DrvGPIOOutput），函数里 <code>us - 2</code> 再扣 2（给 DelayUs 自己）。</li>
+<li>按标准拍数算出来约 3.8 µs。实际还要加上 <b>Flash 读取等待</b>：程序放在 Flash 里，48 MHz 时每次从 Flash 取指令要等 3 拍（芯片手册表 49 <code>FLASHTIM</code> 默认值 2，即 3 拍，本项目没改），CPU 取指令会被拖慢，实际会再长一些，<b>估计 4 ~ 5 µs</b>。</li>
+</ul>
+<div class="rule" style="--c:var(--bad)"><b>待上板验证</b>：手册要 4.75 ~ 5.25 µs。按上面估算，实际高电平可能在 4 ~ 5 µs 之间，<b>落没落在范围里，只能用示波器量 PIO1_15（MCU 第 28 脚；原理图上这根线没有测试点，可以量霍尔芯片 H1 的第 3 脚 SCK）</b>。现在按键能正常用，说明芯片能认出来（芯片的“秒表”大概有余量）；但要精确知道，得量。已记入“待确认问题”。</div>
+</div>
 <div class="qz" data-ans="4"><div class="qt">你来算：<code>DELAY_OUT(5)</code> 等于几？</div>
 <div class="row"><input type="text" inputmode="numeric" aria-label="答案"><button type="button" class="chk">检查</button></div>
 <div class="fb" data-ok="对。宏 DELAY_OUT(x) 就是 (x - 1)，代进去 5 - 1 = 4。" data-no="DELAY_OUT(x) 的定义是 (x - 1)，把 x 换成 5。"></div></div>
@@ -279,9 +302,9 @@ details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
 <tr><td>reg |= 0x00;</td><td>把 FUNC 设成 0（或上 0，等于什么也没变，写出来是为了看得清楚：功能 0 = 普通引脚）。</td></tr>
 <tr><td>LPC_IOCON-&gt;PIO1_15 = reg;</td><td>写回去。<b>从这一刻起，PIO1_15 不归 SPI1 管了</b>，变成普通引脚。</td></tr>
 <tr><td>DrvGPIOOutput(1,15,1);</td><td>把端口 1 第 15 脚设成<b>输出</b>，并输出<b>高电平</b>（GPIO.c：先把 <code>LPC_GPIO-&gt;DIR[1]</code> 第 15 位置 1 设为输出，再写 <code>LPC_GPIO-&gt;SET[1]</code> 拉高）。<b>SCK 变高，命令开始。</b></td></tr>
-<tr><td>CT16B1_DelayUs(high_delay);</td><td>原地等约 4 µs（加上上一行自己花的约 1 µs，高电平共约 5 µs）。<code>CT16B1_DelayUs()</code>（Timer.c:202）用 16 位定时器 CT16B1 计时：设成每 1 µs 加 1，CPU 一直盯着计数，到了就返回。等的时候 CPU 什么也不干。</td></tr>
+<tr><td>CT16B1_DelayUs(high_delay);</td><td>原地等。传入 4，但函数里只数 <code>4 - 2 = 2</code> µs，另外约 2 µs 是函数自己设定时器、进出函数花掉的（见上面方框）。加上前后两次 DrvGPIOOutput，高电平估计 4 ~ 5 µs。<code>CT16B1_DelayUs()</code>（Timer.c:202）用 16 位定时器 CT16B1 计时：设成每 1 µs 加 1，CPU 一直盯着计数，到了就返回。等的时候 CPU 什么也不干。</td></tr>
 <tr><td>DrvGPIOOutput(1,15,0);</td><td>输出<b>低电平</b>（写 <code>LPC_GPIO-&gt;CLR[1]</code>）。<b>SCK 变低，命令结束。</b>两颗芯片这时“量”出高电平约 5 µs → 认出是 HAL_CONVERT（读按键）命令。</td></tr>
-<tr><td>CT16B1_DelayUs(low_delay);</td><td>再等约 4 µs：芯片在这段时间里把最新的读数（16 位）装进自己的移位寄存器。</td></tr>
+<tr><td>CT16B1_DelayUs(low_delay);</td><td>再等（同样是数 2 µs + 函数开销，约 4 µs），之后还要切回 SCK1、开中断、进 SSP_Send_Receive，到第一个时钟沿时低电平已远超手册要求的 2 µs。芯片在这段时间里把最新的读数（16 位）装进自己的移位寄存器。</td></tr>
 <tr><td>reg = LPC_IOCON-&gt;PIO1_15;<br>reg &amp;= ~0x07;<br>reg |= 0x03;<br>LPC_IOCON-&gt;PIO1_15 = reg;</td><td>和前面一样“读 → 改 → 写”，这次把 FUNC 设成 <b>3 = SCK1</b>：<b>把这只脚还给 SPI1</b>。</td></tr>
 <tr><td>NVIC_EnableIRQ(USB_IRQn);</td><td>重新允许 USB 中断。</td></tr>
 </tbody></table></div>
@@ -378,7 +401,7 @@ details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
 <tbody>
 <tr><td><code>hall_spi_tx[4]</code></td><td>button.c:12，全局</td><td>要发的 4 字节；读数据时内容没用（现在是 A7 00 A7 00）</td></tr>
 <tr><td><code>hall_spi_rx[4]</code></td><td>button.c:13，全局</td><td>收到的 4 字节：[0][1] 右键，[2][3] 左键</td></tr>
-<tr><td><code>TD1_DELAY_US</code> / <code>TD2_CONTIUNS_DELAY_US</code></td><td>button.h:34~35，宏</td><td>都是 4：命令高电平、低电平各等 4 µs</td></tr>
+<tr><td><code>TD1_DELAY_US</code> / <code>TD2_CONTIUNS_DELAY_US</code></td><td>button.h:34~35，宏</td><td>都是 4：传给 CT16B1_DelayUs，函数内部数 4 − 2 = 2 µs，加函数开销，高电平估计 4 ~ 5 µs</td></tr>
 <tr><td><code>high_delay</code> / <code>low_delay</code></td><td>Hall_CLK_Command_SET 的参数</td><td>接收上面两个宏的值</td></tr>
 <tr><td><code>reg</code></td><td>Hall_CLK_Command_SET 的局部变量</td><td>“读 → 改 → 写” IOCON 用的临时盒子</td></tr>
 <tr><td><code>LPC_IOCON-&gt;PIO1_15</code></td><td>芯片寄存器（芯片手册表 115）</td><td>PIO1_15 的功能：FUNC 0 = 普通引脚，3 = SCK1</td></tr>
@@ -416,7 +439,7 @@ el(s,'line',{x1:X0,x2:xt(31),y1:392,y2:392,stroke:'var(--muted)'});
 const seg=(lane,t0,t1,txt,c,sub)=>{const [a,b]=L[lane];el(s,'rect',{x:xt(t0)+1,y:a,width:Math.max(2,(t1-t0)*K-2),height:b-a,rx:4,fill:`color-mix(in srgb,var(--${c}) 22%,var(--panel))`,stroke:`var(--${c})`});
  if(txt)el(s,'text',{x:xt((t0+t1)/2),y:(a+b)/2+(sub?-2:4),'text-anchor':'middle',class:'sm'},txt);if(sub)el(s,'text',{x:xt((t0+t1)/2),y:(a+b)/2+10,'text-anchor':'middle',class:'sm',fill:'var(--muted)'},sub)};
 /* code lane */
-seg('code',0,0.5,'','per');seg('code',0.5,5.5,'拉高 + 等 4 µs','per','CT16B1_DelayUs(4)');seg('code',5.5,10.5,'拉低 + 等 4 µs','per','CT16B1_DelayUs(4)');seg('code',10.5,11,'','per');
+seg('code',0,0.5,'','per');seg('code',0.5,5.5,'拉高 + 等','per','CT16B1_DelayUs(4)');seg('code',5.5,10.5,'拉低 + 等','per','CT16B1_DelayUs(4)');seg('code',10.5,11,'','per');
 for(let b=0;b<4;b++)seg('code',BS[b],BS[b]+(b<3?5:4.6),`第 ${b+1} 圈`,'pc','写DR→等→读DR');
 el(s,'text',{x:xt(0.25),y:L.code[0]-6,'text-anchor':'start',class:'sm',fill:'var(--muted)'},'关中断、切 GPIO');el(s,'text',{x:xt(10.6),y:L.code[0]-6,class:'sm',fill:'var(--muted)'},'切回 SCK1、开中断 → SSP_Send_Receive()');
 /* func lane */
@@ -442,8 +465,8 @@ for(let b=0;b<4;b++){const t=BS[b]+4.2;seg('rx',t,t+0.8+(b<3?0:0),'','pc');el(s,
 const cur=el(s,'line',{x1:X0,x2:X0,y1:8,y2:392,stroke:'var(--bad)','stroke-width':1.5});
 function at(t){const r={};
  if(t<0.5)r.code='Hall_CLK_Command_SET() 开头：NVIC_DisableIRQ(USB_IRQn) 关 USB 中断；读 → 改 → 写 IOCON，把 PIO1_15 的 FUNC 改成 0（普通引脚）。';
- else if(t<5.5)r.code='DrvGPIOOutput(1,15,1) 拉高（约 1 µs），然后 CT16B1_DelayUs(4) 原地等约 4 µs。';
- else if(t<10.5)r.code='DrvGPIOOutput(1,15,0) 拉低，然后 CT16B1_DelayUs(4) 再等约 4 µs。';
+ else if(t<5.5)r.code='DrvGPIOOutput(1,15,1) 写 SET 拉高；然后 CT16B1_DelayUs(4)：设定时器（约 0.7 µs）+ 数 2 µs + 返回。加上前后函数开销，高电平估计 4 ~ 5 µs（图上按 5 µs 画）。';
+ else if(t<10.5)r.code='DrvGPIOOutput(1,15,0) 写 CLR 拉低；然后 CT16B1_DelayUs(4) 再等（数 2 µs + 开销）。';
  else if(t<11)r.code='改 IOCON：FUNC = 3，把 PIO1_15 还给 SPI1；NVIC_EnableIRQ(USB_IRQn)。函数返回，hall_get_sample() 接着调 SSP_Send_Receive()。';
  else{const b=Math.min(3,Math.floor((t-11)/5)),u=t-BS[b];r.code=u<4?`SSP_Send_Receive() 第 ${b+1} 圈：已把 hall_spi_tx[${b}]（0x${TX[b].toString(16).toUpperCase().padStart(2,'0')}）写进 LPC_SSP1->DR，SPI1 正在打 8 下时钟；CPU 卡在第二个 while 里查 SR，等 RNE = 1、BSY = 0。`:`第 ${b+1} 圈收尾：读 LPC_SSP1->DR → hall_spi_rx[${b}]；两个指针 ++；${b<3?'回到 while(length--) 开始下一圈':'length 变成 0，循环结束，函数返回'}。`}
  r.func=t<0.4?'3（SCK1），正要改':t<10.6?'0 = 普通引脚 PIO1_15，由 DrvGPIOOutput 直接控制高低':'3 = SCK1，SPI1 打的时钟从这里出去';
@@ -528,7 +551,9 @@ const GEN=[
   ()=>mc('写 LPC_SSP1->DR 会发生什么？',['SPI1 打 8 下时钟：发这个字节，同时收一个字节','只发不收','只收不发'],0,'发 1 个字节 = 收 1 个字节，永远成对。'),
   ()=>mc('没有磁场时，霍尔芯片的读数大约是多少？',['8192','0','16383'],0,'霍尔手册第 12 节。南极靠近变小，北极靠近变大。'),
   ()=>mc('“异或”一串位，结果是 1 表示什么？',['里面 1 的个数是奇数','里面 1 的个数是偶数','全部是 1'],0,'相同得 0、不同得 1；一串异或下来就是数 1 的个数的奇偶。'),
-  ()=>mc('DELAY_OUT 为什么要减 1？',['DrvGPIOOutput() 自己就要花约 1 µs','定时器慢 1 µs','手册要求'],0,'button.h:13 的注释。'),
+  ()=>mc('DELAY_OUT 为什么要减 1？',['作者估计 DrvGPIOOutput() 自己要花约 1 µs，先扣掉','定时器慢 1 µs','手册要求'],0,'button.h:13 的注释（估计值）。反汇编数下来，DrvGPIOOutput 约 30 拍 ≈ 0.6 µs，再加 Flash 等待。'),
+  ()=>mc('CT16B1_DelayUs(4) 里，定时器真正数了几微秒？',['2 µs（while(TC < us - 2)）','4 µs','5 µs'],0,'Timer.c:222：us - 2。扣掉的 2 µs 留给函数自己设定时器、进出函数。'),
+  ()=>mc('48 MHz 的 CPU，1 个时钟拍是多少 µs？',['约 0.021 µs（1/48）','1 µs','0.48 µs'],0,'48 拍 = 1 µs。'),
   ()=>mc('CT16B1_DelayUs() 等待的时候，CPU 在干什么？',['原地一直查计数，不干别的','去做别的任务','睡觉'],0,'这叫“忙等”。'),
  ])()];
 let n=0,ok=0,cur2=null,done=false;const box=$('px');
@@ -566,11 +591,20 @@ bs.forEach(b=>b.onclick=()=>set(b.dataset.f));set('');})();
  br(1,6,40,'td1 ≈ 5 µs：开着（命令）','','pc');
  br(6,11,190,'td2 ≈ 5 µs：关着等（芯片装读数）','手册要求至少 2 µs，代码等了约 5 µs','sw');
  el(s,'text',{x:X(12.8),y:hi-12,'text-anchor':'middle','font-size':12,fill:'var(--fg)'},'然后打时钟搬数据');
- el(s,'text',{x:X(3.5),y:hi+28,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'≈ 1 µs（DrvGPIOOutput 自己）+ 4 µs（CT16B1_DelayUs）');
+ el(s,'text',{x:X(3.5),y:hi+28,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'函数开销 + 定时器数 2 µs，估计 4 ~ 5 µs（见下方方框）');
  el(s,'text',{x:X(1),y:236,'text-anchor':'middle','font-size':11,fill:'var(--fg)'},'↑ 拉高');el(s,'text',{x:X(6),y:236,'text-anchor':'middle','font-size':11,fill:'var(--fg)'},'↑ 拉低');el(s,'text',{x:X(11),y:236,'text-anchor':'middle','font-size':11,fill:'var(--fg)'},'↑ 开始打时钟');
  const CMD=[[5,'读按键 HAL_CONVERT（td1）'],[9,'写 LED 亮度 W_PWM_REG（td3）'],[15,'睡眠 SLEEP（td11）'],[24,'写寄存器 WR_REG（td4）']];
  const R=document.getElementById('tdR');
  function show(){const v=+R.value;document.getElementById('tdO').value=v+' µs';let m=null;for(const [n,nm] of CMD){if(v>=n*0.95-1e-9&&v<=n*1.05+1e-9)m=[n,nm]}
   document.getElementById('tdL').textContent=m?`${v} µs 在 ${m[0]} µs ± 5%（${(m[0]*0.95).toFixed(2)} ~ ${(m[0]*1.05).toFixed(2)} µs）范围内 → 芯片认成：${m[1]}${m[0]===5?'\n这正是我们要的。':'\n不是我们要的！读按键要 4.75 ~ 5.25 µs。'}`:`${v} µs 不在任何一条命令的 ± 5% 范围里 → 手册没定义，芯片可能不理、也可能认错，结果不可靠。\n（读按键要 4.75 ~ 5.25 µs）`}
  R.oninput=show;document.getElementById('tdM').onclick=()=>{R.value=Math.max(1,+R.value-0.25);show()};document.getElementById('tdP').onclick=()=>{R.value=Math.min(30,+R.value+0.25);show()};show()})();
+
+/* ---- high-time breakdown ---- */
+(function(){const s=document.getElementById('hiSvg');if(!s)return;const NS='http://www.w3.org/2000/svg';const el=(p,t,at,x)=>{const e=document.createElementNS(NS,t);for(const k in at)e.setAttribute(k,at[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e};
+ const seg=[['A',6,'muted'],['B',5,'muted'],['C',31,'gold'],['D',99,'hw'],['E',8,'gold'],['F',7,'muted'],['G',25,'per']];const tot=seg.reduce((a,b)=>a+b[1],0);const X0=30,W=800;let x=X0;
+ el(s,'text',{x:X0,y:22,'font-size':12,fill:'var(--fg)'},'↑ 上升沿：第一次 DrvGPIOOutput 写 SET');el(s,'text',{x:X0+W,y:22,'text-anchor':'end','font-size':12,fill:'var(--fg)'},'下降沿：第二次写 CLR ↑');
+ seg.forEach(([n,c,col])=>{const w=c/tot*W;el(s,'rect',{x,y:34,width:w-1,height:44,rx:3,fill:`color-mix(in srgb,var(--${col}) 35%,var(--panel))`,stroke:`var(--${col})`});
+  el(s,'text',{x:x+w/2,y:55,'text-anchor':'middle','font-size':13,'font-weight':700},n);if(w>34)el(s,'text',{x:x+w/2,y:71,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},c+' 拍');x+=w});
+ el(s,'text',{x:X0+(6+5+31+99/2)/tot*W,y:100,'text-anchor':'middle','font-size':12,fill:'var(--hw)'},'D：定时器真正数的 2 µs（只占一半多一点）');
+ el(s,'text',{x:X0+W/2,y:130,'text-anchor':'middle','font-size':12,fill:'var(--fg)'},'合计约 180 拍 ≈ 3.8 µs（不算 Flash 等待）；加上 Flash 等待估计 4 ~ 5 µs');})();
 </script>
