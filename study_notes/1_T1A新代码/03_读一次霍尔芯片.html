@@ -308,6 +308,27 @@ details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
 <tr><td>reg = LPC_IOCON-&gt;PIO1_15;<br>reg &amp;= ~0x07;<br>reg |= 0x03;<br>LPC_IOCON-&gt;PIO1_15 = reg;</td><td>和前面一样“读 → 改 → 写”，这次把 FUNC 设成 <b>3 = SCK1</b>：<b>把这只脚还给 SPI1</b>。</td></tr>
 <tr><td>NVIC_EnableIRQ(USB_IRQn);</td><td>重新允许 USB 中断。</td></tr>
 </tbody></table></div>
+<div class="box" style="border-color:var(--hw)"><b>常见疑问：切回 SCK1 以后，时钟马上就开始打了吗？一打时钟芯片就开始“测量”了吗？</b>
+<p><b>都不是。</b>分开说：</p>
+<h3 style="margin-top:.6rem">① 切回 SCK1 ≠ 开始打时钟</h3>
+<p><code>LPC_IOCON-&gt;PIO1_15 = reg</code>（FUNC = 3）只是<b>把这只脚的“控制权”交回给 SPI1</b>，像把方向盘交给司机，车还没开。SPI1 这时是<b>空闲</b>的：它在开机时已经被打开（<code>InitSPI1Master()</code> 里 <code>LPC_SSP1-&gt;CR1 |= SSPCR1_SSE</code>，SPI.c:247，第 3 课下讲），空闲时它让 SCK 保持<b>低电平</b>（CPOL = 0）。<b>只有软件往 <code>DR</code> 里写了一个字节，SPI1 才开始打 8 下时钟。</b></p>
+<p>从切回 SCK1 到真正打出第一下时钟，中间还要经过这几步：</p>
+<svg id="swSvg" viewBox="0 0 860 200" role="img" aria-label="切回 SCK1 到第一下时钟之间" style="display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px"></svg>
+<p class="note">一个细节：切换前这只脚是普通引脚、输出低；切换后 SPI1 空闲也是低。所以切换那一刻线上<b>一直是低，没有跳变</b>，芯片不会误以为来了时钟或命令。如果 SPI1 被设成空闲为高（CPOL = 1），切换瞬间线会突然变高，芯片可能把它当成一个命令的开头——这也是 SPI1 选 CPOL = 0 的原因之一（我的推断）。</p>
+<h3>② 打时钟 ≠ 开始测量</h3>
+<p>“测磁场 → 变成 14 位的数”这件事（芯片手册里叫 <b>conversion，转换</b>）<b>芯片自己一直在做</b>，不用 MCU 管：开机配置时把它设成了<b>连续转换模式</b>（寄存器 0x18 = 0x8E 的第 2 位 = 1、0x13 = 0x01），每隔 <b>124 µs</b> 自己测一次（寄存器 0x0A = 0x0B：11 × 4 + 80 = 124 µs，霍尔手册第 8 节），结果放在芯片内部，新的盖掉旧的。</p>
+<svg id="cvSvg" viewBox="0 0 860 190" role="img" aria-label="芯片连续转换与命令的关系" style="display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px"></svg>
+<p>所以三件事各管各的：</p>
+<ul>
+<li><b>芯片自己</b>：每 124 µs 测一次，手里始终有“最新的一次结果”。</li>
+<li><b>命令（SCK 高 5 µs）</b>：让芯片把“最新的一次结果”<b>复制</b>进 16 个格子，准备好被搬走。</li>
+<li><b>时钟（32 下）</b>：只负责<b>搬</b>，把格子里的位挤出来，不测量任何东西。</li>
+</ul>
+<p>手册里的证据：td2（命令之后要等多久）写的是“<b>连续模式 &gt; 2 µs，单次模式 &gt; 80 µs</b>”（7.7 节）。连续模式下结果是现成的，复制进格子只要 2 µs；单次模式下要现测一次，所以要等 80 µs。</p>
+<div class="qz" data-choice="2"><div class="qt">你来想：MCU 每 1 ms 读一次，芯片每 124 µs 测一次。读到的数最多可能是“多久以前”测的？</div>
+<div class="row"><button type="button" class="opt">1 ms 以前</button><button type="button" class="opt">刚好此刻</button><button type="button" class="opt">最多约 124 µs 以前</button></div>
+<div class="fb" data-ok="对。命令到来时，芯片手里的“最新结果”最晚是 124 µs 前测的。比 1 ms 的读取间隔短得多，所以每次读到的都很新。" data-no="芯片手里的结果每 124 µs 更新一次，命令只是复制当时最新的那一个。"></div></div>
+</div>
 <div class="qz" data-choice="1"><div class="qt">你来想：如果高电平被拉长到了 9 µs，芯片会以为是什么命令？（霍尔手册 7.7 节：td1 = 5 µs 读按键，td3 = 9 µs 写 LED 亮度，td4 = 24 µs 写寄存器）</div>
 <div class="row"><button type="button" class="opt">读按键</button><button type="button" class="opt">写 LED 亮度（W_PWM_REG）</button><button type="button" class="opt">写寄存器</button></div>
 <div class="fb" data-ok="对。所以拉高的时间必须准，这就是关掉 USB 中断的原因。" data-no="对照手册：9 µs 对应哪条？"></div></div>
@@ -642,4 +663,23 @@ bs.forEach(b=>b.onclick=()=>set(b.dataset.f));set('');})();
   el(s,'text',{x:x+w/2,y:55,'text-anchor':'middle','font-size':13,'font-weight':700},n);if(w>34)el(s,'text',{x:x+w/2,y:71,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},c+' 拍');x+=w});
  el(s,'text',{x:X0+(6+5+31+99/2)/tot*W,y:100,'text-anchor':'middle','font-size':12,fill:'var(--hw)'},'D：定时器真正数的 2 µs（只占一半多一点）');
  el(s,'text',{x:X0+W/2,y:130,'text-anchor':'middle','font-size':12,fill:'var(--fg)'},'合计约 180 拍 ≈ 3.8 µs（不算 Flash 等待）；加上 Flash 等待估计 4 ~ 5 µs');})();
+
+/* ---- switch-back & conversion figures ---- */
+(function(){const NS='http://www.w3.org/2000/svg';const el=(p,t,at,x)=>{const e=document.createElementNS(NS,t);for(const k in at)e.setAttribute(k,at[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e};
+ const s=document.getElementById('swSvg');if(s){
+  const steps=[['切回 SCK1','IOCON FUNC = 3','button.c:821~824','gold'],['开 USB 中断','NVIC_EnableIRQ','button.c:826；USB 有事会先处理','muted'],['函数返回','回到 hall_get_sample()','button.c:862','muted'],['调 SSP_Send_Receive','while(length--)\n等 TNF=1、BSY=0','SPI.c:439~441','muted'],['写 DR = tx[0]','LPC_SSP1->DR = 0xA7','SPI.c:442','pc']];
+  const W=158,G=12;steps.forEach(([a,b,c,col],i)=>{const x=10+i*(W+G);el(s,'rect',{x,y:20,width:W,height:72,rx:8,fill:`color-mix(in srgb,var(--${col}) 15%,var(--panel))`,stroke:`var(--${col})`,'stroke-width':2});
+   el(s,'text',{x:x+W/2,y:42,'text-anchor':'middle','font-size':13,'font-weight':700},a);b.split('\n').forEach((ln,j)=>el(s,'text',{x:x+W/2,y:60+j*13,'text-anchor':'middle','font-size':10.5,'font-family':'var(--font-m)'},ln));
+   el(s,'text',{x:x+W/2,y:108,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},c);if(i<4)el(s,'text',{x:x+W+G/2,y:60,'text-anchor':'middle','font-size':14,fill:'var(--fg)'},'→')});
+  const y0=170,y1=140;let d=`M10,${y0} H${10+4*(W+G)+W/2}`;let x=10+4*(W+G)+W/2;for(let i=0;i<5;i++){d+=` V${y1} H${x+8} V${y0} H${x+16}`;x+=16}d+=' H850';
+  el(s,'path',{d,fill:'none',stroke:'var(--hw)','stroke-width':2});el(s,'text',{x:14,y:y1-6,'font-size':11,'font-weight':600,fill:'var(--hw)'},'SCK：一直是低（SPI1 空闲）……');el(s,'text',{x:850,y:y1-6,'text-anchor':'end','font-size':11,'font-weight':600,fill:'var(--hw)'},'写了 DR，才开始打时钟 ↓');}
+ const c=document.getElementById('cvSvg');if(c){const X=t=>40+t*1.55;
+  el(c,'text',{x:8,y:30,'font-size':12,'font-weight':600,fill:'var(--sw)'},'芯片内部：每 124 µs 自己测一次');
+  for(let t=0;t<=500;t+=124){el(c,'line',{x1:X(t),x2:X(t),y1:40,y2:66,stroke:'var(--sw)','stroke-width':3});el(c,'text',{x:X(t),y:80,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},`测第 ${t/124+1} 次`)}
+  el(c,'line',{x1:X(0),x2:X(510),y1:66,y2:66,stroke:'var(--line)'});
+  const tc=300;el(c,'line',{x1:X(tc),x2:X(tc),y1:96,y2:132,stroke:'var(--pc)','stroke-width':3});el(c,'text',{x:X(tc),y:150,'text-anchor':'middle','font-size':11,'font-weight':600,fill:'var(--pc)'},'MCU 下命令（SCK 高 5 µs）');
+  el(c,'path',{d:`M${X(248)},70 C${X(260)},100 ${X(290)},100 ${X(tc)},108`,fill:'none',stroke:'var(--pc)','stroke-width':1.6,'stroke-dasharray':'4 3'});
+  el(c,'text',{x:X(tc)+8,y:118,'font-size':11,fill:'var(--fg)'},'复制“最新一次”（第 3 次）的结果进 16 个格子 → 然后 32 下时钟搬走');
+  el(c,'text',{x:X(0),y:180,'font-size':10.5,fill:'var(--muted)'},'时间（按比例）：每格竖线间隔 124 µs；MCU 每 1000 µs 才下一次命令');}
+})();
 </script>
