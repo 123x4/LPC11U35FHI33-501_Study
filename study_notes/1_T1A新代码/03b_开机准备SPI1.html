@@ -81,18 +81,6 @@ svg.fig{display:block;width:100%;height:auto;background:var(--panel);border:1px 
 .fb.ok{display:block;border-left:4px solid var(--good)}
 .fb.no{display:block;border-left:4px solid var(--bad)}
 button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
-#eView .rg{margin:.35rem 0}
-#eView .rg .nm{font-size:.78rem;font-weight:600;color:var(--c)}
-#eView .cells{display:grid;gap:2px;font-family:var(--font-m);font-size:.74rem;text-align:center}
-#eView .cells span{border:1px solid var(--line);border-radius:3px;padding:2px 0;background:var(--panel);min-width:0}
-#eView .cells span.k{border:0;background:none;color:var(--muted);font-size:.6rem;padding:0}
-#eView .cells span.hl{outline:2px solid var(--bad);outline-offset:-2px;font-weight:700}
-#eView .cells span.L{background:color-mix(in srgb,var(--sw) 30%,var(--panel))}
-#eView .cells span.R{background:color-mix(in srgb,var(--per) 30%,var(--panel))}
-#eView .cells span.T{background:color-mix(in srgb,var(--muted) 25%,var(--panel))}
-#eView .wire{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.82rem;margin:.1rem 0 .1rem 1em;color:var(--muted)}
-#eView .wire b{font-family:var(--font-m);border:1.5px solid var(--c);border-radius:4px;padding:0 8px;color:var(--fg)}
-#eView .wire b.hl{background:color-mix(in srgb,var(--bad) 25%,var(--panel))}
 </style>
 <div class="wrap">
 <div class="eyebrow">T1A 主线 · 第 3 课（下）① · 开机怎么把 SPI1 准备好 · 代码 src/SPI.c:204~248 · 芯片手册 UM10462 · 霍尔手册 GTRY154</div>
@@ -166,24 +154,28 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <tr><td>7</td><td>CPHA 时钟相位</td><td><code>1</code></td><td>在每位的<b>第二个沿（下降沿）采样</b>，配合芯片“上升沿出数据”。<b>具体谁在哪个沿干什么，见表下面的“半拍演示”。</b></td></tr>
 <tr><td>15:8</td><td>SCR 时钟分频</td><td><code>0000 0010</code> = 2</td><td>再分频 SCR + 1 = <b>3</b></td></tr>
 </tbody></table></div>
-<div class="box" id="edgeBox" style="border-color:var(--hw)"><b>半拍演示：上升沿、下降沿，各是谁在干什么、位从哪个格子到哪个格子</b>
-<p>先记住一条：<b>上升沿（↑）是“发送方把位摆到线上”，下降沿（↓）是“接收方把线上的位收进格子”</b>。两个动作隔开半个周期（0.25 µs），所以收的时候线早就稳定了。</p>
+<div class="box" id="edgeBox" style="border-color:var(--hw)"><b>半拍演示：上升沿谁把位摆上线，下降沿谁把位收进来</b>
+<p>只记一句话：<b>↑ 上升沿 = 发送方把“排头”那一位摆到线上；↓ 下降沿 = 接收方看线，把这一位记进自己的“队尾”</b>。两件事隔半个时钟（0.25 µs），接收方看线的时候，线早就稳定了。</p>
+<p>下面的图默认<b>只看一根线</b>：右键芯片 →（MISO 线）→ MCU。看懂了再点“三根线一起看”。<b>线上的小球</b> = 此刻线上的那一位（粗黑线 = 高电平 1，细灰线 = 低电平 0）；<b>格子颜色</b> = 这一位原来是谁的（灰 = 软件写进 DR 的 0xA7，蓝 = 右键芯片的，绿 = 左键芯片的）；<b>红框</b> = 这半拍正在动的格子。图下方是同一时刻的波形。</p>
+<div class="btns"><button type="button" id="eM1" aria-pressed="true">只看一根线（MISO）</button><button type="button" id="eM2" aria-pressed="false">三根线一起看</button></div>
+<div class="btns"><button type="button" id="eP">上一步</button><button type="button" id="eN">下一步（半下时钟）</button><button type="button" id="ePlay">自动播放</button><button type="button" id="eR">重来</button><span class="note" id="eC"></span></div>
+<div class="scroll"><svg id="eSvg" class="fig" style="min-width:640px" role="img" aria-label="MCU 和霍尔芯片的格子、连线、线上的位，以及 SCK 和数据线的波形"></svg></div>
+<div class="log" id="eLog" aria-live="polite"></div>
+<p class="note">波形里：SCK 每打一下 = 一个 ↑ + 一个 ↓；数据线只在 ↑ 时变；红点 = 接收方在 ↓ 时看到的值；红竖线 = 现在在哪个沿。</p>
+<h3>看懂动画后，对照这张总结表</h3>
 <div class="scroll"><table>
 <thead><tr><th>时刻</th><th>谁</th><th>从哪</th><th>放到哪</th></tr></thead>
 <tbody>
-<tr><td rowspan="3"><b>↑ 上升沿</b><br>（发送方动作）</td><td>SPI1</td><td>自己移位寄存器的 <b>b7</b>（排头）</td><td><b>MOSI 线</b>（PIO0_21 输出这个电平）</td></tr>
-<tr><td>左键芯片</td><td>自己 16 格的 <b>b15</b></td><td><b>SDO 脚 → SDO_0 线</b></td></tr>
-<tr><td>右键芯片</td><td>自己 16 格的 <b>b15</b></td><td><b>SDO 脚 → MISO 线</b></td></tr>
-<tr><td rowspan="3"><b>↓ 下降沿</b><br>（接收方动作）</td><td>SPI1</td><td><b>MISO 线</b>上的电平（PIO0_22 读入）</td><td>自己移位寄存器的 <b>b0</b>（队尾），其余各格往高位挪一格</td></tr>
-<tr><td>左键芯片</td><td><b>MOSI 线</b>（它的 SDI 脚）</td><td>自己 16 格的 <b>b0</b>，其余往高位挪一格</td></tr>
-<tr><td>右键芯片</td><td><b>SDO_0 线</b>（它的 SDI 脚）</td><td>自己 16 格的 <b>b0</b>，其余往高位挪一格</td></tr>
+<tr><td rowspan="3"><b>↑ 上升沿</b><br>（发送方动手）</td><td>SPI1</td><td>移位寄存器的 <b>b7</b>（排头）</td><td><b>MOSI 线</b>（PIO0_21 输出这个电平）</td></tr>
+<tr><td>左键芯片</td><td>16 格的 <b>b15</b></td><td><b>SDO 脚 → SDO_0 线</b></td></tr>
+<tr><td>右键芯片</td><td>16 格的 <b>b15</b></td><td><b>SDO 脚 → MISO 线</b></td></tr>
+<tr><td rowspan="3"><b>↓ 下降沿</b><br>（接收方动手）</td><td>SPI1</td><td><b>MISO 线</b>（PIO0_22 读入）</td><td>移位寄存器的 <b>b0</b>（队尾），其余往前挪一格</td></tr>
+<tr><td>左键芯片</td><td><b>MOSI 线</b>（它的 SDI 脚）</td><td>16 格的 <b>b0</b>，其余往前挪一格</td></tr>
+<tr><td>右键芯片</td><td><b>SDO_0 线</b>（它的 SDI 脚）</td><td>16 格的 <b>b0</b>，其余往前挪一格</td></tr>
 </tbody></table></div>
-<p>一下时钟 = 一个 ↑ + 一个 ↓。下面一步就是半下时钟，起点是第 3 课上“下完命令、软件刚写了 DR = 0xA7”那一刻：</p>
-<div class="btns"><button type="button" id="eP">上一步</button><button type="button" id="eN">下一步（半下时钟）</button><button type="button" id="eR">重来</button><span class="note" id="eC"></span></div>
-<svg id="eSck" class="fig" viewBox="0 0 860 70" role="img" aria-label="当前所在的时钟沿"></svg>
-<div id="eView"></div>
-<div class="log" id="eLog" aria-live="polite"></div>
-<p class="note">红框 = 这半拍被读走的格子（↑ 时是排头 b7 / b15）或被写进的格子（↓ 时是队尾 b0）；线上的值在 ↑ 时更新，在 ↓ 时被读走，读完线上保持不变，直到下一个 ↑。</p>
+<div class="qz" data-choice="0"><div class="qt">你来想：SCK 打了 4 下。每次 ↑ 之后，MISO 线上依次是：高、高、低、高。MCU 在 4 个 ↓ 依次记下的是？</div>
+<div class="qrow"><button type="button" class="opt">1 1 0 1</button><button type="button" class="opt">0 0 1 0</button><button type="button" class="opt">要等 8 下打完才知道</button></div>
+<div class="fb" data-ok="对。↑ 之后线就保持不动，↓ 时 MCU 看到什么就记什么：高 = 1，低 = 0。先记的被后来的往前挤：4 下之后，第一个 1 在 b3，最后一个 1 在 b0。" data-no="每个 ↓ 都单独看一次线、记一位，不用等。↓ 时线上是高就记 1，是低就记 0。"></div></div>
 </div>
 
 <div class="rule" style="--c:var(--hw)"><b>速度公式</b>（芯片手册表 260 SCR 说明）：<code>SCK 频率 = SSP1_PCLK ÷ (CPSR × (SCR + 1))</code><br>
@@ -342,31 +334,101 @@ $('pxNext').onclick=next;next();box._cur=()=>cur;
  document.getElementById('rWr').onclick=()=>{if(rst){say('往 CR0 写 0x0287……但复位还按着，写进去马上又被拉回 0：写入无效。')}else{cr0=0x0287;say('往 CR0 写 0x0287：复位已放开，值留住了。')}};
  say('上电后：复位是按住的。试试先写 CR0，再放开复位，再写 CR0。');})();
 
-/* ---- edge half-step demo ---- */
-(function(){const V=document.getElementById('eView');if(!V)return;const NS='http://www.w3.org/2000/svg';
- const bits=(v,n,c)=>Array.from({length:n},(_,i)=>({v:(v>>(n-1-i))&1,c}));
- const F=[];let S=bits(0xA7,8,'T'),L=bits(0xE2E7,16,'L'),R=bits(0xA454,16,'R'),W={mosi:null,sdo:null,miso:null};
- const snap=(ph,clk,txt,hl)=>F.push({S:S.map(x=>({...x})),L:L.map(x=>({...x})),R:R.map(x=>({...x})),W:{...W},ph,clk,txt,hl});
- snap('start',0,'起点：SPI1 移位寄存器里是 tx 的 0xA7（灰），左键芯片 16 格是 0xE2E7，右键芯片是 0xA454。SCK 是低，三根线上的电平还没人摆。',{});
- for(let k=1;k<=8;k++){W={mosi:S[0],sdo:L[0],miso:R[0]};
-  snap('up',k,`第 ${k} 下 ↑ 上升沿（发送方摆位）：\n【SPI1】把移位寄存器 b7 的 ${S[0].v} 摆到 MOSI 线上。\n【左键芯片】把自己 b15 的 ${L[0].v} 摆到 SDO 脚 → SDO_0 线。\n【右键芯片】把自己 b15 的 ${R[0].v} 摆到 SDO 脚 → MISO 线。\n这时三根线上分别是 MOSI = ${W.mosi.v}、SDO_0 = ${W.sdo.v}、MISO = ${W.miso.v}，接下来 0.25 µs 保持不变。`,{S:[0],L:[0],R:[0],w:1});
-  const m=W.miso,mo=W.mosi,sd=W.sdo;S=S.slice(1).concat({...m});L=L.slice(1).concat({...mo});R=R.slice(1).concat({...sd});
-  snap('down',k,`第 ${k} 下 ↓ 下降沿（接收方收位）：\n【SPI1】读 MISO 线 = ${m.v}，存进移位寄存器的 b0；原来 b6~b0 往上挪到 b7~b1（原 b7 那位刚才已经摆到 MOSI 上，被挤出去了）。\n【左键芯片】读 SDI（= MOSI 线）= ${mo.v}，存进自己的 b0，其余往上挪一格。\n【右键芯片】读 SDI（= SDO_0 线）= ${sd.v}，存进自己的 b0，其余往上挪一格。`+(k===8?`\n8 下打完：SPI1 移位寄存器里是 0x${S.reduce((a,x)=>a*2+x.v,0).toString(16).toUpperCase()}（右键芯片的高字节），接着自动搬进接收 FIFO。`:''),{S:[7],L:[15],R:[15],w:2})}
- let k=0;
- const cells=(arr,hl,lab)=>{const n=arr.length;let h=`<div class="cells" style="grid-template-columns:repeat(${n},minmax(0,1fr))">`;for(let i=0;i<n;i++)h+=`<span class="k">b${n-1-i}</span>`;arr.forEach((x,i)=>h+=`<span class="${x.c}${hl&&hl.includes(i)?' hl':''}">${x.v}</span>`);return h+'</div>'};
- const wire=(nm,from,to,x,hl,col)=>`<div class="wire" style="--c:var(--${col})">${from?from+' → ':''}<b class="${hl?'hl':''}">${nm} = ${x?x.v:'?'}</b> → ${to}</div>`;
- function sck(f){const s=document.getElementById('eSck');s.innerHTML='';const el=(t,a,x)=>{const e=document.createElementNS(NS,t);for(const q in a)e.setAttribute(q,a[q]);if(x!=null)e.textContent=x;s.appendChild(e);return e};
-  const X0=60,W=95;let d=`M10,52 H${X0}`;for(let i=0;i<8;i++){const x=X0+i*W;d+=` V18 H${x+W/2} V52 H${x+W}`}d+=' H850';el('path',{d,fill:'none',stroke:'var(--hw)','stroke-width':2});
-  el('text',{x:8,y:14,'font-size':11,fill:'var(--hw)','font-weight':600},'SCK');
-  if(f.ph!=='start'){const x=X0+(f.clk-1)*W+(f.ph==='down'?W/2:0);el('line',{x1:x,x2:x,y1:4,y2:66,stroke:'var(--bad)','stroke-width':2.5});el('text',{x:x+4,y:66,'font-size':11,fill:'var(--bad)'},f.ph==='up'?`第 ${f.clk} 下 ↑`:`第 ${f.clk} 下 ↓`)}}
- function show(){const f=F[k],up=f.ph==='up',dn=f.ph==='down';
-  V.innerHTML=`<div class="rg" style="--c:var(--pc)"><div class="nm">SPI1 移位寄存器（MCU 里）</div>${cells(f.S,f.hl.S)}</div>`+
-   wire('MOSI 线',up?'SPI1 的 b7 摆出':dn?'（线上保持）':'','左键芯片 SDI'+(dn?'：收进左键芯片 b0':up?'（等下降沿再收）':''),f.W.mosi,f.hl.w,'pc')+
-   `<div class="rg" style="--c:var(--sw)"><div class="nm">左键芯片 16 格</div>${cells(f.L,f.hl.L)}</div>`+
-   wire('SDO_0 线',up?'左键芯片的 b15 摆出':dn?'（线上保持）':'','右键芯片 SDI'+(dn?'：收进右键芯片 b0':up?'（等下降沿再收）':''),f.W.sdo,f.hl.w,'sw')+
-   `<div class="rg" style="--c:var(--per)"><div class="nm">右键芯片 16 格</div>${cells(f.R,f.hl.R)}</div>`+
-   wire('MISO 线',up?'右键芯片的 b15 摆出':dn?'（线上保持）':'','SPI1'+(dn?'：收进 SPI1 的 b0':up?'（等下降沿再收）':''),f.W.miso,f.hl.w,'per');
-  document.getElementById('eLog').textContent=f.txt;sck(f);document.getElementById('eC').textContent=`第 ${k+1} / ${F.length} 步`;
+/* ---- edge half-step demo (picture) ---- */
+(function(){const svg=document.getElementById('eSvg');if(!svg)return;const NS='http://www.w3.org/2000/svg';
+ const RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const bits=(v,n,c)=>Array.from({length:n},(_,i)=>({v:(v>>(n-1-i))&1,c}));const cp=a=>a.map(x=>({...x}));
+ const F=[],H=[null];let S=bits(0xA7,8,'T'),L=bits(0xE2E7,16,'L'),R=bits(0xA454,16,'R');
+ const snap=(ph,clk,W)=>F.push({S:cp(S),L:cp(L),R:cp(R),W:W||{},ph,clk});
+ snap('start',0);
+ for(let c=1;c<=8;c++){const W={mosi:{...S[0]},sdo:{...L[0]},miso:{...R[0]}};H.push(W);snap('up',c,W);
+  S=S.slice(1).concat({...W.miso});L=L.slice(1).concat({...W.mosi});R=R.slice(1).concat({...W.sdo});snap('down',c,W)}
+ const G={
+  one:{VW:940,VH:326,cy:120,ch:34,big:1,ty:236,X0:120,B:{S:{x0:40,cw:30,n:8},R:{x0:576,cw:21,n:16}},
+   wires:{miso:{d:'M568,137 H288',mx:428,my:137,nm:'MISO 线',from:'R',to:'S',col:'per'}},lanes:['miso']},
+  all:{VW:970,VH:410,cy:120,ch:34,big:0,ty:240,X0:130,B:{S:{x0:28,cw:17,n:8},R:{x0:280,cw:17,n:16},L:{x0:668,cw:17,n:16}},
+   wires:{miso:{d:'M272,137 H172',mx:222,my:137,nm:'MISO',from:'R',to:'S',col:'per'},sdo:{d:'M660,137 H560',mx:610,my:137,nm:'SDO_0',from:'L',to:'R',col:'sw'},
+    mosi:{d:'M20,137 H8 V202 H962 V137 H948',mx:490,my:202,nm:'MOSI 线',from:'S',to:'L',col:'pc',low:1}},lanes:['mosi','sdo','miso']}};
+ const NM={S:['MCU · SPI1 移位寄存器（8 格）','pc'],L:['左键霍尔芯片（16 格）','sw'],R:['右键霍尔芯片（16 格）','per']};
+ const FILL={T:'color-mix(in srgb,var(--muted) 22%,var(--panel))',L:'color-mix(in srgb,var(--sw) 32%,var(--panel))',R:'color-mix(in srgb,var(--per) 32%,var(--panel))'};
+ const el=(p,t,a,x)=>{const e=document.createElementNS(NS,t);for(const q in a)e.setAttribute(q,a[q]);if(x!=null)e.textContent=x;p.appendChild(e);return e};
+ let mode='one',k=0,timer=null;
+ function bubble(x,y,w,lines,on){const g=el(svg,'g',{});el(g,'rect',{x,y,width:w,height:20+lines.length*20,rx:10,style:`fill:${on?'color-mix(in srgb,var(--bad) 10%,var(--panel))':'var(--soft)'};stroke:${on?'var(--bad)':'var(--line)'};stroke-width:${on?2.5:1}`});
+  lines.forEach((t,i)=>el(g,'text',{x:x+12,y:y+24+i*20,'font-size':13.5,fill:on?'var(--fg)':'var(--muted)','font-weight':on&&i===0?700:400},t))}
+ function ball(x,y,b,r){const g=el(svg,'g',{});el(g,'circle',{cx:x,cy:y,r,style:`fill:${FILL[b.c]};stroke:var(--fg);stroke-width:2`});
+  el(g,'text',{x,y:y+5,'text-anchor':'middle','font-size':r>12?15:12,'font-weight':700,fill:'var(--fg)',style:'font-family:var(--font-m)'},b.v);return g}
+ function slide(g,dx,dy){if(RM||!dx&&!dy)return;g.style.transform=`translate(${dx}px,${dy}px)`;g.getBoundingClientRect();
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{g.style.transition='transform .5s ease';g.style.transform='translate(0px,0px)'}))}
+ function captions(f,g){const c=f.clk,up=f.ph==='up',dn=f.ph==='down',W=f.W;
+  if(mode==='one'){const v=W.miso&&W.miso.v;
+   if(!up&&!dn){bubble(20,6,400,['MCU：软件刚写了 DR = 0xA7（灰色格子）','移位寄存器装好了，等时钟'],0);bubble(500,6,420,['右键芯片：16 格装着 0xA454（蓝色格子）','这是上次转换的结果，等时钟'],0)}
+   else if(up){bubble(20,6,400,['MCU：这时不看线',`等 ↓ 再看（让线先稳定 0.25 µs）`],0);bubble(500,6,420,[`① 芯片动手（第 ${c} 下 ↑）`,`把排头 b15 的 ${v} 摆到 MISO 线上`],1)}
+   else{bubble(20,6,400,[`② MCU 动手（第 ${c} 下 ↓）：看线 = ${v}`,'记进队尾 b0，其余 7 格往前挪一格'],1);bubble(500,6,420,['芯片：也往前挪一格','它的 b0 收左键芯片送来的位（先不看）'],0)}}
+  else{const s=W.mosi,l=W.sdo,r=W.miso;
+   if(!up&&!dn)bubble(10,6,950,['起点：SPI1 装着 0xA7（灰），左键芯片装着 0xE2E7（绿），右键芯片装着 0xA454（蓝）','SCK 是低，三根线都还没人摆'],0);
+   else if(up)bubble(10,6,950,[`① 第 ${c} 下 ↑：三个发送方同时把自己的排头摆到线上`,`SPI1 b7 = ${s.v} → MOSI　左键 b15 = ${l.v} → SDO_0　右键 b15 = ${r.v} → MISO`],1);
+   else bubble(10,6,950,[`② 第 ${c} 下 ↓：三个接收方同时看线，记进自己的队尾 b0，其余往前挪一格`,`SPI1 ← MISO = ${r.v}　左键 ← MOSI = ${s.v}　右键 ← SDO_0 = ${l.v}`],1)}}
+ function timing(f,g){const X0=g.X0,P=(g.VW-X0-20)/8,c=f.clk,up=f.ph==='up',dn=f.ph==='down';
+  const cur=f.ph==='start'?X0-12:X0+(c-1)*P+(dn?P/2:0),dataEnd=f.ph==='start'?X0:X0+c*P;
+  const defs=el(svg,'defs',{});const cl=el(defs,'clipPath',{id:'eClk'});el(cl,'rect',{x:0,y:0,width:cur+1,height:g.VH});
+  const rows=[['SCK','hw',null]].concat(g.lanes.map(w=>[g.wires[w].nm.replace(' 线',''),g.wires[w].col,w]));
+  rows.forEach((r,i)=>{const y0=g.ty+i*40,hi=y0+6,lo=y0+30;el(svg,'text',{x:8,y:y0+24,'font-size':12.5,fill:`var(--${r[1]})`,'font-weight':700},r[0]);
+   if(!r[2]){let d=`M${X0-50},${lo} H${X0}`;for(let j=0;j<8;j++){const x=X0+j*P;d+=` V${hi} H${x+P/2} V${lo} H${x+P}`}
+    el(svg,'path',{d,fill:'none',stroke:'var(--hw)','stroke-width':1.5,opacity:.3,'stroke-dasharray':'4 3'});
+    el(svg,'path',{d,fill:'none',stroke:'var(--hw)','stroke-width':2.2,'clip-path':'url(#eClk)'});
+    for(let j=0;j<8;j++)el(svg,'text',{x:X0+j*P+P/4,y:hi+16,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},j+1);return}
+   el(svg,'path',{d:`M${X0-50},${(hi+lo)/2} H${X0}`,stroke:'var(--line)','stroke-dasharray':'4 3',fill:'none'});
+   if(c>0){let d='';for(let j=1;j<=c;j++){const x=X0+(j-1)*P,y=H[j][r[2]].v?hi:lo;d+=(j===1?`M${x},${y}`:` V${y}`)+` H${x+P}`}
+    el(svg,'path',{d,fill:'none',stroke:`var(--${r[1]})`,'stroke-width':2.2});
+    for(let j=1;j<=c;j++){if(j===c&&!dn)continue;const x=X0+(j-1)*P+P/2,v=H[j][r[2]].v,y=v?hi:lo;
+     el(svg,'circle',{cx:x,cy:y,r:4.5,fill:'var(--bad)'});el(svg,'text',{x:x+7,y:(hi+lo)/2+4,'font-size':11,fill:'var(--bad)','font-weight':600},'收'+v)}}});
+  const yb=g.ty+rows.length*40-4;
+  if(f.ph!=='start'){el(svg,'line',{x1:cur,x2:cur,y1:g.ty-8,y2:yb,stroke:'var(--bad)','stroke-width':2.5});
+   el(svg,'text',{x:cur+(cur>g.VW-120?-5:5),y:g.ty-10,'text-anchor':cur>g.VW-120?'end':'start','font-size':12,fill:'var(--bad)','font-weight':700},up?`第 ${c} 下 ↑ 摆`:`第 ${c} 下 ↓ 收`)}}
+ function draw(anim){const f=F[k],g=G[mode],up=f.ph==='up',dn=f.ph==='down';
+  svg.setAttribute('viewBox',`0 0 ${g.VW} ${g.VH}`);svg.innerHTML='';captions(f,g);
+  for(const w in g.wires){const Wd=g.wires[w],b=f.W[w];
+   el(svg,'path',{d:Wd.d,fill:'none',stroke:b?(b.v?'var(--fg)':'var(--muted)'):'var(--line)','stroke-width':b&&b.v?4.5:2,'stroke-dasharray':b?'':'6 4','stroke-linejoin':'round'});
+   const lv=b?(b.v?'高电平 = 1':'低电平 = 0'):'还没人摆';
+   if(Wd.low)el(svg,'text',{x:Wd.mx+24,y:Wd.my+18,'font-size':12,fill:'var(--fg)'},`${Wd.nm}（SPI1 → 左键芯片）：${lv}`);
+   else{el(svg,'text',{x:Wd.mx,y:Wd.my-22,'text-anchor':'middle','font-size':12.5,fill:`var(--${Wd.col})`,'font-weight':700},Wd.nm+' ←');
+    el(svg,'text',{x:Wd.mx,y:Wd.my+32,'text-anchor':'middle','font-size':11.5,fill:'var(--muted)'},lv)}}
+  if(mode==='one'){el(svg,'text',{x:296,y:162,'font-size':10.5,fill:'var(--muted)'},'PIO0_22');el(svg,'text',{x:560,y:162,'text-anchor':'end','font-size':10.5,fill:'var(--muted)'},'SDO 脚');
+   el(svg,'text',{x:32,y:198,'font-size':11.5,fill:'var(--muted)'},'↑ b7 挤出去的位走 MOSI 线去左键芯片（先不看）');
+   el(svg,'text',{x:920,y:198,'text-anchor':'end','font-size':11.5,fill:'var(--muted)'},'b0 从 SDI 脚收左键芯片送来的位（先不看）')}
+  for(const bk in g.B){const B=g.B[bk],arr=f[bk],n=B.n,cw=B.cw,[nm,col]=NM[bk],fs=g.big?15:12.5;
+   el(svg,'rect',{x:B.x0-8,y:g.cy-26,width:n*cw+16,height:g.ch+50,rx:8,fill:'var(--panel)',stroke:`var(--${col})`,'stroke-width':2});
+   el(svg,'text',{x:B.x0-8,y:g.cy-32,'font-size':g.big?13.5:12,fill:`var(--${col})`,'font-weight':700},nm);
+   for(let i=0;i<n;i++)el(svg,'text',{x:B.x0+i*cw+cw/2,y:g.cy-8,'text-anchor':'middle','font-size':g.big?10.5:8.5,fill:'var(--muted)'},'b'+(n-1-i));
+   const cg=el(svg,'g',{});arr.forEach((x,i)=>{const cx=B.x0+i*cw;el(cg,'rect',{x:cx+1,y:g.cy,width:cw-2,height:g.ch,rx:3,style:`fill:${FILL[x.c]};stroke:var(--line)`});
+    el(cg,'text',{x:cx+cw/2,y:g.cy+g.ch/2+5,'text-anchor':'middle','font-size':fs,'font-weight':600,fill:'var(--fg)',style:'font-family:var(--font-m)'},x.v)});
+   el(svg,'text',{x:B.x0+cw/2,y:g.cy+g.ch+15,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},'排头');
+   el(svg,'text',{x:B.x0+(n-1)*cw+cw/2,y:g.cy+g.ch+15,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},'队尾');
+   const show=up?(mode==='one'?bk==='R':true):dn?(mode==='one'?bk==='S':true):false;
+   if(show){const i=up?0:n-1;el(svg,'rect',{x:B.x0+i*cw-1,y:g.cy-2,width:cw+2,height:g.ch+4,rx:4,fill:'none',stroke:'var(--bad)','stroke-width':3})}
+   if(anim&&dn)slide(cg,cw,0)}
+  for(const w in g.wires){const Wd=g.wires[w],b=f.W[w];if(!b)continue;const bg=ball(Wd.mx,Wd.my,b,g.big?15:12);
+   if(anim&&up){const B=g.B[Wd.from];slide(bg,B.x0+B.cw/2-Wd.mx,g.cy+g.ch/2-Wd.my)}}
+  timing(f,g);
+  const c=f.clk,got=dn?c:up?c-1:0,rv=Array.from({length:8},(_,j)=>j<got?H[j+1].miso.v:'·');let t;
+  if(mode==='one'){const v=f.W.miso&&f.W.miso.v;
+   t=f.ph==='start'?'起点：DR 刚被写进 0xA7，SPI1 马上要打第 1 下时钟。右键芯片里是上次转换的结果 0xA454（9300）。':
+    up?`第 ${c} 下 ↑：右键芯片把排头 b15 的 ${v} 摆到 MISO 线上（线变成${v?'高':'低'}电平）。MCU 这半拍不动。`:
+    `第 ${c} 下 ↓：MCU 看 MISO 线 = ${v}，存进队尾 b0；原来的 b6~b0 挪到 b7~b1，原来的 b7 挤出去（走 MOSI）。线上的 ${v} 继续保持，直到下一个 ↑ 才换。`;
+   t+=`\nMCU 从右键芯片收到的位（按先后）：${rv.join(' ')}`;
+   if(dn&&c===8)t+=`\n8 下打完：MCU 移位寄存器 = 1010 0100 = 0xA4，就是右键芯片 0xA454 的高字节。它接着自动进接收 FIFO，软件读 DR 拿到它（第 3 课上的 rx[0]）。`}
+  else{t=f.ph==='start'?'起点：三个“队伍”首尾相连成一个圈：SPI1 → MOSI → 左键芯片 → SDO_0 → 右键芯片 → MISO → SPI1。':
+    up?`第 ${c} 下 ↑：三个发送方同时摆位，三根线同时变成新值。`:`第 ${c} 下 ↓：三个接收方同时收位，整圈每一位都往前走了一格。`;
+   if(dn&&c===8)t+='\n8 下打完：右键芯片的高字节 0xA4（蓝）全部进了 SPI1；0xA7（灰）全部进了左键芯片的队尾；左键芯片的高字节 0xE2（绿）进了右键芯片的队尾。'}
+  document.getElementById('eLog').textContent=t;document.getElementById('eC').textContent=`第 ${k+1} / ${F.length} 步`;
   document.getElementById('eP').disabled=k===0;document.getElementById('eN').disabled=k===F.length-1}
- document.getElementById('eN').onclick=()=>{if(k<F.length-1){k++;show()}};document.getElementById('eP').onclick=()=>{if(k>0){k--;show()}};document.getElementById('eR').onclick=()=>{k=0;show()};show();})();
+ const stop=()=>{if(timer){clearInterval(timer);timer=null;document.getElementById('ePlay').textContent='自动播放'}};
+ document.getElementById('eN').onclick=()=>{stop();if(k<F.length-1){k++;draw(1)}};
+ document.getElementById('eP').onclick=()=>{stop();if(k>0){k--;draw(0)}};
+ document.getElementById('eR').onclick=()=>{stop();k=0;draw(0)};
+ document.getElementById('ePlay').onclick=()=>{if(timer){stop();return}if(k>=F.length-1)k=0;draw(0);document.getElementById('ePlay').textContent='暂停';
+  timer=setInterval(()=>{if(k>=F.length-1){stop();return}k++;draw(1)},1300)};
+ const setMode=m=>{mode=m;document.getElementById('eM1').setAttribute('aria-pressed',m==='one');document.getElementById('eM2').setAttribute('aria-pressed',m==='all');draw(0)};
+ document.getElementById('eM1').onclick=()=>setMode('one');document.getElementById('eM2').onclick=()=>setMode('all');
+ draw(0);})();
 </script>
