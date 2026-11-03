@@ -200,7 +200,7 @@ details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
 <p class="note">芯片上没有“片选”脚：霍尔手册 5.3 节说这颗芯片“默认使能，没有片选信号”，所以一共只要 3 根信号线。</p>
 
 <h2>2. 读一次的全貌（先看图）</h2>
-<p>下面是一次读取的<b>完整时序图</b>，横轴是时间（微秒 µs，按比例画）。从上到下 8 条“泳道”，每条看一样东西：代码正在执行什么、PIO1_15 现在是什么功能、USB 中断开没开、SCK 线的电平、芯片在干什么、MOSI 线上的位、MISO 线上的位、<code>hall_spi_rx</code> 什么时候填上。<b>拖动下面的滑块</b>，竖线移到哪个时刻，下面就解释那一刻每条泳道的状态。</p>
+<p>下面是一次读取的<b>完整时序图</b>，横轴是时间（微秒 µs，按比例画）。从上到下 8 条“泳道”，每条看一样东西：代码正在执行什么、PIO1_15 现在是什么功能、USB 中断开没开、SCK 线的电平、芯片在干什么、MOSI 线上的位、MISO 线上的位、<code>hall_spi_rx</code> 什么时候填上。<b>拖动下面的滑块，或者点 − / +</b>（每次走 0.25 µs，正好是半个时钟周期，即一个时钟沿），竖线移到哪个时刻，下面就解释那一刻每条泳道的状态。</p>
 <style>
 #tl2{display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px;min-width:640px}
 #tl2 text{font-family:var(--font-b);fill:var(--fg)}
@@ -210,6 +210,7 @@ details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
 .tlctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:.5rem 0}
 .tlctl input[type=range]{flex:1;min-width:200px}
 .tlctl output{font-family:var(--font-m);font-weight:700;min-width:5.5em}
+.tlctl button.stp{font-weight:700;min-width:2.6em;padding:4px 10px}
 .tlctl button{font:inherit;font-size:.85rem;padding:2px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer}
 .tlinfo{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:3px 12px;font-size:.88rem;background:var(--soft);border-radius:6px;padding:8px 12px}
 .tlinfo dt{font-weight:600;color:var(--c)}
@@ -218,8 +219,8 @@ details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
 #zoom text{font-family:var(--font-b);fill:var(--fg)}
 </style>
 <div class="scroll"><svg id="tl2" viewBox="0 0 1000 470" role="img" aria-label="一次读取的完整时序图"></svg></div>
-<div class="tlctl"><label for="tlT">时刻</label><input type="range" id="tlT" min="0" max="31" step="0.25" value="0"><output id="tlO">0 µs</output>
-<button type="button" data-t="0.2">开始</button><button type="button" data-t="3">下命令中</button><button type="button" data-t="8">芯片装读数</button><button type="button" data-t="13.1">搬第 1 字节</button><button type="button" data-t="15.6">rx[0] 到手</button><button type="button" data-t="30.8">结束</button></div>
+<div class="tlctl"><label for="tlT">时刻</label><button type="button" class="stp" data-d="-1" aria-label="后退 1 微秒">−1 µs</button><button type="button" class="stp" data-d="-0.25" aria-label="后退 0.25 微秒">−</button><input type="range" id="tlT" min="0" max="31" step="0.25" value="0"><button type="button" class="stp" data-d="0.25" aria-label="前进 0.25 微秒">+</button><button type="button" class="stp" data-d="1" aria-label="前进 1 微秒">+1 µs</button><output id="tlO">0 µs</output>
+</div><div class="tlctl"><span class="note">跳到：</span><button type="button" data-t="0.2">开始</button><button type="button" data-t="3">下命令中</button><button type="button" data-t="8">芯片装读数</button><button type="button" data-t="13.1">搬第 1 字节</button><button type="button" data-t="15.6">rx[0] 到手</button><button type="button" data-t="30.8">结束</button></div>
 <dl class="tlinfo" id="tlInfo" aria-live="polite"></dl>
 <p class="note">时间是按代码估算的（DrvGPIOOutput 约 1 µs、SPI1 时钟 2 MHz 即每位 0.5 µs、每个字节之间约 1 µs 的“等待 + 读 DR + 写下一个 DR”），量级对，细节以示波器为准。MISO 上的位用的是本课例子：右键 9300（<code>0xA454</code>）、左键 8935（<code>0xE2E7</code>）；MOSI 上是 tx 的 <code>A7 00 A7 00</code>。</p>
 <h3>放大看一个字节里的 3 位：哪个沿送、哪个沿收</h3>
@@ -441,7 +442,11 @@ function at(t){const r={};
  const got=BS.map((x,i)=>t>=x+4.2?`rx[${i}] = 0x${RXB[i].toString(16).toUpperCase()}`:`rx[${i}] = ?`);r.rx=got.join('，');return r}
 function show(t){$('tlO').value=t.toFixed(2)+' µs';cur.setAttribute('x1',xt(t));cur.setAttribute('x2',xt(t));const r=at(t);
  $('tlInfo').innerHTML=Object.keys(L).map(k=>`<dt style="--c:var(--${cols[k]})">${names[k]}</dt><dd>${r[k]}</dd>`).join('')}
-$('tlT').oninput=e=>show(+e.target.value);document.querySelectorAll('.tlctl button').forEach(b=>b.onclick=()=>{$('tlT').value=b.dataset.t;show(+b.dataset.t)});show(0);
+$('tlT').oninput=e=>show(+e.target.value);
+const go=t=>{t=Math.max(0,Math.min(31,Math.round(t*4)/4));$('tlT').value=t;show(t)};
+document.querySelectorAll('.tlctl button[data-t]').forEach(b=>b.onclick=()=>go(+b.dataset.t));
+document.querySelectorAll('.tlctl button.stp').forEach(b=>b.onclick=()=>go(+$('tlT').value+(+b.dataset.d)));
+show(0);
 })();
 /* ---- zoom: 3 bits ---- */
 (function(){const z=$('zoom');if(!z)return;const x0=120,W=220,hi=40,lo=80,mh=130,ml=170;const bits=[1,0,1];
