@@ -196,6 +196,20 @@ while(times &lt; 30)                        // 883 发 30 次校准命令
 }
 // 891~906：检查读回值的代码，整段被注释掉了</pre>
 <p>每发一次 128 µs 的命令，芯片就拿这 128 µs 当“标准尺”调一下自己的时钟。读回的频率值，手册给的合格范围是 <b>0x7D ~ 0x83</b>（125 ~ 131），正中间是 <b>0x80 = 128</b>。128 恰好等于 128 µs 的“µs 数”，所以可以把读回值想成<b>“芯片用自己的时钟量这 128 µs，量到了多少”</b>：时钟准就量到 128 附近。<i>（这是推测，手册没写读回值的含义。）</i></p>
+<div class="box" style="border-color:var(--bad)"><b>关键问题：芯片的时钟本来就不准，它怎么量得出 128 µs？</b>
+<p><b>它量不出来，也不需要量出来。</b>“准”的那一方是 MCU，不是芯片：</p>
+<ol>
+<li><b>标准来自 MCU</b>：MCU 的时钟来自板上的 <b>12 MHz 晶振</b>（原理图 XTALIN / XTALOUT），再经 PLL 乘 4 得到 48 MHz（OSC.h：MAIN_SEL = 1 选晶振、MSEL = 3 即 × 4）。晶振比芯片内部的 RC 振荡器准得多，所以 MCU 拉高的这一段就是真正的 ≈128 µs。</li>
+<li><b>“应该是 128”写死在芯片里</b>：芯片的设计者规定了校准命令就是 128 µs，所以芯片“知道”：如果自己的时钟是准的，在这段高电平里应该数到 128 下（推测按 1 µs 一下）。</li>
+<li><b>芯片只做一件事：数自己的拍子</b>。它不用知道“现在过了多少 µs”，只要从 SCK 变高开始数自己的时钟拍，数到 SCK 变低为止。数到 140，说明自己的拍子太快（同样的时间多数了 12 下），就把时钟调慢一点；数到 116，就调快一点。</li>
+</ol>
+<p>打个比方：你的手表不知道准不准。电台说“下面这声长音正好 1 分钟”。你用手表计时，手表显示 66 秒，就知道自己的表快了 10%，把它调慢。<b>你不需要表是准的才能校表，只需要“长音”是准的。</b>MCU 的 128 µs 就是这声长音。</p>
+<div class="tool"><b>动手：芯片时钟偏多少，在同一段 128 µs 里就会数到多少下</b>
+<div class="row"><label>芯片时钟偏差：<input type="range" id="tkE" min="-12" max="12" step="1" value="9"></label><b id="tkV" style="font-family:var(--font-m)"></b></div>
+<svg id="tk" class="fig" viewBox="0 0 940 210" role="img" aria-label="128 µs 高电平期间芯片数到的拍子"></svg>
+<p class="note">为了看得清，图上每画 1 根竖线代表芯片数 4 下。“推测按 1 µs 一下”是因为读回值目标正好是 0x80 = 128，手册没写芯片内部的拍子多快。</p></div>
+<p><b>推论：MCU 发的宽度不准，芯片会被“校歪”</b>。芯片把 MCU 给的这一段<b>当成</b> 128 µs。本项目实际拉高约 127 µs（4.2 节估算），芯片就会把自己调到“127 µs 数 128 下”，比真正的准快约 0.8%。这仍在 ±5% 以内，问题不大；但如果这个宽度偏得多，后面所有命令都会跟着认偏。</p>
+<p><b>它又是怎么认出“这是校准命令”的</b>：还没校准时它数得不准，但 128 µs 比其他命令长得多（最长的 WR_REG 才 24 µs），数偏 10% ~ 20% 也不会和别的命令搞混（见第 6 节 Q1）。</p></div>
 <div class="tool"><b>动手：看 30 次校准怎么把两颗芯片拉进合格范围</b>（示意模型：每颗芯片上电时时钟随机偏几个百分点，每次校准偏差缩小一些）
 <div class="btns"><button type="button" id="cRe">重新上电（随机偏差）</button><button type="button" id="cOne">发 1 次校准</button><button type="button" id="cPlay">连发到 30 次</button><span class="note" id="cC"></span></div>
 <div class="scroll"><svg id="cal2" class="fig" viewBox="0 0 940 270" style="min-width:640px" role="img" aria-label="每次校准读回的频率值"></svg></div>
@@ -440,6 +454,22 @@ $('ruE').oninput=drawRU;$('ruM').onclick=()=>{$('ruE').value=+$('ruE').value-0.5
  lab(xs[4],320,'869  SSP_Send_Receive（一个字节一个字节地收发）',236,'var(--per)');
  lab(xs[5],190,'888  nsAPI_SSP_Delay1us(100)',236,'var(--muted)');
  el(s,'text',{x:470,y:282,'text-anchor':'middle','font-size':12,fill:'var(--fg)'},'这一整段 = 一次校准，重复 30 次（883 行 while）。tx 一直是 00 55 00 55，30 次都一样');})();
+/* ---- tick counting ---- */
+function drawTK(){const s=$('tk'),e=+$('tkE').value;s.innerHTML='';const X0=150,W=640,hi=30,lo=70;
+ $('tkV').textContent=e===0?'准':(e>0?'偏快 +':'偏慢 ')+e+'%';
+ el(s,'text',{x:8,y:52,'font-size':12,'font-weight':700,fill:'var(--hw)'},'SCK（MCU）');
+ el(s,'path',{d:`M60,${lo} H${X0} V${hi} H${X0+W} V${lo} H900`,fill:'none',stroke:'var(--hw)','stroke-width':2.4});
+ el(s,'text',{x:X0+W/2,y:hi-8,'text-anchor':'middle','font-size':12,'font-weight':600,fill:'var(--fg)'},'MCU 拉高 128 µs（晶振计时，准）');
+ const n=Math.round(128*(1+e/100)),step=W/(128*(1+e/100))*4;
+ el(s,'text',{x:8,y:118,'font-size':12,'font-weight':700,fill:'var(--per)'},'芯片数拍子');
+ el(s,'line',{x1:X0,x2:X0+W,y1:118,y2:118,stroke:'var(--line)'});
+ let k=0;for(let x=X0;x<=X0+W+0.01;x+=step,k++)el(s,'line',{x1:x,x2:x,y1:104,y2:132,stroke:e===0?'var(--good)':'var(--per)','stroke-width':1.6});
+ const ok=Math.abs(n-128)<=3;
+ el(s,'text',{x:X0+W+12,y:122,'font-size':13,'font-weight':700,fill:ok?'var(--good)':'var(--bad)'},'数到 '+n+' 下');
+ const msg=n>128?`应该数 128，数到 ${n}：我的拍子太快了，调慢一点`:n<128?`应该数 128，只数到 ${n}：我的拍子太慢了，调快一点`:'正好 128：时钟准，不用调';
+ el(s,'rect',{x:X0,y:150,width:W,height:40,rx:8,style:`fill:color-mix(in srgb,var(--${ok?'good':'bad'}) 12%,var(--panel));stroke:var(--${ok?'good':'bad'})`});
+ el(s,'text',{x:X0+W/2,y:175,'text-anchor':'middle','font-size':13.5,'font-weight':600,fill:'var(--fg)'},'芯片心里想：'+msg)}
+$('tkE').oninput=drawTK;drawTK();
 /* ---- cal2 sim ---- */
 let CE=[],CR=[],cn=0,ctimer=null;
 function cReset(){const r=()=>(Math.random()<.5?-1:1)*(3+Math.random()*6);CE=[r(),r()];CR=[[],[]];cn=0;cDraw()}
