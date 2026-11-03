@@ -144,7 +144,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset
 </ol></div>
 </div>
 
-<h3>按一下左键，走过哪些地方（第 2 课会逐站讲）</h3>
+<h3>按一下左键，走过哪些地方（<a href="https://claude.ai/artifact/3pr9UvqxTKk3jFx1QUzg71">第 2 课</a>会逐站讲）</h3>
 <div class="flow">
 <div style="--c:var(--sw)">① 每 1 ms：<code>Button_Scan()</code> → <code>LR_GetState()</code> → <code>hall_get_sample()</code>：通过 SPI1 读两颗霍尔芯片（button.c:311、858）</div>
 <span class="ar">↓</span>
@@ -186,7 +186,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset
 <p><b>建议：先读完这一页，下一课就讲“一次左键点击”的全程。</b>理由：这只鼠标的核心就是“按下 → 震动 → 上报”，这条线穿过了霍尔、算法、线圈、USB 四块最重要的代码。先把这条线走通，后面每一课都是在这条线上放大一站，你始终知道自己学的东西在哪、干什么用。开机初始化放在后面，因为每一步初始化，只有在你知道那块电路平时怎么用之后才好懂。</p>
 <ol class="route">
 <li style="--c:var(--per)" class="now">全景地图（本页）</li>
-<li style="--c:var(--pc)">一次左键点击全程：只走主线，每站讲“它干什么”，不深挖</li>
+<li style="--c:var(--pc)"><a href="https://claude.ai/artifact/3pr9UvqxTKk3jFx1QUzg71">一次左键点击全程</a>：只走主线，每站讲“它干什么”，不深挖</li>
 <li style="--c:var(--sw)">霍尔芯片 GTRY164 和 SPI1：两颗芯片怎么串起来、怎么读、开机怎么配置</li>
 <li style="--c:var(--sw)">按键算法：读数 → 段位 → 按下 / 松开（ADC 串讲第 5~10 关的讲法，换成霍尔的数）</li>
 <li style="--c:var(--pc)">PWM：CT32B1 怎么在一只脚上输出 200 kHz、占空比可调的方波</li>

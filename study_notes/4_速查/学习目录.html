@@ -194,6 +194,7 @@ const GH=p=>'https://github.com/123x4/LPC11U35FHI33-501_Study/blob/claude/focuse
 const G=[
  {k:'t1a',t:'一、T1A 新代码（现在学）',d:'杰哥 2026-11-03 的版本，板型 GT_LINA_T1A_H5_PWM',c:'pc',items:[
   ['第 1 课','T1A 全景地图','板子框图、引脚表（原理图对照代码）、固件骨架、学习路线、引脚练习题',A('UKS8dvoYJWBQPnUPaS4sXA'),'主线'],
+  ['第 2 课','一次左键点击全程','读 → 判 → 震 → 报，12 步逐步走、数据接力表、随机练习',A('3pr9UvqxTKk3jFx1QUzg71'),'主线'],
  ]},
  {k:'base',t:'二、基础课',d:'第 0~13 课：电、单片机、各个外设，和代码版本无关',c:'sw',items:[
   ['第 0 课','这只鼠标的地图','整个项目有哪几块、谁负责什么',A('M2RnYCfavarnoiBEjJ9Eky'),'课'],
@@ -251,6 +252,6 @@ function draw(){const q=$('q').value.trim().toLowerCase(),hide=$('hideRead').che
  $('groups').querySelectorAll('input[data-id]').forEach(c=>c.onchange=()=>{read[c.dataset.id]=c.checked;save();draw()});
  $('cnt').textContent=`显示 ${shown} 项 · 已读 ${done} / ${total}`;$('bar').style.width=(total?done/total*100:0)+'%';
  const nx=G.slice(0,3).flatMap(g=>g.items).find(it=>!read[it[3]]&&it[4]!=='旧'&&it[4]!=='速查');
- $('next').innerHTML=nx?`<b>下一篇建议读：</b><a href="${nx[3]}" target="_blank" rel="noopener">${nx[0]} · ${nx[1]}</a>（${nx[2]}）<br><span class="note">接下来要写的：T1A 第 2 课“一次左键点击全程”，之后是霍尔芯片和 SPI1、按键算法、PWM、波形、线圈状态机、USB 上报、GUI 协议。</span>`:'<b>列表里的都读完了。</b>下一步：T1A 第 2 课“一次左键点击全程”。'}
+ $('next').innerHTML=nx?`<b>下一篇建议读：</b><a href="${nx[3]}" target="_blank" rel="noopener">${nx[0]} · ${nx[1]}</a>（${nx[2]}）<br><span class="note">接下来要写的：T1A 第 3 课“霍尔芯片 GTRY164 和 SPI1”，之后是霍尔芯片和 SPI1、按键算法、PWM、波形、线圈状态机、USB 上报、GUI 协议。</span>`:'<b>列表里的都读完了。</b>下一步：T1A 第 3 课“霍尔芯片 GTRY164 和 SPI1”。'}
 $('q').oninput=draw;$('hideRead').onchange=draw;draw();
 </script>

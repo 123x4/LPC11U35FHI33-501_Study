@@ -1,0 +1,303 @@
+<title>一次左键点击全程</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --hw:#7a5ea8; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.75}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);line-height:1.3;text-wrap:balance}
+h1{font-size:1.9rem;margin:0}
+h2{font-size:1.3rem;margin:2.2rem 0 .4rem}
+h3{font-size:1.05rem;margin:.2rem 0 .3rem}
+p{margin:.6rem 0}
+a{color:var(--per)}
+code{font-family:var(--font-m);font-size:.88em;background:var(--soft);padding:.05em .35em;border-radius:3px;overflow-wrap:anywhere}
+pre.code{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:10px 12px;overflow-x:auto;line-height:1.55;margin:.5rem 0}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.06em;color:var(--muted)}
+.lede{color:var(--muted)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:1rem 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-size:.88rem;margin:.4rem 0}
+td,th{border:1px solid var(--line);padding:4px 9px;text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600}
+.warn{border-left:4px solid var(--bad);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.6rem 0}
+.think{border-left:4px solid var(--per);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.8rem 0}
+.note{font-size:.88rem;color:var(--muted)}
+.rule{border-left:4px solid var(--c);background:var(--soft);padding:6px 12px;border-radius:0 6px 6px 0;margin:.5rem 0}
+.tag{display:inline-block;font-family:var(--font-m);font-size:.72rem;color:var(--bg);background:var(--c);border-radius:4px;padding:0 6px;margin-right:6px;vertical-align:1px}
+/* 4 stations */
+.st4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:.6rem 0}
+@media (max-width:640px){.st4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.st4 a{display:block;text-decoration:none;color:var(--fg);border:2px solid var(--c);border-radius:8px;padding:8px;background:color-mix(in srgb,var(--c) 10%,var(--panel));min-width:0}
+.st4 b{display:block;font-family:var(--font-d);font-size:1.15rem;color:var(--c)}
+.st4 span{font-size:.82rem}
+/* stepper */
+.stp{border:2px solid var(--per);border-radius:8px;padding:10px 14px;background:var(--panel);margin:.6rem 0}
+.stp .bar{display:flex;gap:3px;margin:.2rem 0 .5rem}
+.stp .bar i{flex:1;height:6px;border-radius:3px;background:var(--soft);cursor:pointer}
+.stp .bar i.d{background:color-mix(in srgb,var(--per) 45%,var(--soft))}
+.stp .bar i.c{background:var(--per)}
+.stp .t{font-family:var(--font-m);font-size:.8rem;color:var(--muted)}
+.stp h3{margin:.2rem 0}
+.stp .where{font-family:var(--font-m);font-size:.82rem;color:var(--c,var(--per))}
+.stp .data{font-family:var(--font-m);font-size:.82rem;background:var(--soft);border-radius:6px;padding:6px 10px;margin:.4rem 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btns button{font:inherit;font-size:.9rem;padding:4px 14px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer}
+.btns button:disabled{opacity:.4;cursor:default}
+/* station cards */
+.sc{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:8px;padding:10px 16px;margin:1rem 0;scroll-margin-top:12px}
+.sc .no{font-family:var(--font-m);font-size:.78rem;color:var(--c)}
+details.cd{margin:.5rem 0;border:1px solid var(--line);border-radius:6px;padding:4px 10px}
+details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
+/* quiz + practice */
+.qz,.px{border-radius:8px;padding:8px 12px;margin:.7rem 0}
+.qz{border:1.5px dashed var(--gold);background:color-mix(in srgb,var(--gold) 6%,var(--panel))}
+.px{border:1.5px solid var(--per);background:color-mix(in srgb,var(--per) 6%,var(--panel))}
+.qz .qt,.px .pxq{font-weight:600;margin:.2rem 0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.qz input,.px input{font:inherit;width:120px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.qz button,.px button{font:inherit;font-size:.9rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer;text-align:left}
+.qz button.on,.px button.on{border-color:var(--fg)}
+.px .pxh{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.px .pxh b{color:var(--per)}
+.px .pxs{font-size:.82rem;color:var(--muted)}
+.px .pxNext{border-color:var(--per);color:var(--per)}
+.fb{display:none;padding:6px 10px;border-radius:6px;background:var(--soft);margin-top:.3rem}
+.fb.ok{display:block;border-left:4px solid var(--good)}
+.fb.no{display:block;border-left:4px solid var(--bad)}
+button:focus-visible,input:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+</style>
+<div class="wrap">
+<div class="eyebrow">T1A 主线 · 第 2 课 · 一次左键点击全程</div>
+<h1>一次左键点击全程：读 → 判 → 震 → 报</h1>
+<p class="lede">这一课只走主线：每一站讲“它干什么、交出什么”，不深挖。后面每一课再把其中一站放大。数字是举的例子（读数、基线都是假设的，各步的微秒时间是粗略估计），算法和代码路径都是真实的。</p>
+
+<div class="box"><b>🧭 本质</b>：一次点击是一场<b>接力</b>。接力棒是数据：霍尔芯片的 4 个字节 → 一个“按下”结论 → 一个“左键位” → USB 报告里的一个字节。每 1 ms 由定时器发令，主循环里的函数一棒传一棒。
+<p>学全程时，<b>盯住“数据现在在谁手里、长什么样”</b>，比记住每个函数名更重要。</p></div>
+
+<h2>1. 四站</h2>
+<div class="st4">
+<a href="#S1" style="--c:var(--sw)"><b>① 读</b><span>每 1 ms 通过 SPI1 读两颗霍尔芯片，拿到 4 个字节</span></a>
+<a href="#S2" style="--c:var(--sw)"><b>② 判</b><span>按键算法把读数变成“按着 / 松着”</span></a>
+<a href="#S3" style="--c:var(--pc)"><b>③ 震</b><span>刚变成“按着”：左线圈按波形震 0.5 ms</span></a>
+<a href="#S4" style="--c:var(--per)"><b>④ 报</b><span>组成 8 字节鼠标报告，交给 USB 发给电脑</span></a>
+</div>
+<p>谁来发令？<b>1 ms 定时器中断</b>（<code>TIMER16_0_IRQHandler</code>，Timer.c:65）每 1 ms 把计数 <code>one_ms_cycle</code> 减到 0；主循环里的 <code>Device_Scan()</code>（device.c:878）看到 0，就把它设回 1，并扫描一次按键。所以 ①~③ 每 1 ms 走一遍。</p>
+
+<h2>2. 一步一步走一遍</h2>
+<p>点“下一步”。每一步写着：在哪个函数、干了什么、<b>数据现在长什么样</b>。</p>
+<div class="stp">
+<div class="bar" id="sBar"></div>
+<div id="sBody" aria-live="polite"></div>
+<div class="btns"><button type="button" id="sPrev">上一步</button><button type="button" id="sNext">下一步</button><span class="note" id="sProg"></span></div>
+</div>
+
+<h2>3. 每站要点</h2>
+
+<section class="sc" id="S1" style="--c:var(--sw)">
+<div class="no">第 ① 站 · 读</div><h3>读两颗霍尔芯片</h3>
+<p><span class="tag">问题</span>左右两颗霍尔芯片串成一条链（第 1 课框图），只有一组 SPI 线。怎么一次把两个读数都拿回来？</p>
+<div class="rule"><b>一句话</b>：先在时钟线上打一个“命令脉冲”，然后 SPI 连续收 4 个字节。因为数据是从左键芯片流到右键芯片、再从右键芯片出来回到 MCU，所以<b>先到的是右键</b>：<code>hall_spi_rx[0]、[1]</code> 是右键，<code>[2]、[3]</code> 是左键。</div>
+<p><b>每个键 2 字节 = 2 位校验 + 14 位读数</b>：高字节的最高 2 位是校验位，剩下 6 位和低字节拼成 14 位（0 ~ 16383）。<br>例：左键收到 <code>0xE2 0xE7</code> → <code>0xE2 &amp; 0x3F = 0x22 = 34</code> → <code>34 × 256 + 0xE7(231) = 8935</code>。</p>
+<div class="qz" data-ans="9300"><div class="qt">你来算：左键收到 <code>0xA4 0x54</code>，14 位读数是多少？</div>
+<div class="row"><input type="text" inputmode="numeric" aria-label="答案"><button type="button" class="chk">检查</button></div>
+<div class="fb" data-ok="对。0xA4 &amp; 0x3F = 0x24 = 36，36 × 256 + 0x54(84) = 9300。" data-no="先去掉高字节最高 2 位：0xA4 &amp; 0x3F，再 × 256 + 低字节。"></div></div>
+<details class="cd"><summary>对上代码：LR_GetState()、hall_get_sample()（app/button.c:311、800、858）</summary>
+<pre class="code">858  void hall_get_sample(void)
+859  {
+860    Hall_CLK_Command_SET(TD1_DELAY_US, TD2_CONTIUNS_DELAY_US);   // 时钟脚当 GPIO：拉高约 4 µs、拉低约 4 µs
+862    SSP_Send_Receive(hall_spi_tx, hall_spi_rx, 4);              // SPI1 收发 4 字节，收到的放进 hall_spi_rx
+863  }</pre>
+<p class="note"><code>Hall_CLK_Command_SET()</code>（button.c:800）在 T1A 上把 PIO1_15 临时切成 GPIO 打脉冲，打完切回 SCK1，期间关掉 USB 中断。命令脉冲的意义、为什么是 4 µs，第 3 课讲。</p></details>
+</section>
+
+<section class="sc" id="S2" style="--c:var(--sw)">
+<div class="no">第 ② 站 · 判</div><h3>按键算法：读数 → 按着 / 松着</h3>
+<p><span class="tag">问题</span>读数只是一个数，怎么知道按没按？每只鼠标、每颗磁铁的数都不一样。</p>
+<div class="rule"><b>一句话</b>：<code>ProcessRecvSampleRawData()</code>（my_misc.c:418）对每个键：校验 → <b>取反</b>（16383 − 读数，T1A 上按下读数变小，取反后变成“按得越深数越大”）→ 滤波 → 换算成<b>段位 0~100</b>（当前值在“没按”和“按到底”两条基线之间的位置）→ <b>快速触发</b>判断按下 / 松开 → 结论写进 <code>gbKeyState[k]</code>。最后返回一个字节：<b>第 0 位 = 左键，第 1 位 = 右键</b>。</div>
+<p>例：左键读数 8935 → 取反 7448。假设两条基线是 7083（没按）和 8883（按到底），段位 = 31。松着时从最浅点 0 按到 31，超过了按下距离 30 → 判“按下”。</p>
+<div class="qz" data-ans="7448"><div class="qt">你来算：读数 8935，取反后是多少？</div>
+<div class="row"><input type="text" inputmode="numeric" aria-label="答案"><button type="button" class="chk">检查</button></div>
+<div class="fb" data-ok="对。16383 − 8935 = 7448。" data-no="14 位最大是 16383，用它减。"></div></div>
+<div class="qz" data-ans="1"><div class="qt">左键按着、右键松着，这个函数返回几？</div>
+<div class="row"><input type="text" inputmode="numeric" aria-label="答案"><button type="button" class="chk">检查</button></div>
+<div class="fb" data-ok="对。左键是第 0 位：二进制 01 = 1。" data-no="左键 → 第 0 位，右键 → 第 1 位。"></div></div>
+<details class="cd"><summary>对上代码：骨架（my_misc.c:418~668）</summary>
+<pre class="code">uint8_t ProcessRecvSampleRawData(uint8_t* pData, uint16_t length)
+{
+  if(cali_init_cnt)            // 开机后最多 600 ms：只学“没按”的基线，不判断
+  { ... Hall_InitBaseline() ... }
+  else
+  {
+    for(k = 0 右键, 1 左键)
+    {
+      线圈在震 → 沿用上次结论，跳过            // 震动会干扰读数
+      校验（2 位）→ 14 位读数 → 16383 − 读数
+      滤波（变化 ≤ 60 时只走 1/64）
+      段位 = Hall_CalculateNode()              // 0~100
+      Hall_HandleKeyRapidTrigger()             // → gbKeyState[k]
+      校准两条基线
+    }
+  }
+  左键按着 → 返回值第 0 位 = 1；右键按着 → 第 1 位 = 1
+}</pre>
+<p class="note">每一步怎么算，第 4 课细讲（ADC 串讲第 5~10 关是同一个算法，只是那边的数是 10 位）。</p></details>
+</section>
+
+<section class="sc" id="S3" style="--c:var(--pc)">
+<div class="no">第 ③ 站 · 震</div><h3>刚变成“按着”：左线圈震一下</h3>
+<p><span class="tag">问题</span>算法每 1 ms 都会说“按着”。线圈只该在<b>刚按下</b>那一下震，怎么区分？</p>
+<div class="rule"><b>一句话</b>：<code>Button_Scan()</code>（button.c:605）记着上一次的状态 <code>scan_result_pre</code>。这次和上次不一样、而且这次是“按着” → 调 <code>Ele_LeftKeyPressProcess()</code>（button.c:639）。它算出震动时长（默认 500 µs），启动波形：<code>MyWaveform_StartGenerate(通道 0, 波形表, 500 µs, 1 遍)</code>。之后 CT32B0 中断每 20 µs 改一次 PIO0_13 上 PWM 的占空比（60% → 100% → 60%），放完 25 个点就停。</div>
+<p>震动期间读数会被干扰，所以算法在线圈震动、以及震完后 8 ms 内<b>不看这个键的读数</b>，结论沿用上一次。</p>
+<div class="qz" data-ans="25"><div class="qt">你来算：震动时长 500 µs，每 20 µs 改一次力度，一共改几次？</div>
+<div class="row"><input type="text" inputmode="numeric" aria-label="答案"><button type="button" class="chk">检查</button></div>
+<div class="fb" data-ok="对。500 ÷ 20 = 25。" data-no="时长 ÷ 每次间隔。"></div></div>
+<details class="cd"><summary>对上代码：Ele_LeftKeyPressProcess()（src/my_electromagnet.c:982）</summary>
+<pre class="code">if(leftEle.pressVibrateDurationUs)                      // 时长不为 0 才震（默认 500 µs，来自 EEPROM 参数）
+{
+  if(右线圈正在震) { 先记下来，稍后再震; return; }        // 同一时间只震一个线圈（SINGLE_COIL_AT_A_TIME）
+  wfPeriodUs = Ele_CalculateDuration(ELE_POS_LEFT, nowHallSegment[0], leftEle.pressVibrateDurationUs);
+  leftEle.status = ELE_PRESS_VIBRATING;                 // 状态：按下在震
+  leftEle.vibrateBeginTick = MyTick_GetTickMs();        // 记下开始时间
+  MyWaveform_StartGenerate(CHANNEL_0, pLeftWf, wfPeriodUs, 1);   // 启动波形，之后在中断里自己跑
+}</pre>
+<p class="note">主循环里的 <code>Ele_PollingTask()</code> 负责看时间：震完 → “震后消抖”8 ms → 回到“不震”。PWM、波形、状态机分别是第 5、6、7 课。</p></details>
+</section>
+
+<section class="sc" id="S4" style="--c:var(--per)">
+<div class="no">第 ④ 站 · 报</div><h3>告诉电脑：8 字节鼠标报告</h3>
+<p><span class="tag">问题</span>电脑怎么知道左键按下了？</p>
+<div class="rule"><b>一句话</b>：<code>Button_Scan()</code> 返回“有变化” → <code>Device_Button_Scan()</code>（device.c:952）把按键结果写进 <code>wheel_button_status</code>，挂一个“按键事件”；<code>Device_Pack()</code> 通过 <code>Custom_HandleKey()</code>（键位映射）把它变成鼠标报告；<code>Device_Report()</code> 把 8 字节放进 USB 端点 1，电脑来取时拿走。</div>
+<div class="scroll"><table>
+<tr><th>字节</th><td>[0]</td><td>[1]</td><td>[2] [3]</td><td>[4] [5]</td><td>[6]</td><td>[7]</td></tr>
+<tr><th>含义</th><td>报告编号 0x01</td><td><b>按键</b>：第 0 位左、第 1 位右、第 2 位中……</td><td>X 位移</td><td>Y 位移</td><td>滚轮</td><td>横向滚轮</td></tr>
+<tr><th>左键按下、鼠标不动</th><td>01</td><td><b>01</b></td><td>00 00</td><td>00 00</td><td>00</td><td>00</td></tr>
+</table></div>
+<div class="qz" data-ans="3"><div class="qt">你来算：左键和右键同时按着，报告的第 [1] 字节是几？</div>
+<div class="row"><input type="text" inputmode="numeric" aria-label="答案"><button type="button" class="chk">检查</button></div>
+<div class="fb" data-ok="对。第 0 位和第 1 位都是 1：二进制 11 = 3。" data-no="左 = 第 0 位，右 = 第 1 位，两位都是 1。"></div></div>
+<details class="cd"><summary>对上代码：Device_Report()（src/device.c:671）</summary>
+<pre class="code">if (data_type &amp; MOUSE_KEY_REPORT)
+{
+  data_type &amp;= ~MOUSE_KEY_REPORT;
+  for(i = 0; i &lt; 60; i++)                         // 等端点 1 空出来，最多 60 × 10 µs
+  {
+    if(nsAPI_USB_EP_Status(HID_EP1_IN)) break;
+    nsAPI_SSP_Delay1us(10);
+  }
+  report_data.mouse_report[0] = 0x01;
+  USB_LoadInEP_Data(EP_1_MOUSE, report_data.mouse_report, 8);   // 放进 USB 端点 1
+}</pre>
+<p class="note">USB 怎么把这 8 字节送到电脑，第 8 课讲。</p></details>
+</section>
+
+<h2>4. 松开的时候</h2>
+<p>路线完全一样，只是方向反过来：② 判出“松开”（从最深点往回抬超过 20 段）→ ③ 调 <code>Ele_LeftKeyReleaseProcess()</code>，<b>松开也震一下</b>（模拟机械按键弹起的“咔”）→ ④ 报告第 [1] 字节第 0 位变回 0。</p>
+
+<h2>5. 接力棒：数据在谁手里</h2>
+<div class="scroll"><table>
+<thead><tr><th>数据</th><th>长什么样（例子）</th><th>谁写</th><th>谁读</th></tr></thead>
+<tbody>
+<tr><td><code>hall_spi_rx[4]</code></td><td>右 hi、右 lo、左 hi、左 lo，如 … <code>E2 E7</code></td><td><code>hall_get_sample()</code></td><td>按键算法</td></tr>
+<tr><td><code>gbKeyState[2]</code></td><td>[0] 右、[1] 左；1 = 按着</td><td>快速触发</td><td>算法拼返回值</td></tr>
+<tr><td>算法返回值</td><td>第 0 位左、第 1 位右，如 <code>0x01</code></td><td><code>ProcessRecvSampleRawData()</code></td><td><code>Button_GetState()</code></td></tr>
+<tr><td><code>buttonScan_stru.scan_result_pre</code></td><td>上一次确认的按键状态</td><td><code>Button_Scan()</code></td><td><code>Button_Scan()</code>（比较变化）</td></tr>
+<tr><td><code>leftEle.status</code></td><td>不震 / 按下在震 / 松开在震 / 震后消抖</td><td>按下 / 松开处理、<code>Ele_PollingTask()</code></td><td>算法（决定冻不冻结）</td></tr>
+<tr><td><code>wheel_button_status</code> + 按键事件</td><td>第 0 位 = 1</td><td><code>Device_Button_Scan()</code></td><td><code>Device_Pack()</code></td></tr>
+<tr><td><code>report_data.mouse_report[8]</code></td><td><code>01 01 00 00 00 00 00 00</code></td><td><code>Device_Pack()</code></td><td><code>Device_Report()</code></td></tr>
+</tbody></table></div>
+
+<h2>6. 练习（随机出题，可以一直做）</h2>
+<div class="px" id="px"></div>
+
+<div class="warn"><b>这一课发现、要问杰哥的</b><br>
+<code>inc/button.h:16</code> 写着 <code>USE_HALL_SENSOR 5</code>，注释是“GTRY12: 2, GTRY15: 5, GTRY16: 6”，即按 GTRY15 的时序（命令脉冲等时间）来读；而原理图上的芯片是 <b>GTRY164</b>。是不是应该用 6？还是 GTRY164 和 GTRY15 时序相同？第 3 课讲霍尔芯片时会对照芯片手册（<code>M300S/GTRY164 Magnetic Keyboard Sensor…pdf</code>）再确认。</div>
+
+<div class="think"><b>💡 想法上</b>：读“全程”时容易陷进去：看到一个函数就想把它读懂，结果读了半天还没走到 USB。更好的办法是<b>先只问每一站“输入什么、输出什么”</b>，把整条线走通，再回头一站一站深挖。这和读长函数时“先画骨架”是同一个道理：先有地图，再看街道。</div>
+</div>
+<script>
+(function(){
+const $=id=>document.getElementById(id),V=n=>`var(--${n})`;
+/* ---------- stepper ---------- */
+const ST=[
+ {t:'t = 0 ms',c:'muted',h:'1 ms 到了',w:'TIMER16_0_IRQHandler · Timer.c:65',d:'定时器中断把 one_ms_cycle 从 1 减到 0（Timer.c:78），顺便给系统毫秒计数 +1。',x:'one_ms_cycle: 1 → 0'},
+ {t:'t ≈ 0 ms',c:'muted',h:'主循环发现时间到了',w:'Device_Scan · device.c:878 → Device_Button_Scan · device.c:952',d:'大循环里的 Device_Scan() 看到 one_ms_cycle == 0，设回 1，调按键扫描 → Button_Scan()。',x:'one_ms_cycle: 0 → 1\n调用：Button_Scan() → Button_GetState()'},
+ {t:'约 +10 µs',c:'sw',h:'① 读：普通键 + 霍尔',w:'Button_GetState → LR_GetState · button.c:311 → hall_get_sample · button.c:858',d:'先读 4 个普通键（中键、DPI、两个侧键）的引脚；再打一个时钟脉冲，SPI1 收 4 个字节。',x:'hall_spi_rx = [右 hi, 右 lo, 左 hi, 左 lo]\n           = [ …,    …,   E2,   E7 ]'},
+ {t:'约 +30 µs',c:'sw',h:'② 判：左键读数 → 段位',w:'ProcessRecvSampleRawData · my_misc.c:418',d:'校验通过 → 14 位读数 → 取反 → 滤波 → 段位。',x:'0xE2 0xE7 → (0xE2 & 0x3F) × 256 + 0xE7 = 8935\n16383 − 8935 = 7448\n基线：没按 7083，按到底 8883（假设）\n段位 = 31'},
+ {t:'约 +30 µs',c:'sw',h:'② 判：快速触发 → 按下',w:'Hall_HandleKeyRapidTrigger · my_misc.c:330',d:'左键现在松着，记着的最浅段位是 0；现在 31，按下了 31 段 ≥ 30（而且 ≥ 触发点 10）→ 判定按下。',x:'gbKeyState[1] (左) = 1\n返回值 = 0x01（第 0 位 = 左键）'},
+ {t:'约 +30 µs',c:'pc',h:'③ 发现“刚按下”',w:'Button_Scan · button.c:605',d:'这次第 0 位是 1，上次确认的状态 scan_result_pre 第 0 位是 0 → 有变化，而且是按下。',x:'scan_result_pre: 0x00 → 0x01\nbutton_changed = TRUE\n调用 Ele_LeftKeyPressProcess() · button.c:639'},
+ {t:'约 +35 µs',c:'pc',h:'③ 震：启动波形',w:'Ele_LeftKeyPressProcess · my_electromagnet.c:982',d:'时长 500 µs（默认参数）。状态改成“按下在震”，记下开始时间，启动波形。函数马上返回，震动在中断里自己进行。',x:'leftEle.status = ELE_PRESS_VIBRATING\nMyWaveform_StartGenerate(CHANNEL_0, wfCustom, 500, 1)'},
+ {t:'+35 µs ~ +535 µs',c:'pc',h:'③ 震：中断里改力度',w:'TIMER32_0_IRQHandler · my_waveform.c:87',d:'每 20 µs 中断一次，从波形表取下一个占空比，改 CT32B1 的 MR0；PIO0_13 上的 200 kHz PWM 跟着变，MOS 管开关，线圈通电。25 次后停，PIO0_13 回到低电平。',x:'占空比：60% → … → 100% → … → 60%（25 步）\n之后 PIO0_13 = 0'},
+ {t:'约 +40 µs',c:'per',h:'④ 记下按键、挂事件',w:'Device_Button_Scan · device.c:952',d:'Button_Scan() 返回“有变化”，把结果写进 wheel_button_status，挂上“按键事件”。（这时候线圈还在中断里震着，两件事同时进行。）',x:'wheel_button_status 第 0 位 = 1\ndeviceEvent |= BUTTON_EVENT'},
+ {t:'约 +50 µs',c:'per',h:'④ 组包',w:'Device_Pack · device.c:540 → Custom_HandleKey（app/custom.c）',d:'看到按键事件 → 键位映射：默认左键就是鼠标左键 → 填进 8 字节鼠标报告。',x:'report_data.mouse_report = 01 01 00 00 00 00 00 00'},
+ {t:'约 +60 µs',c:'per',h:'④ 交给 USB',w:'Device_Report · device.c:671',d:'等端点 1 空出来，把 8 字节放进去。电脑下次来取时就拿走了。',x:'USB_LoadInEP_Data(EP_1_MOUSE, mouse_report, 8)'},
+ {t:'+1 ms ~ +10 ms',c:'muted',h:'震完之后',w:'Ele_PollingTask（主循环）· 算法里的冻结',d:'每 1 ms 照常读霍尔，但左键线圈在震 / 消抖，左键读数不用，结论一直是“按着”。约 2 ms 后状态变成“震后消抖”，再过 8 ms 多变回“不震”，左键恢复正常判断。',x:'leftEle.status：按下在震 → 震后消抖（约 2 ms）→ 不震（约 11 ms）'},
+];
+let k=0;const bar=$('sBar');
+ST.forEach((s,i)=>{const b=document.createElement('i');b.title=s.h;b.onclick=()=>{k=i;show()};bar.appendChild(b)});
+function show(){const s=ST[k];$('sBody').innerHTML=`<div class="t">${s.t}</div><h3>${k+1}. ${s.h}</h3><div class="where" style="--c:${V(s.c)}">${s.w}</div><p>${s.d}</p><div class="data">${s.x.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>`;
+ [...bar.children].forEach((b,i)=>b.className=i<k?'d':(i===k?'c':''));$('sPrev').disabled=k===0;$('sNext').disabled=k===ST.length-1;$('sProg').textContent=`${k+1} / ${ST.length}`}
+$('sPrev').onclick=()=>{if(k>0){k--;show()}};$('sNext').onclick=()=>{if(k<ST.length-1){k++;show()}};show();
+/* ---------- fixed quiz ---------- */
+document.querySelectorAll('.qz').forEach(q=>{const fb=q.querySelector('.fb'),inp=q.querySelector('input'),ans=+q.dataset.ans;
+ const go=()=>{const s=inp.value.trim();if(!s)return;const v=/^0x/i.test(s)?parseInt(s,16):parseFloat(s);if(isNaN(v))return;const ok=Math.abs(v-ans)<1e-9;fb.className='fb '+(ok?'ok':'no');fb.innerHTML=(ok?'✓ '+fb.dataset.ok:'✗ '+fb.dataset.no)};
+ q.querySelector('.chk').onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter')go()})});
+/* ---------- practice ---------- */
+const BE=[0,64,128,192,64,0,192,128,128,192,0,64,192,128,64,0,64,0,192,128,0,64,128,192,192,128,64,0,128,192,0,64,128,192,0,64,192,128,64,0,0,64,128,192,64,0,192,128,192,128,64,0,128,192,0,64,64,0,192,128,0,64,128,192,64,0,192,128,0,64,128,192,192,128,64,0,128,192,0,64,0,64,128,192,64,0,192,128,128,192,0,64,192,128,64,0,192,128,64,0,128,192,0,64,64,0,192,128,0,64,128,192,128,192,0,64,192,128,64,0,0,64,128,192,64,0,192,128,128,192,0,64,192,128,64,0,0,64,128,192,64,0,192,128,192,128,64,0,128,192,0,64,64,0,192,128,0,64,128,192,0,64,128,192,64,0,192,128,128,192,0,64,192,128,64,0,64,0,192,128,0,64,128,192,192,128,64,0,128,192,0,64,192,128,64,0,128,192,0,64,64,0,192,128,0,64,128,192,128,192,0,64,192,128,64,0,0,64,128,192,64,0,192,128,64,0,192,128,0,64,128,192,192,128,64,0,128,192,0,64,0,64,128,192,64,0,192,128,128,192,0,64,192,128,64,0];
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),pick=a=>a[Math.floor(Math.random()*a.length)];
+const hx=v=>'0x'+v.toString(16).toUpperCase().padStart(2,'0');
+function mk(v){const hi6=(v>>8)&0x3F,lo=v&0xFF;return[hi6|(BE[hi6]^BE[lo]),lo]}
+function mc(q,opts,ans,sol){const idx=opts.map((_,i)=>i);for(let i=idx.length-1;i>0;i--){const j=ri(0,i);[idx[i],idx[j]]=[idx[j],idx[i]]}return{q,type:'mc',opts:idx.map(i=>opts[i]),ans:idx.indexOf(ans),sol}}
+const num=(q,ans,sol)=>({q,type:'num',ans,sol});
+const STEPS=['定时器中断把 one_ms_cycle 减到 0','Device_Scan 发现时间到了','SPI1 收 4 个字节','校验、取反、段位','快速触发判定按下','Button_Scan 发现“刚按下”','启动波形（线圈开始震）','Device_Button_Scan 挂按键事件','Device_Pack 组 8 字节报告','Device_Report 交给 USB'];
+const GEN=[
+ ()=>{const v=ri(3000,14000),[h,l]=mk(v);return num(`霍尔收到 <code>${hx(h)} ${hx(l)}</code>，14 位读数是多少？`,v,`${hx(h)} &amp; 0x3F = ${(h&0x3F)}，${h&0x3F} × 256 + ${l} = <b>${v}</b>`)},
+ ()=>{const v=ri(3000,14000);let[h,l]=mk(v);const bad=Math.random()<0.4;if(bad)h^=pick([0x40,0x80,0xC0]);const exp=BE[h&0x3F]^BE[l];
+  return mc(`收到 <code>${hx(h)} ${hx(l)}</code>，校验能通过吗？（规则：高字节最高 2 位 = bit_error[高字节低 6 位] ^ bit_error[低字节]）`,['能','不能'],bad?1:0,`高字节最高 2 位是 ${hx(h&0xC0)}，算出来应该是 ${hx(exp)}，${bad?'不相等，返回 CRC_ERROR，这次不用':'相等，通过'}。`)},
+ ()=>{const v=ri(3000,14000);return num(`读数 ${v}，取反后是多少？`,16383-v,`16383 − ${v} = <b>${16383-v}</b>`)},
+ ()=>{const L=ri(0,1),R=ri(0,1);return num(`左键${L?'按着':'松着'}、右键${R?'按着':'松着'}，算法返回值是几？`,L|(R<<1),`左 → 第 0 位，右 → 第 1 位：${R}${L}（二进制）= <b>${L|(R<<1)}</b>`)},
+ ()=>{const L=ri(0,1),R=ri(0,1),M=ri(0,1);const v=L|(R<<1)|(M<<2);return num(`左${L?'按':'松'}、右${R?'按':'松'}、中键${M?'按':'松'}，鼠标报告第 [1] 字节是几？`,v,`第 0 位左、第 1 位右、第 2 位中：${M}${R}${L}（二进制）= <b>${v}</b>`)},
+ ()=>{const d=pick([200,300,400,500,600,800,1000,1500,2000]);return num(`震动时长 ${d} µs，波形每 20 µs 更新一次，一共更新几次？`,Math.floor(d/20),`${d} ÷ 20 = <b>${Math.floor(d/20)}</b>`)},
+ ()=>{const d=pick([100,300,500,800,1000,1500,2500]);const tD=Math.floor((d+999)/1000)+1;const t=ri(0,tD+12);let s;if(t<tD)s=0;else if(t-tD<=8)s=1;else s=2;
+  return mc(`左键按下，震动时长 ${d} µs。按下后第 ${t} 毫秒，左线圈的状态是？`,['按下在震','震后消抖','不震'],s,`状态机（my_electromagnet.c Ele_StatusTask）：经过的毫秒 × 1000 &gt; ${d} + 999 时转“震后消抖”，即第 ${tD} ms；再过 8 ms 以上（第 ${tD+9} ms）回到“不震”。第 ${t} ms 是“${['按下在震','震后消抖','不震'][s]}”。${s<2?'这段时间左键读数不用，结论沿用“按着”。':''}`)},
+ ()=>{let a=ri(0,STEPS.length-1),b=ri(0,STEPS.length-1);while(b===a)b=ri(0,STEPS.length-1);const first=Math.min(a,b);return mc('下面两件事，哪个先发生？',[STEPS[first],STEPS[Math.max(a,b)]],0,`顺序：${STEPS.map((s,i)=>i===a||i===b?'<b>'+s+'</b>':s).join(' → ')}`)},
+ ()=>pick([
+  ()=>mc('hall_spi_rx 里哪两个字节是左键的？',['[2] 和 [3]','[0] 和 [1]','[1] 和 [3]'],0,'菊花链里数据从右键芯片出来回到 MCU，先到的是右键，所以 [0][1] 是右键、[2][3] 是左键。'),
+  ()=>mc('谁每 1 ms 发令扫描按键？',['定时器 CT16B0 的中断','USB 中断','波形中断'],0,'TIMER16_0_IRQHandler 把 one_ms_cycle 减到 0，主循环看到后扫描。'),
+  ()=>mc('线圈为什么只在“刚按下”时震，而不是每 1 ms 都震？',['Button_Scan 和上一次的状态比较，只有变化时才调震动函数','算法只在第一次返回 1','定时器只触发一次'],0,'scan_result_pre 记着上一次确认的状态。'),
+  ()=>mc('线圈震动期间，左键的霍尔读数会怎样？',['不用，结论沿用上一次','照常判断','读数清零'],0,'震动会干扰读数；震完还有约 8 ms 消抖。'),
+  ()=>mc('T1A 上按下左键，霍尔原始读数变大还是变小？',['变小（所以要用 16383 减）','变大'],0,'PRESS_KEY_AND_VALUE_INCREASE = 0（inc/my_misc.h）。'),
+  ()=>mc('松开左键时线圈会震吗？',['会，Ele_LeftKeyReleaseProcess 也启动波形','不会'],0,'模拟机械按键弹起的手感。'),
+  ()=>mc('报告第 [0] 字节 0x01 是什么？',['报告编号（鼠标报告）','左键','X 位移'],0,'mouse_report[0] = 0x01。'),
+  ()=>mc('Ele_LeftKeyPressProcess() 返回时，线圈震完了吗？',['没有，震动在中断里继续','震完了'],0,'它只是启动波形，之后每 20 µs 由 TIMER32_0 中断推进。'),
+  ()=>mc('开机后最初一段时间（最多 600 ms），按键算法干什么？',['只学“没按”的基线，不判断按键','正常判断','什么都不干'],0,'cali_init_cnt 不为 0 时走学习分支。'),
+  ()=>mc('算法返回值第 0 位代表哪个键？',['左键','右键'],0,'注意 gbKeyState[0] 是右键、[1] 是左键，拼返回值时交叉了。'),
+ ])()];
+let n=0,ok=0,cur=null,done=false;const box=$('px');
+box.innerHTML='<div class="pxh"><b>练习</b><span class="pxs" id="pxs"></span></div><div class="pxq" id="pxq"></div><div class="row" id="pxa"></div><div class="fb" id="pxfb"></div><div class="row"><button type="button" id="pxShow">看答案</button><button type="button" class="pxNext" id="pxNext">下一题 →</button></div>';
+const upd=()=>$('pxs').textContent=`已做 ${n} 题，对 ${ok} 题`;
+function judge(r){if(!done){n++;if(r)ok++}done=true;$('pxfb').className='fb '+(r?'ok':'no');$('pxfb').innerHTML=r?'✓ 对。'+cur.sol:'✗ 不对，再想想，或者点“看答案”。';upd()}
+function next(){cur=pick(GEN)();done=false;$('pxq').innerHTML=cur.q;$('pxfb').className='fb';$('pxfb').innerHTML='';const a=$('pxa');a.innerHTML='';
+ if(cur.type==='mc'){cur.opts.forEach((o,j)=>{const b=document.createElement('button');b.type='button';b.innerHTML=o;b.onclick=()=>{a.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');judge(j===cur.ans)};a.appendChild(b)})}
+ else{const inp=document.createElement('input');inp.type='text';inp.inputMode='numeric';inp.setAttribute('aria-label','答案');const c=document.createElement('button');c.type='button';c.textContent='检查';
+  const go=()=>{const s=inp.value.trim();if(!s)return;const v=/^0x/i.test(s)?parseInt(s,16):parseFloat(s);if(isNaN(v))return;judge(Math.abs(v-cur.ans)<1e-9)};c.onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter'){if(done&&$('pxfb').classList.contains('ok'))next();else go()}});a.append(inp,c)}
+ upd()}
+$('pxShow').onclick=()=>{if(!done)n++;done=true;$('pxfb').className='fb no';$('pxfb').innerHTML='答案：'+(cur.type==='mc'?cur.opts[cur.ans]:cur.ans)+'<br>'+cur.sol;upd()};
+$('pxNext').onclick=next;next();
+box._cur=()=>cur;
+})();
+</script>
