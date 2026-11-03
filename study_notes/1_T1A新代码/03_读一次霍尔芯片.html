@@ -1,0 +1,367 @@
+<title>读一次霍尔芯片</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --hw:#7a5ea8; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.8}
+.wrap{max-width:860px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);line-height:1.3;text-wrap:balance}
+h1{font-size:1.9rem;margin:0}
+h2{font-size:1.3rem;margin:2.4rem 0 .4rem;padding-top:.6rem;border-top:1px solid var(--line)}
+h3{font-size:1.06rem;margin:1.3rem 0 .3rem}
+p{margin:.6rem 0}
+a{color:var(--per)}
+code{font-family:var(--font-m);font-size:.88em;background:var(--soft);padding:.05em .35em;border-radius:3px;overflow-wrap:anywhere}
+pre.code{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:10px 12px;overflow-x:auto;line-height:1.55;margin:.5rem 0}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.06em;color:var(--muted)}
+.lede{color:var(--muted)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:1rem 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-size:.88rem;margin:.4rem 0}
+td,th{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600}
+.note{font-size:.88rem;color:var(--muted)}
+.think{border-left:4px solid var(--per);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.8rem 0}
+.rule{border-left:4px solid var(--c,var(--per));background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.6rem 0}
+.tag{display:inline-block;font-family:var(--font-m);font-size:.72rem;color:var(--bg);background:var(--c,var(--per));border-radius:4px;padding:0 6px;margin-right:6px;vertical-align:1px}
+/* vocabulary cards */
+.voc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:.6rem 0}
+@media (max-width:680px){.voc{grid-template-columns:minmax(0,1fr)}}
+.voc>div{border:1.5px dashed var(--c);border-radius:8px;padding:8px 12px;background:var(--panel);min-width:0}
+.voc b.w{font-family:var(--font-d);font-size:1.02rem;color:var(--c);display:block}
+.voc .wh{font-size:.82rem;color:var(--muted)}
+/* line-by-line table */
+.lbl td:first-child{font-family:var(--font-m);font-size:.78rem;white-space:pre;background:var(--soft)}
+.lbl td{font-size:.86rem}
+/* timeline svg & sim */
+svg.tl{display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px}
+.sim{border:2px solid var(--per);border-radius:8px;padding:10px 12px;background:var(--panel);margin:.6rem 0}
+.chain{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:.4rem 0}
+.reg{border:2px solid var(--c);border-radius:6px;padding:4px 6px;min-width:0}
+.reg .nm{font-size:.78rem;color:var(--c);font-weight:600}
+.bits{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:1px;font-family:var(--font-m);font-size:.7rem;text-align:center}
+.bits span{display:block;padding:2px 0;border-radius:2px;background:var(--soft);min-width:13px}
+.bits span.L{background:color-mix(in srgb,var(--sw) 35%,var(--panel))}
+.bits span.R{background:color-mix(in srgb,var(--per) 35%,var(--panel))}
+.bits span.T{background:color-mix(in srgb,var(--muted) 25%,var(--panel))}
+.arrow{color:var(--muted);font-size:.85rem}
+.rx{display:flex;gap:6px;flex-wrap:wrap;font-family:var(--font-m);font-size:.85rem}
+.rx span{border:1px solid var(--line);border-radius:4px;padding:2px 8px;background:var(--soft)}
+.rx span.L{border-color:var(--sw);background:color-mix(in srgb,var(--sw) 20%,var(--panel))}
+.rx span.R{border-color:var(--per);background:color-mix(in srgb,var(--per) 20%,var(--panel))}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.btns button{font:inherit;font-size:.88rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer}
+.btns button:disabled{opacity:.4;cursor:default}
+.log{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:6px 10px;white-space:pre-wrap;min-height:2.4em}
+/* crc tool */
+.bitrow{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:2px;font-family:var(--font-m);font-size:.72rem;text-align:center;margin:.3rem 0}
+.bitrow div{border:1px solid var(--line);border-radius:3px;padding:1px 0;min-width:0}
+.bitrow div.c{background:color-mix(in srgb,var(--gold) 30%,var(--panel))}
+.bitrow div.e{background:color-mix(in srgb,var(--sw) 18%,var(--panel))}
+.bitrow div.o{background:color-mix(in srgb,var(--pc) 18%,var(--panel))}
+.bitrow div small{display:block;color:var(--muted);font-size:.6rem}
+/* quiz & practice */
+.qz,.px{border-radius:8px;padding:8px 12px;margin:.7rem 0}
+.qz{border:1.5px dashed var(--gold);background:color-mix(in srgb,var(--gold) 6%,var(--panel))}
+.px{border:1.5px solid var(--per);background:color-mix(in srgb,var(--per) 6%,var(--panel))}
+.qz .qt,.px .pxq{font-weight:600;margin:.2rem 0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.qz input,.px input,.ctl input{font:inherit;width:120px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.qz button,.px button{font:inherit;font-size:.9rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer;text-align:left}
+.qz button.on,.px button.on{border-color:var(--fg)}
+.px .pxh{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.px .pxh b{color:var(--per)}
+.px .pxs{font-size:.82rem;color:var(--muted)}
+.px .pxNext{border-color:var(--per);color:var(--per)}
+.fb{display:none;padding:6px 10px;border-radius:6px;background:var(--soft);margin-top:.3rem}
+.fb.ok{display:block;border-left:4px solid var(--good)}
+.fb.no{display:block;border-left:4px solid var(--bad)}
+button:focus-visible,input:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+details.cd{margin:.5rem 0;border:1px solid var(--line);border-radius:6px;padding:4px 10px}
+details.cd>summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
+</style>
+<div class="wrap">
+<div class="eyebrow">T1A 主线 · 第 3 课（上）· 读一次霍尔芯片 · 手册：materials/GTRY154_…V1.1.pdf（下称“霍尔手册”）、LPC11U3x 用户手册 UM10462（下称“芯片手册”）</div>
+<h1>读一次霍尔芯片：那 4 个字节是怎么来的</h1>
+<p class="lede">第 2 课里，第 ① 站只用一句话带过：“每 1 ms 通过 SPI1 读两颗霍尔芯片，拿到 4 个字节”。这一课把这一句话拆开，一步不跳：用到的每个零件、每个变量、每一行代码都解释。开机时怎么把芯片和 SPI1 准备好，放在第 3 课（下）。</p>
+
+<div class="box"><b>🧭 本质</b>：MCU 和两颗霍尔芯片之间只有 3 根线（时钟、去的数据、回的数据）。这颗芯片用一个很特别的办法“说话”：
+<ol style="margin:.3rem 0;padding-left:1.4em">
+<li><b>下命令</b>：把时钟线拉高一段时间。拉高多久，就代表哪条命令（拉高 5 µs = “把最新读数准备好”）。</li>
+<li><b>搬数据</b>：再让时钟线快速跳 32 下，每跳一下，数据线上就出来 1 位，32 位 = 两颗芯片各 16 位。</li>
+</ol>
+代码里对应两个函数：<code>Hall_CLK_Command_SET()</code> 管第 1 步，<code>SSP_Send_Receive()</code> 管第 2 步。它们被 <code>hall_get_sample()</code>（app/button.c:858）依次调用。</div>
+
+<h2>1. 先认识要用到的东西</h2>
+<p>后面的每一步都会用到下面这些词。先每个都认识一下，看不懂的可以先跳过，讲到时还会再说。</p>
+<div class="voc">
+<div style="--c:var(--sw)"><b class="w">霍尔芯片 GTRY154</b>按键里有块磁铁，芯片测“磁场有多强”，把它变成一个 <b>14 位的数</b>（0 ~ 16383）。没有磁场时是 8192；磁铁南极越靠近，数越小（霍尔手册第 12 节）。左右键下面各一颗。<span class="wh">原理图标 GTRY164，实际按 H5 = GTRY154 设计（杰哥确认）</span></div>
+<div style="--c:var(--sw)"><b class="w">移位寄存器</b>芯片里有一排 <b>16 个格子</b>，每格放 1 位（0 或 1）。时钟线每“跳一下”（从低变高再变低），这一排格子里的位整体往前挪一格：最前面那一位从 <b>SDO</b> 脚出去，最后面空出来的格子由 <b>SDI</b> 脚进来的那一位填上。像一队人往前走，排头出门，门外进来一个人站到队尾。</div>
+<div style="--c:var(--per)"><b class="w">三根线：SCK、SDI、SDO</b>芯片上的叫法：<b>SCK</b> 时钟（MCU 给）、<b>SDI</b> 数据进芯片、<b>SDO</b> 数据出芯片。MCU 那边叫 <b>SCK1</b>（PIO1_15）、<b>MOSI</b>（PIO0_21，主机发出）、<b>MISO</b>（PIO0_22，主机收进）。</div>
+<div style="--c:var(--per)"><b class="w">菊花链</b>两颗芯片串成一条：MCU 的 MOSI → 左键芯片 SDI；左键芯片 SDO → 右键芯片 SDI；右键芯片 SDO → MCU 的 MISO。时钟线两颗共用。所以两个 16 格的队伍<b>首尾接成一条 32 格的长队</b>，右键芯片排在出口那头。</div>
+<div style="--c:var(--pc)"><b class="w">SPI1（芯片手册里叫 SSP1）</b>MCU 里专门负责“打时钟、收发位”的电路。你把 1 个字节写进它的 <code>DR</code> 寄存器，它就自动在 SCK1 上打 8 下时钟，把这个字节从 MOSI 一位一位送出去；<b>同时</b>从 MISO 一位一位收 8 位，拼成 1 个字节放进“接收队列”，你再读 <code>DR</code> 就能拿到。发 1 个字节 = 收 1 个字节，永远成对。</div>
+<div style="--c:var(--pc)"><b class="w">两个数组：hall_spi_tx[4]、hall_spi_rx[4]</b>定义在 app/button.c:12~13：<br><code>UINT8 hall_spi_tx[4] = {0};</code>　要发出去的 4 个字节<br><code>UINT8 hall_spi_rx[4] = {0};</code>　收回来的 4 个字节<br>全局变量（任何函数都能用），每个元素 1 字节（UINT8 = 0~255）。读数据时 tx 的内容没用（后面解释），我们要的是 rx。</div>
+</div>
+
+<h2>2. 读一次的全貌（先看图）</h2>
+<p>下图是时钟线 SCK 和回来的数据线 MISO 在一次读取中的样子（时间没按比例画）：</p>
+<svg class="tl" id="tl" viewBox="0 0 860 200" role="img" aria-label="一次读取的时序图"></svg>
+<div class="rule"><b>一句话</b>：<b>第 1 步</b>，把 SCK 当普通引脚，拉高约 5 µs 再拉低约 5 µs —— 两颗芯片看到“高了 5 µs”，就把各自最新的读数（16 位）装进自己的 16 个格子。<b>第 2 步</b>，把 SCK 交还给 SPI1，让它连续收发 4 个字节（打 32 下时钟），32 位排着队从 MISO 出来，先出来的是右键芯片的 16 位，后出来的是左键芯片的 16 位。</div>
+<p class="note">霍尔手册第 7 节原文：芯片“通过计算 SCK 高电平的时间来识别指令……因为 SCK 也是移位时钟，为了区分指令和正常读写时钟，SCK 作时钟时频率必须高于 1 MHz”。也就是说：正常时钟每次高电平不到 0.5 µs，芯片当它是“挪一格”；一口气高 5 µs，芯片就当它是命令。</p>
+
+<h2>3. 第 1 步：下命令 —— Hall_CLK_Command_SET()</h2>
+<h3>3.1 它要解决什么问题</h3>
+<p>SPI1 打出来的时钟又短又快（每次高电平 0.25 µs），没法“拉高 5 µs”。所以要<b>临时把 PIO1_15 这只脚从 SPI1 手里拿回来</b>，当普通引脚自己拉高、拉低，弄完再还给 SPI1。</p>
+<h3>3.2 怎么调用的</h3>
+<pre class="code">858  void hall_get_sample(void)
+859  {
+860    Hall_CLK_Command_SET(TD1_DELAY_US, TD2_CONTIUNS_DELAY_US);
+862    SSP_Send_Receive(hall_spi_tx, hall_spi_rx, 4);
+863  }</pre>
+<p>传进去的两个数是两个“宏”（编译前就替换成数字的名字），定义在 inc/button.h。我们的板子 <code>USE_HALL_SENSOR</code> = 5，用的是这一组：</p>
+<pre class="code">13  /***DrvGPIOOutput() is expected to take 1 microsecond. */
+14  #define  DELAY_OUT(x)   (x - 1)
+16  #define USE_HALL_SENSOR       5
+34  #define  TD1_DELAY_US             (DELAY_OUT(5))   //5+-5%
+35  #define  TD2_CONTIUNS_DELAY_US    (DELAY_OUT(5))   //>2</pre>
+<table>
+<tr><th>名字</th><th>展开</th><th>等于</th><th>意思</th></tr>
+<tr><td><code>TD1_DELAY_US</code></td><td><code>DELAY_OUT(5)</code> → <code>5 - 1</code></td><td><b>4</b></td><td>高电平要保持的微秒数。霍尔手册 7.7 节 td1 = 5 µs ± 5%（即 4.75 ~ 5.25 µs）</td></tr>
+<tr><td><code>TD2_CONTIUNS_DELAY_US</code></td><td><code>DELAY_OUT(5)</code> → <code>5 - 1</code></td><td><b>4</b></td><td>拉低后要等的微秒数。手册 td2（连续模式）要求 &gt; 2 µs，让芯片有时间把读数装好</td></tr>
+</table>
+<p><b>为什么要减 1？</b>第 13 行注释说：拉高、拉低引脚的函数 <code>DrvGPIOOutput()</code> 本身大约要花 1 µs。所以等 4 µs + 函数自己的 1 µs ≈ 5 µs。</p>
+<div class="qz" data-ans="4"><div class="qt">你来算：<code>DELAY_OUT(5)</code> 等于几？</div>
+<div class="row"><input type="text" inputmode="numeric" aria-label="答案"><button type="button" class="chk">检查</button></div>
+<div class="fb" data-ok="对。宏 DELAY_OUT(x) 就是 (x - 1)，代进去 5 - 1 = 4。" data-no="DELAY_OUT(x) 的定义是 (x - 1)，把 x 换成 5。"></div></div>
+
+<h3>3.3 逐行看（app/button.c:800~829，T1A 分支）</h3>
+<p>函数的两个参数：<code>high_delay</code> = 4（高电平等多久），<code>low_delay</code> = 4（低电平等多久）。</p>
+<div class="scroll"><table class="lbl">
+<thead><tr><th>代码</th><th>白话 + 涉及的变量 / 寄存器</th></tr></thead>
+<tbody>
+<tr><td>uint32_t reg;</td><td>声明一个<b>局部变量</b> <code>reg</code>：只在这个函数里用的临时盒子，32 位。用来先把寄存器的值抄出来改，改完再写回去（“读 → 改 → 写”）。</td></tr>
+<tr><td>NVIC_DisableIRQ(USB_IRQn);</td><td><b>暂时不让 USB 中断打断我</b>。中断会让 CPU 跑去干别的事。如果正好在“拉高 5 µs”的中间被打断，高电平就会变成 6 µs、10 µs……芯片会认成别的命令（9 µs 是写 LED 亮度，24 µs 是写寄存器）。<code>NVIC</code> 是管中断开关的部件，<code>USB_IRQn</code> 是 USB 中断的编号。（关中断的原因是我的推断，代码没写注释）</td></tr>
+<tr><td>reg = LPC_IOCON-&gt;PIO1_15;</td><td>把 PIO1_15 这只脚的<b>功能配置寄存器</b>（IOCON，芯片手册表 115）的值抄到 <code>reg</code>。它的最低 3 位 FUNC 决定这只脚现在干什么：0 = 普通引脚 PIO1_15，3 = SPI1 的时钟 SCK1。</td></tr>
+<tr><td>reg &amp;= ~0x07;</td><td>把 <code>reg</code> 的最低 3 位清成 0（<code>0x07</code> = 二进制 111，<code>~</code> 取反后是“除了最低 3 位全是 1”，<code>&amp;=</code> 就把那 3 位清掉，其他位不动）。</td></tr>
+<tr><td>reg |= 0x00;</td><td>把 FUNC 设成 0（或上 0，等于什么也没变，写出来是为了看得清楚：功能 0 = 普通引脚）。</td></tr>
+<tr><td>LPC_IOCON-&gt;PIO1_15 = reg;</td><td>写回去。<b>从这一刻起，PIO1_15 不归 SPI1 管了</b>，变成普通引脚。</td></tr>
+<tr><td>DrvGPIOOutput(1,15,1);</td><td>把端口 1 第 15 脚设成<b>输出</b>，并输出<b>高电平</b>（GPIO.c：先把 <code>LPC_GPIO-&gt;DIR[1]</code> 第 15 位置 1 设为输出，再写 <code>LPC_GPIO-&gt;SET[1]</code> 拉高）。<b>SCK 变高，命令开始。</b></td></tr>
+<tr><td>CT16B1_DelayUs(high_delay);</td><td>原地等约 4 µs（加上上一行自己花的约 1 µs，高电平共约 5 µs）。<code>CT16B1_DelayUs()</code>（Timer.c:202）用 16 位定时器 CT16B1 计时：设成每 1 µs 加 1，CPU 一直盯着计数，到了就返回。等的时候 CPU 什么也不干。</td></tr>
+<tr><td>DrvGPIOOutput(1,15,0);</td><td>输出<b>低电平</b>（写 <code>LPC_GPIO-&gt;CLR[1]</code>）。<b>SCK 变低，命令结束。</b>两颗芯片这时“量”出高电平约 5 µs → 认出是 HAL_CONVERT（读按键）命令。</td></tr>
+<tr><td>CT16B1_DelayUs(low_delay);</td><td>再等约 4 µs：芯片在这段时间里把最新的读数（16 位）装进自己的移位寄存器。</td></tr>
+<tr><td>reg = LPC_IOCON-&gt;PIO1_15;<br>reg &amp;= ~0x07;<br>reg |= 0x03;<br>LPC_IOCON-&gt;PIO1_15 = reg;</td><td>和前面一样“读 → 改 → 写”，这次把 FUNC 设成 <b>3 = SCK1</b>：<b>把这只脚还给 SPI1</b>。</td></tr>
+<tr><td>NVIC_EnableIRQ(USB_IRQn);</td><td>重新允许 USB 中断。</td></tr>
+</tbody></table></div>
+<div class="qz" data-choice="1"><div class="qt">你来想：如果高电平被拉长到了 9 µs，芯片会以为是什么命令？（霍尔手册 7.7 节：td1 = 5 µs 读按键，td3 = 9 µs 写 LED 亮度，td4 = 24 µs 写寄存器）</div>
+<div class="row"><button type="button" class="opt">读按键</button><button type="button" class="opt">写 LED 亮度（W_PWM_REG）</button><button type="button" class="opt">写寄存器</button></div>
+<div class="fb" data-ok="对。所以拉高的时间必须准，这就是关掉 USB 中断的原因。" data-no="对照手册：9 µs 对应哪条？"></div></div>
+
+<h2>4. 第 2 步：搬数据 —— SSP_Send_Receive()</h2>
+<h3>4.1 它要解决什么问题</h3>
+<p>两颗芯片已经把读数装进各自的 16 个格子，现在这 32 位排成一条队。要让时钟跳 32 下，把它们一位一位“挤”出来，并按 8 位一组拼成 4 个字节放进 <code>hall_spi_rx</code>。SPI1 一次搬 8 位（1 个字节），所以要让它搬 4 次。</p>
+
+<h3>4.2 先看效果：一位一位挤出来（动手）</h3>
+<p>例子：右键芯片的读数是 9300，左键是 8935（第 2 课的例子）。加上 2 位校验后，右键芯片要送出的 16 位是 <code>0xA454</code>，左键是 <code>0xE2E7</code>（怎么算出来的见第 5 节）。按按钮看：</p>
+<div class="sim">
+<div class="btns"><button type="button" id="mCmd">① 下命令（装读数）</button><button type="button" id="m1">打 1 下时钟</button><button type="button" id="m8">打 8 下（搬 1 个字节）</button><button type="button" id="mRe">重来</button></div>
+<div class="chain">
+<div class="reg" style="--c:var(--muted)"><div class="nm">MCU 发出（MOSI），tx 的位</div><div class="bits" id="vTx"></div></div>
+</div>
+<div class="arrow">↓ 进入左键芯片 SDI</div>
+<div class="reg" style="--c:var(--sw)"><div class="nm">左键芯片的 16 个格子（左边是排头，先出去）</div><div class="bits" id="vL"></div></div>
+<div class="arrow">↓ 左键芯片 SDO → 右键芯片 SDI</div>
+<div class="reg" style="--c:var(--per)"><div class="nm">右键芯片的 16 个格子</div><div class="bits" id="vR"></div></div>
+<div class="arrow">↓ 右键芯片 SDO → MCU 的 MISO → SPI1 收到的位</div>
+<div class="reg" style="--c:var(--pc)"><div class="nm">SPI1 正在拼的这个字节</div><div class="bits" id="vS" style="grid-template-columns:repeat(8,minmax(0,1fr))"></div></div>
+<p style="margin:.4rem 0 .2rem"><b>hall_spi_rx[0..3]：</b></p><div class="rx" id="vRx"></div>
+<div class="log" id="mLog" aria-live="polite"></div>
+<p class="note">颜色：蓝 = 右键芯片的位，绿 = 左键芯片的位，灰 = MCU 从 MOSI 送进去的位（tx 的内容，这时没用）。</p>
+</div>
+<div class="rule"><b>看出来的规律</b>：右键芯片在出口那头，所以<b>前 16 下时钟出来的是右键</b>（变成 rx[0]、rx[1]），<b>后 16 下出来的是左键</b>（rx[2]、rx[3]）。左键的位要先穿过右键芯片的 16 个格子才能出来。</div>
+<div class="qz" data-ans="64"><div class="qt">你来算：如果链上串了 4 颗芯片，要打几下时钟才能把所有读数都挤出来？</div>
+<div class="row"><input type="text" inputmode="numeric" aria-label="答案"><button type="button" class="chk">检查</button></div>
+<div class="fb" data-ok="对。每颗 16 位，4 × 16 = 64 下，也就是 8 个字节。我们只有 2 颗：32 下、4 个字节。" data-no="每颗芯片 16 位，几颗就乘几。"></div></div>
+
+<h3>4.3 tx 里发出去的是什么？</h3>
+<p>SPI 发 1 个字节一定同时收 1 个字节，所以想收 4 个字节就得发 4 个字节。发出去的这 4 个字节会从 MOSI 进入左键芯片的队尾（上图灰色的位），但是<b>后面没有跟命令，芯片不理它们</b>，下一次“下命令”时格子会被新读数覆盖。</p>
+<p>这时 <code>hall_spi_tx</code> 里是 <code>A7 00 A7 00</code>：是开机配置芯片寄存器时最后一次写进去的内容（第 3 课下讲），之后没人改过。内容无所谓，只是“陪跑”。</p>
+
+<h3>4.4 逐行看（src/SPI.c:436~451，T1A 分支）</h3>
+<p>调用：<code>SSP_Send_Receive(hall_spi_tx, hall_spi_rx, 4);</code></p>
+<table>
+<tr><th>参数</th><th>拿到的值</th><th>意思</th></tr>
+<tr><td><code>U8 *buf_wr</code></td><td><code>hall_spi_tx</code> 的地址</td><td>指针：指向“要发的第一个字节”。<code>*buf_wr</code> 就是它指着的那个字节</td></tr>
+<tr><td><code>U8 *buf_rd</code></td><td><code>hall_spi_rx</code> 的地址</td><td>指针：指向“收到的字节放哪”</td></tr>
+<tr><td><code>U16 length</code></td><td>4</td><td>要收发几个字节</td></tr>
+</table>
+<p>再认识 SPI1 的两个寄存器（芯片手册 13.6.3、13.6.4 节，表 262、263）：</p>
+<table>
+<tr><th>寄存器</th><th>是什么</th></tr>
+<tr><td><code>LPC_SSP1-&gt;DR</code></td><td><b>数据寄存器</b>。写它 = 把一个字节交给 SPI1 去发（发的同时会收）；读它 = 从接收队列里拿出最早收到的那个字节。</td></tr>
+<tr><td><code>LPC_SSP1-&gt;SR</code></td><td><b>状态寄存器</b>（只能读），每一位是一个“灯”：<br>第 1 位 <b>TNF</b>（发送队列没满）：1 = 还能往里放；代码里叫 <code>SSP_SR_TNF_NOTFULL</code> = <code>0x02</code><br>第 2 位 <b>RNE</b>（接收队列不空）：1 = 有收到的字节可以拿；<code>SSP_SR_RNE_NOTEMPTY</code> = <code>0x04</code><br>第 4 位 <b>BSY</b>（忙）：1 = 正在收发；<code>SSP_SR_BSY_BUSY</code> = <code>0x10</code><br>（第 0 位 TFE、第 3 位 RFF 这里没用到）</td></tr>
+</table>
+<div class="scroll"><table class="lbl">
+<thead><tr><th>代码</th><th>白话</th></tr></thead>
+<tbody>
+<tr><td>while(length--)</td><td>循环：先看 <code>length</code> 是不是 0，不是就进去，然后 <code>length</code> 减 1。4 → 进入（变 3）→ 进入（变 2）→ 进入（变 1）→ 进入（变 0）→ 是 0，停。<b>一共转 4 圈，每圈收发 1 个字节。</b></td></tr>
+<tr><td>while((LPC_SSP1-&gt;SR &amp; (0x02 | 0x10)) != 0x02){}</td><td><b>等，直到“能放、而且不忙”</b>。<code>0x02 | 0x10 = 0x12</code>：只看 TNF 和 BSY 这两位。只有 TNF = 1、BSY = 0 时，<code>SR &amp; 0x12</code> 才等于 <code>0x02</code>，才跳出这个空循环往下走。花括号里是空的：就是一直原地查。</td></tr>
+<tr><td>LPC_SSP1-&gt;DR = *buf_wr;</td><td>把 tx 的当前字节交给 SPI1。<b>SPI1 马上开始打 8 下时钟</b>：发出这 8 位，同时从 MISO 收 8 位。</td></tr>
+<tr><td>while((LPC_SSP1-&gt;SR &amp; (0x10 | 0x04)) != 0x04){}</td><td><b>等，直到“收到了、而且不忙了”</b>。<code>0x10 | 0x04 = 0x14</code>，只有 RNE = 1、BSY = 0 时结果才是 <code>0x04</code>。8 下时钟在 2 MHz 下约 4 µs。</td></tr>
+<tr><td>*buf_rd = LPC_SSP1-&gt;DR;</td><td>从接收队列拿出刚收到的字节，放进 rx 的当前位置。</td></tr>
+<tr><td>buf_wr++;<br>buf_rd++;</td><td>两个指针都往后挪一格，下一圈处理 tx[1] / rx[1]，依此类推。</td></tr>
+</tbody></table></div>
+<div class="qz" data-choice="0"><div class="qt">你来算：此时 SR = <code>0x03</code>（二进制 0000 0011），第一个“等”会结束吗？</div>
+<div class="row"><button type="button" class="opt">会结束（能放、不忙）</button><button type="button" class="opt">还要等</button></div>
+<div class="fb" data-ok="对。0x03 &amp; 0x12 = 0x02，等于 0x02，跳出。（0x03 是 TFE=1、TNF=1：发送队列空、没满，BSY=0 不忙）" data-no="算 0x03 &amp; 0x12：0000 0011 和 0001 0010 按位与。"></div></div>
+<div class="qz" data-choice="1"><div class="qt">你来算：此时 SR = <code>0x13</code>（BSY = 1），第一个“等”会结束吗？</div>
+<div class="row"><button type="button" class="opt">会结束</button><button type="button" class="opt">还要等（忙着呢）</button></div>
+<div class="fb" data-ok="对。0x13 &amp; 0x12 = 0x12，不等于 0x02，继续等。" data-no="算 0x13 &amp; 0x12 = ?"></div></div>
+
+<h2>5. 收到之后：4 个字节变成两个读数</h2>
+<p>这一步在按键算法 <code>ProcessRecvSampleRawData()</code> 里做（第 4 课细讲），这里只看“字节怎么拼回读数”。每颗芯片的 16 位是：<b>最高 2 位是校验位 CRC1、CRC0，后面 14 位是读数 D13 ~ D0</b>（霍尔手册 7.2 节）。</p>
+<div class="rule"><b>拼回读数</b>：<code>读数 = (高字节 &amp; 0x3F) × 256 + 低字节</code>　（<code>&amp; 0x3F</code> 去掉最高 2 位校验位）<br>
+<b>校验</b>：<code>CRC0 = D0 ^ D2 ^ D4 ^ … ^ D12</code>（偶数位异或），<code>CRC1 = D1 ^ D3 ^ … ^ D13</code>（奇数位异或）。“异或 ^”：两个位相同得 0、不同得 1；一串位异或起来 = 里面 1 的个数是奇数就得 1，偶数就得 0。<br>
+代码里的 <code>bit_error</code> 表（app/button.c:125）就是把这个计算提前算好存起来，查表比现算快（我用全部 16384 个值核对过，和公式完全一致）。</div>
+<h3>动手：输入一个读数，看它变成哪两个字节</h3>
+<div class="box ctl"><label>读数（0~16383）：<input type="number" id="cV" min="0" max="16383" value="8935"></label>
+<div class="bitrow" id="cBits"></div>
+<div class="log" id="cLog"></div></div>
+<div class="qz" data-ans="9300"><div class="qt">你来算：rx[0] = <code>0xA4</code>，rx[1] = <code>0x54</code>，右键读数是多少？</div>
+<div class="row"><input type="text" inputmode="numeric" aria-label="答案"><button type="button" class="chk">检查</button></div>
+<div class="fb" data-ok="对。0xA4 &amp; 0x3F = 0x24 = 36，36 × 256 + 0x54(84) = 9300。" data-no="先 0xA4 &amp; 0x3F，再 × 256，再加 0x54。"></div></div>
+
+<h2>6. 一次读取花多少时间（估算）</h2>
+<table>
+<tr><th>段</th><th>时间</th></tr>
+<tr><td>下命令：高电平 + 低电平</td><td>约 5 + 5 = 10 µs</td></tr>
+<tr><td>搬数据：32 位，SPI1 时钟 2 MHz（每位 0.5 µs）</td><td>约 16 µs，加上每个字节之间的等待，约 20 µs</td></tr>
+<tr><td>合计</td><td><b>约 30 µs</b>，每 1 ms 一次，占 CPU 约 3%</td></tr>
+</table>
+<p class="note">SPI1 为什么是 2 MHz、为什么这样设置，第 3 课（下）讲。</p>
+
+<h2>7. 本课所有变量和寄存器</h2>
+<div class="scroll"><table>
+<thead><tr><th>名字</th><th>在哪</th><th>是什么</th></tr></thead>
+<tbody>
+<tr><td><code>hall_spi_tx[4]</code></td><td>button.c:12，全局</td><td>要发的 4 字节；读数据时内容没用（现在是 A7 00 A7 00）</td></tr>
+<tr><td><code>hall_spi_rx[4]</code></td><td>button.c:13，全局</td><td>收到的 4 字节：[0][1] 右键，[2][3] 左键</td></tr>
+<tr><td><code>TD1_DELAY_US</code> / <code>TD2_CONTIUNS_DELAY_US</code></td><td>button.h:34~35，宏</td><td>都是 4：命令高电平、低电平各等 4 µs</td></tr>
+<tr><td><code>high_delay</code> / <code>low_delay</code></td><td>Hall_CLK_Command_SET 的参数</td><td>接收上面两个宏的值</td></tr>
+<tr><td><code>reg</code></td><td>Hall_CLK_Command_SET 的局部变量</td><td>“读 → 改 → 写” IOCON 用的临时盒子</td></tr>
+<tr><td><code>LPC_IOCON-&gt;PIO1_15</code></td><td>芯片寄存器（芯片手册表 115）</td><td>PIO1_15 的功能：FUNC 0 = 普通引脚，3 = SCK1</td></tr>
+<tr><td><code>LPC_GPIO-&gt;DIR / SET / CLR</code></td><td>芯片寄存器</td><td>设方向、拉高、拉低（DrvGPIOOutput 里用）</td></tr>
+<tr><td><code>LPC_CT16B1</code></td><td>芯片的 16 位定时器 1</td><td>CT16B1_DelayUs 用它数微秒</td></tr>
+<tr><td><code>USB_IRQn</code></td><td>中断编号</td><td>下命令期间关掉 USB 中断</td></tr>
+<tr><td><code>buf_wr</code> / <code>buf_rd</code> / <code>length</code></td><td>SSP_Send_Receive 的参数</td><td>指向 tx、指向 rx、要收发几个字节（4）</td></tr>
+<tr><td><code>LPC_SSP1-&gt;DR</code></td><td>SPI1 数据寄存器（表 262）</td><td>写 = 发一个字节，读 = 拿一个收到的字节</td></tr>
+<tr><td><code>LPC_SSP1-&gt;SR</code></td><td>SPI1 状态寄存器（表 263）</td><td>TNF（0x02）、RNE（0x04）、BSY（0x10）</td></tr>
+</tbody></table></div>
+
+<h2>8. 练习（随机出题，可以一直做）</h2>
+<div class="px" id="px"></div>
+
+<div class="think"><b>💡 想法上</b>：你说第 2 课“全程”看不明白，原因很可能不是你，而是我：全程里每一站都用到了还没讲过的零件（移位寄存器、SPI、指针、状态寄存器……），零件不认识，串起来自然看不懂。所以从这一课起，<b>先把每一站的零件一个个讲透，再回头看全程</b>。学完第 3、4 课后，再去看第 2 课的第 ① ② 站，应该就能看懂了。以后遇到看不懂的地方，先问自己：<b>是哪个词、哪个零件我还不认识？</b>把它说出来，我就从那里讲。</div>
+</div>
+<script>
+(function(){
+const $=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
+function el(p,t,a,x){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e}
+const BE=[0,64,128,192,64,0,192,128,128,192,0,64,192,128,64,0,64,0,192,128,0,64,128,192,192,128,64,0,128,192,0,64,128,192,0,64,192,128,64,0,0,64,128,192,64,0,192,128,192,128,64,0,128,192,0,64,64,0,192,128,0,64,128,192,64,0,192,128,0,64,128,192,192,128,64,0,128,192,0,64,0,64,128,192,64,0,192,128,128,192,0,64,192,128,64,0,192,128,64,0,128,192,0,64,64,0,192,128,0,64,128,192,128,192,0,64,192,128,64,0,0,64,128,192,64,0,192,128,128,192,0,64,192,128,64,0,0,64,128,192,64,0,192,128,192,128,64,0,128,192,0,64,64,0,192,128,0,64,128,192,0,64,128,192,64,0,192,128,128,192,0,64,192,128,64,0,64,0,192,128,0,64,128,192,192,128,64,0,128,192,0,64,192,128,64,0,128,192,0,64,64,0,192,128,0,64,128,192,128,192,0,64,192,128,64,0,0,64,128,192,64,0,192,128,64,0,192,128,0,64,128,192,192,128,64,0,128,192,0,64,0,64,128,192,64,0,192,128,128,192,0,64,192,128,64,0];
+const word=v=>{const hi6=(v>>8)&0x3F,lo=v&0xFF;return ((hi6|(BE[hi6]^BE[lo]))<<8)|lo};
+/* ---- timeline ---- */
+(function(){const s=$('tl');const y1=40,y0=80,m1=130,m0=170;
+ el(s,'text',{x:8,y:64,'font-size':13,fill:'var(--fg)','font-weight':600},'SCK');el(s,'text',{x:8,y:154,'font-size':13,fill:'var(--fg)','font-weight':600},'MISO');
+ let d=`M60,${y0} H90 V${y1} H210 V${y0} H330`;let x=330;const cw=14;
+ for(let b=0;b<4;b++){for(let i=0;i<8;i++){d+=` V${y1} H${x+cw/2} V${y0} H${x+cw}`;x+=cw}x+=14;d+=` H${x}`}
+ el(s,'path',{d,fill:'none',stroke:'var(--pc)','stroke-width':2});
+ el(s,'text',{x:150,y:32,'text-anchor':'middle','font-size':12,fill:'var(--fg)'},'高 ≈ 5 µs：命令 HAL_CONVERT');
+ el(s,'text',{x:270,y:100,'text-anchor':'middle','font-size':12,fill:'var(--muted)'},'低 ≈ 5 µs：芯片装读数');
+ el(s,'line',{x1:90,x2:210,y1:110,y2:110,stroke:'var(--muted)','stroke-dasharray':'3 3'});
+ el(s,'text',{x:150,y:124,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'第 1 步：Hall_CLK_Command_SET()');
+ const labs=['rx[0] 右键高字节','rx[1] 右键低字节','rx[2] 左键高字节','rx[3] 左键低字节'];x=330;
+ for(let b=0;b<4;b++){const w=8*cw;el(s,'rect',{x,y:m1,width:w,height:m0-m1,rx:4,fill:b<2?'color-mix(in srgb,var(--per) 30%,var(--panel))':'color-mix(in srgb,var(--sw) 30%,var(--panel))',stroke:'var(--line)'});
+  el(s,'text',{x:x+w/2,y:m1+24,'text-anchor':'middle','font-size':10.5,fill:'var(--fg)'},labs[b]);x+=w+14}
+ el(s,'text',{x:600,y:196,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'第 2 步：SSP_Send_Receive()，32 下时钟（4 个字节 × 8 位）');
+})();
+/* ---- daisy chain simulator ---- */
+const TX=[0xA7,0x00,0xA7,0x00];
+let L,R,txBits,clk,cur,rx,loaded;
+function reset(){L=Array(16).fill(null);R=Array(16).fill(null);txBits=[];TX.forEach(b=>{for(let i=7;i>=0;i--)txBits.push({v:(b>>i)&1,c:'T'})});clk=0;cur=[];rx=[];loaded=false;
+ $('mLog').textContent='还没下命令：两颗芯片的格子里是上一次留下的东西（?）。先点“① 下命令”。';draw()}
+function load(){const wl=word(8935),wr=word(9300);L=[];R=[];for(let i=15;i>=0;i--){L.push({v:(wl>>i)&1,c:'L'});R.push({v:(wr>>i)&1,c:'R'})}clk=0;cur=[];rx=[];loaded=true;
+ $('mLog').textContent='下命令后：左键芯片装好 0xE2E7（8935 加校验），右键芯片装好 0xA454（9300 加校验）。排头（左边）先出去。现在点“打 1 下时钟”。';draw()}
+function tick(){if(!loaded||clk>=32)return;const out=R.shift();R.push(L.shift());L.push(txBits[clk]);cur.push(out);clk++;
+ let msg=`第 ${clk} 下时钟：右键芯片排头的位（${out.v}）从 MISO 出去，进了 SPI1；左键芯片排头挪进右键芯片队尾；MOSI 送进一位 tx（${txBits[clk-1].v}）到左键芯片队尾。`;
+ if(cur.length===8){const b=cur.reduce((a,x)=>a*2+x.v,0);rx.push({b,c:cur[0].c});msg+=`\n凑满 8 位 → hall_spi_rx[${rx.length-1}] = 0x${b.toString(16).toUpperCase().padStart(2,'0')}（SSP_Send_Receive 转完第 ${rx.length} 圈）`;cur=[]}
+ if(clk===32)msg+='\n32 下打完：rx = A4 54 E2 E7。前两个字节是右键，后两个是左键。';$('mLog').textContent=msg;draw()}
+function cells(arr,n){let h='';for(let i=0;i<n;i++){const x=arr[i];h+=x?`<span class="${x.c}">${x.v}</span>`:'<span>?</span>'}return h}
+function draw(){$('vL').innerHTML=cells(L,16);$('vR').innerHTML=cells(R,16);$('vS').innerHTML=cells(cur,8);
+ $('vTx').innerHTML=cells(txBits.slice(clk,clk+16).concat(Array(16).fill(null)).slice(0,16).map(x=>x||{v:'·',c:''}),16);
+ let h='';for(let i=0;i<4;i++){const r=rx[i];h+=r?`<span class="${r.c}">rx[${i}] = 0x${r.b.toString(16).toUpperCase().padStart(2,'0')}</span>`:`<span>rx[${i}] = ?</span>`}$('vRx').innerHTML=h;
+ $('m1').disabled=$('m8').disabled=!loaded||clk>=32}
+$('mCmd').onclick=load;$('m1').onclick=tick;$('m8').onclick=()=>{for(let i=0;i<8;i++)tick()};$('mRe').onclick=reset;reset();
+/* ---- crc tool ---- */
+function crcShow(){let v=Math.max(0,Math.min(16383,parseInt($('cV').value)||0));const w=word(v),hi=w>>8,lo=w&0xFF;let h='';
+ for(let i=15;i>=0;i--){const b=(w>>i)&1;const cls=i>=14?'c':(i%2===0?'e':'o');const nm=i===15?'CRC1':i===14?'CRC0':'D'+i;h+=`<div class="${cls}">${b}<small>${nm}</small></div>`}$('cBits').innerHTML=h;
+ const ev=[0,2,4,6,8,10,12].map(i=>(v>>i)&1),od=[1,3,5,7,9,11,13].map(i=>(v>>i)&1);
+ $('cLog').textContent=`偶数位 D0,D2,…,D12 = ${ev.join(' ')} → 1 的个数 ${ev.filter(x=>x).length} → CRC0 = ${ev.reduce((a,b)=>a^b,0)}\n奇数位 D1,D3,…,D13 = ${od.join(' ')} → 1 的个数 ${od.filter(x=>x).length} → CRC1 = ${od.reduce((a,b)=>a^b,0)}\n16 位 = 0x${w.toString(16).toUpperCase().padStart(4,'0')} → 高字节 0x${hi.toString(16).toUpperCase().padStart(2,'0')}、低字节 0x${lo.toString(16).toUpperCase().padStart(2,'0')}\n反过来：(0x${hi.toString(16).toUpperCase()} & 0x3F) × 256 + 0x${lo.toString(16).toUpperCase()} = ${(hi&0x3F)} × 256 + ${lo} = ${v}`}
+$('cV').oninput=crcShow;crcShow();
+/* ---- fixed quiz ---- */
+document.querySelectorAll('.qz').forEach(q=>{const fb=q.querySelector('.fb');const show=ok=>{fb.className='fb '+(ok?'ok':'no');fb.innerHTML=(ok?'✓ ':'✗ ')+(ok?fb.dataset.ok:fb.dataset.no)};
+ if(q.dataset.ans!=null){const inp=q.querySelector('input'),ans=+q.dataset.ans;const go=()=>{const s=inp.value.trim();if(!s)return;const v=/^0x/i.test(s)?parseInt(s,16):parseFloat(s);if(isNaN(v))return;show(Math.abs(v-ans)<1e-9)};q.querySelector('.chk').onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter')go()})}
+ else{const c=+q.dataset.choice;[...q.querySelectorAll('.opt')].forEach((b,j)=>b.onclick=()=>{q.querySelectorAll('.opt').forEach(x=>x.classList.remove('on'));b.classList.add('on');show(j===c)})}});
+/* ---- practice ---- */
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),pick=a=>a[Math.floor(Math.random()*a.length)];
+const hx=(v,n)=>'0x'+v.toString(16).toUpperCase().padStart(n||2,'0');
+function mc(q,opts,ans,sol){const idx=opts.map((_,i)=>i);for(let i=idx.length-1;i>0;i--){const j=ri(0,i);[idx[i],idx[j]]=[idx[j],idx[i]]}return{q,type:'mc',opts:idx.map(i=>opts[i]),ans:idx.indexOf(ans),sol}}
+const num=(q,ans,sol)=>({q,type:'num',ans,sol});
+const bin=v=>v.toString(2).padStart(8,'0').replace(/(\d{4})/,'$1 ');
+const GEN=[
+ ()=>{const x=ri(2,30);return num(`<code>DELAY_OUT(${x})</code> 等于几？`,x-1,`DELAY_OUT(x) = (x - 1)，${x} - 1 = <b>${x-1}</b>`)},
+ ()=>{const sr=pick([0x01,0x02,0x03,0x06,0x07,0x12,0x13,0x16,0x17,0x0E,0x1E]);const ok=(sr&0x12)===0x02;return mc(`SR = <code>${hx(sr)}</code>（二进制 ${bin(sr)}），“能放、而且不忙”的等待会结束吗？`,['会结束','还要等'],ok?0:1,`${hx(sr)} &amp; 0x12 = ${hx(sr&0x12)}，${ok?'等于 0x02，结束':'不等于 0x02，继续等'}。（TNF = 第 1 位 = ${(sr>>1)&1}，BSY = 第 4 位 = ${(sr>>4)&1}）`)},
+ ()=>{const sr=pick([0x02,0x03,0x06,0x07,0x12,0x16,0x17,0x0E,0x1E,0x05]);const ok=(sr&0x14)===0x04;return mc(`SR = <code>${hx(sr)}</code>（二进制 ${bin(sr)}），“收到了、而且不忙”的等待会结束吗？`,['会结束','还要等'],ok?0:1,`${hx(sr)} &amp; 0x14 = ${hx(sr&0x14)}，${ok?'等于 0x04，结束':'不等于 0x04，继续等'}。（RNE = 第 2 位 = ${(sr>>2)&1}，BSY = 第 4 位 = ${(sr>>4)&1}）`)},
+ ()=>{const t=pick([[5,0],[9,1],[24,2],[128,3],[15,4]]);const names=['读按键 HAL_CONVERT','写 LED 亮度 W_PWM_REG','写寄存器 WR_REG','频率校准 FREQ_Calibrate','睡眠 SLEEP'];return mc(`SCK 被拉高约 ${t[0]} µs，芯片认成哪条命令？`,names,t[1],'霍尔手册 7.7 节：td1 = 5 µs 读按键，td3 = 9 µs 写 PWM，td4 = 24 µs 写寄存器，td7 = 128 µs 频率校准，td11 = 15 µs 睡眠。')},
+ ()=>{const v=ri(1000,16000),w=word(v);return num(`收到 <code>${hx(w>>8)} ${hx(w&0xFF)}</code>，读数是多少？`,v,`(${hx(w>>8)} &amp; 0x3F) × 256 + ${hx(w&0xFF)} = ${(w>>8)&0x3F} × 256 + ${w&0xFF} = <b>${v}</b>`)},
+ ()=>{const v=ri(0,16383);const ev=[0,2,4,6,8,10,12].map(i=>(v>>i)&1);const c=ev.reduce((a,b)=>a^b,0);return num(`读数 ${v}（二进制 ${v.toString(2).padStart(14,'0')}），CRC0（偶数位 D0、D2…D12 异或）是几？`,c,`偶数位从 D0 起：${ev.join(' ')}，1 的个数 ${ev.filter(x=>x).length}，${c?'奇数个 → 1':'偶数个 → 0'}。`)},
+ ()=>{const n=ri(1,8);return num(`链上串了 ${n} 颗芯片，要打几下时钟才能读出全部？`,16*n,`每颗 16 位：${n} × 16 = <b>${16*n}</b> 下（${2*n} 个字节）`)},
+ ()=>{const n=pick([16,32,48,64]),f=pick([1,2,4,8]);return num(`SPI 时钟 ${f} MHz，搬 ${n} 位要多少 µs（不算间隙）？`,n/f,`每位 1/${f} µs，${n} ÷ ${f} = <b>${n/f}</b> µs`)},
+ ()=>{const i=ri(0,3);return mc(`<code>hall_spi_rx[${i}]</code> 是哪颗芯片的哪个字节？`,['右键高字节','右键低字节','左键高字节','左键低字节'],i,'右键芯片在出口那头，先出来：[0] 右高、[1] 右低、[2] 左高、[3] 左低。')},
+ ()=>{const f=pick([0,3]);return mc(`<code>LPC_IOCON-&gt;PIO1_15</code> 的最低 3 位写 ${f}，这只脚是什么功能？`,['普通引脚 PIO1_15','SPI1 的时钟 SCK1','CT16B0_MAT2'],f===0?0:1,'芯片手册表 115：0 = PIO1_15，1 = DCD，2 = CT16B0_MAT2，3 = SCK1。')},
+ ()=>pick([
+  ()=>mc('为什么下命令时要把 PIO1_15 切成普通引脚？',['SPI1 打的时钟高电平太短，拉不出 5 µs','为了省电','因为 SCK1 坏了'],0,'SPI1 只会打又短又快的时钟；命令要“高 5 µs”，只能自己用普通引脚拉。'),
+  ()=>mc('为什么下命令期间要关 USB 中断？',['怕中断插进来把高电平拉长，芯片认错命令','USB 会烧坏芯片','为了让 USB 更快'],0,'高电平要 5 µs ± 5%，被打断就可能变成 9 µs（写 PWM）甚至更长。'),
+  ()=>mc('读数据时，hall_spi_tx 里的字节有什么用？',['只是陪跑：SPI 发一个才能收一个，芯片不理会这些位','告诉芯片读哪个键','校验用'],0,'后面没有命令，芯片不执行；下次下命令时格子被新读数覆盖。'),
+  ()=>mc('SSP_Send_Receive 里的 while(length--) 循环转几圈？（length = 4）',['4 圈','3 圈','5 圈'],0,'4、3、2、1 时进入，变成 0 时停。'),
+  ()=>mc('写 LPC_SSP1->DR 会发生什么？',['SPI1 打 8 下时钟：发这个字节，同时收一个字节','只发不收','只收不发'],0,'发 1 个字节 = 收 1 个字节，永远成对。'),
+  ()=>mc('没有磁场时，霍尔芯片的读数大约是多少？',['8192','0','16383'],0,'霍尔手册第 12 节。南极靠近变小，北极靠近变大。'),
+  ()=>mc('“异或”一串位，结果是 1 表示什么？',['里面 1 的个数是奇数','里面 1 的个数是偶数','全部是 1'],0,'相同得 0、不同得 1；一串异或下来就是数 1 的个数的奇偶。'),
+  ()=>mc('DELAY_OUT 为什么要减 1？',['DrvGPIOOutput() 自己就要花约 1 µs','定时器慢 1 µs','手册要求'],0,'button.h:13 的注释。'),
+  ()=>mc('CT16B1_DelayUs() 等待的时候，CPU 在干什么？',['原地一直查计数，不干别的','去做别的任务','睡觉'],0,'这叫“忙等”。'),
+ ])()];
+let n=0,ok=0,cur2=null,done=false;const box=$('px');
+box.innerHTML='<div class="pxh"><b>练习</b><span class="pxs" id="pxs"></span></div><div class="pxq" id="pxq"></div><div class="row" id="pxa"></div><div class="fb" id="pxfb"></div><div class="row"><button type="button" id="pxShow">看答案</button><button type="button" class="pxNext" id="pxNext">下一题 →</button></div>';
+const upd=()=>$('pxs').textContent=`已做 ${n} 题，对 ${ok} 题`;
+function judge(r){if(!done){n++;if(r)ok++}done=true;$('pxfb').className='fb '+(r?'ok':'no');$('pxfb').innerHTML=r?'✓ 对。'+cur2.sol:'✗ 不对，再想想，或者点“看答案”。';upd()}
+function next(){cur2=pick(GEN)();done=false;$('pxq').innerHTML=cur2.q;$('pxfb').className='fb';$('pxfb').innerHTML='';const a=$('pxa');a.innerHTML='';
+ if(cur2.type==='mc'){cur2.opts.forEach((o,j)=>{const b=document.createElement('button');b.type='button';b.innerHTML=o;b.onclick=()=>{a.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');judge(j===cur2.ans)};a.appendChild(b)})}
+ else{const inp=document.createElement('input');inp.type='text';inp.inputMode='decimal';inp.setAttribute('aria-label','答案');const c=document.createElement('button');c.type='button';c.textContent='检查';
+  const go=()=>{const s=inp.value.trim();if(!s)return;const v=/^0x/i.test(s)?parseInt(s,16):parseFloat(s);if(isNaN(v))return;judge(Math.abs(v-cur2.ans)<1e-9)};c.onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter'){if(done&&$('pxfb').classList.contains('ok'))next();else go()}});a.append(inp,c)}
+ upd()}
+$('pxShow').onclick=()=>{if(!done)n++;done=true;$('pxfb').className='fb no';$('pxfb').innerHTML='答案：'+(cur2.type==='mc'?cur2.opts[cur2.ans]:cur2.ans)+'<br>'+cur2.sol;upd()};
+$('pxNext').onclick=next;next();box._cur=()=>cur2;
+})();
+</script>
