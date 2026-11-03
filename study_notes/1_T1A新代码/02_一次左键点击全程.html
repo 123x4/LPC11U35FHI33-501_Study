@@ -224,8 +224,9 @@ button:focus-visible,input:focus-visible,a:focus-visible,summary:focus-visible{o
 <h2>6. 练习（随机出题，可以一直做）</h2>
 <div class="px" id="px"></div>
 
-<div class="warn"><b>这一课发现、要问杰哥的</b><br>
-<code>inc/button.h:16</code> 写着 <code>USE_HALL_SENSOR 5</code>，注释是“GTRY12: 2, GTRY15: 5, GTRY16: 6”，即按 GTRY15 的时序（命令脉冲等时间）来读；而原理图上的芯片是 <b>GTRY164</b>。是不是应该用 6？还是 GTRY164 和 GTRY15 时序相同？第 3 课讲霍尔芯片时会对照芯片手册（<code>M300S/GTRY164 Magnetic Keyboard Sensor…pdf</code>）再确认。</div>
+<div class="box"><b>补充：霍尔芯片是哪颗（已和杰哥确认）</b><br>
+<code>inc/button.h:16</code> 写着 <code>USE_HALL_SENSOR 5</code>（注释：GTRY12: 2, GTRY15: 5, GTRY16: 6）。杰哥确认这块板<b>按 H5 设计</b>：H5 = 第 5 代霍尔 = <b>GTRY154</b>（手册 <code>materials/GTRY154_Magnetic_Keyboard_Sensor_and_LED_Driver_V1.1_20240719.pdf</code> 第 1 节写着 “5rd generation”）。原理图上标的 GTRY164 是第 6 代。手册第 7.7 节的时序（命令脉冲 td1 = 5 µs、写寄存器 td4 = 24 µs……）和代码里 5 号那组常数一致。<br>
+本课第 ① 站的校验规则也来自这份手册第 7.2 节：<code>CRC0 = D0^D2^…^D12</code>（偶数位异或），<code>CRC1 = D1^D3^…^D13</code>（奇数位异或）。代码里的 <code>bit_error</code> 表就是把这两个式子提前算好了，我用全部 16384 个值核对过，完全一致。</div>
 
 <div class="think"><b>💡 想法上</b>：读“全程”时容易陷进去：看到一个函数就想把它读懂，结果读了半天还没走到 USB。更好的办法是<b>先只问每一站“输入什么、输出什么”</b>，把整条线走通，再回头一站一站深挖。这和读长函数时“先画骨架”是同一个道理：先有地图，再看街道。</div>
 </div>

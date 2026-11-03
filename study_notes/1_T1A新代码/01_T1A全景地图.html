@@ -93,7 +93,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset
 <p>固件也只有三部分：<b>开机初始化一遍</b>（把每块电路设好）→ <b>一个永远在转的大循环</b>（读、算、发）→ <b>几个中断</b>（时间到了、USB 来数据了，硬件打断循环插一件急事）。后面每一课，都是在这张图上放大其中一块。</p></div>
 
 <h2>1. 这是一只什么鼠标（先看场景）</h2>
-<p>你按下左键：按键里的<b>磁铁</b>靠近<b>霍尔芯片</b>（GTRY164，感应磁场强弱的芯片），芯片读数变化 → MCU 每 1 ms 读一次，算出“按到了几成” → 判定为“按下” → 立刻让左键下面的<b>线圈</b>通电震一下，手指感觉到“咔”的一下（这就是“触觉”） → 同时把“左键按下”通过 USB 发给电脑。</p>
+<p>你按下左键：按键里的<b>磁铁</b>靠近<b>霍尔芯片</b>（感应磁场强弱的芯片，按 H5 即 GTRY154 设计），芯片读数变化 → MCU 每 1 ms 读一次，算出“按到了几成” → 判定为“按下” → 立刻让左键下面的<b>线圈</b>通电震一下，手指感觉到“咔”的一下（这就是“触觉”） → 同时把“左键按下”通过 USB 发给电脑。</p>
 <p>所以和普通鼠标比，它的左右键<b>没有机械开关</b>，“咔哒”的手感是线圈震出来的。其余部分（侧键、中键、DPI 键、光学传感器、滚轮、USB）和普通鼠标一样。</p>
 
 <h2>2. 板子上有什么（点方块看细节）</h2>
@@ -187,7 +187,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset
 <ol class="route">
 <li style="--c:var(--per)" class="now">全景地图（本页）</li>
 <li style="--c:var(--pc)"><a href="https://claude.ai/artifact/3pr9UvqxTKk3jFx1QUzg71">一次左键点击全程</a>：只走主线，每站讲“它干什么”，不深挖</li>
-<li style="--c:var(--sw)">霍尔芯片 GTRY164 和 SPI1：两颗芯片怎么串起来、怎么读、开机怎么配置</li>
+<li style="--c:var(--sw)">霍尔芯片（H5 / GTRY154）和 SPI1：两颗芯片怎么串起来、怎么读、开机怎么配置</li>
 <li style="--c:var(--sw)">按键算法：读数 → 段位 → 按下 / 松开（ADC 串讲第 5~10 关的讲法，换成霍尔的数）</li>
 <li style="--c:var(--pc)">PWM：CT32B1 怎么在一只脚上输出 200 kHz、占空比可调的方波</li>
 <li style="--c:var(--pc)">波形：CT32B0 中断每 20 µs 改一次占空比，100 个点怎么在任意时长里放完</li>
@@ -217,8 +217,8 @@ const B={
   d:[['作用','把按键、位移发给电脑；GUI 软件也通过它读写参数'],['MCU 脚','USB_DM（13）、USB_DP（14）专用脚；PIO0_6 USB_Connect；PIO0_3 USB_VBUS（经 10 kΩ 接 VDD_MCU）'],['代码','⬜ 厂商协议栈 usbhw.c / usbcore.c / usbdesc.c / hiduser.c；🟩 device.c Device_Report()、my_protocol_mouse.c（GUI 协议）']]},
  keys:{n:'普通按键',c:'muted',x:20,y:350,w:220,h:90,sub:'中键 · 前后侧键 · DPI',
   d:[['作用','4 个机械按键：中键 MB、侧键 L_FORWARD / L_BACK、DPI'],['电路','每个键都用 47 kΩ 电阻上拉到 VDD_MCU，按下时接地 → <b>没按读 1，按下读 0</b>；串 100 Ω 和 2.2 nF 滤抖、TVS 防静电。DPI 键还接到充电芯片的 /QON'],['MCU 脚','PIO0_7 中键、PIO0_11 前侧、PIO0_12 后侧、PIO0_23 DPI'],['代码','app/button.c：Button_GetState()、Button_Scan()；GPIO.c InitGPIO() 设成输入']]},
- hall:{n:'霍尔左右键',c:'sw',x:640,y:20,w:240,h:100,sub:'GTRY164 × 2，菊花链',
-  d:[['作用','左右键下面各一颗霍尔芯片 GTRY164，测磁铁离它多近 → 按了多深'],['电路','两颗串成一条链（菊花链）：MCU 的 MOSI → 左键芯片 SDI；左键 SDO → 右键 SDI；右键 SDO → MCU 的 MISO；时钟线两颗共用。电源：Hall_PWR_EN 拉高 → 三极管 Q3 导通 → MOS 管打开 → 两颗芯片通电'],['MCU 脚','SPI1：PIO0_21 MOSI、PIO0_22 MISO、PIO1_15 SCK；PIO0_16 Hall_PWR_EN'],['代码','SPI.c InitSPI1Master()；button.c HallSensor_INIT()、hall_get_sample()、LR_GetState()；my_misc.c 按键算法']]},
+ hall:{n:'霍尔左右键',c:'sw',x:640,y:20,w:240,h:100,sub:'H5（GTRY154）× 2，菊花链',
+  d:[['作用','左右键下面各一颗霍尔芯片，测磁铁离它多近 → 按了多深。原理图上标的是 GTRY164，杰哥确认按 <b>H5</b> 设计，即第 5 代的 GTRY154（手册 materials/GTRY154_…pdf）；代码 USE_HALL_SENSOR = 5 与此一致'],['电路','两颗串成一条链（菊花链）：MCU 的 MOSI → 左键芯片 SDI；左键 SDO → 右键 SDI；右键 SDO → MCU 的 MISO；时钟线两颗共用。电源：Hall_PWR_EN 拉高 → 三极管 Q3 导通 → MOS 管打开 → 两颗芯片通电'],['MCU 脚','SPI1：PIO0_21 MOSI、PIO0_22 MISO、PIO1_15 SCK；PIO0_16 Hall_PWR_EN'],['代码','SPI.c InitSPI1Master()；button.c HallSensor_INIT()、hall_get_sample()、LR_GetState()；my_misc.c 按键算法']]},
  coil:{n:'线圈驱动',c:'pc',x:660,y:180,w:220,h:100,sub:'左右各一个线圈',
   d:[['作用','判定按下 / 松开时让线圈通电一下，手指感觉到“咔”'],['电路','H_VDD（7 V）→ 线圈 → MOS 管 MS3416K → 地。MCU 的 PWM 脚为高 → MOS 管导通 → 线圈通电；旁边的二极管 DS32W 在断电时给线圈电流一条回路（续流），保护 MOS 管'],['MCU 脚','PIO0_13 PWM1（左线圈，定时器 CT32B1 的 MAT0）、PIO0_14 PWM2（右线圈，MAT1）'],['代码','my_pwm.c（200 kHz PWM）、my_waveform.c（每 20 µs 改力度）、my_electromagnet.c（什么时候震、震多久）']]},
  sen:{n:'光学传感器',c:'hw',x:660,y:350,w:220,h:90,sub:'PAW3950',

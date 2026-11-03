@@ -23,8 +23,8 @@
 ├── Led_Effect_Gruop_Code/ 灯效和产线测试（公司老代码，部分编进了工程）
 ├── List/  output/         编译产物（map、hex、axf），保留下来方便查
 ├── study_notes/           学习资料（讲解网页的源文件、早期讲义、工具）
-├── materials/             芯片手册（LPC11U3x 用户手册、数据手册）、LPCOpen 例程
-└── M300S/                 公司老项目资料、GTRY164 霍尔芯片手册
+├── materials/             T1A 原理图、霍尔芯片 GTRY154 手册和 H5 参考代码、PAW3950 手册、MCU 手册、LPCOpen 例程
+└── M300S/                 公司老项目资料
 ```
 
 ## T1A 板主要硬件
