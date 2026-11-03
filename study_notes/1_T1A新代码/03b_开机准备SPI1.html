@@ -88,11 +88,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <p class="lede">第 3 课（上）讲了“每 1 ms 怎么用 SPI1 读芯片”。用之前，SPI1 得先被准备好：开机时 <code>Device_Init()</code> 调一次 <code>InitSPI1Master()</code>（device.c:441），一共 12 行有效代码。这一课一行一行讲：每行改了哪个寄存器的哪几位、改完 SPI1 处于什么状态。霍尔芯片本身的开机准备（上电、校准、写寄存器）在下一课 ②。</p>
 
 <div class="box" style="border-color:var(--gold)"><b>这一课为什么这样安排（根据你前面的提问）</b>
-<p>你前面问的“tx 发出去后怎么进来东西”“是不是芯片拉低 SCLK”“切回 SCK1 就打时钟了吗”“写 DR 就启动转换吗”“& 0x3F、高低位、校验看不懂”，说明两件事最需要先补：</p>
-<ol style="margin:.2rem 0;padding-left:1.4em">
-<li><b>分清谁在做事、做的是“准备”还是“动作”</b>：所以下面先给“角色表”；逐行讲解时，每行都用一排“状态灯”告诉你：这一行只是把某样东西准备好了，还是 SPI1 已经开始动作。</li>
-<li><b>位运算</b>：这一课全是 <code>|=</code>、<code>&amp;= ~</code>、<code>&lt;&lt;</code>，所以第 2 节先用一个可以自己试的小工具把它们讲透，后面每一行都给“改之前 / 改之后”的二进制对比。</li>
-</ol>
+<p>你前面问的“tx 发出去后怎么进来东西”“是不是芯片拉低 SCLK”“切回 SCK1 就打时钟了吗”“写 DR 就启动转换吗”，说明最需要先补的是：<b>分清谁在做事、做的是“准备”还是“动作”</b>。所以下面先给“角色表”；逐行讲解时，每行都给出寄存器改之前 / 改之后的位，并用一排“状态灯”告诉你：这一行只是把某样东西准备好了，还是 SPI1 已经开始动作。</p>
 </div>
 
 <div class="box"><b>🧭 本质</b>：芯片刚上电时，为了省电和安全，SPI1 这块电路是“<b>被按住复位、没有时钟、引脚没接上、规则没定、总开关关着</b>”的。软件要做的就是<b>按顺序把这几样一件件准备好</b>，最后打开总开关。准备好以后它仍然<b>不动</b>，安安静静停在空闲状态（SCK 保持低），等软件往 <code>DR</code> 写字节时才开始打时钟。</div>
@@ -108,35 +104,11 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <tr><td><b>霍尔芯片</b></td><td>外部芯片</td><td>这一课<b>不参与</b>：SPI1 准备好后不会自己打时钟，芯片什么也收不到</td></tr>
 </tbody></table></div>
 
-<h2>2. 先导：寄存器里的位运算（自己试）</h2>
-<p>一个寄存器就是一排开关（32 位，每位 0 或 1）。代码改寄存器只有下面几种写法，<b>一定要分清</b>：</p>
-<div class="scroll"><table>
-<thead><tr><th>写法</th><th>白话</th><th>效果</th></tr></thead>
-<tbody>
-<tr><td><code>(1 &lt;&lt; n)</code></td><td>做一个“只有第 n 位是 1”的数</td><td><code>1 &lt;&lt; 2</code> = <code>0000 0100</code> = 4</td></tr>
-<tr><td><code>REG |= X</code></td><td><b>把 X 里是 1 的那些位，在 REG 里置成 1</b>；其他位不动</td><td>打开某几个开关，不碰别的</td></tr>
-<tr><td><code>REG &amp;= ~X</code></td><td><code>~X</code> 是把 X 每位取反；再“与”上去：<b>把 X 里是 1 的那些位，在 REG 里清成 0</b>；其他位不动</td><td>关掉某几个开关，不碰别的</td></tr>
-<tr><td><code>REG = X</code></td><td><b>整个 REG 换成 X</b>，所有位都被改</td><td>一次设好全部开关</td></tr>
-</tbody></table></div>
-<div class="tool"><b>位运算小工具</b>：选一个例子，或自己输入，看每一位怎么变（红色 = 变了的位）。
-<div class="row"><label>REG 原来 = <input type="text" id="tA" value="0x90" size="7"></label>
-<select id="tOp" aria-label="运算"><option value="or">REG |= X</option><option value="andn">REG &amp;= ~X</option><option value="set">REG = X</option></select>
-<label>X = <input type="text" id="tX" value="0x07" size="7"></label></div>
-<div class="row"><span class="note">例子：</span>
-<button type="button" data-ex="0x90,andn,0x07">IOCON 先清 FUNC：&amp;= ~0x07</button>
-<button type="button" data-ex="0x90,or,0x02">再设 FUNC = 2：|= 0x02</button>
-<button type="button" data-ex="0x00,or,0x04">PRESETCTRL |= (1&lt;&lt;2)</button>
-<button type="button" data-ex="0x00,or,0x02">CR1 |= SSE（1&lt;&lt;1）</button></div>
-<div id="tOut"></div></div>
-<div class="qz" data-ans="0x92" data-hex="1"><div class="qt">你来算：IOCON 原来是 <code>0x90</code>，先 <code>&amp;= ~0x07</code>，再 <code>|= 0x02</code>，最后是多少？（十六进制）</div>
-<div class="qrow"><input type="text" aria-label="答案"><button type="button" class="chk">检查</button></div>
-<div class="fb" data-ok="对。0x90 = 1001 0000，最低 3 位本来就是 000，清了还是 0x90；再或上 0000 0010 → 1001 0010 = 0x92。低 3 位 FUNC = 2，其他位（上拉、第 7 位）都没动。" data-no="一步一步：0x90 的低 3 位清 0 → 还是 0x90；再把第 1 位置 1。"></div></div>
-
-<h2>3. 全貌图：一条时钟链 + 一个总开关</h2>
-<p>SPI1 打出来的 SCK 时钟，是从 48 MHz 的系统时钟一级一级“分”出来的。下面这张图里每个方框都是一个寄存器设出来的。<b>第 4 节逐行走的时候，这张图会跟着一格一格亮起来。</b></p>
+<h2>2. 全貌图：一条时钟链 + 一个总开关</h2>
+<p>SPI1 打出来的 SCK 时钟，是从 48 MHz 的系统时钟一级一级“分”出来的。下面这张图里每个方框都是一个寄存器设出来的。<b>第 3 节逐行走的时候，这张图会跟着一格一格亮起来。</b></p>
 <div class="scroll"><svg class="fig" id="chain" viewBox="0 0 900 250" role="img" aria-label="SPI1 时钟链和开关" style="min-width:720px"></svg></div>
 
-<h2>4. 逐行走一遍（src/SPI.c:204~248，T1A 分支）</h2>
+<h2>3. 逐行走一遍（src/SPI.c:204~248，T1A 分支）</h2>
 <p>点“下一步”。每一步给出：这一行代码、白话、<b>改了哪个寄存器的哪几位</b>（二进制前后对比）、出处，以及下面一排“状态灯”：<b>哪一样准备好了</b>，以及 SPI1 是不是已经能用。</p>
 <div class="stp">
 <div class="btns"><button type="button" id="sP">上一步</button><button type="button" id="sN">下一步</button><button type="button" id="sR">重来</button><span class="note" id="sC"></span></div>
@@ -147,7 +119,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <div class="log" id="sSt"></div>
 </div>
 
-<h2>5. 重点：<code>CR0 = 0x0287</code> 和速度怎么算</h2>
+<h2>4. 重点：<code>CR0 = 0x0287</code> 和速度怎么算</h2>
 <p><code>CR0</code> 是 SPI1 的“规则”寄存器（芯片手册表 260）。<code>0x0287</code> 拆成二进制，每几位管一件事：</p>
 <div id="cr0"></div>
 <div class="scroll"><table>
@@ -172,7 +144,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <div class="qrow"><input type="text" inputmode="decimal" aria-label="答案"><button type="button" class="chk">检查</button></div>
 <div class="fb" data-ok="对。48 ÷ (4 × 3) = 4 MHz，仍在 1 ~ 18 MHz 内。" data-no="代公式：48 ÷ (CPSR × (SCR + 1))。"></div></div>
 
-<h2>6. 常见疑问</h2>
+<h2>5. 常见疑问</h2>
 <div class="box"><b>Q1：为什么一定要按这个顺序？能不能先写 CR0 再开时钟？</b>
 <p>不能。<code>SYSAHBCLKCTRL</code> 第 18 位是 SPI1 <b>寄存器</b>的时钟：没开时，SPI1 的寄存器（CR0、CPSR、CR1、DR）不能正常读写，写进去的值不生效。<code>PRESETCTRL</code> 第 2 位为 0 时 SPI1 被按在复位里，写进去也会被复位清掉。所以顺序是：<b>放开复位、开寄存器时钟 → 再设规则 → 最后开总开关</b>。手册表 261 对 SSE 位也写明：“软件应该先把其他 SSP/SPI 寄存器设好，<b>再</b>置这一位”。（前两行谁先谁后，手册没有硬性要求，本项目先放复位、再开时钟。）</p></div>
 <div class="box"><b>Q2：为什么要连读 8 次 DR？</b>
@@ -183,7 +155,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <div class="box"><b>Q4：打开总开关以后，SPI1 马上开始打时钟吗？</b>
 <p><b>不会</b>。<code>CR1 |= SSE</code> 只是让 SPI1 “上岗待命”：SCK 停在低（CPOL = 0），MOSI、MISO 都不动。<b>只有软件往 DR 写字节，它才打 8 下时钟</b>。这和第 3 课上“切回 SCK1 不等于开始打时钟”是同一个道理：<b>设置 ≠ 动作</b>。</p></div>
 
-<h2>7. 本课所有寄存器和变量</h2>
+<h2>6. 本课所有寄存器和变量</h2>
 <div class="scroll"><table>
 <thead><tr><th>名字</th><th>手册</th><th>写成</th><th>作用</th></tr></thead>
 <tbody>
@@ -201,7 +173,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <tr><td><code>DUMMY</code></td><td>局部变量</td><td>—</td><td>装读出来的、不要的字节</td></tr>
 </tbody></table></div>
 
-<h2>8. 练习（随机出题，可以一直做）</h2>
+<h2>7. 练习（随机出题，可以一直做）</h2>
 <div class="px" id="px"></div>
 
 <div class="think"><b>💡 想法上</b>：这一课的 12 行，其实就是第 3 课（基础课）讲过的“外设七步”：<b>通电 → 时钟 → 解锁（放开复位）→ 引脚 → 配置 → 中断 → 使用</b>（这里没用中断，“使用”在第 3 课上）。以后读任何外设的初始化函数，都先按这七步把每一行归类：这一行属于哪一步？漏了哪一步？顺序对不对？这样读一个陌生的初始化函数也不会乱。</div>
@@ -216,12 +188,6 @@ function strip(bitsN,before,after,names,col){/* MSB first */let h=`<div class="b
  for(let i=bitsN-1;i>=0;i--)h+=`<span class="k">${names&&names[i]!=null?names[i]:i}</span>`;
  const row=(lab,v,cmp)=>{let r=`<span class="k">${lab}</span>`;for(let i=bitsN-1;i>=0;i--){const b=(v>>i)&1,c=cmp!=null&&(((v^cmp)>>i)&1);r+=`<span class="${c?'ch':''}">${b}</span>`}return r};
  h+=row('前',before)+row('后',after,before)+'</div>';return h}
-/* ---- bit tool ---- */
-function tool(){const A=pv($('tA').value),X=pv($('tX').value),op=$('tOp').value;if(isNaN(A)||isNaN(X)){$('tOut').textContent='请输入数字（十进制或 0x 开头的十六进制）';return}
- let R,desc;if(op==='or'){R=A|X;desc=`REG |= ${hx(X)}：X 里是 1 的位在 REG 里置 1`}else if(op==='andn'){R=A&~X;desc=`~${hx(X)} = 把 X 每位取反；REG &= ~X：X 里是 1 的位在 REG 里清 0`}else{R=X;desc='REG = X：整个换掉'}
- R&=0xFF;$('tOut').innerHTML=`<p class="note">${desc}（只显示低 8 位）</p>`+strip(8,A&0xFF,R)+`<div class="log">原来 ${hx(A)} = ${(A&0xFF).toString(2).padStart(8,'0')}\n结果 ${hx(R)} = ${R.toString(2).padStart(8,'0')}</div>`}
-['tA','tX'].forEach(i=>$(i).oninput=tool);$('tOp').onchange=tool;
-document.querySelectorAll('.tool button[data-ex]').forEach(b=>b.onclick=()=>{const [a,o,x]=b.dataset.ex.split(',');$('tA').value=a;$('tOp').value=o;$('tX').value=x;tool()});tool();
 /* ---- chain figure ---- */
 const CH={};(function(){const s=$('chain');const box=(k,x,y,w,t,sub)=>{const g=el(s,'g',{});const r=el(g,'rect',{x,y,width:w,height:52,rx:8,fill:'var(--panel)',stroke:'var(--line)','stroke-width':2});el(g,'text',{x:x+w/2,y:y+22,'text-anchor':'middle','font-size':12.5,'font-weight':600,fill:'var(--fg)'},t);el(g,'text',{x:x+w/2,y:y+40,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)','font-family':'var(--font-m)'},sub);CH[k]=r};
  const ar=(x1,x2,y,lab)=>{el(s,'line',{x1,x2,y1:y,y2:y,stroke:'var(--muted)','stroke-width':1.8});el(s,'path',{d:`M${x2-7},${y-5} L${x2},${y} L${x2-7},${y+5}`,fill:'none',stroke:'var(--muted)','stroke-width':1.8});if(lab)el(s,'text',{x:(x1+x2)/2,y:y-6,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},lab)};
@@ -229,7 +195,7 @@ const CH={};(function(){const s=$('chain');const box=(k,x,y,w,t,sub)=>{const g=e
  box('sys',10,36,120,'系统时钟','48 MHz');ar(130,160,62);box('div',160,36,150,'SSP1CLKDIV ÷ 1','→ SSP1_PCLK 48 MHz');ar(310,340,62);box('cpsr',340,36,130,'CPSR ÷ 8','→ 6 MHz');ar(470,500,62);box('scr',500,36,150,'CR0.SCR + 1 = ÷ 3','→ 2 MHz');ar(650,680,62,'SCK1');box('pin',680,36,210,'引脚 PIO1_15 = SCK1','IOCON FUNC = 3');
  el(s,'text',{x:10,y:126,'font-size':12,'font-weight':600,fill:'var(--fg)'},'开关和规则');
  box('rst',10,140,165,'PRESETCTRL 第 2 位','放开复位 = 1');box('clk',185,140,175,'SYSAHBCLKCTRL 第 18 位','寄存器时钟 = 1');box('io',370,140,170,'IOCON：MOSI1 / MISO1','PIO0_21 = 2，PIO0_22 = 3');box('fmt',550,140,150,'CR0 格式','8 位 · SPI · CPOL0 CPHA1');box('en',710,140,180,'CR1.SSE 总开关','= 1：上岗待命');
- el(s,'text',{x:450,y:232,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'方框变绿 = 这一样已经准备好（跟着第 4 节的“下一步”变化）');})();
+ el(s,'text',{x:450,y:232,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'方框变绿 = 这一样已经准备好（跟着第 3 节的“下一步”变化）');})();
 function lightChain(on){for(const k in CH){CH[k].setAttribute('stroke',on.has(k)?'var(--good)':'var(--line)');CH[k].setAttribute('fill',on.has(k)?'color-mix(in srgb,var(--good) 14%,var(--panel))':'var(--panel)')}}
 /* ---- stepper ---- */
 const LAMPS=[['rst','复位已放开'],['clk','寄存器有时钟'],['pclk','工作时钟 48 MHz'],['mosi','MOSI 脚接好'],['miso','MISO 脚接好'],['sck','SCK 脚接好'],['fmt','格式定好（8 位 SPI）'],['spd','速度定好（2 MHz）'],['fifo','接收 FIFO 清空'],['en','总开关打开']];
@@ -241,7 +207,7 @@ const S=[
  {cl:'LPC_IOCON->PIO0_21 &= ~0x07;　LPC_IOCON->PIO0_21 |= 0x02;　（SPI.c:216~217）',who:'软件 → IOCON',t:'先把低 3 位 FUNC 清 0，再设成 2：<b>PIO0_21 这只脚接到 SPI1 的 MOSI1</b>（表 97：0 = 普通引脚，1 = CT16B1_MAT0，2 = MOSI1）。只改低 3 位，上拉等其他设置不动。',on:['rst','clk','pclk','mosi'],reg:[3,0,2,{2:'F2',1:'F1',0:'F0'},'sw'],chain:['sys','rst','clk','div']},
  {cl:'LPC_IOCON->PIO0_22 &= ~0x07;　LPC_IOCON->PIO0_22 |= 0x03;　（SPI.c:221~222）',who:'软件 → IOCON',t:'FUNC = 3：<b>PIO0_22 接到 MISO1</b>（表 98：0 = 普通引脚，1 = AD6，2 = CT16B1_MAT1，3 = MISO1）。',on:['rst','clk','pclk','mosi','miso'],reg:[3,0,3,{2:'F2',1:'F1',0:'F0'},'sw'],chain:['sys','rst','clk','div','io']},
  {cl:'LPC_IOCON->PIO1_15 &= ~0x07;　LPC_IOCON->PIO1_15 |= 0x03;　（SPI.c:227~228）',who:'软件 → IOCON',t:'FUNC = 3：<b>PIO1_15 接到 SCK1</b>（表 115）。这就是第 3 课上 <code>Hall_CLK_Command_SET()</code> 每次临时改成 0、用完又改回 3 的那只脚。',on:['rst','clk','pclk','mosi','miso','sck'],reg:[3,0,3,{2:'F2',1:'F1',0:'F0'},'sw'],chain:['sys','rst','clk','div','io','pin']},
- {cl:'LPC_SSP1->CR0 = 0x0287;　（SPI.c:238）',who:'软件 → SPI1',t:'整个 CR0 换成 0x0287：<b>8 位一帧、SPI 格式、空闲低（CPOL 0）、下降沿采样（CPHA 1）、SCR = 2</b>（第 5 节详细拆）。用的是“=”，所有位都被设定。',on:['rst','clk','pclk','mosi','miso','sck','fmt'],reg:[16,0,0x0287,{15:'S7',14:'S6',13:'S5',12:'S4',11:'S3',10:'S2',9:'S1',8:'S0',7:'PHA',6:'POL',5:'F1',4:'F0',3:'D3',2:'D2',1:'D1',0:'D0'},'pc'],note:'S = SCR，PHA = CPHA，POL = CPOL，F = FRF，D = DSS。',chain:['sys','rst','clk','div','io','pin','scr','fmt']},
+ {cl:'LPC_SSP1->CR0 = 0x0287;　（SPI.c:238）',who:'软件 → SPI1',t:'整个 CR0 换成 0x0287：<b>8 位一帧、SPI 格式、空闲低（CPOL 0）、下降沿采样（CPHA 1）、SCR = 2</b>（第 4 节详细拆）。用的是“=”，所有位都被设定。',on:['rst','clk','pclk','mosi','miso','sck','fmt'],reg:[16,0,0x0287,{15:'S7',14:'S6',13:'S5',12:'S4',11:'S3',10:'S2',9:'S1',8:'S0',7:'PHA',6:'POL',5:'F1',4:'F0',3:'D3',2:'D2',1:'D1',0:'D0'},'pc'],note:'S = SCR，PHA = CPHA，POL = CPOL，F = FRF，D = DSS。',chain:['sys','rst','clk','div','io','pin','scr','fmt']},
  {cl:'LPC_SSP1->CPSR = 0x08;　（SPI.c:239）',who:'软件 → SPI1',t:'预分频 = 8。和 CR0 的 SCR 一起决定速度：48 ÷ (8 × 3) = <b>2 MHz</b>（表 264：只能是 2~254 的偶数）。',on:['rst','clk','pclk','mosi','miso','sck','fmt','spd'],reg:[8,0,8,null,'pc'],chain:['sys','rst','clk','div','io','pin','scr','fmt','cpsr']},
  {cl:'for(I = 0; I < 8; I++)  DUMMY = LPC_SSP1->DR;　（SPI.c:243~246）',who:'软件 → SPI1',t:'连读 8 次 DR：<b>把接收 FIFO 里可能剩的旧字节清掉</b>（FIFO 能排 8 个）。刚复位时本来就空，这是保险写法。读出来的值丢在 DUMMY 里不用。',on:['rst','clk','pclk','mosi','miso','sck','fmt','spd','fifo'],reg:null,chain:['sys','rst','clk','div','io','pin','scr','fmt','cpsr']},
  {cl:'LPC_SSP1->CR1 |= SSPCR1_SSE;　（SPI.c:247）',who:'软件 → SPI1',t:'SSPCR1_SSE = (1&lt;&lt;1)（SPI.h:43）。CR1 第 1 位 SSE 置 1：<b>打开总开关</b>。第 2 位 MS 保持 0 = 主机（表 261）。',on:['rst','clk','pclk','mosi','miso','sck','fmt','spd','fifo','en'],reg:[4,0,2,{3:'SOD',2:'MS',1:'SSE',0:'LBM'},'pc'],chain:['sys','rst','clk','div','io','pin','scr','fmt','cpsr','en']},
@@ -275,10 +241,6 @@ function mc(q,opts,ans,sol){const idx=opts.map((_,i)=>i);for(let i=idx.length-1;
 const num=(q,ans,sol,hex)=>({q,type:hex?'hex':'num',ans,sol});
 const b8=v=>v.toString(2).padStart(8,'0').replace(/(\d{4})/,'$1 ');
 const GEN=[
- ()=>{const n=ri(0,7);return num(`<code>(1 &lt;&lt; ${n})</code> 等于几（十进制）？`,1<<n,`1 往左挪 ${n} 位 = 二进制 ${b8(1<<n)} = <b>${1<<n}</b>`)},
- ()=>{const a=ri(0,255),n=ri(0,7);const r=a|(1<<n);return num(`REG = <code>${hx(a)}</code>，执行 <code>REG |= (1&lt;&lt;${n})</code> 后是多少？（十六进制）`,r,`${b8(a)} 的第 ${n} 位置 1 → ${b8(r)} = <b>${hx(r)}</b>`,true)},
- ()=>{const a=ri(0,255),n=ri(0,7);const r=a&~(1<<n)&0xFF;return num(`REG = <code>${hx(a)}</code>，执行 <code>REG &amp;= ~(1&lt;&lt;${n})</code> 后是多少？（十六进制）`,r,`${b8(a)} 的第 ${n} 位清 0 → ${b8(r)} = <b>${hx(r)}</b>`,true)},
- ()=>{const a=pick([0x90,0x91,0x93,0x88,0x8A,0x10,0x30]),f=ri(0,3);const r=((a&~7)|f)&0xFF;return num(`IOCON = <code>${hx(a)}</code>，先 <code>&amp;= ~0x07</code> 再 <code>|= ${hx(f)}</code>，结果？（十六进制）`,r,`低 3 位先清 0：${b8(a&~7&0xFF)}；再设成 ${f}：${b8(r)} = <b>${hx(r)}</b>`,true)},
  ()=>{const c=pick([2,4,6,8,10,12,16,24]),s=ri(0,5);const f=48/(c*(s+1));return num(`SSP1CLKDIV = 1，CPSR = ${c}，SCR = ${s}，SCK 是多少 MHz？（可以写小数）`,+f.toFixed(4),`48 ÷ (${c} × (${s} + 1)) = 48 ÷ ${c*(s+1)} = <b>${+f.toFixed(4)}</b> MHz${f>18?'（超过 18，芯片不行）':f<1?'（低于 1，芯片不行）':''}`)},
  ()=>{const v=pick([0x0287,0x0207,0x00C7,0x0147,0x0387,0x0047]);const dss=(v&15)+1,pol=(v>>6)&1,pha=(v>>7)&1,scr=v>>8;return mc(`CR0 = <code>${hx(v,4)}</code>，下面哪个说法对？`,[`${dss} 位一帧，CPOL = ${pol}，CPHA = ${pha}，SCR = ${scr}`,`${dss} 位一帧，CPOL = ${1-pol}，CPHA = ${pha}，SCR = ${scr}`,`${dss} 位一帧，CPOL = ${pol}，CPHA = ${1-pha}，SCR = ${scr+1}`],0,`低 4 位 DSS = ${v&15} → ${dss} 位；第 6 位 CPOL = ${pol}；第 7 位 CPHA = ${pha}；高 8 位 SCR = ${scr}。`)},
  ()=>pick([
@@ -292,7 +254,6 @@ const GEN=[
   ()=>mc('CPOL = 0 意味着什么？',['空闲时 SCK 是低','空闲时 SCK 是高','下降沿采样'],0,'CPHA = 1 才是“第二个沿（下降沿）采样”。'),
   ()=>mc('代码注释说 SPI1 是 8 MHz，实际是？',['2 MHz','8 MHz','6 MHz'],0,'48 ÷ (8 × 3) = 2。注释把 CPSR 当成了 2。'),
   ()=>mc('PIO0_22 的 FUNC 写 3 是什么功能？',['MISO1','MOSI1','AD6'],0,'表 98：0 PIO0_22，1 AD6，2 CT16B1_MAT1，3 MISO1。'),
-  ()=>mc('“REG = X” 和 “REG |= X” 的区别？',['= 改全部位；|= 只把 X 中为 1 的位置 1','没区别','|= 改全部位'],0,'所以改共用寄存器（SYSAHBCLKCTRL、IOCON）都用 |= 和 &= ~，不碰别人的位。'),
  ])()];
 let n=0,ok=0,cur=null,done=false;const box=$('px');
 box.innerHTML='<div class="pxh"><b>练习</b><span class="pxs" id="pxs"></span></div><div class="pxq" id="pxq"></div><div class="qrow" id="pxa"></div><div class="fb" id="pxfb"></div><div class="qrow"><button type="button" id="pxShow">看答案</button><button type="button" class="pxNext" id="pxNext">下一题 →</button></div>';
