@@ -172,6 +172,24 @@ input[type=range]{width:min(420px,100%)}
 <li><b>“底部 ≤ 顶部”还防计算出错</b>：后面要算 <code>step = 2²¹ ÷ (底部 − 顶部)</code>。两者相等时是<b>除以 0</b>；顶部比底部大时，两个 uint16_t 相减会“绕回”成一个很大的数（比如 7000 − 7100 → 65436），算出来的段位全是错的。</li>
 <li><b>“差 &lt; 100”防噪声被放大</b>：0 ~ 100 段要分到“底部 − 顶部”这么宽的范围里。范围只有 50 时，temp 抖 ±15（正常噪声）就是范围的 30%，段位会跳二三十，足够误触发按下。规定至少 100，算是“范围太窄就先别算”。</li>
 </ul></div>
+<div class="box" style="border-color:var(--per)"><b>逐行讲第 316 ~ 323 行：为什么不直接写“× 255 ÷ 范围”</b>
+<p>这几行要算的就是 <code>格号 = (temp − 顶部) × 255 ÷ (底部 − 顶部)</code>。直接这么写也对，作者换了一种写法，目的是<b>少做除法</b>：这颗芯片（Cortex-M0）<b>没有硬件除法器</b>，除法要调一个软件函数一位一位地算，很慢；乘法和移位都很快。反汇编可以看到：320 行的除法编译成了调用 <code>__aeabi_idivmod</code>（软件除法函数），323 行的 × 255 被编译成“左移 8 位再减自己”（x × 256 − x），完全没有除法。</p>
+<div class="scroll"><table>
+<thead><tr><th>行</th><th>代码</th><th>干什么</th><th>例子（顶部 7083、底部 10383、temp 8363）</th></tr></thead>
+<tbody>
+<tr><td>290~292</td><td><code>static … oldBottomBaseline, oldTopBaseline, step</code></td><td><code>static</code>：函数返回后值还留着，下次调用还能用。用来记住“上次用哪两条基线算的 step”</td><td>—</td></tr>
+<tr><td>316</td><td><code>if(old底部 != 底部 || old顶部 != 顶部)</code></td><td>基线变了吗？变了才重新算 step；没变就直接用上次的 step，省掉一次除法</td><td>第一次进来 old 都是 0 → 变了</td></tr>
+<tr><td>318~319</td><td><code>old… = …</code></td><td>记下这次的基线</td><td>old 底部 = 10383，old 顶部 = 7083</td></tr>
+<tr><td>320</td><td><code>step = 2²¹ ÷ (底部 − 顶部)</code></td><td><b>唯一的一次除法</b>：先把“÷ 范围”算成一个整数倍数，乘了 2²¹（= 2097152）是为了保留精度（直接 1 ÷ 3300 取整就成 0 了）</td><td>2097152 ÷ 3300 = 635.5 → <b>635</b></td></tr>
+<tr><td>322</td><td><code>diff = temp − 顶部</code></td><td>按下去了多少</td><td>8363 − 7083 = <b>1280</b></td></tr>
+<tr><td>323</td><td><code>tmp = (diff × step × 255) &gt;&gt; 21</code></td><td>× step 相当于“÷ 范围再 × 2²¹”，最后右移 21 位（= ÷ 2²¹）把那个 2²¹ 去掉</td><td>1280 × 635 × 255 = 207264000；÷ 2097152 = 98.83 → <b>98</b><br>直接算：1280 × 255 ÷ 3300 = 98.9 → 98，一样</td></tr>
+</tbody></table></div>
+<ul>
+<li><b>为什么是 2²¹ 不是更大</b>：结果要装进 32 位（uint32_t）。diff 比范围小，所以 diff × step 小于 2²¹；再 × 255（小于 2⁸）小于 2²⁹，离 32 位上限还有余量，不会溢出。取大一点精度更高，取太大（超过 2²⁴）就会溢出。</li>
+<li><b>320 行注释 <code>// rawData != bottomBaseline</code></b>：走到这里时 temp 一定在顶部和底部<b>之间</b>（等于底部的情况 310 行已经处理成 255），所以 diff 比范围小，格号最大 254。</li>
+<li><b>tmp 是 uint8_t</b>：0 ~ 255 刚好是 nodeCaliTable 的下标范围。</li>
+</ul>
+<p><b>一个细节（我的观察）</b>：<code>oldBottomBaseline / oldTopBaseline / step</code> 是<b>两个键共用</b>的（函数里的 static 只有一份）。每 1 ms 先算右键、再算左键，两个键的基线不一样，所以每次进来都发现“变了”，<b>每次都重新做除法</b>，这个省除法的设计实际没省下来（除非两个键基线正好相同）。结果是对的，只是多花一点时间。改法是把它们做成每个键一份（数组）。已记进待确认问题（小问题）。</p></div>
 <div class="tool"><b>动手：拖动 temp，看格号和段位</b>
 <div class="row"><label>顶部基线 <input type="number" id="ndT" value="7083" style="width:6em"></label><label>底部基线 <input type="number" id="ndB" value="10383" style="width:6em"></label><label>temp：<input type="range" id="ndR" min="6800" max="10700" value="8000"></label><b id="ndV" style="font-family:var(--font-m)"></b></div>
 <div class="scroll"><svg id="ndSvg" class="fig" viewBox="0 0 1100 300" style="min-width:800px" role="img" aria-label="temp 在两条基线之间的位置和段位查表"></svg></div>
