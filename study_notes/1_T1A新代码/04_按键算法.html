@@ -180,6 +180,22 @@ input[type=range]{width:min(420px,100%)}
 </tbody></table></div>
 <p>30、20、10 是默认值（my_misc.h:52~54）。开机时 <code>Init_CfgParamToRun()</code>（my_protocol_mouse.c:98）会把 GUI 存的配置交给 <code>Hall_UpdateParam()</code>；配置里“启用”位没开就用默认值。</p>
 <div class="rule" style="--c:var(--gold)"><b>一个容易看漏的地方</b>：从完全松开（最低点 0）开始，要段位 ≥ 0 + 30 才按下。触发点 10 比 30 小，所以默认参数下<b>第一次按下实际是在段位 30</b>，触发点 10 不起作用。只有 RTP 设得比 AP 小时，AP 才会起作用。</div>
+<div class="box" style="border-color:var(--gold)"><b>AP 叫“触发点”，为什么按到 10 不算按下？</b>
+<p>因为代码里按下要<b>同时</b>满足两个条件（my_misc.c:388）：</p>
+<pre class="code">if((segment &gt;= (current_node_update_temp + press_dis))   // 条件①：比最低点高出 RTP（默认 30）
+   &amp;&amp; (segment &gt;= ap_seg))                                 // 条件②：不浅于 AP（默认 10）</pre>
+<p>两个都要过，所以真正的门槛是两者中<b>大的那个</b>：</p>
+<div class="rule" style="--c:var(--gold)"><b>按下门槛 = max(最低点 + RTP，AP)</b>　（段位到 100 时不看门槛，直接按下）</div>
+<div class="scroll"><table>
+<thead><tr><th>情况</th><th>最低点</th><th>最低点 + RTP</th><th>AP</th><th>门槛 = 大的那个</th><th>谁说了算</th></tr></thead>
+<tbody>
+<tr><td>默认参数，从完全松开开始</td><td>0</td><td>0 + 30 = 30</td><td>10</td><td><b>30</b></td><td>RTP</td></tr>
+<tr><td>把 RTP 改成 5</td><td>0</td><td>0 + 5 = 5</td><td>10</td><td><b>10</b></td><td>AP</td></tr>
+<tr><td>把 AP 改成 50</td><td>0</td><td>0 + 30 = 30</td><td>50</td><td><b>50</b></td><td>AP</td></tr>
+<tr><td>默认参数，按下后抬到 60 松开（快速触发）</td><td>60</td><td>60 + 30 = 90</td><td>10</td><td><b>90</b></td><td>RTP</td></tr>
+</tbody></table></div>
+<p>所以在这份代码里，AP 的作用是<b>“最浅不能浅于这里”的下限</b>：防止 RTP 设得很小时，手指轻轻一碰就触发。它不是一个单独的“到这里就按下”的点。你可以在下面的工具里把 RTP 改成 5、选“轻轻碰一下”，就能看到 AP 起作用。</p>
+<p class="note">很多带快速触发的键盘里，AP 是“第一次按下的深度”，之后才用 RTP / RTR。这份代码的写法不一样：第一次按下也要满足“比最低点高 RTP”。另外 349 行有一句被注释掉的松开条件 <code>(segment &lt; ap_seg)</code>，说明 AP 的用法改过。是不是有意这样设计，已记进待确认问题，问杰哥。</p></div>
 <div class="tool"><b>动手：选一种按法，一步一步看极点和状态</b>
 <div class="row"><label>按法：<select id="rtSel"><option value="0">普通点一下</option><option value="1">按下后半松再按（快速触发）</option><option value="2">轻轻碰一下（不够 30）</option><option value="3">按到底（100）</option><option value="4">按住时手指抖</option></select></label>
 <label>AP <input type="number" id="rtAP" value="10" style="width:4em"></label><label>RTP <input type="number" id="rtP" value="30" style="width:4em"></label><label>RTR <input type="number" id="rtR" value="20" style="width:4em"></label></div>
