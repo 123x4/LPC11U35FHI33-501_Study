@@ -116,6 +116,18 @@ void Ele_Init(void)                    // 416，开机时 Device_Init() 调（de
 }</pre>
 <p class="note">注意（第 1 课已列为待确认）：代码用 PIO1_19 控制升压，但原理图上 ETA1628 的 EN 接的是电源开关来的 PWR_EN，PIO1_19 没有网络。如果原理图是对的，这两行实际不起作用，升压一直开着。</p>
 
+<h3>1.1 整体接线图（照原理图 V0.1：Power ON/OFF、Haptic BOOST 7V、LB &amp; RB Haptics Driver 三块）</h3>
+<p>下面把 MCU 到两个线圈的所有元件都画出来了，位号和数值都照原理图。<b>点任意元件或连线</b>，下面会说明它是干什么的。红色粗线是线圈的大电流路径，蓝色是 MCU 的控制信号。</p>
+<div class="scroll"><svg id="wire6" class="fig" viewBox="0 0 1360 660" style="min-width:1150px" role="img" aria-label="MCU 与两个线圈的整体接线图"></svg></div>
+<div class="log" id="wire6Log">点任意元件看它的作用。</div>
+<div class="scroll"><table>
+<thead><tr><th>位号</th><th>元件</th><th>作用</th></tr></thead><tbody id="wire6Tab"></tbody></table></div>
+<div class="box"><b>看图时注意到的两点</b>
+<ul>
+<li><b>升压由电源开关直接打开，不归 MCU 管</b>：ETA1628 的 EN（4 脚）接的是 PWR_EN，也就是拨动开关 SW1 拨到“开”以后的电，再加 R34 1 MΩ 下拉。MCU 的 PIO1_19（1 脚）在原理图上没有接任何东西，所以代码里的 <code>Ele_EnableBoost()</code> / <code>Ele_DisableBoost()</code> 实际不起作用：开关一开，H_VDD 就一直是 7 V。（第 1 课待确认问题 0 ①）</li>
+<li><b>栅极前面有一个 RC</b>：PWM → R63 100 Ω → 栅极，栅极又经 C60 0.1 µF 接地（右边是 R64、C61）。时间常数 R × C = 100 Ω × 0.1 µF = <b>10 µs</b>，比 PWM 周期 5 µs 还长。按这个算，200 kHz 的方波到了栅极会被抹平成接近“占空比 × 3.3 V”的电压，MOS 管可能不是“全开 / 全关”地快速开关，而是被调到“半开”（线性区），用栅极电压直接控制线圈电流。这是按元件值推的，<i>没有上板验证</i>，可以用示波器同时看 PWM1（TP35）和 Q4 栅极确认，或问杰哥是不是有意这样设计。</li>
+</ul></div>
+
 <h2>2. 全程：按下那一刻之后的 14 毫秒</h2>
 <p>一步一步走：每一步是一个时间点，看每个“角色”在干什么。</p>
 <div class="tool">
@@ -243,6 +255,101 @@ function drawHW(){const s=$('hw');s.innerHTML='';const on=hwSt==='on',off=hwSt==
  $('hwLog').textContent={on:'PWM 输出高：MOS 管导通，7 V 加在线圈两端，电流从 H_VDD 经线圈、MOS 管流到地。线圈变成电磁铁，推动按键。',off:'PWM 刚变低：MOS 管断开。线圈像一个“有惯性的水流”，电流不能瞬间变 0，二极管给它一条回路（续流），否则线圈两端会冒出很高的电压击穿 MOS 管。',idle:'空闲：PWMC 第 0 位 = 0，PIO0_13 由 EMR 控制，固定为低，MOS 管断开，线圈没电。升压芯片一直开着，H_VDD 一直是 7 V。'}[hwSt];
  ['hwOn','hwOff','hwIdle'].forEach((id,i)=>$(id).setAttribute('aria-pressed',hwSt===['on','off','idle'][i]))}
 $('hwOn').onclick=()=>{hwSt='on';drawHW()};$('hwOff').onclick=()=>{hwSt='off';drawHW()};$('hwIdle').onclick=()=>{hwSt='idle';drawHW()};drawHW();
+/* ===== full wiring ===== */
+(function(){const s=$('wire6');if(!s)return;
+ const P={
+  SW1:['SW1','拨动开关 MS23.C01G2.PET','电源总开关。拨到“开”：Charger_OUT 接到 SYS_PWR（系统电源）和 PWR_EN；拨在中间只能充电（原理图注释）'],
+  D2:['D2 / D5','TVS PT05D5CE','SYS_PWR、PWR_EN 线上的静电 / 浪涌保护'],
+  R30:['R30','0 Ω','跳线电阻，方便调试时断开升压的输入'],
+  C29:['C29 / C30','10 µF / 0.1 µF','升压芯片输入滤波电容'],
+  L4:['L4','电感 10 µH','升压用的储能电感：芯片 SW 脚反复接地 / 断开，电感把能量“推”到更高的电压'],
+  U5:['U5','升压芯片 ETA1628','把 SYS_PWR（3.x V）升到 7 V。IN 5 脚、EN 4 脚、SW 1 脚、FB 3 脚、GND 2 脚'],
+  R34:['R34 / C63','1 MΩ 下拉 / 0.1 µF','EN 脚下拉和滤波：PWR_EN 没电时保证升压关'],
+  D10:['D10','肖特基二极管 DS32W','升压的整流二极管，只让电流从电感流向输出'],
+  R32:['R32 / R33','180 kΩ / 30 kΩ','反馈分压，决定输出电压：输出 = FB 基准 × (1 + 180 ÷ 30) = 基准 × 7（标题写 7 V；FB 基准要查 ETA1628 规格书）'],
+  C31:['C28 / C31 / C32','47 nF / 22 µF / 0.1 µF','升压输出滤波'],
+  R31:['R31','0 Ω','跳线，输出 H_VDD（TP19 测试点）'],
+  R62:['R62','10 Ω','H_VDD 到线圈电源之间的限流电阻：大电容充电、线圈突然要大电流时，不让升压芯片被拉垮'],
+  C58:['C58 / C59','470 µF 电解 / 100 µF 钽','线圈的“蓄水池”：平时经 R62 慢慢充满，线圈通电的半毫秒里主要由它们放电供电'],
+  Coil1:['Coil1（LB）','左线圈','通电变成电磁铁，把左键往上“踢”一下。两端是 TP31、TP33'],
+  Coil2:['Coil2（RB）','右线圈','同左，两端 TP32、TP34'],
+  D28:['D28 / D29','肖特基二极管 DS32W','续流二极管，并在线圈两端：MOS 管关断时，线圈电流经它绕回自己慢慢消失，防止高压击穿 MOS 管'],
+  D31:['D31 / D32','TVS PESDHC2FD7VB','MOS 管漏极到地的瞬态保护，再挡一层尖峰电压'],
+  Q4:['Q4 / Q5','N 沟道 MOS 管 MS3416K','线圈的电子开关：栅极（1 脚）电压高 → 漏极（3 脚）和源极（2 脚）之间导通 → 电流从线圈流到地'],
+  R67:['R67 / R68','0 Ω','源极到地的跳线。0 Ω 位置可以换成小电阻，用来测线圈电流'],
+  R63:['R63 / R64','100 Ω','栅极电阻：限制给栅极充放电的电流，减小振铃'],
+  C60:['C60 / C61','0.1 µF','栅极到地的电容。和 100 Ω 组成 10 µs 的低通，见下面“注意到的两点”'],
+  R65:['R65 / R66','1 MΩ','栅极下拉：MCU 复位、引脚还没配好时，把栅极拉到地，MOS 管保持关断，线圈不会乱通电'],
+  D30:['D30 / D33','TVS BTRD04Y15','PWM 线上的静电保护'],
+  MCU:['U（MCU）','LPC11U35','23 脚 PIO0_13 = CT32B1_MAT0 → PWM1（左）；24 脚 PIO0_14 = CT32B1_MAT1 → PWM2（右）；1 脚 PIO1_19 代码当 HP_EN 用，但原理图没接线'],
+  PWM1:['PWM1（TP35）','网络','MCU 23 脚 PIO0_13 → 左 MOS 栅极。200 kHz PWM，占空比按波形表变'],
+  PWM2:['PWM2（TP36）','网络','MCU 24 脚 PIO0_14 → 右 MOS 栅极'],
+  HVDD:['H_VDD','网络','升压输出 7 V，经 R62 给两个线圈'],
+  PWREN:['PWR_EN','网络','开关 SW1 打开后的电，直接接 ETA1628 的 EN：开关一开升压就工作'],
+  HPEN:['PIO1_19（HP_EN）','MCU 1 脚','代码 my_board.h:365 定义成升压使能，Ele_Init() 里先拉低再拉高；但原理图上这只脚没有网络，实际没接']
+ };
+ const show=k=>{const q=P[k];$('wire6Log').textContent=`${q[0]}　${q[1]}\n${q[2]}`};
+ const g=(k)=>{const e=el(s,'g',{style:'cursor:pointer'});e.addEventListener('click',()=>show(k));return e};
+ const box=(k,x,y,w,h,t,sub,c)=>{const e=g(k);el(e,'rect',{x,y,width:w,height:h,rx:6,style:`fill:color-mix(in srgb,var(--${c||'muted'}) 14%,var(--panel));stroke:var(--${c||'fg'});stroke-width:1.6`});el(e,'text',{x:x+w/2,y:y+h/2-(sub?3:-4),'text-anchor':'middle','font-size':12,'font-weight':700,fill:'var(--fg)'},t);if(sub)el(e,'text',{x:x+w/2,y:y+h/2+13,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},sub);return e};
+ const W=(k,pts,c,w,dash)=>{const e=g(k);el(e,'polyline',{points:pts,fill:'none',stroke:'transparent','stroke-width':12});el(e,'polyline',{points:pts,fill:'none',stroke:`var(--${c})`,'stroke-width':w||2,'stroke-dasharray':dash||'','stroke-linejoin':'round'});return e};
+ const gnd=(x,y)=>{el(s,'line',{x1:x,x2:x,y1:y-12,y2:y,stroke:'var(--fg)','stroke-width':1.5});[14,9,4].forEach((h,i)=>el(s,'line',{x1:x-h,x2:x+h,y1:y+i*4,y2:y+i*4,stroke:'var(--fg)','stroke-width':1.5}))};
+ const dot=(x,y)=>el(s,'circle',{cx:x,cy:y,r:3.5,fill:'var(--fg)'});
+ const lab=(x,y,t,c,a)=>el(s,'text',{x,y,'font-size':11.5,'font-weight':700,fill:`var(--${c||'fg'})`,'text-anchor':a||'start'},t);
+ /* ---- power & boost (top) ---- */
+ lab(20,22,'① 电源开关','muted');lab(330,22,'② 升压 7 V（Haptic BOOST 7V）','muted');
+ lab(20,72,'Charger_OUT','fg');W('SW1','105,68 130,68','fg');box('SW1',130,45,90,70,'SW1','拨动开关');
+ W('PWREN','220,100 300,100 300,170 360,170','per',2);lab(232,95,'PWR_EN','per');
+ W('SW1','220,60 330,60','bad',2.5);lab(232,55,'SYS_PWR','bad');dot(250,60);box('D2',236,120,58,30,'D2/D5','TVS');W('D2','250,60 250,120','muted',1);
+ box('R30',330,48,46,24,'R30','0Ω');W('L4','376,60 420,60','bad',2.5);dot(400,60);box('C29',382,118,44,30,'C29/30','');W('C29','400,60 400,118','muted',1);gnd(404,170);
+ box('L4',420,48,60,24,'L4','10µH');W('L4','480,60 520,60','bad',2.5);dot(520,60);
+ box('U5',440,120,150,100,'U5 ETA1628','IN·EN·SW·FB·GND','gold');W('L4','400,60 400,90 430,90 430,140 440,140','bad',1.5);lab(444,150,'IN 5','muted');
+ W('PWREN','360,170 440,170','per',2);lab(444,175,'EN 4','muted');box('R34',350,186,56,30,'R34/C63','1M 下拉');gnd(378,236);
+ W('U5','520,60 520,120','bad',1.5);lab(524,135,'SW 1','muted');gnd(515,240);lab(492,214,'GND 2','muted');
+ box('D10',540,48,56,24,'D10','DS32W');W('D10','596,60 700,60','bad',2.5);dot(640,60);dot(680,60);
+ box('R32',618,92,44,46,'R32','180k');W('R32','640,60 640,92','muted',1);W('R32','640,138 640,176','muted',1);W('R32','640,170 590,170','muted',1);dot(640,170);lab(596,166,'FB 3','muted');box('R32',618,176,44,40,'R33','30k');gnd(640,236);
+ box('C31',664,92,58,44,'C28/31/32','滤波');W('C31','680,60 680,92','muted',1);gnd(693,160);
+ box('R31',700,48,46,24,'R31','0Ω');W('HVDD','746,60 800,60','bad',3);lab(750,40,'H_VDD = 7 V（TP19）','bad');
+ lab(800,22,'③ 线圈电源和储能','muted');
+ box('R62',800,48,56,24,'R62','10Ω');W('HVDD','856,60 1230,60','bad',3);dot(880,60);
+ box('C58',820,96,120,44,'C58 / C59','470µF / 100µF');W('C58','880,60 880,96','bad',1.8);gnd(880,166);
+ lab(1010,112,'⑥ 线圈 + 开关管','muted');
+ /* one coil channel at column X */
+ const ch=(X,c,d,q,tvs,rs,coil,diode,mos,tvsN,rsN,tpTop,tpD)=>{
+  W('HVDD',`${X},60 ${X},140`,'bad',3);dot(X,60);dot(X,140);lab(X-8,135,tpTop,'muted','end');
+  W(c,`${X},140 ${X},150`,'bad',3);box(c,X-40,150,80,60,coil[0],coil[1],'bad');
+  W(c,`${X},210 ${X},235`,'bad',3);dot(X,235);
+  W(d,`${X},140 ${X+78},140 ${X+78},150`,'per',1.5);W(d,`${X},235 ${X+78},235 ${X+78},210`,'per',1.5);box(d,X+50,150,56,60,diode,'DS32W','per');
+  W(q,`${X},235 ${X},315`,'bad',3);dot(X,285);lab(X-8,280,tpD,'muted','end');
+  W(tvs,`${X},285 ${X+80},285 ${X+80},315`,'muted',1.2);box(tvs,X+52,315,56,44,tvsN,'TVS');gnd(X+80,380);
+  box(q,X-50,315,100,70,mos,'G1 · D3 · S2','good');
+  W(rs,`${X},385 ${X},400`,'bad',3);box(rs,X-20,400,40,24,rsN,'0Ω');gnd(X,450);
+ };
+ ch(980,'Coil1','D28','Q4','D31','R67',['Coil1','LB 左线圈'],'D28','Q4 MS3416K','D31','R67','TP31','D（TP33）');
+ ch(1230,'Coil2','D28','Q4','D31','R67',['Coil2','RB 右线圈'],'D29','Q5 MS3416K','D32','R68','TP32','D（TP34）');
+ /* ---- MCU ---- */
+ lab(20,272,'④ MCU','muted');box('MCU',20,282,170,290,'LPC11U35','','pc');
+ [[302,'1   PIO1_19','代码：HP_EN'],[350,'23  PIO0_13','CT32B1_MAT0'],[500,'24  PIO0_14','CT32B1_MAT1']].forEach(([y,t,sub])=>{el(s,'rect',{x:182,y:y-6,width:14,height:12,fill:'var(--muted)'});lab(30,y+4,t,'pc');el(s,'text',{x:100,y:y+20,'font-size':10,fill:'var(--muted)'},sub)});
+ W('HPEN','196,302 290,302','muted',1.6,'5 4');const xe=el(s,'g',{style:'cursor:pointer'});xe.addEventListener('click',()=>show('HPEN'));el(xe,'text',{x:296,y:308,'font-size':16,fill:'var(--bad)','font-weight':700},'✗');lab(316,307,'原理图上没有网络（没接升压 EN）','bad');
+ lab(420,272,'⑤ 栅极驱动（PWM → MOS 栅极）','muted');
+ /* left gate */
+ W('PWM1','196,350 930,350','per',2.4);lab(205,342,'PWM1（TP35）','per');
+ const drops=(y,r,dd,rr,cc,rN,dN,rrN,cN)=>{dot(250,y);dot(310,y);dot(820,y);
+  box(r,230,y+25,40,44,rN,'1M');W(r,`250,${y} 250,${y+25}`,'muted',1);gnd(250,y+90);
+  box(dd,290,y+25,40,44,dN,'TVS');W(dd,`310,${y} 310,${y+25}`,'muted',1);gnd(310,y+90);
+  box(rr,700,y-12,56,24,rrN,'100Ω');
+  box(cc,800,y+25,40,44,cN,'0.1µF');W(cc,`820,${y} 820,${y+25}`,'muted',1);gnd(820,y+90);};
+ drops(350,'R65','D30','R63','C60','R65','D30','R63','C60');
+ /* right gate */
+ W('PWM2','196,500 1150,500 1150,350 1180,350','per',2.4);lab(205,492,'PWM2（TP36）','per');
+ drops(500,'R65','D30','R63','C60','R66','D33','R64','C61');
+ /* legend */
+ el(s,'line',{x1:20,x2:50,y1:640,y2:640,stroke:'var(--bad)','stroke-width':3});lab(56,644,'线圈大电流路径','fg');
+ el(s,'line',{x1:200,x2:230,y1:640,y2:640,stroke:'var(--per)','stroke-width':2.4});lab(236,644,'MCU 控制信号 / 使能','fg');
+ el(s,'line',{x1:420,x2:450,y1:640,y2:640,stroke:'var(--per)','stroke-width':1.4});lab(456,644,'续流回路（MOS 关断时）','fg');
+ lab(700,644,'元件值、位号照原理图 V0.1（LB & RB Haptics Driver、Haptic BOOST 7V、Power ON/OFF）','muted');
+ /* table */
+ const order=['SW1','D2','R30','C29','L4','U5','R34','D10','R32','C31','R31','R62','C58','Coil1','Coil2','D28','D31','Q4','R67','R63','C60','R65','D30','MCU','PWM1','PWM2','HVDD','PWREN','HPEN'];
+ $('wire6Tab').innerHTML=order.map(k=>`<tr><td>${P[k][0]}</td><td>${P[k][1]}</td><td>${P[k][2]}</td></tr>`).join('');})();
 /* ===== ms timeline ===== */
 const ST=[
  {t:0,a:'第 4 课：霍尔算法判出左键按下（gbKeyState[1] = 1）',b:'Button_Scan() 发现左键 0 → 1（button.c:632~639）→ 调 Ele_LeftKeyPressProcess()',s:'NO',v:0,h:0},
