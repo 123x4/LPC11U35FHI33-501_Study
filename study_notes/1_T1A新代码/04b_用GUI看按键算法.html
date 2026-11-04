@@ -126,7 +126,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <tr><td><b>baselineTop</b></td><td><code>gwTopBaseline[k]</code></td><td>顶部基线（松开时的 temp）</td></tr>
 <tr><td><b>crtSegment</b></td><td><code>node[k]</code></td><td>段位 0 ~ 100</td></tr>
 <tr><td><b>maxSegment</b></td><td><code>xSegInfo.wMaxSegmentValue = 100</code>（my_misc.c:606）</td><td>⚠ <b>永远是 100</b>（写死的常数，表示“段位最大值”），不是“这次按到的最深段位”</td></tr>
-<tr><td><b>设置RT：生效 / 失效</b></td><td><code>bmEnableMask</code> = 0xF0 / 0x00；固件只看第 7 位（my_misc.c:105）</td><td>失效时固件用默认 10 / 30 / 20，<b>不用</b>滑块的值</td></tr>
+<tr><td><b>设置RT：生效 / 失效</b></td><td><code>bmEnableMask</code> = 0xF0 / 0x00；固件只看第 7 位（my_misc.c:105）</td><td>失效时固件用默认 10 / 30 / 20，<b>不用</b>滑块的值；<b>快速触发照样在工作</b>（不是关掉 RT）。点圆点本身不发包，要再松一次滑块</td></tr>
 <tr><td><b>AP值</b></td><td><code>ap_value[i]</code> ← <code>wSegmentActuationPoint</code></td><td>单位是段位（0 ~ 100）。按下门槛 = max(最低点 + 按下RT，AP)（第 4 课第 5 节）</td></tr>
 <tr><td><b>按下RT</b></td><td><code>rt_press_value[i]</code></td><td>段位</td></tr>
 <tr><td><b>松开RT</b></td><td><code>rt_release_value[i]</code></td><td>段位</td></tr>
@@ -193,6 +193,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 <tr><td>3</td><td>选“失效”时，MouseInfo 显示的 AP / RT 不是正在生效的值</td><td>固件 my_misc.c:127~132 用默认值；GetRT 读回的是存着的配置</td><td>容易以为滑块的值在起作用</td></tr>
 <tr><td>4</td><td>RawData 四种请求轮流、各隔 100 ms，同一个数 400 ms 才更新一次</td><td>GUI MainWindow.xaml.cs:1766~1782</td><td>快速点击时看不到段位变化；看基线学习、慢按没问题</td></tr>
 <tr><td>5</td><td>拖任何一个 RT 滑块，松手时三个值和“生效 / 失效”一起发，并且固件会把<b>全部参数</b>写一次 EEPROM</td><td>GUI SaveRTSettings()；固件 Task_ParamGuard()（my_protocol_mouse.c:127）</td><td>频繁拖滑块 = 频繁写 EEPROM；参数写 EEPROM 可能越界（待确认问题 1）</td></tr>
+<tr><td>7</td><td><b>“失效”不是关掉快速触发</b>，只是让固件改用默认 AP 10 / 按下RT 30 / 松开RT 20：固件里没有“不用快速触发、改用固定门槛”的分支，<code>Hall_HandleKeyRapidTrigger()</code> 永远按快速触发判断。协议里定义的第 6 / 5 / 4 位（单独开关 AP / 按下RT / 松开RT）固件也没用</td><td>固件 my_misc.c:101~133（只看第 7 位）；my_protocol_common.h:106~111</td><td>GUI 的字面意思和实际行为不一样，问杰哥是不是还没做完</td></tr>
+<tr><td>8</td><td>点“生效 / 失效”这两个圆点本身<b>不发包</b>，要再拖一下任意 RT 滑块并松手，才把新的生效状态发出去</td><td>GUI MainWindow.xaml.cs：圆点没有事件，只在 SaveRTSettings() 里读（1522~1525 行）</td><td>只点“失效”看不到任何变化</td></tr>
 <tr><td>6</td><td>连接前滑块显示 5 / 5 / 5（界面默认值），连接后才读回真正的配置</td><td>GUI MainWindow.xaml:130~137；连接后 ReadMouseInfo(true)</td><td>没连上就拖滑块没有意义</td></tr>
 </tbody></table></div>
 
