@@ -1,0 +1,351 @@
+<title>线圈震一下</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --hw:#7a5ea8; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.8}
+.wrap{max-width:880px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);line-height:1.3;text-wrap:balance}
+h1{font-size:1.9rem;margin:0}
+h2{font-size:1.3rem;margin:2.4rem 0 .4rem;padding-top:.6rem;border-top:1px solid var(--line)}
+h3{font-size:1.06rem;margin:1.3rem 0 .3rem}
+p{margin:.6rem 0}
+a{color:var(--per)}
+code{font-family:var(--font-m);font-size:.88em;background:var(--soft);padding:.05em .35em;border-radius:3px;overflow-wrap:anywhere}
+pre.code{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:10px 12px;overflow-x:auto;line-height:1.55;margin:.5rem 0}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.06em;color:var(--muted)}
+.lede{color:var(--muted)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:1rem 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-size:.88rem;margin:.4rem 0}
+td,th{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600}
+.note{font-size:.88rem;color:var(--muted)}
+.think{border-left:4px solid var(--per);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.8rem 0}
+.rule{border-left:4px solid var(--c,var(--per));background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.6rem 0}
+.log{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:6px 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.btns button,.tool button{font:inherit;font-size:.88rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer}
+.btns button:disabled{opacity:.4;cursor:default}
+.btns button[aria-pressed="true"]{border-color:var(--fg);font-weight:700}
+/* bit strip */
+.bstrip{display:inline-grid;gap:2px;font-family:var(--font-m);font-size:.74rem;text-align:center;margin:.2rem 0}
+.bstrip span{border:1px solid var(--line);border-radius:3px;padding:1px 3px;min-width:1.6em;background:var(--panel)}
+.bstrip span.ch{background:color-mix(in srgb,var(--bad) 28%,var(--panel));border-color:var(--bad);font-weight:700}
+.bstrip span.k{background:none;border:0;color:var(--muted);font-size:.6rem}
+.bstrip span.f{background:color-mix(in srgb,var(--c,var(--per)) 18%,var(--panel))}
+/* lamps */
+.lamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:.5rem 0}
+.lamps div{border:1.5px solid var(--line);border-radius:6px;padding:4px 8px;font-size:.82rem;background:var(--panel)}
+.lamps div::before{content:"○ ";color:var(--muted)}
+.lamps div.on{border-color:var(--good);background:color-mix(in srgb,var(--good) 15%,var(--panel))}
+.lamps div.on::before{content:"● ";color:var(--good)}
+.lamps div.new{outline:2px solid var(--bad)}
+.stp{border:2px solid var(--per);border-radius:8px;padding:10px 14px;background:var(--panel);margin:.6rem 0}
+.stp .cl{font-family:var(--font-m);font-size:.85rem;background:var(--soft);border-left:4px solid var(--per);padding:4px 8px;border-radius:0 6px 6px 0;overflow-wrap:anywhere}
+.stp .who{display:inline-block;font-size:.72rem;color:var(--bg);background:var(--c);border-radius:4px;padding:0 6px;margin-right:6px}
+.stp h3{margin:.5rem 0 .2rem}
+svg.fig{display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+/* tools */
+.tool{border:1.5px solid var(--hw);border-radius:8px;padding:8px 12px;background:color-mix(in srgb,var(--hw) 5%,var(--panel));margin:.6rem 0}
+.tool input,.tool select{font:inherit;font-size:.88rem;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.tool .row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:.3rem 0}
+/* quiz & practice */
+.qz,.px{border-radius:8px;padding:8px 12px;margin:.7rem 0}
+.qz{border:1.5px dashed var(--gold);background:color-mix(in srgb,var(--gold) 6%,var(--panel))}
+.px{border:1.5px solid var(--per);background:color-mix(in srgb,var(--per) 6%,var(--panel))}
+.qz .qt,.px .pxq{font-weight:600;margin:.2rem 0}
+.qrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.qz input,.px input{font:inherit;width:120px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.qz button,.px button{font:inherit;font-size:.9rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer;text-align:left}
+.qz button.on,.px button.on{border-color:var(--fg)}
+.px .pxh{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.px .pxh b{color:var(--per)}
+.px .pxs{font-size:.82rem;color:var(--muted)}
+.px .pxNext{border-color:var(--per);color:var(--per)}
+.fb{display:none;padding:6px 10px;border-radius:6px;background:var(--soft);margin-top:.3rem}
+.fb.ok{display:block;border-left:4px solid var(--good)}
+.fb.no{display:block;border-left:4px solid var(--bad)}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.wrap{max-width:1400px}
+.lv{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:.6rem 0}
+.lv div{border:1.5px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--panel)}
+.lv div b{display:block;font-size:1.05rem}
+.lv div.a{border-color:var(--bad)}.lv div.b{border-color:var(--gold)}.lv div.c{border-color:var(--per)}
+input[type=range]{width:min(380px,100%)}
+</style>
+<div class="wrap">
+<div class="eyebrow">T1A 主线 · 第 6 课 · 线圈“咔哒”一下的完整过程 · 代码 src/my_electromagnet.c、src/my_waveform.c、src/my_pwm.c、inc/my_pwm.h（只看 GT_LINA_T1A_H5_PWM 编译进去的部分）</div>
+<h1>线圈震一下：从“判出按下”到手指感到“咔”</h1>
+<p class="lede">这只鼠标的左右键没有机械开关，手指感到的“咔哒”是旁边一个<b>线圈</b>通电半毫秒、把按键往上“踢”一下产生的。这一课从第 5 课的 <code>Button_Scan()</code> 发现“左键刚按下”开始，一路讲到线圈里的电流：谁下命令、电压从哪来、怎么用 PWM 控制力度、半毫秒里力度怎么按“波形”变化、震完之后为什么还要“冷静”十来毫秒。</p>
+
+<div class="box"><b>🧭 本质（打个比方）</b>：线圈像一面鼓，MCU 是鼓手。<b>导通时间</b>是“这一下敲多久”（默认 500 µs）；<b>PWM 占空比</b>是“每一瞬间用多大力”（0 ~ 100%）；<b>波形表</b>是“这一下里力度怎么变”（先轻后重再轻，像一个小山包）。敲完以后鼓面还在晃，旁边的霍尔芯片会被干扰，所以要等十来毫秒（<b>消抖</b>）再相信霍尔读数。</div>
+
+<p>三个时间尺度，一层套一层，后面会逐层放大：</p>
+<div class="lv">
+<div class="a"><b>毫秒级：状态机</b>按下 → 震动中（约 2 ms）→ 消抖（约 9 ms）→ 空闲。主循环里的 <code>Ele_PollingTask()</code> 管</div>
+<div class="b"><b>20 µs 级：波形</b>500 µs 的一次震动分成 25 段，每 20 µs 换一个力度。CT32B0 定时器中断管</div>
+<div class="c"><b>5 µs 级：PWM</b>每 5 µs 一个开关周期（200 kHz），“开”的比例就是力度。CT32B1 定时器硬件自己产生</div>
+</div>
+
+<h2>1. 硬件：电从哪来、怎么开关</h2>
+<p>原理图上：7 V 升压芯片 ETA1628 产生线圈电源 H_VDD → 线圈 → MOS 管 MS3416K → 地。MCU 的 PWM 脚（左 PIO0_13、右 PIO0_14）接 MOS 管的栅极：脚为高，MOS 管导通，线圈有电流；脚为低，MOS 管断开。旁边的二极管 DS32W 在断开瞬间给线圈电流一条回路（续流），保护 MOS 管。点按钮看电流怎么走：</p>
+<div class="btns"><button type="button" id="hwOn">PIO0_13 = 高（导通）</button><button type="button" id="hwOff">PIO0_13 = 低（刚断开）</button><button type="button" id="hwIdle">空闲</button></div>
+<div class="scroll"><svg id="hw" class="fig" viewBox="0 0 1340 330" style="min-width:1100px" role="img" aria-label="线圈驱动电路"></svg></div>
+<div class="log" id="hwLog"></div>
+<pre class="code">#define Ele_EnableBoost()   DrvGPIOOutput(HP_EN_PORT, HP_EN_PIN, 1)   // my_electromagnet.c:97，HP_EN = PIO1_19
+void Ele_Init(void)                    // 416，开机时 Device_Init() 调（device.c:422）
+{
+  Ele_DisableBoost();                  // 441 先关升压
+  MyWaveform_Init();                   // 442 配好 PWM（CT32B1）和波形定时器（CT32B0）
+  Ele_EnableBoost();                   // 443 再开升压：从此 H_VDD = 7 V 一直有电
+}</pre>
+<p class="note">注意（第 1 课已列为待确认）：代码用 PIO1_19 控制升压，但原理图上 ETA1628 的 EN 接的是电源开关来的 PWR_EN，PIO1_19 没有网络。如果原理图是对的，这两行实际不起作用，升压一直开着。</p>
+
+<h2>2. 全程：按下那一刻之后的 14 毫秒</h2>
+<p>一步一步走：每一步是一个时间点，看每个“角色”在干什么。</p>
+<div class="tool">
+<div class="btns"><button type="button" id="mP">上一步</button><button type="button" id="mN">下一步</button><button type="button" id="mPlay">自动播放</button><button type="button" id="mR">重来</button><span class="note" id="mC"></span></div>
+<div class="scroll"><svg id="ms" class="fig" viewBox="0 0 1340 420" style="min-width:1100px" role="img" aria-label="按下后 14 毫秒的时间线"></svg></div>
+<div class="log" id="mLog"></div></div>
+
+<h2>3. 放大到 20 µs：一次震动里力度怎么变</h2>
+<p>力度不是一下子开满，而是按<b>波形表</b> <code>wfCustomTbl[100]</code>（my_electromagnet.c:312）变化：从 60% 慢慢升到 100%，再慢慢降回 60%，像一个小山包。导通时间由 GUI 的“按下振感强度”设定（默认 500 µs，最大 5000 µs）。拖动滑块看它被切成几段、每段用表里的哪个数：</p>
+<div class="tool">
+<div class="row"><label>导通时间（µs）：<input type="range" id="onT" min="20" max="5000" step="20" value="500"></label><b id="onV" style="font-family:var(--font-m)"></b>
+<label>放大看第 <input type="number" id="seg" value="0" min="0" style="width:4em"> 段</label></div>
+<div class="scroll"><svg id="wf" class="fig" viewBox="0 0 1340 520" style="min-width:1100px" role="img" aria-label="波形表、每 20 微秒一段的占空比、和其中一段的 PWM"></svg></div>
+<div class="log" id="wfLog"></div></div>
+<pre class="code">MyWaveform_StartGenerate(CHANNEL_0, pLeftWf, wfPeriodUs, 1)          // my_waveform.c:155；左线圈用通道 0，右线圈通道 1
+  periodUs    = wfPeriodUs，限制在 20 ~ 5000                            // 170~178
+  updateTimes = periodUs / 20                                            // 179：要换几次力度（UPDATE_PERIOD_US = 20）
+  inc         = (表长 100 &lt;&lt; 15) / updateTimes                         // 195：每次在表里往前走多少格（放大 2¹⁵ 倍保留小数）
+  acc         = inc &gt;&gt; 1                                              // 196：从“半步”开始，取每一段的中间
+  MyWaveform_Start(): 先用 表[acc &gt;&gt; 15] 设占空比、开 PWM、定 20 µs 后的闹钟  // 278~291
+TIMER32_0_IRQHandler(): 每 20 µs 闹一次                                  // 87~99
+  MyWaveform_UpdateFromIsr(): acc += inc；idx = acc &gt;&gt; 15                // 237~238
+    idx &lt; 100 → MyPWM_SetDuty(表[idx])，闹钟再往后定 20 µs               // 239~243
+    idx ≥ 100 → 走完一遍（cycles = 1）→ MyWaveform_Stop()：PWM 关，脚拉低  // 244~251</pre>
+
+<h2>4. 放大到 5 µs：PWM 怎么做出“百分之几的力”</h2>
+<p>CT32B1 定时器的计数器 TC 从 0 数到 240 再回 0，每数一下 1/48 µs，所以一圈 240 ÷ 48 = <b>5 µs</b>（200 kHz）。另有一个比较值 MR0（左）/ MR1（右）：TC 小于它时脚为低，大于等于它时脚为高。比较值越小，高电平越长，力越大。百分比到比较值的换算查表 <code>Freq200kHzDuty[101]</code>（my_pwm.c:19）。</p>
+<div class="tool"><div class="row"><label>占空比（%）：<input type="range" id="dt" min="0" max="100" value="75"></label><b id="dtV" style="font-family:var(--font-m)"></b></div>
+<div class="scroll"><svg id="pwm" class="fig" viewBox="0 0 1340 280" style="min-width:1100px" role="img" aria-label="CT32B1 计数器、比较值和 PWM 输出"></svg></div>
+<div class="log" id="pwmLog"></div></div>
+<div class="scroll"><table>
+<thead><tr><th>寄存器</th><th>写成</th><th>意思（my_pwm.c:72~105）</th></tr></thead>
+<tbody>
+<tr><td><code>IOCON PIO0_13 / PIO0_14</code></td><td>FUNC 3</td><td>脚接到 CT32B1_MAT0 / MAT1（定时器直接驱动脚）</td></tr>
+<tr><td><code>SYSAHBCLKCTRL</code> 第 10 位</td><td>1</td><td>给 CT32B1 时钟</td></tr>
+<tr><td><code>PR</code></td><td>0</td><td>不分频，TC 每 1/48 µs 加 1</td></tr>
+<tr><td><code>MR3</code></td><td>240</td><td>TC 到 240 清零 → 周期 5 µs = 200 kHz（MCR 第 10 位）</td></tr>
+<tr><td><code>MR0 / MR1</code></td><td>表里的值，开机 241</td><td>比较值；241 &gt; 240 永远比不上 = 0%</td></tr>
+<tr><td><code>PWMC</code> 第 0 / 1 位</td><td>开始震时 1，停止时 0</td><td>1 = 这只脚由 PWM 控制；0 = 交给 EMR，EMR 设成“清零”= 一直低（MOS 关）</td></tr>
+</tbody></table></div>
+
+<h2>5. 毫秒级：震完以后的状态机</h2>
+<div class="scroll"><svg id="sm" class="fig" viewBox="0 0 1340 300" style="min-width:1100px" role="img" aria-label="线圈状态机"></svg></div>
+<pre class="code">static void Ele_StatusTask(Ele_Handle_ts *pEle)          // 1303，主循环每圈：Ele_PollingTask() → 左、右各一次（960~963）
+  ELE_PRESS_VIBRATING / ELE_RELEASE_VIBRATING:
+    if((现在毫秒 − vibrateBeginTick) × 1000 &gt; 导通时间 + 999)   // 1313 / 1322：按毫秒算，“向上取整再多 1 ms”
+      → ELE_RELEASE_DEBOUNCE，记下 debounceBeginTick
+  ELE_RELEASE_DEBOUNCE:
+    if(现在毫秒 − debounceBeginTick &gt; 8)                         // 1330：VIBRATE_DEBOUNCE_TIME_MS = 8
+      → ELE_NO_VIBRATING</pre>
+<div class="tool"><b>算一算：导通时间是多少，这一侧霍尔要“闭眼”多久</b>
+<div class="row"><label>导通时间（µs）：<input type="number" id="smT" value="500" min="0" max="5000" style="width:6em"></label></div>
+<div class="log" id="smLog"></div></div>
+<p><b>为什么要这一段“闭眼”</b>：第 4 课讲过，<code>Ele_IsVibrating()</code>（894 行）只要状态不是 <code>ELE_NO_VIBRATING</code> 就返回 1，按键算法就跳过这个键。线圈电流只有半毫秒，但通电产生的磁场、按键被踢以后的机械晃动都会让霍尔读数乱跳一阵，消抖就是等它平静下来。另一个函数 <code>Ele_IsTureVibrating()</code>（926 行）只认“真正在震”的两个状态，不含消抖，给调试推送用。</p>
+
+<h2>6. 几条附加规则</h2>
+<h3>6.1 同一时间只震一个线圈（SINGLE_COIL_AT_A_TIME = 1）</h3>
+<p>两个线圈共用一个 7 V 升压，同时震电流太大。所以左键要震时，如果右线圈正在“按下震 / 松开震”（不算消抖），就先不震，把请求<b>存起来</b>（990~996 行，<code>gxCacheVibrate</code>），等 5 ms 后由 <code>Ele_OnlyOne()</code>（1407 行）补震。</p>
+<div class="box"><b>读代码时注意到</b>：补震时调用的<b>总是 <code>Ele_…KeyReleaseProcess()</code></b>（1416、1420 行），不管存起来的是按下还是松开；也就是说被推迟的“按下振感”会用<b>释放振感的导通时间</b>来补。而且只存得下一个请求，后来的会覆盖先来的。按下、释放导通时间设得一样时没区别。</div>
+<h3>6.2 动态导通时间（GUI“调试配置 → 动态导通时间”，默认关）</h3>
+<p>打开后，导通时间按<b>按下时的段位</b>打折（1263 行 <code>Ele_CalculateDuration()</code>）：<code>实际 = 设定 × durationScale[段位] ÷ 1024</code>，表在 209 行，近似 设定 × 100 ÷ (段位 × 2 + 100)。段位越深，震得越短。段位来自第 4 课的 <code>Ele_UpadteSegment()</code>（每 1 ms 存进 <code>nowHallSegment[]</code>）。</p>
+<div class="tool"><div class="row"><label>设定导通时间 <input type="number" id="dyT" value="500" style="width:6em"> µs</label><label>按下时段位：<input type="range" id="dyS" min="0" max="100" value="30"></label><b id="dyV" style="font-family:var(--font-m)"></b></div><div class="log" id="dyLog"></div></div>
+<h3>6.3 自动振动（GUI“调试配置 → 自动振动”）</h3>
+<p>打开后不用按键，每隔“振动触发周期”（最少 20 ms）自动调一次按下振动（1428~1453 行），用来连续测试手感。这两项调试参数只存在 RAM 里，重启恢复默认。</p>
+<h3>6.4 GUI 的参数到了哪</h3>
+<div class="scroll"><table>
+<thead><tr><th>GUI</th><th>固件变量</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td>按下振感配置 → 强度（0 ~ 5000）</td><td><code>leftEle.pressVibrateDurationUs</code></td><td>就是导通时间（µs），<code>Ele_UpdateParam()</code>（603 行）写入，超过 5000 按 5000；生效位为 0 时 = 0（不震）</td></tr>
+<tr><td>释放振感配置 → 强度</td><td><code>leftEle.releaseVibrateDurationUs</code></td><td><code>Ele_UpdateReleaseParam()</code>（721 行），按下、释放分开设（DIFF_PRESS_RELEASE_TURN_ON_TIME = 1）</td></tr>
+<tr><td>驱动方式 Level / Waveform</td><td><code>pressDriveMode / releaseDriveMode</code></td><td>能收能存，但 T1A 的按下 / 松开函数<b>不看它</b>，永远用波形表 <code>wfCustomTbl</code>；GUI 下发的波形表 <code>gPwmWf[100]</code> 也没用上（待确认问题 2）</td></tr>
+<tr><td>调试配置</td><td><code>xCoilDebugCfg[2]</code>（193 行）</td><td>动态导通时间、自动振动、周期</td></tr>
+</tbody></table></div>
+
+<h2>7. 代码地图</h2>
+<div class="scroll"><table>
+<thead><tr><th>函数</th><th>在哪</th><th>谁调用、什么时候</th><th>干什么</th></tr></thead>
+<tbody>
+<tr><td><code>Ele_Init()</code></td><td>my_electromagnet.c:416</td><td>开机 Device_Init()</td><td>关升压 → 配 PWM、波形定时器 → 开升压</td></tr>
+<tr><td><code>Ele_LeftKeyPressProcess()</code></td><td>:982</td><td>Button_Scan() 发现左键刚按下（button.c:639）</td><td>导通时间 ≠ 0、右线圈没在震 → 算时长 → 状态 = 按下震动中、记开始毫秒 → 启动波形</td></tr>
+<tr><td><code>Ele_LeftKeyReleaseProcess()</code></td><td>:1032</td><td>左键刚松开（button.c:655）；补震</td><td>同上，用释放导通时间，状态 = 松开震动中</td></tr>
+<tr><td><code>Ele_Right…Process()</code></td><td>:1083、1133</td><td>右键</td><td>同上，波形通道 1</td></tr>
+<tr><td><code>Ele_CalculateDuration()</code></td><td>:1263</td><td>上面四个函数</td><td>动态导通时间关：原样返回；开：按段位打折</td></tr>
+<tr><td><code>MyWaveform_StartGenerate()</code></td><td>my_waveform.c:155</td><td>上面四个函数</td><td>算 updateTimes、inc、acc，开 PWM，定第一个 20 µs 闹钟</td></tr>
+<tr><td><code>TIMER32_0_IRQHandler()</code></td><td>my_waveform.c:87</td><td>CT32B0 每 20 µs 中断（MR0 左 / MR1 右）</td><td>走一步波形表，改占空比；走完就停</td></tr>
+<tr><td><code>MyPWM_SetDuty()</code></td><td>my_pwm.h:39</td><td>波形每一步</td><td>百分比 → 查 Freq200kHzDuty → 写 MR0 / MR1</td></tr>
+<tr><td><code>Ele_PollingTask()</code></td><td>my_electromagnet.c:960</td><td>主循环每圈（device.c:525）</td><td>两个状态机、补震、自动振动</td></tr>
+<tr><td><code>Ele_IsVibrating()</code></td><td>:894</td><td>按键算法每 1 ms（my_misc.c:490、502）</td><td>状态 ≠ 空闲 → 1 → 按键算法跳过这个键</td></tr>
+<tr><td><code>Ele_K4/K5KeyPressProcess()</code></td><td>:1184、1208</td><td>侧键按下</td><td>T1A 上什么都不做（#if 1 空函数，以前是调试用的“每按一次加 100 µs”）</td></tr>
+</tbody></table></div>
+
+<h2>8. 练习</h2>
+<div class="px" id="px"></div>
+</div>
+<script>
+(function(){
+const $=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
+const el=(p,t,a,x)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e};
+const WF=[60,61,62,62,63,64,65,66,67,67,68,69,70,71,72,72,73,74,75,76,77,77,78,79,80,81,82,82,83,84,85,86,87,87,88,89,90,91,92,92,93,94,95,96,97,97,98,99,100,100,100,100,99,98,97,97,96,95,94,93,92,92,91,90,89,88,87,87,86,85,84,83,82,82,81,80,79,78,77,77,76,75,74,73,72,72,71,70,69,68,67,67,66,65,64,63,62,62,61,60];
+const DT=[241,239,236,234,231,229,227,224,222,219,217,214,212,210,207,205,202,200,198,195,193,190,188,186,183,181,178,176,174,171,169,166,164,161,159,157,154,152,149,147,145,142,140,137,135,133,130,128,125,123,121,118,116,113,111,108,106,104,101,99,96,94,92,89,87,84,82,80,77,75,72,70,67,65,63,60,58,55,53,51,48,46,43,41,39,36,34,31,29,27,24,22,19,17,14,12,10,7,5,2,0];
+const DS=[1024,1003,984,966,948,930,914,898,882,867,853,839,825,812,800,787,775,764,752,742,731,721,711,701,691,682,673,664,656,648,640,632,624,616,609,602,595,588,581,575,568,562,556,550,544,538,533,527,522,517,512,506,501,497,492,487,483,478,474,469,465,461,457,453,449,445,441,437,433,430,426,423,419,416,412,409,406,403,400,396,393,390,387,384,382,379,376,373,371,368,365,363,360,358,355,353,350,348,345,343,341];
+/* ===== hardware ===== */
+let hwSt='idle';
+function drawHW(){const s=$('hw');s.innerHTML='';const on=hwSt==='on',off=hwSt==='off';
+ const box=(x,y,w,h,t,l,c)=>{el(s,'rect',{x,y,width:w,height:h,rx:8,style:`fill:color-mix(in srgb,var(--${c}) 14%,var(--panel));stroke:var(--${c});stroke-width:2`});el(s,'text',{x:x+w/2,y:y+22,'text-anchor':'middle','font-size':13.5,'font-weight':700,fill:'var(--fg)'},t);l.forEach((q,i)=>el(s,'text',{x:x+w/2,y:y+42+i*17,'text-anchor':'middle','font-size':11.5,fill:'var(--fg)'},q))};
+ box(20,30,180,90,'电池 / USB 3.x V',['PWR'],'muted');box(260,30,200,90,'ETA1628 升压',['EN ← HP_EN（PIO1_19）','输出 H_VDD = 7 V'],'gold');
+ box(20,190,200,110,'MCU LPC11U35',['PIO0_13 = CT32B1_MAT0（左）','PIO0_14 = CT32B1_MAT1（右）','200 kHz PWM'],'pc');
+ /* coil */
+ const cx=640,cy=40;el(s,'rect',{x:cx-60,y:cy,width:120,height:110,rx:10,style:`fill:${on?'color-mix(in srgb,var(--bad) 22%,var(--panel))':'var(--panel)'};stroke:var(--fg);stroke-width:2`});
+ for(let i=0;i<5;i++)el(s,'path',{d:`M${cx-40},${cy+20+i*16} q40,-10 80,0`,fill:'none',stroke:'var(--gold)','stroke-width':3});
+ el(s,'text',{x:cx,y:cy+130,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--fg)'},'左线圈');
+ /* MOS */
+ el(s,'rect',{x:cx-50,y:200,width:100,height:70,rx:8,style:`fill:${on?'color-mix(in srgb,var(--good) 25%,var(--panel))':'var(--soft)'};stroke:var(--fg);stroke-width:2`});
+ el(s,'text',{x:cx,y:228,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--fg)'},'MOS 管');el(s,'text',{x:cx,y:248,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'MS3416K　'+(on?'导通':'断开'));
+ /* diode */
+ el(s,'rect',{x:820,y:60,width:110,height:70,rx:8,style:`fill:${off?'color-mix(in srgb,var(--per) 25%,var(--panel))':'var(--soft)'};stroke:var(--fg);stroke-width:2`});el(s,'text',{x:875,y:90,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--fg)'},'二极管');el(s,'text',{x:875,y:110,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'DS32W 续流');
+ /* wires */
+ const w=(d,c,lw)=>el(s,'path',{d,fill:'none',stroke:c,'stroke-width':lw||2.5,'stroke-linejoin':'round'});
+ w('M200,75 H260','var(--muted)');w('M460,75 H580','var(--bad)',3.5);el(s,'text',{x:520,y:66,'text-anchor':'middle','font-size':12,fill:'var(--bad)','font-weight':700},'H_VDD 7 V');
+ w(`M${cx},150 V200`,on?'var(--bad)':'var(--line)',on?4:2.5);w(`M${cx},270 V305 H1000`,on?'var(--bad)':'var(--line)',on?4:2.5);el(s,'text',{x:1010,y:309,'font-size':12,fill:'var(--fg)'},'地');
+ w('M220,245 H590','var(--pc)',on?3.5:2);el(s,'text',{x:400,y:236,'text-anchor':'middle','font-size':12,fill:'var(--pc)','font-weight':700},on?'PWM 脚 = 高 → 栅极有电压':off?'PWM 脚 = 低':'PWM 脚 = 低（PWMC = 0，EMR 清零）');
+ w(`M${cx+60},60 H820`,off?'var(--per)':'var(--line)',off?4:2);w(`M930,95 H960 V160 H${cx} V150`,off?'var(--per)':'var(--line)',off?4:2);
+ if(on){el(s,'text',{x:cx+75,y:180,'font-size':12.5,fill:'var(--bad)','font-weight':700},'电流 ↓：7 V → 线圈 → MOS → 地，线圈产生磁场，把按键“踢”一下')}
+ if(off){el(s,'text',{x:960,y:200,'font-size':12.5,fill:'var(--per)','font-weight':700},'线圈电流不能突然停，经二极管绕回自己，慢慢消失')}
+ $('hwLog').textContent={on:'PWM 输出高：MOS 管导通，7 V 加在线圈两端，电流从 H_VDD 经线圈、MOS 管流到地。线圈变成电磁铁，推动按键。',off:'PWM 刚变低：MOS 管断开。线圈像一个“有惯性的水流”，电流不能瞬间变 0，二极管给它一条回路（续流），否则线圈两端会冒出很高的电压击穿 MOS 管。',idle:'空闲：PWMC 第 0 位 = 0，PIO0_13 由 EMR 控制，固定为低，MOS 管断开，线圈没电。升压芯片一直开着，H_VDD 一直是 7 V。'}[hwSt];
+ ['hwOn','hwOff','hwIdle'].forEach((id,i)=>$(id).setAttribute('aria-pressed',hwSt===['on','off','idle'][i]))}
+$('hwOn').onclick=()=>{hwSt='on';drawHW()};$('hwOff').onclick=()=>{hwSt='off';drawHW()};$('hwIdle').onclick=()=>{hwSt='idle';drawHW()};drawHW();
+/* ===== ms timeline ===== */
+const ST=[
+ {t:0,a:'第 4 课：霍尔算法判出左键按下（gbKeyState[1] = 1）',b:'Button_Scan() 发现左键 0 → 1（button.c:632~639）→ 调 Ele_LeftKeyPressProcess()',s:'NO',v:0,h:0},
+ {t:0.01,a:'Ele_LeftKeyPressProcess()（982）',b:'导通时间 500 ≠ 0；右线圈没在震 → Ele_CalculateDuration() = 500 µs → status = ELE_PRESS_VIBRATING，vibrateBeginTick = 现在毫秒 → MyWaveform_StartGenerate(通道 0, 波形表, 500, 1)',s:'PRESS',v:1,h:1},
+ {t:0.25,a:'波形进行中（CT32B0 每 20 µs 中断一次）',b:'25 段力度：62% → 100% → 61%，PWM 200 kHz 一直在开关',s:'PRESS',v:1,h:1},
+ {t:0.5,a:'500 µs 到：波形表走完',b:'MyWaveform_UpdateFromIsr() 发现 idx ≥ 100 → MyWaveform_Stop()：PWMC 清 0，PIO0_13 拉低，MOS 关，线圈电流经二极管消失',s:'PRESS',v:0,h:1},
+ {t:1,a:'主循环 Ele_StatusTask()（1311）',b:'现在 − 开始 = 1 ms，1 × 1000 = 1000，不大于 500 + 999 = 1499 → 还算“按下震动中”',s:'PRESS',v:0,h:1},
+ {t:2,a:'主循环 Ele_StatusTask()',b:'2 × 1000 = 2000 > 1499 → status = ELE_RELEASE_DEBOUNCE，debounceBeginTick = 现在',s:'DEB',v:0,h:1},
+ {t:6,a:'消抖中',b:'磁场、机械晃动慢慢平息；按键算法仍跳过左键（Ele_IsVibrating = 1）',s:'DEB',v:0,h:1},
+ {t:10,a:'主循环 Ele_StatusTask()（1329）',b:'现在 − 消抖开始 = 8，不大于 8 → 继续消抖',s:'DEB',v:0,h:1},
+ {t:11,a:'主循环 Ele_StatusTask()',b:'11 − 2 = 9 > 8 → status = ELE_NO_VIBRATING',s:'NO',v:0,h:0},
+ {t:12,a:'按键算法恢复处理左键',b:'Ele_IsVibrating(左) = 0，从这 1 ms 起左键的霍尔读数重新参与判断'}].map(o=>Object.assign({s:'NO',v:0,h:0},o));
+let mi=0,mt=null;
+function drawMS(){const s=$('ms');s.innerHTML='';const X0=170,W=1150,X=t=>X0+t/14*W;
+ const rows=[['手指 / 按键状态',40],['线圈状态机 status',100],['PWM（线圈通电）',170],['线圈电流',230],['按键算法看左键吗',300]];
+ rows.forEach(([n,y])=>el(s,'text',{x:10,y:y+18,'font-size':12.5,'font-weight':600,fill:'var(--fg)'},n));
+ for(let t=0;t<=14;t++){el(s,'line',{x1:X(t),x2:X(t),y1:30,y2:340,stroke:'var(--grid)'});el(s,'text',{x:X(t),y:360,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},t+' ms')}
+ el(s,'rect',{x:X(0),y:40,width:X(14)-X(0),height:26,style:'fill:color-mix(in srgb,var(--bad) 22%,transparent)'});el(s,'text',{x:X(0)+6,y:58,'font-size':11.5,fill:'var(--fg)'},'左键按着（gbKeyState[1] = 1）');
+ const seg=(a,b,y,c,txt)=>{el(s,'rect',{x:X(a),y,width:X(b)-X(a),height:26,rx:3,style:`fill:color-mix(in srgb,var(--${c}) 30%,var(--panel));stroke:var(--${c})`});if(txt)el(s,'text',{x:(X(a)+X(b))/2,y:y+17,'text-anchor':'middle','font-size':11,fill:'var(--fg)'},txt)};
+ seg(0,2,100,'bad','PRESS_VIBRATING');seg(2,11,100,'gold','RELEASE_DEBOUNCE（> 8 ms）');seg(11,14,100,'line','NO_VIBRATING');
+ seg(0,0.5,170,'pc','');el(s,'text',{x:X(0.5)+6,y:188,'font-size':11,fill:'var(--pc)','font-weight':700},'← 只有 0.5 ms！');
+ let d=`M${X(0)},256`;for(let i=0;i<=40;i++){const t=i/40*1.4;const I=t<0.5?(1-Math.exp(-t/0.15))*0.9:0.9*(1-Math.exp(-0.5/0.15))*Math.exp(-(t-0.5)/0.12);d+=` L${X(t)},${256-I*24}`}d+=` L${X(14)},256`;el(s,'path',{d,fill:'none',stroke:'var(--bad)','stroke-width':2});
+ seg(0,11,300,'muted','跳过（Ele_IsVibrating = 1）');seg(11,14,300,'good','照常判断');
+ const cur=ST[mi];el(s,'line',{x1:X(cur.t),x2:X(cur.t),y1:26,y2:345,stroke:'var(--bad)','stroke-width':2.5});
+ el(s,'text',{x:X0,y:395,'font-size':11.5,fill:'var(--muted)'},'导通时间按默认 500 µs；毫秒数按主循环每次检查的时刻取整，实际可能早晚零点几毫秒');
+ $('mLog').textContent=`t ≈ ${cur.t} ms　${cur.a}\n${cur.b}`;$('mC').textContent=`第 ${mi+1} / ${ST.length} 步`;$('mP').disabled=mi===0;$('mN').disabled=mi===ST.length-1}
+const mStop=()=>{if(mt){clearInterval(mt);mt=null;$('mPlay').textContent='自动播放'}};
+$('mN').onclick=()=>{mStop();if(mi<ST.length-1){mi++;drawMS()}};$('mP').onclick=()=>{mStop();if(mi>0){mi--;drawMS()}};$('mR').onclick=()=>{mStop();mi=0;drawMS()};
+$('mPlay').onclick=()=>{if(mt){mStop();return}if(mi>=ST.length-1)mi=0;$('mPlay').textContent='暂停';mt=setInterval(()=>{if(mi>=ST.length-1){mStop();return}mi++;drawMS()},1300)};drawMS();
+/* ===== waveform zoom ===== */
+function samples(T){let p=Math.min(5000,Math.max(20,T));const up=Math.floor(p/20);const inc=Math.floor((100<<15)/up);let acc=inc>>1;const out=[{idx:acc>>15,acc}];while(true){acc+=inc;const idx=acc>>15;if(idx>=100)break;out.push({idx,acc})}return{p,up,inc,out}}
+function drawWF(){const T=+$('onT').value;$('onV').textContent=T+' µs';const r=samples(T);let k=Math.min(Math.max(0,+$('seg').value),r.out.length-1);$('seg').max=r.out.length-1;$('seg').value=k;
+ const s=$('wf');s.innerHTML='';
+ /* table */
+ const X0=80,W=1220,Y=v=>150-(v-50)/50*120;el(s,'text',{x:10,y:20,'font-size':12.5,'font-weight':700,fill:'var(--fg)'},'波形表 wfCustomTbl[100]（灰）和这次真正用到的格子（金点）');
+ el(s,'polyline',{points:WF.map((v,i)=>(X0+i/99*W)+','+Y(v)).join(' '),fill:'none',stroke:'var(--muted)','stroke-width':1.5});
+ r.out.forEach((o,i)=>el(s,'circle',{cx:X0+o.idx/99*W,cy:Y(WF[o.idx]),r:i===k?6:3.5,fill:i===k?'var(--bad)':'var(--gold)'}));
+ [60,80,100].forEach(v=>{el(s,'text',{x:X0-6,y:Y(v)+4,'text-anchor':'end','font-size':10.5,fill:'var(--muted)'},v+'%')});el(s,'text',{x:X0,y:168,'font-size':10.5,fill:'var(--muted)'},'格 0');el(s,'text',{x:X0+W,y:168,'text-anchor':'end','font-size':10.5,fill:'var(--muted)'},'格 99');
+ /* steps over time */
+ const Y2=v=>330-v*1.3,n=r.out.length,sw=W/n;el(s,'text',{x:10,y:195,'font-size':12.5,'font-weight':700,fill:'var(--fg)'},`时间轴：${r.p} µs 分成 ${n} 段，每段 20 µs，每段的占空比`);
+ r.out.forEach((o,i)=>{const v=WF[o.idx];el(s,'rect',{x:X0+i*sw+1,y:Y2(v),width:Math.max(1,sw-2),height:v*1.3,style:`fill:${i===k?'var(--bad)':'color-mix(in srgb,var(--gold) 55%,var(--panel))'}`});if(sw>26)el(s,'text',{x:X0+i*sw+sw/2,y:Y2(v)-4,'text-anchor':'middle','font-size':9.5,fill:'var(--fg)'},v)});
+ el(s,'text',{x:X0,y:350,'font-size':10.5,fill:'var(--muted)'},'0 µs');el(s,'text',{x:X0+W,y:350,'text-anchor':'end','font-size':10.5,fill:'var(--muted)'},r.p+' µs → 停');
+ /* zoom one segment: 4 PWM periods */
+ const v=WF[r.out[k].idx],cmp=DT[v],hi=(240-Math.min(cmp,240))/240;const zx=X0,zw=W,zy=400;el(s,'text',{x:10,y:385,'font-size':12.5,'font-weight':700,fill:'var(--fg)'},`再放大第 ${k} 段（${k*20} ~ ${k*20+20} µs）：占空比 ${v}% → 4 个 5 µs 的 PWM 周期，每个周期高 ${(hi*5).toFixed(2)} µs`);
+ let d=`M${zx},${zy+80}`;for(let i=0;i<4;i++){const x=zx+i*zw/4,lo=(1-hi)*zw/4;d+=` H${x+lo} V${zy+20} H${x+zw/4} V${zy+80}`}el(s,'path',{d,fill:'none',stroke:'var(--pc)','stroke-width':2.4});
+ for(let i=0;i<=4;i++)el(s,'text',{x:zx+i*zw/4,y:zy+100,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},(k*20+i*5)+' µs');
+ $('wfLog').textContent=`periodUs = ${r.p}；updateTimes = ${r.p} ÷ 20 = ${r.up}；inc = (100 << 15) ÷ ${r.up} = ${r.inc}（= ${(r.inc/32768).toFixed(3)} 格 / 步）；acc 起点 = inc >> 1 = ${r.inc>>1}\n第 ${k} 段：acc = ${r.out[k].acc}，idx = acc >> 15 = ${r.out[k].idx} → 表[${r.out[k].idx}] = ${v}% → Freq200kHzDuty[${v}] = 比较值 ${cmp} → 每 5 µs 里 TC 从 ${cmp} 到 240 为高 = ${(hi*100).toFixed(1)}%\n一共 ${n} 段 × 20 µs = ${n*20} µs 后 idx ≥ 100 → 停止 PWM（cycles = 1，只走一遍）`}
+$('onT').oninput=()=>{$('seg').value=0;drawWF()};$('seg').oninput=drawWF;drawWF();
+/* ===== pwm ===== */
+function drawPWM(){const p=+$('dt').value;$('dtV').textContent=p+'%';const cmp=DT[p];const s=$('pwm');s.innerHTML='';const X0=80,W=1220,X=t=>X0+t/15*W,Yt=v=>150-v/240*120;
+ el(s,'text',{x:10,y:20,'font-size':12.5,'font-weight':700,fill:'var(--fg)'},'CT32B1 的 TC（锯齿，0 → 240 每 5 µs 一圈）和比较值 MR0（红线）');
+ let d='';for(let c=0;c<3;c++){d+=`${c?'L':'M'}${X(c*5)},${Yt(0)} L${X(c*5+5)},${Yt(240)} `}el(s,'path',{d,fill:'none',stroke:'var(--muted)','stroke-width':1.8});
+ if(cmp<=240){el(s,'line',{x1:X0,x2:X0+W,y1:Yt(cmp),y2:Yt(cmp),stroke:'var(--bad)','stroke-width':2,'stroke-dasharray':'6 4'});el(s,'text',{x:X0+W,y:Yt(cmp)-5,'text-anchor':'end','font-size':11,fill:'var(--bad)'},'MR0 = '+cmp)}
+ else el(s,'text',{x:X0+W,y:28,'text-anchor':'end','font-size':11,fill:'var(--bad)'},'MR0 = 241 > 240：永远比不上');
+ [0,120,240].forEach(v=>el(s,'text',{x:X0-6,y:Yt(v)+4,'text-anchor':'end','font-size':10.5,fill:'var(--muted)'},v));
+ const hi=cmp>240?0:(240-cmp)/240;let o=`M${X0},${250}`;for(let c=0;c<3;c++){const lo=(1-hi)*5;o+=` H${X(c*5+lo)} V${hi>0?185:250} H${X(c*5+5)} V250`}
+ el(s,'path',{d:o,fill:'none',stroke:'var(--pc)','stroke-width':2.4});el(s,'text',{x:10,y:225,'font-size':12,'font-weight':700,fill:'var(--pc)'},'PIO0_13');
+ for(let c=0;c<=3;c++)el(s,'text',{x:X(c*5),y:270,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},c*5+' µs');
+ $('pwmLog').textContent=`MyPWM_SetDuty(0, ${p}) → Freq200kHzDuty[${p}] = ${cmp} → MR0 = ${cmp}\nTC < ${cmp} 时脚为低，TC ≥ ${cmp} 时为高 → 高电平 ${(hi*100).toFixed(1)}%（每 5 µs 高 ${(hi*5).toFixed(2)} µs）${p===0?'\n0%：比较值 241 比 240 大，永远比不上，一直低':p===100?'\n100%：比较值 0，一开始就比上，一直高':''}`}
+$('dt').oninput=drawPWM;drawPWM();
+/* ===== state machine ===== */
+(function(){const s=$('sm');const st=(x,y,t,sub,c)=>{el(s,'rect',{x,y,width:250,height:80,rx:40,style:`fill:color-mix(in srgb,var(--${c}) 18%,var(--panel));stroke:var(--${c});stroke-width:2.5`});el(s,'text',{x:x+125,y:y+33,'text-anchor':'middle','font-size':14,'font-weight':700,fill:'var(--fg)',style:'font-family:var(--font-m)'},t);el(s,'text',{x:x+125,y:y+55,'text-anchor':'middle','font-size':11.5,fill:'var(--muted)'},sub)};
+ st(40,110,'NO_VIBRATING','空闲，霍尔照常用','good');st(420,20,'PRESS_VIBRATING','按下振动中（≈ 导通时间 + 1 ms）','bad');st(420,190,'RELEASE_VIBRATING','松开振动中','bad');st(860,110,'RELEASE_DEBOUNCE','消抖（> 8 ms）','gold');
+ const df=el(s,'defs',{});const mk=el(df,'marker',{id:'ah6',markerWidth:10,markerHeight:10,refX:9,refY:5,orient:'auto'});el(mk,'path',{d:'M0,0 L10,5 L0,10 z',fill:'var(--muted)'});const ar=(d,l,lx,ly)=>{el(s,'path',{d,fill:'none',stroke:'var(--muted)','stroke-width':2,'marker-end':'url(#ah6)'});if(l)el(s,'text',{x:lx,y:ly,'font-size':11.5,fill:'var(--hw)','font-weight':600},l)};
+ ar('M290,135 L420,70','按键刚按下：…PressProcess()',250,90);ar('M290,165 L420,225','按键刚松开：…ReleaseProcess()',250,225);
+ ar('M670,60 L860,130','(现在−开始)×1000 > 时长+999',690,80);ar('M670,230 L860,170','同左',760,225);
+ ar('M985,190 V270 H165 V190','现在 − 消抖开始 > 8',500,288);
+ [[860,150],[420,60],[420,230],[165,190]].forEach(([x,y])=>{});})();
+function smCalc(){const T=Math.max(0,Math.min(5000,+$('smT').value||0));if(!T){$('smLog').textContent='导通时间 0：…PressProcess() 第 987 行判断不成立，什么都不做，状态不变，不闭眼，也没有振感。';return}
+ let m=1;while(m*1000<=T+999)m++;const tot=m+9;$('smLog').textContent=`振动中：要 (现在 − 开始) × 1000 > ${T} + 999 = ${T+999} → 毫秒差至少 ${m}\n消抖：要 现在 − 消抖开始 > 8 → 至少 9 ms\n合计：这一侧霍尔大约“闭眼” ${m} + 9 = ${tot} ms（主循环检查时刻有零点几毫秒误差）；线圈真正通电只有 ${T} µs`}
+$('smT').oninput=smCalc;smCalc();
+function dyCalc(){const T=+$('dyT').value||0,sg=+$('dyS').value;$('dyV').textContent=sg;const r=Math.floor(T*DS[sg]/1024);$('dyLog').textContent=`durationScale[${sg}] = ${DS[sg]}；${T} × ${DS[sg]} >> 10 = ${r} µs（${(DS[sg]/10.24).toFixed(1)}%）；近似公式 ${T} × 100 ÷ (${sg} × 2 + 100) = ${(T*100/(sg*2+100)).toFixed(0)}`}
+$('dyT').oninput=dyCalc;$('dyS').oninput=dyCalc;dyCalc();
+/* ===== practice ===== */
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),pick=a=>a[Math.floor(Math.random()*a.length)];
+function mc(q,opts,ans,sol){const idx=opts.map((_,i)=>i);for(let i=idx.length-1;i>0;i--){const j=ri(0,i);[idx[i],idx[j]]=[idx[j],idx[i]]}return{q,type:'mc',opts:idx.map(i=>opts[i]),ans:idx.indexOf(ans),sol}}
+const num=(q,ans,sol)=>({q,type:'num',ans,sol});
+const GEN=[
+ ()=>{const T=pick([100,200,300,500,1000,2000]);return num(`导通时间 ${T} µs，波形分成几段（updateTimes）？`,T/20,`${T} ÷ 20 = <b>${T/20}</b>`)},
+ ()=>{const T=pick([200,500,1000]);const up=T/20,inc=Math.floor((100<<15)/up);return num(`导通时间 ${T} µs，每一步在表里走几格？（inc ÷ 32768，保留 2 位小数）`,+(inc/32768).toFixed(2),`inc = (100 << 15) ÷ ${up} = ${inc}，÷ 32768 = <b>${(inc/32768).toFixed(2)}</b>`)},
+ ()=>{const p=ri(0,100);return num(`MyPWM_SetDuty(0, ${p}) 写进 MR0 的是多少？（查 Freq200kHzDuty）`,DT[p],`Freq200kHzDuty[${p}] = <b>${DT[p]}</b>`)},
+ ()=>{const c=ri(0,240);return num(`MR0 = ${c}，一个 5 µs 周期里高电平占百分之几？（(240 − MR0) ÷ 240，保留 1 位小数）`,+((240-c)/240*100).toFixed(1),`(240 − ${c}) ÷ 240 = <b>${((240-c)/240*100).toFixed(1)}</b>%`)},
+ ()=>{const T=pick([500,1000,1500,2000,3000]);let m=1;while(m*1000<=T+999)m++;return num(`导通时间 ${T} µs，“按下振动中”至少要毫秒差多少才转消抖？`,m,`要 差 × 1000 > ${T+999}，最小整数 <b>${m}</b>`)},
+ ()=>{const T=pick([300,500,800]),sg=ri(0,100);const r=Math.floor(T*DS[sg]/1024);return num(`动态导通时间开着，设定 ${T} µs，按下时段位 ${sg}。实际导通多少 µs？（durationScale[${sg}] = ${DS[sg]}）`,r,`${T} × ${DS[sg]} >> 10 = <b>${r}</b>`)},
+ ()=>mc('线圈的电从哪来？',['ETA1628 升压出的 7 V（H_VDD）','MCU 的 PWM 脚直接供电','USB 5 V 直接接线圈'],0,'PWM 脚只控制 MOS 管的开关。'),
+ ()=>mc('PWM 频率 200 kHz 是怎么来的？',['48 MHz ÷ 240（MR3 = 240，PR = 0）','48 MHz ÷ 200','CT32B0 每 20 µs'],0,'my_pwm.c:89、Freq200kHzInit 传 240。'),
+ ()=>mc('谁每 20 µs 改一次占空比？',['CT32B0 的 MR0 / MR1 中断（TIMER32_0_IRQHandler）','主循环','CT32B1 自己'],0,'my_waveform.c:87。'),
+ ()=>mc('波形走完以后脚是什么电平？',['低：PWMC 清 0，EMR 设成清零','高','悬空'],0,'MyPWM_CT32B1_Stop()。'),
+ ()=>mc('线圈电流 0.5 ms 就没了，为什么霍尔要跳过十来毫秒？',['还有“振动中”约 2 ms 和消抖 > 8 ms，等磁场和机械晃动平息','因为 PWM 一直开着','因为 USB 要发包'],0,'Ele_StatusTask()。'),
+ ()=>mc('右线圈正在按下振动，这时左键按下会怎样？',['先存起来，5 ms 后用“释放”函数补震','两个同时震','左键这次不震也不补'],0,'SINGLE_COIL_AT_A_TIME，Ele_OnlyOne() 调的是 ReleaseProcess。'),
+ ()=>mc('GUI 上“按下振感强度”实际改的是？',['导通时间（µs）','PWM 占空比','升压电压'],0,'pressVibrateDurationUs。'),
+ ()=>mc('驱动方式选 Level，T1A 会怎样？',['没影响，仍按波形表震','变成一直 100% 占空比','不震'],0,'T1A 的 PressProcess 不看 driveMode。'),
+];
+let n=0,ok=0,cur=null,done=false;const pxb=$('px');
+pxb.innerHTML='<div class="pxh"><b>练习</b><span class="pxs" id="pxs"></span></div><div class="pxq" id="pxq"></div><div class="qrow" id="pxa"></div><div class="fb" id="pxfb"></div><div class="qrow"><button type="button" id="pxShow">看答案</button><button type="button" class="pxNext" id="pxNext">下一题 →</button></div>';
+const upd=()=>$('pxs').textContent=`已做 ${n} 题，对 ${ok} 题`;
+function judge(r){if(!done){n++;if(r)ok++}done=true;$('pxfb').className='fb '+(r?'ok':'no');$('pxfb').innerHTML=r?'✓ 对。'+cur.sol:'✗ 不对，再想想，或者点“看答案”。';upd()}
+function next(){cur=pick(GEN)();done=false;$('pxq').innerHTML=cur.q;$('pxfb').className='fb';$('pxfb').innerHTML='';const a=$('pxa');a.innerHTML='';
+ if(cur.type==='mc'){cur.opts.forEach((o,j)=>{const b=document.createElement('button');b.type='button';b.innerHTML=o;b.onclick=()=>{a.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');judge(j===cur.ans)};a.appendChild(b)})}
+ else{const inp=document.createElement('input');inp.type='text';inp.setAttribute('aria-label','答案');const c=document.createElement('button');c.type='button';c.textContent='检查';
+  const go=()=>{const v=parseFloat(inp.value);if(isNaN(v))return;judge(Math.abs(v-cur.ans)<0.051)};c.onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter'){if(done&&$('pxfb').classList.contains('ok'))next();else go()}});a.append(inp,c)}
+ upd()}
+$('pxShow').onclick=()=>{if(!done)n++;done=true;$('pxfb').className='fb no';$('pxfb').innerHTML='答案：'+(cur.type==='mc'?cur.opts[cur.ans]:cur.ans)+'<br>'+cur.sol;upd()};
+$('pxNext').onclick=next;next();
+})();
+</script>
