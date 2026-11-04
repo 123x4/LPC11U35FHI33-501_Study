@@ -96,6 +96,8 @@ input[type=range]{width:min(420px,100%)}
 <div class="eyebrow">T1A 主线 · 第 4 课 · 按键算法：从读数到“按下 / 松开” · 代码 src/my_misc.c:418~668（ProcessRecvSampleRawData）、app/button.c:311、605</div>
 <h1>按键算法：一个读数怎么变成“按下了”</h1>
 <p class="lede">第 3 课拿到了两颗霍尔芯片的读数（每 1 ms 一次，14 位，0 ~ 16383）。这一课讲 MCU 拿到读数以后怎么判断左右键是按下还是松开：<b>校验 → 翻转 → 滤波 → 换算成 0 ~ 100 的“段位” → 快速触发判定</b>，旁边还有两条一直在“学习”的基线。全部是软件计算，不涉及新的硬件。</p>
+<div class="box" style="border-color:var(--gold)"><b>📌 配套 GUI</b>：同事的上位机 Test HAPTIC MOUSE 能读出本课的基线、段位，也能改 AP / RT。GUI 上每个框对应哪个变量、怎么用它在真板子上验证本课内容，见 <a href="https://claude.ai/artifact/1ZaTkpqbA4MGaP8C3MSasj">第 4 课（续）：用 GUI 看按键算法</a>。</div>
+
 
 <div class="box" style="border-color:var(--gold)"><b>这一课为什么这样安排（根据你前面的提问）</b>
 <p>你之前学旧板的滤波时卡了好几次（“为什么差 ≤ 10 就只走 1/16”）。这次每一站都先用<b>图</b>讲清“它要解决什么问题”，再用<b>一步一步的数字</b>算给你看，最后才对代码。每一站的画法按内容来：按键画成剖面图，滤波画成“两条曲线 + 一条宽度为 ±60 的带子”，段位画成一把尺子，快速触发画成“记录最低点 / 最高点的曲线”。最后有一个<b>综合模拟器</b>：用滑块当手指按键，所有数字和曲线实时跟着变。</p>

@@ -4,6 +4,8 @@
 
 **现在在学：T1A 霍尔板（杰哥 2026-11-03 的代码 + 原理图 `materials/GT_Lina T1A Hall Haptic POC_SCH_V0.1.pdf`），完全按这块板子学，不对比旧板型。** 路线：全景地图 → 一次左键点击全程 → 霍尔芯片和 SPI1 → 按键算法 → PWM → 波形 → 线圈状态机 → USB 上报 → GUI 协议 → 其余。
 
+配套上位机（GUI）：`materials/GUI_HapticMouse_V1.0（区分按压和释放的振感强度-静音）/`，可直接运行 `可直接运行的程序_V1.0.05/MouseTest.exe`。
+
 另外两份文档：
 
 - [待确认问题.md](待确认问题.md)：读代码时发现、要问杰哥或上板验证的问题，按代码版本分开列。
@@ -33,6 +35,7 @@ study_notes/
 | 第 3 课（下）① | [开机准备 SPI1](https://claude.ai/artifact/K8jtZ8wuzFac7dAVtqgwkR) | InitSPI1Master 12 行：每行寄存器位变化 + 准备情况；位运算工具、时钟链、速度计算器、练习 |
 | 第 3 课（下）② | [开机准备霍尔芯片](https://claude.ai/artifact/TfZtAngPnE5Vrxp7SuzAim) | 通电（PIO0_16 开关）→ 校准时钟（30 次 128 µs）→ 写 25 个设置（寄信 + 填表）；A7 00 的来历、练习 |
 | 第 4 课 | [按键算法](https://claude.ai/artifact/YaUD1PcZQkwvNyPqJHBRLg) | 翻转 → 滤波（>60 跳、≤60 走 1/64）→ 段位 0~100 → 快速触发（30 / 20）；基线学习；综合模拟器、练习 |
+| 第 4 课（续） | [用 GUI 看按键算法](https://claude.ai/artifact/1ZaTkpqbA4MGaP8C3MSasj) | 同事的上位机：每个框对应哪个固件变量、HID 包拆解、像 GUI 的模拟面板、8 个上板实验 |
 
 ## 2. 基础课（第 0~13 课，按顺序读）
 
