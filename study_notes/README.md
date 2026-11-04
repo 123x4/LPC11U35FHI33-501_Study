@@ -36,6 +36,7 @@ study_notes/
 | 第 3 课（下）② | [开机准备霍尔芯片](https://claude.ai/artifact/TfZtAngPnE5Vrxp7SuzAim) | 通电（PIO0_16 开关）→ 校准时钟（30 次 128 µs）→ 写 25 个设置（寄信 + 填表）；A7 00 的来历、练习 |
 | 第 4 课 | [按键算法](https://claude.ai/artifact/YaUD1PcZQkwvNyPqJHBRLg) | 翻转 → 滤波（>60 跳、≤60 走 1/64）→ 段位 0~100 → 快速触发（30 / 20）；基线学习；综合模拟器、练习 |
 | 第 4 课（续） | [用 GUI 看按键算法](https://claude.ai/artifact/1ZaTkpqbA4MGaP8C3MSasj) | 同事的上位机：每个框对应哪个固件变量、HID 包拆解、像 GUI 的模拟面板、8 个上板实验 |
+| 第 4 课（精读） | [按键算法逐行精读](https://claude.ai/artifact/PchkiFqH5Q89hUjBEAiSzi) | 以代码为主：原文原行号、6 个场景的单步调试器（看每个变量怎么变）、每个函数逐行解释 |
 
 ## 2. 基础课（第 0~13 课，按顺序读）
 

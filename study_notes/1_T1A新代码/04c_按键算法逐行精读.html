@@ -1,0 +1,351 @@
+<title>按键算法逐行精读</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --hw:#7a5ea8; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.8}
+.wrap{max-width:880px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);line-height:1.3;text-wrap:balance}
+h1{font-size:1.9rem;margin:0}
+h2{font-size:1.3rem;margin:2.4rem 0 .4rem;padding-top:.6rem;border-top:1px solid var(--line)}
+h3{font-size:1.06rem;margin:1.3rem 0 .3rem}
+p{margin:.6rem 0}
+a{color:var(--per)}
+code{font-family:var(--font-m);font-size:.88em;background:var(--soft);padding:.05em .35em;border-radius:3px;overflow-wrap:anywhere}
+pre.code{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:10px 12px;overflow-x:auto;line-height:1.55;margin:.5rem 0}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.06em;color:var(--muted)}
+.lede{color:var(--muted)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:1rem 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-size:.88rem;margin:.4rem 0}
+td,th{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600}
+.note{font-size:.88rem;color:var(--muted)}
+.think{border-left:4px solid var(--per);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.8rem 0}
+.rule{border-left:4px solid var(--c,var(--per));background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.6rem 0}
+.log{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:6px 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.btns button,.tool button{font:inherit;font-size:.88rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer}
+.btns button:disabled{opacity:.4;cursor:default}
+.btns button[aria-pressed="true"]{border-color:var(--fg);font-weight:700}
+/* bit strip */
+.bstrip{display:inline-grid;gap:2px;font-family:var(--font-m);font-size:.74rem;text-align:center;margin:.2rem 0}
+.bstrip span{border:1px solid var(--line);border-radius:3px;padding:1px 3px;min-width:1.6em;background:var(--panel)}
+.bstrip span.ch{background:color-mix(in srgb,var(--bad) 28%,var(--panel));border-color:var(--bad);font-weight:700}
+.bstrip span.k{background:none;border:0;color:var(--muted);font-size:.6rem}
+.bstrip span.f{background:color-mix(in srgb,var(--c,var(--per)) 18%,var(--panel))}
+/* lamps */
+.lamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:.5rem 0}
+.lamps div{border:1.5px solid var(--line);border-radius:6px;padding:4px 8px;font-size:.82rem;background:var(--panel)}
+.lamps div::before{content:"○ ";color:var(--muted)}
+.lamps div.on{border-color:var(--good);background:color-mix(in srgb,var(--good) 15%,var(--panel))}
+.lamps div.on::before{content:"● ";color:var(--good)}
+.lamps div.new{outline:2px solid var(--bad)}
+.stp{border:2px solid var(--per);border-radius:8px;padding:10px 14px;background:var(--panel);margin:.6rem 0}
+.stp .cl{font-family:var(--font-m);font-size:.85rem;background:var(--soft);border-left:4px solid var(--per);padding:4px 8px;border-radius:0 6px 6px 0;overflow-wrap:anywhere}
+.stp .who{display:inline-block;font-size:.72rem;color:var(--bg);background:var(--c);border-radius:4px;padding:0 6px;margin-right:6px}
+.stp h3{margin:.5rem 0 .2rem}
+svg.fig{display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+/* tools */
+.tool{border:1.5px solid var(--hw);border-radius:8px;padding:8px 12px;background:color-mix(in srgb,var(--hw) 5%,var(--panel));margin:.6rem 0}
+.tool input,.tool select{font:inherit;font-size:.88rem;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.tool .row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:.3rem 0}
+/* quiz & practice */
+.qz,.px{border-radius:8px;padding:8px 12px;margin:.7rem 0}
+.qz{border:1.5px dashed var(--gold);background:color-mix(in srgb,var(--gold) 6%,var(--panel))}
+.px{border:1.5px solid var(--per);background:color-mix(in srgb,var(--per) 6%,var(--panel))}
+.qz .qt,.px .pxq{font-weight:600;margin:.2rem 0}
+.qrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.qz input,.px input{font:inherit;width:120px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.qz button,.px button{font:inherit;font-size:.9rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer;text-align:left}
+.qz button.on,.px button.on{border-color:var(--fg)}
+.px .pxh{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.px .pxh b{color:var(--per)}
+.px .pxs{font-size:.82rem;color:var(--muted)}
+.px .pxNext{border-color:var(--per);color:var(--per)}
+.fb{display:none;padding:6px 10px;border-radius:6px;background:var(--soft);margin-top:.3rem}
+.fb.ok{display:block;border-left:4px solid var(--good)}
+.fb.no{display:block;border-left:4px solid var(--bad)}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.wrap{max-width:1400px}
+.dbg{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:12px;align-items:start}
+.code{position:relative;font-family:var(--font-m);font-size:.8rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;max-height:620px;overflow:auto;padding:4px 0}
+.code div{display:grid;grid-template-columns:3.6em 1fr;white-space:pre;line-height:1.5}
+.code div span.n{color:var(--muted);text-align:right;padding-right:.8em;user-select:none}
+.code div.done{background:color-mix(in srgb,var(--per) 7%,transparent)}
+.code div.cur{background:color-mix(in srgb,var(--bad) 22%,transparent);font-weight:700}
+.code div.cur span.n{color:var(--bad)}
+.stack{font-family:var(--font-m);font-size:.8rem;margin:.2rem 0}
+.stack span{display:inline-block;border:1px solid var(--line);border-radius:4px;padding:0 6px;margin:2px;background:var(--soft)}
+.stack span.top{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,var(--panel));font-weight:700}
+table.vars{font-family:var(--font-m);font-size:.78rem;margin:.2rem 0;width:100%}
+table.vars td,table.vars th{padding:2px 6px}
+table.vars td.ch{background:color-mix(in srgb,var(--gold) 40%,var(--panel));font-weight:700}
+table.vars tr.rel td:first-child{border-left:3px solid var(--per)}
+.note{font-size:.9rem}
+#dNote{border-left:4px solid var(--bad);background:var(--soft);padding:6px 10px;border-radius:0 6px 6px 0;margin:.4rem 0;min-height:3.2em}
+.fnsec .code{max-height:none}
+.fnsec .code div{grid-template-columns:3.6em minmax(0,1.5fr) minmax(0,1fr)}
+.fnsec .code div span.x{white-space:normal;font-family:var(--font-b);color:var(--fg);font-size:.8rem;border-left:1px solid var(--line);padding-left:8px}
+.fnsec .code div.hasx{background:color-mix(in srgb,var(--sw) 6%,transparent)}
+</style>
+<div class="wrap">
+<div class="eyebrow">T1A 主线 · 第 4 课（精读）· 按键算法逐行读代码 · src/my_misc.c:135~668（只保留 T1A 编译进去的行）、app/button.c:311~664</div>
+<h1>按键算法：对着代码一行一行读</h1>
+<p class="lede">第 4 课先讲了道理，这一页<b>以代码为主</b>：用的就是 <code>src/my_misc.c</code> 的原文和原行号，只把 T1A 不编译的 <code>#if</code> 分支去掉了（用 unifdef 按 T1A 的宏处理，行号不变）。上半部分是一个<b>单步调试器</b>：选一个场景，一行一行往下走，看每个变量怎么变、进到哪个函数里；下半部分每个函数单独列出全部代码，右边逐行解释。</p>
+
+<div class="box" style="border-color:var(--gold)"><b>怎么读这一页</b>
+<p>先在调试器里选“平常：两个键都没碰”，按“下一步”走一遍完整的 1 ms（大约 100 步），把流程走熟；再选“左键刚按下的那 1 ms”“左键松开的那 1 ms”，看判定那几行是怎么翻转的。哪一行看不懂，就到下面对应函数的逐行表里查。函数调用可以用“跳过函数”直接看结果，或者“下一步”走进去。</p></div>
+
+<h2>1. 谁调用谁（每 1 ms 一次）</h2>
+<div class="scroll"><svg id="cg" class="fig" viewBox="0 0 1360 250" style="min-width:1100px" role="img" aria-label="按键算法的函数调用关系"></svg></div>
+
+<h2>2. 单步调试器：一次 ProcessRecvSampleRawData()</h2>
+<div class="tool">
+<div class="row"><label>场景：<select id="dS"></select></label>
+<span class="btns" style="margin:0"><button type="button" id="dPrev">上一步</button><button type="button" id="dNext">下一步</button><button type="button" id="dOver">跳过函数</button><button type="button" id="dOut">跳出函数</button><button type="button" id="dReset">重来</button></span><span class="note" id="dC"></span></div>
+<div id="dDesc" class="note"></div>
+<div class="dbg">
+<div><div class="stack" id="dStack"></div><div class="code" id="dCode"></div></div>
+<div><div id="dNote" aria-live="polite"></div>
+<b>当前函数的局部变量</b><table class="vars" id="dLoc"></table>
+<b>全局变量和 static 变量</b>（两列 = 两个键：[0] 右键、[1] 左键；黄色 = 这一步刚变；左边蓝线 = 当前函数会用到）<table class="vars" id="dGlb"></table>
+</div></div></div>
+
+<h2>3. 每个函数逐行</h2>
+<div id="fns"></div>
+
+<h2>4. 练习</h2>
+<div class="px" id="px"></div>
+</div>
+<script>
+(function(){
+const $=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
+const el=(p,t,a,x)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e};
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const CODE={"PRSD": [[418, "uint8_t ProcessRecvSampleRawData(uint8_t* pData, uint16_t length)"], [419, "{"], [424, "  #define length_filter_bit        6"], [425, "  #define FILTER_SKIP_VALUE        60"], [427, "    static uint16_t raw_data_filter[ANA_TOTAL_COUNT] = {0};"], [428, "    static uint32_t raw_data_filter_sum[ANA_TOTAL_COUNT] = {0};"], [430, "  uint8_t *ana_rd_buff = pData;"], [431, "  uint16_t temp[ANA_TOTAL_COUNT];"], [432, "  uint16_t node[ANA_TOTAL_COUNT];"], [433, "    uint8_t ret = 0;"], [435, "  static uint8_t previousKeySta[ANA_TOTAL_COUNT] = {0};"], [441, "  if(cali_init_cnt)"], [442, "  {"], [443, "    cali_init_cnt--;"], [444, "    for(uint8_t k = 0; k < ANA_TOTAL_COUNT; k++)"], [445, "    {"], [458, "      temp[k] = ana_phy_bit_error_checker2(ana_rd_buff[2*k] , ana_rd_buff[2*k + 1]);"], [460, "      if(temp[k] != CRC_ERROR)"], [461, "      {"], [463, "        temp[k] = MAX_VALUE_14BIT - temp[k];"], [476, "        if(0 == Hall_InitBaseline(k, temp[k], &(gwTopBaseline[k]), &(gwBottomBaseline[k])))"], [477, "        {"], [478, "          cali_init_cnt = 0;"], [479, "        }"], [481, "      }"], [483, "    }"], [484, "  }"], [485, "  else"], [486, "  {"], [487, "    for(uint8_t k = 0; k < ANA_TOTAL_COUNT; k++)"], [488, "    {"], [490, "      if(Ele_IsVibrating(ELE_POS_LEFT))"], [491, "      {"], [492, "        if(k == 1) // left button"], [493, "        {"], [494, "          gbKeyState[k] = previousKeySta[k];"], [498, "          continue;"], [499, "        }"], [500, "      }"], [502, "      if(Ele_IsVibrating(ELE_POS_RIGHT))"], [503, "      {"], [504, "        if(k == 0) // right button"], [505, "        {"], [506, "          gbKeyState[k] = previousKeySta[k];"], [510, "          continue;"], [511, "        }"], [512, "      }"], [520, "        temp[k] = ana_phy_bit_error_checker2(ana_rd_buff[2 * k], ana_rd_buff[2 * k + 1]);"], [521, "        if (temp[k] != CRC_ERROR)"], [523, "      {"], [531, "            temp[k] = MAX_VALUE_14BIT - temp[k];"], [534, "          if((raw_data_filter[k] > (temp[k] + FILTER_SKIP_VALUE)) || ((raw_data_filter[k] + FILTER_SKIP_VALUE) < temp[k]))"], [535, "          {"], [536, "            raw_data_filter[k] = temp[k];"], [537, "            raw_data_filter_sum[k] = temp[k] << length_filter_bit;"], [538, "          }"], [539, "          else"], [540, "          {"], [541, "            raw_data_filter_sum[k] += temp[k];"], [542, "            raw_data_filter_sum[k] -= raw_data_filter[k];"], [543, "            raw_data_filter[k] = raw_data_filter_sum[k] >> length_filter_bit;"], [544, "            temp[k] = raw_data_filter[k];"], [545, "          }"], [547, "        node[k] = Hall_CalculateNode(temp[k], gwBottomBaseline[k], gwTopBaseline[k]);"], [548, "        Hall_HandleKeyRapidTrigger(k, node[k]);"], [549, "        Hall_CalibrateTopBaseline(k, gbKeyState[k], temp[k], &(gwTopBaseline[k]));"], [550, "        Hall_CalibrateBottomBaseline(k, gbKeyState[k], temp[k], &(gwBottomBaseline[k]));"], [552, "        if(0 == k) // right"], [553, "        {"], [554, "          Ele_UpadteSegment(VK_RBUTTON, node[0]);"], [555, "        }"], [556, "        else //if(1 == k) //left"], [557, "        {"], [558, "          Ele_UpadteSegment(VK_LBUTTON, node[1]);"], [559, "        }"], [561, "        previousKeySta[k] = gbKeyState[k];"], [600, "        HallRawInfo_ts xRawInfo;"], [601, "        HallSegmentInfo_ts xSegInfo;"], [602, "        xRawInfo.wBaselineBottom = gwBottomBaseline[k];"], [603, "        xRawInfo.wBaselineTop = gwTopBaseline[k];"], [604, "        xRawInfo.wCurrentRaw = temp[k];"], [605, "        xSegInfo.wCurrentSegmentValue = node[k];"], [606, "        xSegInfo.wMaxSegmentValue = 100;"], [607, "        Hall_SyncParam(k, &xRawInfo, &xSegInfo);"], [610, "      }"], [611, "    }"], [613, "    /********debug code begin*********************/"], [653, "    /********debug code end*********************/"], [654, "  }"], [657, "  if(gbKeyState[0])"], [658, "  {"], [659, "    ret |= (0x01 << 1);"], [660, "  }"], [662, "  if(gbKeyState[1])"], [663, "  {"], [664, "    ret |= (0x01 << 0);"], [665, "  }"], [667, "  return ret;"], [668, "}"]], "INIT": [[135, "int32_t Hall_InitBaseline(uint16_t keyIndex, uint16_t rawData, uint16_t *const pTopBaseline, uint16_t *const pBottomBaseline)"], [136, "{"], [137, "  static uint16_t counter[ANA_TOTAL_COUNT] = {0};"], [138, "  uint16_t upperLimit = *pTopBaseline + (MAGNETIC_NOISE);"], [139, "  uint16_t lowerLimit = *pTopBaseline - (MAGNETIC_NOISE);"], [141, "  if((rawData > upperLimit) || (rawData < lowerLimit))"], [142, "  {"], [143, "    *pTopBaseline = rawData;"], [144, "    *pBottomBaseline = rawData;"], [145, "    counter[keyIndex] = 0;"], [146, "    return -1;"], [147, "  }"], [148, "  else"], [149, "  {"], [150, "    *pTopBaseline = (*pTopBaseline + rawData) / 2;"], [151, "    *pBottomBaseline = *pTopBaseline;"], [152, "    counter[keyIndex] += 1;"], [153, "    if(counter[keyIndex] >= (100 * ONE_MS_COUNT))"], [154, "    {"], [155, "      counter[keyIndex] = 100;"], [156, "      return 0;"], [157, "    }"], [158, "  }"], [159, "  return -1;"], [160, "}"]], "TOP": [[162, "void Hall_CalibrateTopBaseline(uint16_t keyIndex, uint8_t nowKeySta, uint16_t rawData, uint16_t *const pTopBaseline)"], [163, "{"], [164, "  static uint16_t counter1[ANA_TOTAL_COUNT] = {0};"], [165, "  static uint16_t counter2[ANA_TOTAL_COUNT] = {0};"], [166, "  static uint16_t counter3[ANA_TOTAL_COUNT] = {0};"], [167, "  uint16_t topBaseline = *pTopBaseline;"], [169, "  if(nowKeySta) //press"], [170, "  {"], [171, "    counter1[keyIndex] = 0;"], [172, "    counter2[keyIndex] = 0;"], [173, "    counter3[keyIndex] = 0;"], [174, "    return;"], [175, "  }"], [177, "  if(rawData < (topBaseline - MAGNETIC_NOISE))"], [178, "  {"], [179, "    counter1[keyIndex] += 1;"], [180, "    counter2[keyIndex] += 1;"], [181, "    counter3[keyIndex] = 0;"], [182, "    if(counter1[keyIndex] >= (300 * ONE_MS_COUNT))"], [183, "    {"], [184, "      counter1[keyIndex] = 0;"], [185, "      counter2[keyIndex] = 0;"], [186, "      topBaseline -= MAGNETIC_NOISE;"], [187, "      *pTopBaseline = topBaseline;"], [188, "    }"], [189, "  }"], [190, "  else if((rawData < topBaseline) /*&& (rawData >= (topBaseline - MAGNETIC_NOISE))*/)"], [191, "  {"], [192, "    counter2[keyIndex] += 1;"], [193, "    counter1[keyIndex] = 0;"], [194, "    counter3[keyIndex] = 0;"], [195, "    if(counter2[keyIndex] >= (100 * ONE_MS_COUNT))"], [196, "    {"], [197, "      counter2[keyIndex] = 0;"], [198, "      topBaseline -= 5;"], [199, "      *pTopBaseline = topBaseline;"], [200, "    }"], [201, "  }"], [202, "  else if((rawData <= (topBaseline + MAGNETIC_NOISE)) && (rawData > topBaseline))"], [203, "  {"], [204, "    counter3[keyIndex] += 1;"], [205, "    counter1[keyIndex] = 0;"], [206, "    counter2[keyIndex] = 0;"], [207, "    if(counter3[keyIndex] >= (100 * ONE_MS_COUNT))"], [208, "    {"], [209, "      counter3[keyIndex] = 0;"], [210, "      topBaseline += 2;"], [211, "      *pTopBaseline = topBaseline;"], [212, "    }"], [213, "  }"], [214, "  else /* if(rawData == topBaseline || rawData > (topBaseline + MAGNETIC_NOISE)) */"], [215, "  {"], [216, "    counter1[keyIndex] = 0;"], [217, "    counter2[keyIndex] = 0;"], [218, "    counter3[keyIndex] = 0;"], [219, "  }"], [220, "}"]], "BOT": [[222, "void Hall_CalibrateBottomBaseline(uint16_t keyIndex, uint8_t nowKeySta, uint16_t rawData, uint16_t *const pBottomBaseline)"], [223, "{"], [224, "  static uint8_t pressTimeMs[ANA_TOTAL_COUNT] = {0};"], [225, "  static uint8_t pressCnt[ANA_TOTAL_COUNT] = {0};"], [226, "  static uint16_t counter1[ANA_TOTAL_COUNT] = {0};"], [227, "  static uint16_t counter2[ANA_TOTAL_COUNT] = {0};"], [228, "  uint16_t bottomBaseline = *pBottomBaseline;"], [230, "/**********time calculate code begin*******************************************/"], [231, "  if(nowKeySta) //press"], [232, "  {"], [233, "    pressCnt[keyIndex] += 1;"], [234, "    if(pressCnt[keyIndex] >= ONE_MS_COUNT)"], [235, "    {"], [236, "      pressCnt[keyIndex] = 0;"], [237, "      if(pressTimeMs[keyIndex] < 0xFF)"], [238, "      {"], [239, "        pressTimeMs[keyIndex] += 1;"], [240, "      }"], [241, "    }"], [242, "  }"], [243, "  else //release"], [244, "  {"], [245, "    pressCnt[keyIndex] = 0;"], [246, "    pressTimeMs[keyIndex] = 0;"], [247, "  }"], [248, "/**********time calculate code end*********************************************/"], [249, "  if(pressTimeMs[keyIndex] > 100) //100ms window in press"], [250, "  {"], [251, "    counter1[keyIndex] = 0;"], [252, "    counter2[keyIndex] = 0;"], [253, "    return;"], [254, "  }"], [256, "  if(rawData > (bottomBaseline + (MAGNETIC_NOISE * 4)))"], [257, "  {"], [259, "    counter1[keyIndex] += 1;"], [260, "    counter2[keyIndex] += 1;"], [261, "    if(counter1[keyIndex] >= (30 * ONE_MS_COUNT))"], [262, "    {"], [263, "      counter1[keyIndex] = 0;"], [264, "      counter2[keyIndex] = 0;"], [265, "      bottomBaseline += (MAGNETIC_NOISE * 3);"], [266, "      *pBottomBaseline = bottomBaseline;"], [267, "    }"], [269, "  }"], [270, "  else if(rawData > (bottomBaseline + MAGNETIC_NOISE))"], [271, "  {"], [272, "    counter2[keyIndex] += 1;"], [273, "    counter1[keyIndex] = 0;"], [274, "    if(counter2[keyIndex] >= (30 * ONE_MS_COUNT))"], [275, "    {"], [276, "      counter2[keyIndex] = 0;"], [277, "      bottomBaseline += (MAGNETIC_NOISE / 2);"], [278, "      *pBottomBaseline = bottomBaseline;"], [279, "    }"], [280, "  }"], [281, "  else"], [282, "  {"], [283, "    counter1[keyIndex] = 0;"], [284, "    counter2[keyIndex] = 0;"], [285, "  }"], [286, "}"]], "NODE": [[288, "uint16_t Hall_CalculateNode(uint16_t rawData, uint16_t bottomBaseline, uint16_t topBaseline)"], [289, "{"], [290, "  static uint16_t oldBottomBaseline = 0;"], [291, "  static uint16_t oldTopBaseline = 0;"], [292, "  static uint32_t step = 0;"], [293, "  uint8_t tmp = 0;"], [294, "  uint32_t diff = 0;"], [297, "  if(topBaseline >= bottomBaseline)"], [298, "  {"], [299, "    return nodeCaliTable[0];"], [300, "  }"], [301, "  else if((bottomBaseline - topBaseline) < 100)"], [302, "  {"], [303, "    return nodeCaliTable[0];"], [304, "  }"], [306, "  if(rawData <= topBaseline)"], [307, "  {"], [308, "    tmp = 0;"], [309, "  }"], [310, "  else if(rawData >= bottomBaseline)"], [311, "  {"], [312, "    tmp = 255;"], [313, "  }"], [314, "  else"], [315, "  {"], [316, "    if((oldBottomBaseline != bottomBaseline) || (oldTopBaseline != topBaseline))"], [317, "    {"], [318, "      oldBottomBaseline = bottomBaseline;"], [319, "      oldTopBaseline = topBaseline;"], [320, "      step = (uint32_t)((1 << 21) / (bottomBaseline - topBaseline)); // rawData != bottomBaseline"], [321, "    }"], [322, "    diff = rawData - topBaseline;"], [323, "    tmp = (diff * step * 255) >> 21;"], [324, "  }"], [326, "  return nodeCaliTable[tmp];"], [327, "}"]], "RT": [[330, "void Hall_HandleKeyRapidTrigger(uint8_t keyIndex, uint16_t segment)"], [331, "{"], [332, "  static uint16_t current_node_update[ANA_TOTAL_COUNT] = {0};"], [333, "    unsigned short release_dis, press_dis, ap_seg;"], [334, "    unsigned short current_node_update_temp;"], [336, "  ap_seg = ap_value[keyIndex];"], [337, "    press_dis = rt_press_value[keyIndex];"], [338, "    release_dis = rt_release_value[keyIndex];"], [341, "//    {"], [342, "//        if(press_dis <= 20)press_dis = 20;"], [343, "//        if(release_dis <= 20)release_dis = 20;"], [344, "//    }"], [346, "    if(gbKeyState[keyIndex])"], [347, "    {"], [348, "        if(segment == 0)"], [349, "    //if((segment < ap_seg) || (!segment))"], [350, "        {"], [351, "            gbKeyState[keyIndex] = 0;"], [352, "            current_node_update[keyIndex] = segment;"], [353, "        }"], [354, "        else"], [355, "        {"], [356, "            if(segment > current_node_update[keyIndex])"], [357, "            {"], [358, "                current_node_update[keyIndex] = segment;"], [359, "            }"], [360, "            else"], [361, "            {"], [362, "                if(current_node_update[keyIndex] > (segment + release_dis))"], [363, "                {"], [364, "                    gbKeyState[keyIndex] = 0;"], [365, "                    current_node_update[keyIndex] = segment;"], [366, "                }"], [367, "            }"], [368, "        }"], [369, "    }"], [370, "    else"], [371, "    {"], [372, "        if(segment >= MAX_SEGMENT)"], [373, "        {"], [374, "            gbKeyState[keyIndex] = 1;"], [375, "            current_node_update[keyIndex] = segment;"], [376, "        }"], [377, "        else"], [378, "        {"], [379, "            current_node_update_temp = current_node_update[keyIndex];"], [381, "            if(segment < current_node_update_temp)"], [382, "            {"], [383, "                current_node_update[keyIndex] = segment;"], [384, "            }"], [385, "            else"], [386, "            {"], [388, "                if((segment >= (current_node_update_temp + press_dis)) && (segment >= ap_seg))"], [389, "        {"], [390, "                    gbKeyState[keyIndex] = 1;"], [391, "                    current_node_update[keyIndex] = segment;"], [392, "                }"], [393, "            }"], [394, "        }"], [395, "    }"], [396, "}"]], "CHK": [[398, "__attribute__((unused)) static unsigned short ana_phy_bit_error_checker2(unsigned char sample_hi,unsigned char sample_lo)"], [399, "{"], [400, "      unsigned char sample_hi_shade = sample_hi & 0x3f;//?6?"], [402, "        if((sample_hi & 0xC0)==(bit_error[sample_hi_shade]^bit_error[sample_lo]))"], [403, "        {"], [404, "//            if (ana_mode == ANA_MODE_CONTINUE)"], [405, "//            {"], [406, "                return (sample_hi_shade<<8) | sample_lo;"], [407, "//            }"], [408, "//            else"], [409, "//            {"], [410, "//                return (((sample_hi_shade<<8) | sample_lo) << 4);"], [411, "//            }"], [412, "        }else"], [413, "    {"], [414, "            return CRC_ERROR;"], [415, "        }"], [416, "}"]], "LR": [[311, "UINT32 LR_GetState(void)"], [312, "{"], [319, "    UINT32 result = 0; //init value is 0."], [346, "    hall_get_sample();"], [363, "  result = ProcessRecvSampleRawData((uint8_t *)(&hall_spi_rx), 4);"], [364, "    return result;"]], "SCAN": [[605, "BOOL Button_Scan(void)"], [606, "{"], [607, "    UINT8 i;"], [608, "    UINT32 button;"], [610, "    buttonScan_stru.button_changed = FALSE;"], [612, "    button = Button_GetState();"], [614, "  for(i = 0; i <= 1; i++) // 0: left; 1: right"], [615, "  {"], [616, "        if((button ^ buttonScan_stru.scan_result_cur) & (0x01 << i))"], [617, "        {"], [618, "            if(button & (0x01 << i))"], [619, "            {"], [620, "                buttonScan_stru.scan_result_cur |= (0x01 << i);"], [621, "                //buttonScan_stru.debounce[i] = 5;"], [622, "            }"], [623, "            else"], [624, "            {"], [625, "                buttonScan_stru.scan_result_cur &= ~(0x01 << i);"], [626, "                //buttonScan_stru.debounce[i] = 8;"], [627, "            }"], [628, "        }"], [630, "    if((buttonScan_stru.scan_result_pre ^ buttonScan_stru.scan_result_cur) & (0x01 << i))"], [631, "    {"], [632, "      if(buttonScan_stru.scan_result_cur & (0x01 << i))"], [633, "      {"], [634, "        buttonScan_stru.scan_result_pre |= (0x01 << i);"], [635, "        buttonScan_stru.button_changed = TRUE;"], [636, "        //****************code press begin****************/"], [637, "        if(0 == i)// left button"], [638, "        {"], [639, "          Ele_LeftKeyPressProcess();"], [640, "        }"], [641, "        else //if(1 == i)//right button"], [642, "        {"], [643, "          Ele_RightKeyPressProcess();"], [645, "        }"], [646, "        //****************code press end****************/"], [647, "      }"], [648, "      else"], [649, "      {"], [650, "        buttonScan_stru.scan_result_pre &= ~(0x01 << i);"], [651, "        buttonScan_stru.button_changed = TRUE;"], [652, "        //****************code release begin****************/"], [653, "        if(0 == i)// left button"], [654, "        {"], [655, "          Ele_LeftKeyReleaseProcess();"], [656, "        }"], [657, "        else //if(1 == i)//right button"], [658, "        {"], [659, "          Ele_RightKeyReleaseProcess();"], [660, "        }"], [661, "        //****************code release end****************/"], [662, "      }"], [663, "    }"], [664, "  }"]]};
+const FNAME={PRSD:'ProcessRecvSampleRawData',CHK:'ana_phy_bit_error_checker2',INIT:'Hall_InitBaseline',NODE:'Hall_CalculateNode',RT:'Hall_HandleKeyRapidTrigger',TOP:'Hall_CalibrateTopBaseline',BOT:'Hall_CalibrateBottomBaseline',LR:'LR_GetState',SCAN:'Button_Scan'};
+const FILE={LR:'app/button.c',SCAN:'app/button.c'};
+const TBL=[0,0,0,0,0,0,0,0,0,0,5,6,7,8,9,10,11,12,13,14,14,15,15,16,16,17,17,18,18,19,19,20,21,22,22,23,23,24,24,25,25,26,26,27,27,28,28,29,29,30,31,31,32,32,33,33,34,34,35,35,36,36,37,37,38,38,39,39,40,40,41,41,42,42,43,43,44,44,45,45,46,46,47,47,48,48,49,49,50,50,51,51,52,52,53,53,54,54,55,55,56,56,57,57,58,58,58,59,59,59,60,60,61,61,62,62,63,63,64,64,65,65,66,66,66,67,67,67,68,68,68,69,69,69,70,70,71,71,72,72,73,73,74,74,74,75,75,75,76,76,76,77,77,77,78,78,78,79,79,79,80,80,81,81,82,82,82,83,83,83,84,84,84,85,85,85,86,86,86,87,87,87,88,88,88,89,89,89,90,90,90,91,91,91,92,92,92,93,93,93,94,94,94,95,95,95,96,96,96,97,97,97,98,98,98,98,99,99,99,99].concat(Array(36).fill(100));
+const hx=v=>'0x'+(v&255).toString(16).toUpperCase().padStart(2,'0');
+const par=(v,s)=>{let p=0;for(let i=s;i<14;i+=2)p^=(v>>i)&1;return p};
+function enc(raw){return [(par(raw,1)<<7)|(par(raw,0)<<6)|(raw>>8),raw&255]}
+/* ===== call graph ===== */
+(function(){const s=$('cg');const N=[[20,20,'Device_Scan()','device.c:877 主循环每圈'],[250,20,'Device_Button_Scan()','device.c:952，1 ms 一次'],[500,20,'Button_Scan()','button.c:605'],[750,20,'Button_GetState()','button.c:564'],[1000,20,'LR_GetState()','button.c:311'],
+ [1000,110,'hall_get_sample()','button.c:858 第 3 课'],[640,110,'ProcessRecvSampleRawData()','my_misc.c:418 本页主角'],
+ [20,190,'ana_phy_bit_error_checker2()','my_misc.c:398 校验拼数'],[250,190,'Hall_InitBaseline()','my_misc.c:135 开机学习'],[480,190,'Hall_CalculateNode()','my_misc.c:288 段位'],[710,190,'Hall_HandleKeyRapidTrigger()','my_misc.c:330 判按下'],[940,190,'Hall_CalibrateTop/BottomBaseline()','my_misc.c:162 / 222 学基线'],[1180,190,'Ele_UpadteSegment() 等','交给线圈 / GUI']];
+ N.forEach(([x,y,t,sub],i)=>{const main=i===6;el(s,'rect',{x,y,width:i>=7?(i===11?230:215):220,height:46,rx:8,style:`fill:${main?'color-mix(in srgb,var(--bad) 14%,var(--panel))':'var(--panel)'};stroke:${main?'var(--bad)':'var(--line)'};stroke-width:${main?2.5:1.5}`});
+  el(s,'text',{x:x+10,y:y+19,'font-size':13,'font-weight':700,fill:'var(--fg)',style:'font-family:var(--font-m)'},t);el(s,'text',{x:x+10,y:y+37,'font-size':11,fill:'var(--muted)'},sub)});
+ const a=d=>el(s,'path',{d,fill:'none',stroke:'var(--muted)','stroke-width':1.6});
+ a('M240,43 H250');a('M470,43 H500');a('M720,43 H750');a('M970,43 H1000');a('M1110,66 V110');a('M1060,66 V80 H750 V110');
+ [127,357,587,817,1055].forEach(x=>a(`M750,156 V172 H${x} V190`));a('M860,156 V172 H1290 V190');
+ el(s,'text',{x:760,y:100,'font-size':11,fill:'var(--muted)'},'先 hall_get_sample() 读 4 字节，再把 hall_spi_rx 交给它（button.c:346、363）');})();
+/* ===== tracer ===== */
+let G,ST,FR,TR;
+const cp=o=>JSON.parse(JSON.stringify(o));
+function T(line,note){TR.push({fn:FR[FR.length-1].fn,line,note,stack:cp(FR),G:cp(G),ST:cp(ST),d:FR.length})}
+const push=(fn,v)=>FR.push({fn,v}),pop=()=>FR.pop(),L=()=>FR[FR.length-1].v;
+const kn=k=>k?'左键':'右键';
+function CHK(hi,lo){push('CHK',{sample_hi:hx(hi),sample_lo:hx(lo),sample_hi_shade:'?'});const v=L();
+ T(398,`进入校验：高字节 ${hx(hi)}、低字节 ${hx(lo)}（第 3 课第 5 节）`);
+ const sh=hi&0x3f;v.sample_hi_shade=hx(sh);T(400,`sample_hi_shade = ${hx(hi)} & 0x3F = ${hx(sh)}：去掉最高 2 位（两个校验位），剩 D13~D8`);
+ const d=(sh<<8)|lo,exp=(par(d,1)<<7)|(par(d,0)<<6),ok=(hi&0xC0)===exp;
+ T(402,`收到的校验位 ${hx(hi&0xC0)}；用 bit_error 表按数据位算出应有的 ${hx(exp)}。${ok?'相等 → 通过':'不相等 → 失败'}`);
+ let r;if(ok){r=d;T(406,`返回 (${hx(sh)} << 8) | ${hx(lo)} = ${d}（14 位读数）`)}else{r=0xFFFF;T(414,'返回 CRC_ERROR = 0xFFFF')}pop();return r}
+function INIT(k,raw){push('INIT',{keyIndex:k,rawData:raw,upperLimit:'?',lowerLimit:'?'});const v=L();
+ T(135,`进入 Hall_InitBaseline：${kn(k)}，rawData（已翻转的 temp）= ${raw}，pTopBaseline 指向 gwTopBaseline[${k}]，pBottomBaseline 指向 gwBottomBaseline[${k}]`);
+ v.upperLimit=G.top[k]+60;v.lowerLimit=G.top[k]-60;T(139,`上限 = 顶部 ${G.top[k]} + 60 = ${v.upperLimit}；下限 = ${G.top[k]} − 60 = ${v.lowerLimit}（138、139 行）`);
+ if(raw>v.upperLimit||raw<v.lowerLimit){T(141,`${raw} 不在 ${v.lowerLimit} ~ ${v.upperLimit} 里 → 不稳定`);G.top[k]=raw;T(143,`*pTopBaseline = ${raw}：直接换成这次的数`);G.bot[k]=raw;T(144,'*pBottomBaseline 也一样');ST.initCnt[k]=0;T(145,'计数清零，重新数“连续稳定”');T(146,'return −1：还没学完');pop();return -1}
+ T(141,`${raw} 在 ${v.lowerLimit} ~ ${v.upperLimit} 里 → 稳定，走 else`);const nt=Math.floor((G.top[k]+raw)/2);T(150,`*pTopBaseline = (${G.top[k]} + ${raw}) / 2 = ${nt}`);G.top[k]=nt;G.bot[k]=nt;T(151,`*pBottomBaseline = *pTopBaseline = ${nt}（学习阶段底部 = 顶部）`);
+ ST.initCnt[k]++;T(152,`counter[${k}] + 1 = ${ST.initCnt[k]}`);
+ if(ST.initCnt[k]>=100){T(153,`${ST.initCnt[k]} ≥ 100（100 × ONE_MS_COUNT）→ 连续稳定够 100 次`);ST.initCnt[k]=100;T(155,'counter = 100');T(156,'return 0：学完了');pop();return 0}
+ T(153,`${ST.initCnt[k]} < 100 → 还要继续`);T(159,'return −1：还没学完');pop();return -1}
+function NODE(t,b,top){push('NODE',{rawData:t,bottomBaseline:b,topBaseline:top,tmp:0,diff:0});const v=L();
+ T(288,`进入 Hall_CalculateNode：rawData = ${t}，bottomBaseline = ${b}，topBaseline = ${top}`);
+ if(top>=b){T(297,`顶部 ${top} ≥ 底部 ${b}`);T(299,'return nodeCaliTable[0] = 0');pop();return 0}
+ T(297,`顶部 ${top} < 底部 ${b}，往下`);
+ if(b-top<100){T(301,`底部 − 顶部 = ${b-top} < 100：基线没学好`);T(303,'return 0');pop();return 0}
+ T(301,`底部 − 顶部 = ${b-top} ≥ 100，往下`);
+ if(t<=top){T(306,`rawData ${t} ≤ 顶部 ${top}：完全松开`);v.tmp=0;T(308,'tmp = 0')}
+ else if(t>=b){T(306,`rawData ${t} > 顶部`);T(310,`rawData ${t} ≥ 底部 ${b}：按到底`);v.tmp=255;T(312,'tmp = 255')}
+ else{T(306,`rawData ${t} > 顶部`);T(310,`rawData ${t} < 底部，走 else：在两条基线之间`);
+  if(ST.oldB!==b||ST.oldT!==top){T(316,`上次算 step 用的基线是 ${ST.oldB} / ${ST.oldT}，这次 ${b} / ${top}，不一样 → 重新算`);ST.oldB=b;T(318,`oldBottomBaseline = ${b}`);ST.oldT=top;T(319,`oldTopBaseline = ${top}`);ST.step=Math.floor(2097152/(b-top));T(320,`step = 2²¹ ÷ (${b} − ${top}) = 2097152 ÷ ${b-top} = ${ST.step}（软件除法，慢）`)}
+  else T(316,`基线和上次一样（${b} / ${top}）→ 直接用上次的 step = ${ST.step}`);
+  v.diff=t-top;T(322,`diff = ${t} − ${top} = ${v.diff}`);v.tmp=Math.floor(v.diff*ST.step*255/2097152)&255;T(323,`tmp = (${v.diff} × ${ST.step} × 255) >> 21 = ${v.diff*ST.step*255} >> 21 = ${v.tmp}`)}
+ const r=TBL[v.tmp];T(326,`return nodeCaliTable[${v.tmp}] = ${r}`);pop();return r}
+function RT(k,seg){push('RT',{keyIndex:k,segment:seg,ap_seg:'?',press_dis:'?',release_dis:'?',current_node_update_temp:'?'});const v=L();
+ T(330,`进入 Hall_HandleKeyRapidTrigger：${kn(k)}，段位 segment = ${seg}`);
+ v.ap_seg=G.ap[k];T(336,`ap_seg = ap_value[${k}] = ${v.ap_seg}`);v.press_dis=G.rtp[k];T(337,`press_dis = rt_press_value[${k}] = ${v.press_dis}`);v.release_dis=G.rtr[k];T(338,`release_dis = rt_release_value[${k}] = ${v.release_dis}`);
+ const cur=()=>ST.cur[k];
+ if(G.key[k]){T(346,`gbKeyState[${k}] = 1：现在是按下状态`);
+  if(seg===0){T(348,'segment == 0：回到顶了');G.key[k]=0;T(351,'gbKeyState = 0 → 松开');ST.cur[k]=seg;T(352,'current_node_update = 0')}
+  else{T(348,`segment = ${seg} ≠ 0，走 else`);
+   if(seg>cur()){T(356,`段位 ${seg} > 记住的最高点 ${cur()} → 还在往下按`);ST.cur[k]=seg;T(358,`最高点更新为 ${seg}`)}
+   else{T(356,`段位 ${seg} ≤ 最高点 ${cur()}，走 else：在往回抬`);
+    if(cur()>seg+v.release_dis){T(362,`最高点 ${cur()} > ${seg} + ${v.release_dis} = ${seg+v.release_dis}：抬起超过松开灵敏度`);G.key[k]=0;T(364,'gbKeyState = 0 → 松开');ST.cur[k]=seg;T(365,`current_node_update = ${seg}（从这里开始记最低点）`)}
+    else T(362,`最高点 ${cur()} ≤ ${seg + v.release_dis}：抬得还不够，保持按下`)}}}
+ else{T(346,`gbKeyState[${k}] = 0：现在是松开状态，走 else`);
+  if(seg>=100){T(372,`段位 ${seg} ≥ MAX_SEGMENT 100：按到底`);G.key[k]=1;T(374,'gbKeyState = 1 → 按下');ST.cur[k]=seg;T(375,`current_node_update = ${seg}`)}
+  else{T(372,`段位 ${seg} < 100，走 else`);v.current_node_update_temp=cur();T(379,`current_node_update_temp = 最低点 ${cur()}`);
+   if(seg<v.current_node_update_temp){T(381,`段位 ${seg} < 最低点 ${v.current_node_update_temp} → 还在往上抬`);ST.cur[k]=seg;T(383,`最低点更新为 ${seg}`)}
+   else{T(381,`段位 ${seg} ≥ 最低点 ${v.current_node_update_temp}，走 else`);const c1=seg>=v.current_node_update_temp+v.press_dis,c2=seg>=v.ap_seg;
+    if(c1&&c2){T(388,`${seg} ≥ ${v.current_node_update_temp} + ${v.press_dis} = ${v.current_node_update_temp+v.press_dis} ✓，且 ${seg} ≥ AP ${v.ap_seg} ✓`);G.key[k]=1;T(390,'gbKeyState = 1 → 按下');ST.cur[k]=seg;T(391,`current_node_update = ${seg}（从这里开始记最高点）`)}
+    else T(388,`${seg} ≥ ${v.current_node_update_temp + v.press_dis}？${c1?'✓':'✗'}；${seg} ≥ AP ${v.ap_seg}？${c2?'✓':'✗'} → 不满足，保持松开`)}}}
+ T(396,'返回（这个函数没有返回值，结果写在 gbKeyState 和 current_node_update 里）');pop()}
+function TOP(k,sta,raw){push('TOP',{keyIndex:k,nowKeySta:sta,rawData:raw,topBaseline:G.top[k]});const v=L();const c=ST.tc;
+ T(167,`进入 Hall_CalibrateTopBaseline：${kn(k)}，状态 ${sta}，temp ${raw}；topBaseline 先复制一份 = ${G.top[k]}`);
+ if(sta){T(169,'nowKeySta = 1：按下状态不学顶部');c[0][k]=0;c[1][k]=0;c[2][k]=0;T(173,'三个计数清零（171~173 行）');T(174,'return');pop();return}
+ T(169,'nowKeySta = 0：松开状态，继续');const tb=v.topBaseline;
+ if(raw<tb-60){T(177,`${raw} < ${tb} − 60 = ${tb-60}：比顶部低很多`);c[0][k]++;c[1][k]++;c[2][k]=0;T(181,`counter1 = ${c[0][k]}，counter2 = ${c[1][k]}，counter3 = 0（179~181 行）`);
+  if(c[0][k]>=300){T(182,`counter1 ≥ 300：连续 300 ms`);c[0][k]=0;c[1][k]=0;v.topBaseline=tb-60;T(186,`topBaseline = ${tb} − 60 = ${v.topBaseline}`);G.top[k]=v.topBaseline;T(187,'写回 gwTopBaseline')}else T(182,`counter1 = ${c[0][k]} < 300，还不改`)}
+ else if(raw<tb){T(177,`${raw} 不比 ${tb-60} 小`);T(190,`${raw} < ${tb}：比顶部低一点（0 ~ 60）`);c[1][k]++;c[0][k]=0;c[2][k]=0;T(194,`counter2 = ${c[1][k]}，另两个清零（192~194 行）`);
+  if(c[1][k]>=100){T(195,'counter2 ≥ 100：连续 100 ms');c[1][k]=0;v.topBaseline=tb-5;T(198,`topBaseline = ${tb} − 5 = ${v.topBaseline}`);G.top[k]=v.topBaseline;T(199,'写回 gwTopBaseline')}else T(195,`counter2 = ${c[1][k]} < 100，还不改`)}
+ else if(raw<=tb+60&&raw>tb){T(177,'不比顶部低很多');T(190,'也不比顶部低');T(202,`${tb} < ${raw} ≤ ${tb+60}：比顶部高一点`);c[2][k]++;c[0][k]=0;c[1][k]=0;T(206,`counter3 = ${c[2][k]}，另两个清零（204~206 行）`);
+  if(c[2][k]>=100){T(207,'counter3 ≥ 100：连续 100 ms');c[2][k]=0;v.topBaseline=tb+2;T(210,`topBaseline = ${tb} + 2 = ${v.topBaseline}`);G.top[k]=v.topBaseline;T(211,'写回 gwTopBaseline')}else T(207,`counter3 = ${c[2][k]} < 100，还不改`)}
+ else{T(177,'不比顶部低很多');T(190,'也不比顶部低');T(202,`${raw} ${raw===tb?'= 顶部':'> 顶部 + 60'}：都不是`);c[0][k]=0;c[1][k]=0;c[2][k]=0;T(218,'三个计数清零（216~218 行）')}
+ T(220,'返回');pop()}
+function BOT(k,sta,raw){push('BOT',{keyIndex:k,nowKeySta:sta,rawData:raw,bottomBaseline:G.bot[k]});const v=L();const bb=v.bottomBaseline;
+ T(228,`进入 Hall_CalibrateBottomBaseline：${kn(k)}，状态 ${sta}，temp ${raw}；bottomBaseline 复制一份 = ${bb}`);
+ if(sta){T(231,'nowKeySta = 1：按下中，数一数按了多少 ms');ST.bpc[k]++;T(233,`pressCnt = ${ST.bpc[k]}`);if(ST.bpc[k]>=1){T(234,'pressCnt ≥ ONE_MS_COUNT（1）');ST.bpc[k]=0;T(236,'pressCnt = 0');if(ST.bpms[k]<255){T(237,`pressTimeMs ${ST.bpms[k]} < 255`);ST.bpms[k]++;T(239,`pressTimeMs = ${ST.bpms[k]}`)}else T(237,'pressTimeMs 已经 255，不再加')}}
+ else{T(231,'nowKeySta = 0：松开');ST.bpc[k]=0;ST.bpms[k]=0;T(246,'pressCnt = 0，pressTimeMs = 0（245~246 行）')}
+ if(ST.bpms[k]>100){T(249,`pressTimeMs = ${ST.bpms[k]} > 100：按下已超过 100 ms，不学`);ST.bc1[k]=0;ST.bc2[k]=0;T(252,'两个计数清零');T(253,'return');pop();return}
+ T(249,`pressTimeMs = ${ST.bpms[k]} ≤ 100：可以学`);
+ if(raw>bb+240){T(256,`${raw} > ${bb} + 240 = ${bb+240}：比底部高很多`);ST.bc1[k]++;ST.bc2[k]++;T(260,`counter1 = ${ST.bc1[k]}，counter2 = ${ST.bc2[k]}`);
+  if(ST.bc1[k]>=30){T(261,'counter1 ≥ 30：连续 30 ms');ST.bc1[k]=0;ST.bc2[k]=0;v.bottomBaseline=bb+180;T(265,`bottomBaseline = ${bb} + 180 = ${bb+180}`);G.bot[k]=bb+180;T(266,'写回 gwBottomBaseline')}else T(261,`counter1 = ${ST.bc1[k]} < 30`)}
+ else if(raw>bb+60){T(256,`${raw} 不比 ${bb+240} 大`);T(270,`${raw} > ${bb} + 60：比底部高一点`);ST.bc2[k]++;ST.bc1[k]=0;T(273,`counter2 = ${ST.bc2[k]}，counter1 = 0`);
+  if(ST.bc2[k]>=30){T(274,'counter2 ≥ 30');ST.bc2[k]=0;v.bottomBaseline=bb+30;T(277,`bottomBaseline = ${bb} + 30 = ${bb+30}`);G.bot[k]=bb+30;T(278,'写回 gwBottomBaseline')}else T(274,`counter2 = ${ST.bc2[k]} < 30`)}
+ else{T(256,`${raw} 不比 ${bb+240} 大`);T(270,`${raw} 不比 ${bb+60} 大`);ST.bc1[k]=0;ST.bc2[k]=0;T(284,'两个计数清零（283~284 行）')}
+ T(286,'返回');pop()}
+function PRSD(rx,vib){push('PRSD',{pData:'&hall_spi_rx',ana_rd_buff:'= pData',k:'—','temp[0]':'?','temp[1]':'?','node[0]':'?','node[1]':'?',ret:0});const v=L();
+ T(418,`进入：pData 指向 hall_spi_rx = ${rx.map(hx).join(' ')}（[0][1] 右键，[2][3] 左键），length = 4`);
+ T(424,'T1A：length_filter_bit = 6（滤波 ÷ 64）、FILTER_SKIP_VALUE = 60（424~425 行）');
+ T(428,'两个 static 数组：滤波值、滤波总和。static = 函数返回后不清，一直保留（427~428 行）');
+ T(433,'局部变量：temp[2]、node[2] 每次进来都是随机值；ret = 0（430~433 行）');
+ if(G.cali){T(441,`cali_init_cnt = ${G.cali} ≠ 0：还在开机学习阶段`);G.cali--;T(443,`cali_init_cnt − 1 = ${G.cali}`);
+  for(let k=0;k<2;k++){v.k=k;T(444,`for 循环：k = ${k}（${kn(k)}）`);const r=CHK(rx[2*k],rx[2*k+1]);v['temp['+k+']']=r;T(458,`temp[${k}] = ${r===0xFFFF?'CRC_ERROR':r}`);
+   if(r===0xFFFF){T(460,'CRC_ERROR：这个键这次不学');continue}T(460,'校验通过');const t=16383-r;v['temp['+k+']']=t;T(463,`翻转：temp = 16383 − ${r} = ${t}`);
+   const ri=INIT(k,t);T(476,`Hall_InitBaseline 返回 ${ri}`);if(ri===0){G.cali=0;T(478,'有一个键学完 → cali_init_cnt = 0，整个学习阶段结束（另一个键不管学没学完）')}}
+  v.k='—';}
+ else{T(441,'cali_init_cnt = 0：学习阶段已结束，走 else 正常处理');
+  for(let k=0;k<2;k++){v.k=k;T(487,`for 循环：k = ${k}（${kn(k)}）`);
+   T(490,`Ele_IsVibrating(左) = ${vib[1]?1:0}`);if(vib[1]&&k===1){T(492,'k == 1（左键）');G.key[1]=ST.prev[1];T(494,`gbKeyState[1] = previousKeySta[1] = ${ST.prev[1]}：振动期间保持原状态`);T(498,'continue：左键这次后面全跳过');continue}
+   T(502,`Ele_IsVibrating(右) = ${vib[0]?1:0}`);if(vib[0]&&k===0){T(504,'k == 0（右键）');G.key[0]=ST.prev[0];T(506,`gbKeyState[0] = previousKeySta[0] = ${ST.prev[0]}`);T(510,'continue');continue}
+   const r=CHK(rx[2*k],rx[2*k+1]);v['temp['+k+']']=r===0xFFFF?'0xFFFF':r;T(520,`temp[${k}] = ${r===0xFFFF?'CRC_ERROR（0xFFFF）':r}（芯片读数）`);
+   if(r===0xFFFF){T(521,'temp == CRC_ERROR：523~610 行整段跳过，这个键这 1 ms 什么都不变');continue}
+   T(521,'校验通过，进入大括号');let t=16383-r;v['temp['+k+']']=t;T(531,`翻转：temp[${k}] = 16383 − ${r} = ${t}（按得越深越大）`);
+   const f=ST.filt[k];
+   if(f>t+60||f+60<t){T(534,`上次滤波值 ${f} 和 temp ${t} 差 ${Math.abs(f-t)} > 60 → 当作真的在动`);ST.filt[k]=t;T(536,`raw_data_filter = ${t}`);ST.fsum[k]=t*64;T(537,`raw_data_filter_sum = ${t} << 6 = ${t*64}`)}
+   else{T(534,`上次滤波值 ${f} 和 temp ${t} 差 ${Math.abs(f-t)} ≤ 60 → 当作噪声，走 else`);const s0=ST.fsum[k];ST.fsum[k]+=t;T(541,`sum = ${s0} + ${t} = ${ST.fsum[k]}`);ST.fsum[k]-=f;T(542,`sum = ${s0+t} − ${f} = ${ST.fsum[k]}`);ST.filt[k]=ST.fsum[k]>>6;T(543,`raw_data_filter = ${ST.fsum[k]} >> 6 = ${ST.fsum[k]} ÷ 64 = ${ST.filt[k]}`);t=ST.filt[k];v['temp['+k+']']=t;T(544,`temp[${k}] = ${t}：后面都用滤波后的值`)}
+   const n=NODE(t,G.bot[k],G.top[k]);v['node['+k+']']=n;T(547,`node[${k}] = ${n}`);
+   RT(k,n);T(548,`判完：gbKeyState[${k}] = ${G.key[k]}`);
+   TOP(k,G.key[k],t);T(549,'顶部基线学习完');BOT(k,G.key[k],t);T(550,'底部基线学习完');
+   if(k===0){T(552,'0 == k：右键');T(554,`Ele_UpadteSegment(VK_RBUTTON, ${n})：段位交给线圈模块（后面的课）`)}else{T(552,'k = 1，走 else');T(558,`Ele_UpadteSegment(VK_LBUTTON, ${n})`)}
+   ST.prev[k]=G.key[k];T(561,`previousKeySta[${k}] = ${G.key[k]}：记下来，振动时用`);
+   T(604,`装 GUI 要的数：wBaselineBottom ${G.bot[k]}、wBaselineTop ${G.top[k]}、wCurrentRaw ${t}、段位 ${n}、最大 100（600~606 行）`);T(607,`Hall_SyncParam(${k}, …)：存起来，GUI 来读时回给它`)}
+  v.k='—';T(611,'for 循环结束');}
+ T(657,`gbKeyState[0]（右）= ${G.key[0]}`);if(G.key[0]){v.ret|=2;T(659,`ret |= 0x02 → ${hx(v.ret)}`)}
+ T(662,`gbKeyState[1]（左）= ${G.key[1]}`);if(G.key[1]){v.ret|=1;T(664,`ret |= 0x01 → ${hx(v.ret)}`)}
+ T(667,`return ${hx(v.ret)}：第 0 位左键、第 1 位右键 → LR_GetState → Button_Scan 比较有没有变化`);pop()}
+/* ===== scenarios ===== */
+const base=()=>({G:{top:[7083,7090],bot:[10383,10380],key:[0,0],cali:0,ap:[10,10],rtp:[30,30],rtr:[20,20]},
+ ST:{filt:[7083,7090],fsum:[7083*64+20,7090*64+5],prev:[0,0],initCnt:[100,100],tc:[[0,0],[0,40],[99,0]],bpms:[0,0],bpc:[0,0],bc1:[0,0],bc2:[0,0],cur:[0,0],oldB:10380,oldT:7090,step:Math.floor(2097152/3290)}});
+const SC=[
+ {n:'平常：两个键都没碰（有噪声）',d:'学习已结束。右键 temp 7101、上次滤波值 7100（比顶部 7083 高一点，而且已经连续 99 ms 这样，这次会让顶部 + 2），左键 temp 7071（比顶部低一点）。',t:[7101,7071],f:b=>{b.ST.filt[0]=7100;b.ST.fsum[0]=7100*64+30;return b}},
+ {n:'左键刚按下的那 1 ms',d:'左键松开中，上一次滤波值 7700（段位还不到 30），这 1 ms 手指压下去，temp 跳到 8400。',t:[7090,8400],f:b=>{b.ST.filt[1]=7700;b.ST.fsum[1]=7700*64;b.ST.tc[1][1]=0;return b}},
+ {n:'左键松开的那 1 ms',d:'左键按下中（已按 150 ms，最高点 100），这 1 ms 手指抬起，temp 从 10380 掉到 9000。',t:[7090,9000],f:b=>{b.G.key[1]=1;b.ST.prev[1]=1;b.ST.cur[1]=100;b.ST.filt[1]=10380;b.ST.fsum[1]=10380*64;b.ST.bpms[1]=150;b.ST.tc[1][1]=0;return b}},
+ {n:'开机学习阶段的某 1 ms',d:'cali_init_cnt 还剩 540。右键已经连续稳定 59 次，左键 99 次。这一次左键先学满 100 → 整个学习阶段结束，右键没学满也一起结束。',t:[7090,7095],f:b=>{b.G.cali=540;b.G.top=[7085,7092];b.G.bot=[7085,7092];b.ST.initCnt=[59,99];return b}},
+ {n:'右键这 1 ms 校验失败',d:'右键的 4 字节在线上被干扰，一位翻转了；左键正常。',t:[7083,7090],bad:0,f:b=>b},
+ {n:'左侧线圈正在振动',d:'左键刚按下、线圈在振。这 1 ms 左键的读数不可信，代码直接跳过。',t:[7083,9500],vib:[0,1],f:b=>{b.G.key[1]=1;b.ST.prev[1]=1;return b}}];
+let si=0,ti=0;
+function build(){const sc=SC[si],b=sc.f(base());G=b.G;ST=b.ST;FR=[];TR=[];
+ const rx=[];sc.t.forEach((tv,k)=>{const raw=16383-tv;const [h,l]=enc(raw);rx.push(h,l)});if(sc.bad!=null)rx[2*sc.bad+1]^=0x04;
+ PRSD(rx,sc.vib||[0,0]);ti=0;$('dDesc').textContent=sc.d;show()}
+const GROWS=[['gwTopBaseline[]','top','G',['INIT','TOP','NODE','PRSD']],['gwBottomBaseline[]','bot','G',['INIT','BOT','NODE','PRSD']],['gbKeyState[]','key','G',['RT','PRSD','TOP','BOT']],['raw_data_filter[]（static）','filt','ST',['PRSD']],['raw_data_filter_sum[]（static）','fsum','ST',['PRSD']],['previousKeySta[]（static）','prev','ST',['PRSD']],
+ ['InitBaseline counter[]（static）','initCnt','ST',['INIT']],['Top counter1[]（static）','tc.0','ST',['TOP']],['Top counter2[]（static）','tc.1','ST',['TOP']],['Top counter3[]（static）','tc.2','ST',['TOP']],
+ ['Bottom pressTimeMs[]（static）','bpms','ST',['BOT']],['Bottom pressCnt[]（static）','bpc','ST',['BOT']],['Bottom counter1[]（static）','bc1','ST',['BOT']],['Bottom counter2[]（static）','bc2','ST',['BOT']],
+ ['current_node_update[]（static）','cur','ST',['RT']],['ap_value[]','ap','G',['RT']],['rt_press_value[]','rtp','G',['RT']],['rt_release_value[]','rtr','G',['RT']]];
+const SROWS=[['cali_init_cnt','cali','G',['PRSD']],['oldBottomBaseline（static）','oldB','ST',['NODE']],['oldTopBaseline（static）','oldT','ST',['NODE']],['step（static）','step','ST',['NODE']]];
+const getv=(o,p)=>p.split('.').reduce((a,k)=>a==null?a:a[k],o);
+function show(){const e=TR[ti],p=ti?TR[ti-1]:e;const code=CODE[e.fn];
+ const done=new Set();for(let j=ti;j>=0;j--){if(TR[j].d<e.d)break;if(TR[j].fn===e.fn&&TR[j].d===e.d)done.add(TR[j].line)}
+ $('dCode').innerHTML=code.map(([n,t])=>`<div class="${n===e.line?'cur':done.has(n)?'done':''}" ${n===e.line?'id="dCur"':''}><span class="n">${n}</span><span>${esc(t)}</span></div>`).join('');
+ const c=$('dCur');if(c){const box=$('dCode');box.scrollTop=c.offsetTop-box.clientHeight/2}
+ $('dStack').innerHTML='<span>…LR_GetState (button.c:363)</span> → '+e.stack.map((f,i)=>`<span class="${i===e.stack.length-1?'top':''}">${FNAME[f.fn]}</span>`).join(' → ');
+ $('dNote').innerHTML=`<b>${FILE[e.fn]||'my_misc.c'}:${e.line}</b>　${esc(e.note)}`;
+ const lv=e.stack[e.stack.length-1].v,plv=(p.stack.length===e.stack.length&&p.stack[p.stack.length-1].fn===e.fn)?p.stack[p.stack.length-1].v:{};
+ $('dLoc').innerHTML='<tr>'+Object.keys(lv).map(k=>`<th>${k}</th>`).join('')+'</tr><tr>'+Object.keys(lv).map(k=>`<td class="${plv[k]!==undefined&&plv[k]!==lv[k]?'ch':''}">${lv[k]}</td>`).join('')+'</tr>';
+ const src=o=>({G:e.G,ST:e.ST})[o],psrc=o=>({G:p.G,ST:p.ST})[o];
+ let h='<tr><th>名字</th><th>[0] 右键</th><th>[1] 左键</th></tr>';
+ GROWS.forEach(([nm,key,o,rel])=>{const a=getv(src(o),key),b=getv(psrc(o),key);h+=`<tr class="${rel.includes(e.fn)?'rel':''}"><td>${nm}</td>`+[0,1].map(i=>`<td class="${a[i]!==b[i]?'ch':''}">${a[i]}</td>`).join('')+'</tr>'});
+ SROWS.forEach(([nm,key,o,rel])=>{const a=getv(src(o),key),b=getv(psrc(o),key);h+=`<tr class="${rel.includes(e.fn)?'rel':''}"><td>${nm}</td><td colspan="2" class="${a!==b?'ch':''}">${a}</td></tr>`});
+ $('dGlb').innerHTML=h;
+ $('dC').textContent=`第 ${ti+1} / ${TR.length} 步`;$('dPrev').disabled=ti===0;['dNext','dOver','dOut'].forEach(i=>$(i).disabled=ti>=TR.length-1)}
+SC.forEach((s,i)=>{const o=document.createElement('option');o.value=i;o.textContent=s.n;$('dS').appendChild(o)});
+$('dS').onchange=()=>{si=+$('dS').value;build()};
+$('dNext').onclick=()=>{if(ti<TR.length-1){ti++;show()}};$('dPrev').onclick=()=>{if(ti>0){ti--;show()}};$('dReset').onclick=()=>{ti=0;show()};
+$('dOver').onclick=()=>{const d=TR[ti].d;let j=ti+1;while(j<TR.length-1&&TR[j].d>d)j++;ti=Math.min(j,TR.length-1);show()};
+$('dOut').onclick=()=>{const d=TR[ti].d;let j=ti+1;while(j<TR.length-1&&TR[j].d>=d)j++;ti=Math.min(j,TR.length-1);show()};
+build();
+/* ===== per-function listings ===== */
+const X={
+PRSD:{t:'主函数：每 1 ms 处理两个键',p:'参数 pData = hall_spi_rx（4 字节），length = 4。返回 2 位：第 0 位左键、第 1 位右键按下。',x:{
+ 424:'T1A 的滤波参数：÷ 2⁶ = 64，跳变门限 60',427:'滤波值，每个键一个。static：一直保留',428:'滤波总和 ≈ 滤波值 × 64，uint32_t 防溢出',430:'换个名字指向同一块内存',431:'这 1 ms 的读数（先是芯片读数，翻转后是 temp，滤波后是滤波值）',432:'这 1 ms 的段位',433:'返回值，先清 0',435:'上一次的按下状态，振动时用',
+ 441:'cali_init_cnt 初值 600（my_misc.c:72）：不为 0 就是开机学习阶段',443:'每 1 ms 减 1，最多 600 ms',444:'k = 0 右键、k = 1 左键',458:'校验 + 拼成 14 位读数',460:'校验失败这个键这次不学',463:'翻转：按下变大',476:'学顶部基线，返回 0 = 学完',478:'任一个键学完就结束整个阶段（推论：另一个可能没学稳）',
+ 485:'学习阶段结束后都走这里',487:'两个键依次处理',490:'左边线圈在振 → 左键读数不可信',494:'状态保持振动前的值',498:'跳过左键后面的全部处理',502:'右边同理',520:'校验 + 拼数，失败返回 0xFFFF',521:'只有校验通过才处理，否则整段跳过',531:'翻转',534:'和上次滤波值差 > 60 → 跳',536:'滤波值直接等于新值',537:'总和重设 = 新值 × 64',541:'总和 + 新值',542:'总和 − 旧滤波值（合起来 = 总和多了“新值 − 旧滤波值”）',543:'滤波值 = 总和 ÷ 64：只挪了差值的 1/64',544:'后面都用滤波值',
+ 547:'算段位 0 ~ 100',548:'快速触发判定 → 改 gbKeyState',549:'学顶部基线（用刚判出的状态）',550:'学底部基线',554:'段位交给线圈（右键）',558:'段位交给线圈（左键）',561:'记下状态，振动时用',600:'给 GUI 的结构体',604:'⚠ 这里给 GUI 的“Raw”其实是滤波后的 temp',606:'⚠ 写死 100',607:'存起来，GUI 来问时回给它',
+ 657:'右键（k = 0）→ 第 1 位',659:'',662:'左键（k = 1）→ 第 0 位',667:'返回给 LR_GetState'}},
+CHK:{t:'校验 + 拼 14 位读数（第 3 课第 5 节）',p:'参数：高字节、低字节。返回 14 位读数，或 CRC_ERROR = 0xFFFF。',x:{398:'__attribute__((unused))：告诉编译器“没用到也别报警告”（其实用到了）',400:'去掉高 2 位校验位',402:'收到的校验位 vs. 按数据算出的校验位（bit_error 查表，button.c:125）',406:'通过：高 6 位 << 8 | 低 8 位',414:'失败'}},
+INIT:{t:'开机学顶部基线',p:'参数：键号、翻转后的读数、两个基线的地址（指针，可以直接改全局变量）。返回 0 = 学完，−1 = 没学完。',x:{137:'每个键一个“连续稳定次数”，static',138:'上限 = 顶部 + 60',139:'下限 = 顶部 − 60',141:'超出 ±60：不稳定',143:'顶部直接换成这次的值',144:'底部也一样',145:'计数清零',146:'没学完',150:'稳定：顶部 = (顶部 + 新值) ÷ 2，每次往新值挪一半',151:'学习阶段底部 = 顶部',152:'计数 + 1',153:'连续 100 次（ONE_MS_COUNT = 1）',155:'',156:'学完',159:'没学完'}},
+NODE:{t:'段位：temp 在两条基线之间的位置 → 0 ~ 100',p:'参数：temp、底部基线、顶部基线。返回段位 0 ~ 100。',x:{290:'static：记住上次算 step 用的底部（左右键共用一份）',291:'记住上次的顶部',292:'记住上次算出的 step',293:'格号 0 ~ 255',294:'按下了多少',297:'顶部 ≥ 底部：基线没学好，也防除以 0 / 相减回绕',299:'段位 0',301:'差 < 100：范围太窄，噪声会被放大',306:'没按下去',308:'',310:'按到底或更深',312:'',316:'基线变了才重算 step',318:'',319:'',320:'唯一的除法：2²¹ ÷ 范围（软件除法，慢）',322:'',323:'乘、移位代替除法：≈ diff × 255 ÷ 范围',326:'查表：前 10 格 0，第 220 格起 100'}},
+RT:{t:'快速触发：按下 / 松开判定',p:'参数：键号、段位。没有返回值，结果写在 gbKeyState[] 和 current_node_update[]。',x:{332:'记住的极点：松开时 = 最低点，按下时 = 最高点。static',336:'触发点 AP（默认 10）',337:'按下灵敏度 RTP（默认 30）',338:'松开灵敏度 RTR（默认 20）',346:'现在是按下状态吗',348:'回到 0 就直接松开',351:'松开',352:'',356:'比最高点还深 → 更新最高点',358:'',362:'最高点 > 段位 + 20 → 抬起超过 20 → 松开',364:'松开',365:'从这里开始记最低点',372:'到 100 直接按下',374:'按下',375:'',379:'取出最低点',381:'比最低点还浅 → 更新最低点',383:'',388:'比最低点深 RTP 以上，且不浅于 AP → 按下（门槛 = max(最低点 + RTP，AP)）',390:'按下',391:'从这里开始记最高点'}},
+TOP:{t:'松开时慢慢修正顶部基线',p:'参数：键号、当前状态、temp、顶部基线地址。',x:{164:'“低很多”连续计数',165:'“低一点”连续计数',166:'“高一点”连续计数',167:'先复制一份，改完再写回',169:'按下状态不学',177:'比顶部低 60 以上',182:'连续 300 ms',186:'顶部 − 60',187:'写回全局',190:'比顶部低 0 ~ 60',195:'连续 100 ms',198:'顶部 − 5',202:'比顶部高 0 ~ 60',207:'连续 100 ms',210:'顶部 + 2',214:'等于顶部，或高 60 以上（按下去了）：都清零'}},
+BOT:{t:'松开时和刚按下的 100 ms 内修正底部基线（只增不减）',p:'参数：键号、当前状态、temp、底部基线地址。',x:{224:'按下了多少 ms（最多 255）',225:'按下计数（ONE_MS_COUNT = 1 时每次都满）',226:'“高很多”连续计数',227:'“高一点”连续计数',231:'按下状态：计时',237:'防止 uint8_t 溢出',246:'松开：计时清零',249:'按下超过 100 ms 就不学了',256:'比底部高 240 以上',261:'连续 30 ms',265:'底部 + 180',266:'写回全局',270:'比底部高 60 ~ 240',274:'连续 30 ms',277:'底部 + 30',281:'其余：清零（注意没有往下减的分支）'}},
+LR:{t:'读左右键（button.c）',p:'返回第 0 位左键、第 1 位右键。',x:{319:'结果先清 0',346:'第 3 课：下命令 + 收 4 字节到 hall_spi_rx',363:'本页的主函数',364:''}},
+SCAN:{t:'比较前后两次，变了才算一次按下 / 松开（button.c）',p:'返回 button_changed：有没有键变化（要不要上报 USB）。',x:{612:'所有键的当前状态（左右键来自 LR_GetState）',614:'i = 0 左键、1 右键（这里是位号，和 my_misc.c 的 k 相反）',616:'这次和 scan_result_cur 不同',618:'',620:'左右键没有消抖（被注释掉了），直接更新',625:'',630:'scan_result_cur 和上次确认的 scan_result_pre 不同 → 真的变了',634:'记下',635:'要上报 USB',639:'左键按下 → 线圈振（后面的课）',643:'右键按下 → 线圈振',650:'记下',651:'要上报',655:'左键松开 → 释放振感',659:'右键松开'}}};
+const ORDER=['LR','PRSD','CHK','INIT','NODE','RT','TOP','BOT','SCAN'];
+$('fns').innerHTML=ORDER.map(fn=>{const x=X[fn];return `<div class="fnsec"><h3>${FNAME[fn]}()　<span class="note">${FILE[fn]||'src/my_misc.c'}:${CODE[fn][0][0]}~${CODE[fn][CODE[fn].length-1][0]}</span></h3><p><b>${x.t}</b>。${x.p}</p><div class="code">`+
+ CODE[fn].map(([n,t])=>{const e=x.x[n];return `<div class="${e?'hasx':''}"><span class="n">${n}</span><span style="white-space:pre-wrap;padding-left:1.2em;text-indent:-1.2em">${esc(t)}</span><span class="x">${e||''}</span></div>`}).join('')+'</div></div>'}).join('');
+/* ===== practice ===== */
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),pick=a=>a[Math.floor(Math.random()*a.length)];
+function mc(q,opts,ans,sol){const idx=opts.map((_,i)=>i);for(let i=idx.length-1;i>0;i--){const j=ri(0,i);[idx[i],idx[j]]=[idx[j],idx[i]]}return{q,type:'mc',opts:idx.map(i=>opts[i]),ans:idx.indexOf(ans),sol}}
+const num=(q,ans,sol)=>({q,type:'num',ans,sol});
+const GEN=[
+ ()=>{const t=ri(7000,7200),f=t+ri(-60,60),s=f*64+ri(0,63);const s2=s+t-f;return num(`第 534 行判断“差 ≤ 60”，走 541~544 行。raw_data_filter = ${f}，raw_data_filter_sum = ${s}，temp = ${t}。543 行之后 raw_data_filter = ？`,s2>>6,`541：${s} + ${t} = ${s+t}；542：− ${f} = ${s2}；543：${s2} >> 6 = <b>${s2>>6}</b>`)},
+ ()=>{const top=ri(7000,7300),b=top+ri(2500,3500),t=ri(top+100,b-100),st=Math.floor(2097152/(b-top)),d=t-top;return num(`第 320 行：底部 ${b}、顶部 ${top}，step = ？`,st,`2097152 ÷ ${b-top} = ${(2097152/(b-top)).toFixed(2)} → <b>${st}</b>`)},
+ ()=>{const top=ri(7000,7300),b=top+ri(2500,3500),t=ri(top+100,b-100),st=Math.floor(2097152/(b-top)),d=t-top,tmp=Math.floor(d*st*255/2097152);return num(`第 322~323 行：顶部 ${top}、temp ${t}、step ${st}。tmp = ？`,tmp,`diff = ${d}；${d} × ${st} × 255 = ${d*st*255}；>> 21 = <b>${tmp}</b>`)},
+ ()=>{const c=ri(0,50),s=ri(0,99);const pr=s>=c+30&&s>=10;return mc(`第 388 行（松开状态）：current_node_update_temp = ${c}，segment = ${s}，默认 RTP 30、AP 10。会按下吗？`,['会','不会'],pr?0:1,`${s} ≥ ${c+30}？${s>=c+30?'是':'否'}；${s} ≥ 10？${s>=10?'是':'否'}`)},
+ ()=>{const m=ri(40,100),s=ri(1,99);const rl=m>s+20;return mc(`第 362 行（按下状态）：最高点 ${m}，segment = ${s}，RTR 20。会松开吗？`,['会','不会'],rl?0:1,`${m} > ${s} + 20 = ${s+20}？${rl?'是':'否'}`)},
+ ()=>mc('第 476~478 行：右键稳定了 59 次，左键这次学满 100 次，会怎样？',['cali_init_cnt = 0，两个键都结束学习','只有左键结束，右键继续学','等右键也学满'],0,'cali_init_cnt 是两个键共用的。'),
+ ()=>mc('第 521 行校验失败时，这个键这 1 ms 的 gbKeyState 怎样？',['不变','清 0','置 1'],0,'整段跳过。'),
+ ()=>mc('第 169 行：按下状态时顶部基线学吗？',['不学，三个计数清零后 return','照学','只学 +2'],0,'171~174 行。'),
+ ()=>mc('第 249 行 pressTimeMs > 100 说明什么？',['已经按下超过 100 ms，底部不再学','松开超过 100 ms','基线差 100'],0,'只在按下的前 100 ms 学。'),
+ ()=>mc('第 290~292 行的 static 变量有什么问题？',['左右键共用一份，交替调用时缓存总失效','会溢出','没有问题也没有影响'],0,'每次都重新做除法，结果仍正确。'),
+ ()=>mc('Button_Scan 里 i = 0 是哪个键？',['左键（第 0 位）','右键','中键'],0,'和 my_misc.c 的 k 相反：k = 0 是右键。'),
+];
+let n=0,ok=0,cur=null,done=false;const pxb=$('px');
+pxb.innerHTML='<div class="pxh"><b>练习</b><span class="pxs" id="pxs"></span></div><div class="pxq" id="pxq"></div><div class="qrow" id="pxa"></div><div class="fb" id="pxfb"></div><div class="qrow"><button type="button" id="pxShow">看答案</button><button type="button" class="pxNext" id="pxNext">下一题 →</button></div>';
+const upd=()=>$('pxs').textContent=`已做 ${n} 题，对 ${ok} 题`;
+function judge(r){if(!done){n++;if(r)ok++}done=true;$('pxfb').className='fb '+(r?'ok':'no');$('pxfb').innerHTML=r?'✓ 对。'+cur.sol:'✗ 不对，再想想，或者点“看答案”。';upd()}
+function next(){cur=pick(GEN)();done=false;$('pxq').innerHTML=cur.q;$('pxfb').className='fb';$('pxfb').innerHTML='';const a=$('pxa');a.innerHTML='';
+ if(cur.type==='mc'){cur.opts.forEach((o,j)=>{const b=document.createElement('button');b.type='button';b.innerHTML=o;b.onclick=()=>{a.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');judge(j===cur.ans)};a.appendChild(b)})}
+ else{const inp=document.createElement('input');inp.type='text';inp.setAttribute('aria-label','答案');const c=document.createElement('button');c.type='button';c.textContent='检查';
+  const go=()=>{const v=parseFloat(inp.value);if(isNaN(v))return;judge(Math.abs(v-cur.ans)<0.01)};c.onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter'){if(done&&$('pxfb').classList.contains('ok'))next();else go()}});a.append(inp,c)}
+ upd()}
+$('pxShow').onclick=()=>{if(!done)n++;done=true;$('pxfb').className='fb no';$('pxfb').innerHTML='答案：'+(cur.type==='mc'?cur.opts[cur.ans]:cur.ans)+'<br>'+cur.sol;upd()};
+$('pxNext').onclick=next;next();
+})();
+</script>

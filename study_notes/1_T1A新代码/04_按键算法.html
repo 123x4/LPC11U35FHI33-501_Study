@@ -97,6 +97,7 @@ input[type=range]{width:min(420px,100%)}
 <h1>按键算法：一个读数怎么变成“按下了”</h1>
 <p class="lede">第 3 课拿到了两颗霍尔芯片的读数（每 1 ms 一次，14 位，0 ~ 16383）。这一课讲 MCU 拿到读数以后怎么判断左右键是按下还是松开：<b>校验 → 翻转 → 滤波 → 换算成 0 ~ 100 的“段位” → 快速触发判定</b>，旁边还有两条一直在“学习”的基线。全部是软件计算，不涉及新的硬件。</p>
 <div class="box" style="border-color:var(--gold)"><b>📌 配套 GUI</b>：同事的上位机 Test HAPTIC MOUSE 能读出本课的基线、段位，也能改 AP / RT。GUI 上每个框对应哪个变量、怎么用它在真板子上验证本课内容，见 <a href="https://claude.ai/artifact/1ZaTkpqbA4MGaP8C3MSasj">第 4 课（续）：用 GUI 看按键算法</a>。</div>
+<div class="box" style="border-color:var(--gold)"><b>📌 逐行读代码</b>：想对着 my_misc.c 原文一行一行看（带单步调试器），见 <a href="https://claude.ai/artifact/PchkiFqH5Q89hUjBEAiSzi">第 4 课（精读）：按键算法逐行精读</a>。</div>
 
 
 <div class="box" style="border-color:var(--gold)"><b>这一课为什么这样安排（根据你前面的提问）</b>
