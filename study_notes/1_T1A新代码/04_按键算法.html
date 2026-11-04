@@ -166,6 +166,12 @@ input[type=range]{width:min(420px,100%)}
 <div class="scroll"><div id="tbGrid" style="font-family:var(--font-m);font-size:.74rem;min-width:1150px"></div></div>
 <div class="log" id="tbLog">把鼠标放到某一格上。</div></div>
 <p>还有两条保护：底部 ≤ 顶部，或两者差 &lt; 100（基线还没学好）→ 段位一律 0。</p>
+<div class="box"><b>这两条保护具体防什么（my_misc.c:297~304）</b>
+<ul>
+<li><b>什么时候会碰到</b>：主要是<b>开机刚学完</b>。<code>Hall_InitBaseline()</code> 学完时让底部 = 顶部（差 0），要等第一次按下时底部基线学上去（+ 180，或 4 次 + 30），差才 ≥ 100。在这之前段位一直 0，按键按不出来。平时底部只增不减、顶部只微调，正常不会再掉回这两种情况。</li>
+<li><b>“底部 ≤ 顶部”还防计算出错</b>：后面要算 <code>step = 2²¹ ÷ (底部 − 顶部)</code>。两者相等时是<b>除以 0</b>；顶部比底部大时，两个 uint16_t 相减会“绕回”成一个很大的数（比如 7000 − 7100 → 65436），算出来的段位全是错的。</li>
+<li><b>“差 &lt; 100”防噪声被放大</b>：0 ~ 100 段要分到“底部 − 顶部”这么宽的范围里。范围只有 50 时，temp 抖 ±15（正常噪声）就是范围的 30%，段位会跳二三十，足够误触发按下。规定至少 100，算是“范围太窄就先别算”。</li>
+</ul></div>
 <div class="tool"><b>动手：拖动 temp，看格号和段位</b>
 <div class="row"><label>顶部基线 <input type="number" id="ndT" value="7083" style="width:6em"></label><label>底部基线 <input type="number" id="ndB" value="10383" style="width:6em"></label><label>temp：<input type="range" id="ndR" min="6800" max="10700" value="8000"></label><b id="ndV" style="font-family:var(--font-m)"></b></div>
 <div class="scroll"><svg id="ndSvg" class="fig" viewBox="0 0 1100 300" style="min-width:800px" role="img" aria-label="temp 在两条基线之间的位置和段位查表"></svg></div>
