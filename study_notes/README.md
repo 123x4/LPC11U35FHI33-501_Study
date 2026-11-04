@@ -37,6 +37,7 @@ study_notes/
 | 第 4 课 | [按键算法](https://claude.ai/artifact/YaUD1PcZQkwvNyPqJHBRLg) | 翻转 → 滤波（>60 跳、≤60 走 1/64）→ 段位 0~100 → 快速触发（30 / 20）；基线学习；综合模拟器、练习 |
 | 第 4 课（续） | [用 GUI 看按键算法](https://claude.ai/artifact/1ZaTkpqbA4MGaP8C3MSasj) | 同事的上位机：每个框对应哪个固件变量、HID 包拆解、像 GUI 的模拟面板、8 个上板实验 |
 | 第 4 课（精读） | [按键算法逐行精读](https://claude.ai/artifact/PchkiFqH5Q89hUjBEAiSzi) | 以代码为主：原文原行号、6 个场景的单步调试器（看每个变量怎么变）、每个函数逐行解释 |
+| 第 5 课 | [按键状态报给电脑](https://claude.ai/artifact/Uk9umaH4seBx4JfKsauXou) | 2 位结果 → 按键位图 → 键位表 → 8 字节鼠标报告（每一位）→ 端点缓冲区 / ACTIVE / NAK；报文生成器、逐毫秒时间线 |
 
 ## 2. 基础课（第 0~13 课，按顺序读）
 

@@ -1,0 +1,342 @@
+<title>按键报给电脑</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --hw:#7a5ea8; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.8}
+.wrap{max-width:880px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);line-height:1.3;text-wrap:balance}
+h1{font-size:1.9rem;margin:0}
+h2{font-size:1.3rem;margin:2.4rem 0 .4rem;padding-top:.6rem;border-top:1px solid var(--line)}
+h3{font-size:1.06rem;margin:1.3rem 0 .3rem}
+p{margin:.6rem 0}
+a{color:var(--per)}
+code{font-family:var(--font-m);font-size:.88em;background:var(--soft);padding:.05em .35em;border-radius:3px;overflow-wrap:anywhere}
+pre.code{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:10px 12px;overflow-x:auto;line-height:1.55;margin:.5rem 0}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.06em;color:var(--muted)}
+.lede{color:var(--muted)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:1rem 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-size:.88rem;margin:.4rem 0}
+td,th{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600}
+.note{font-size:.88rem;color:var(--muted)}
+.think{border-left:4px solid var(--per);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.8rem 0}
+.rule{border-left:4px solid var(--c,var(--per));background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.6rem 0}
+.log{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:6px 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.btns button,.tool button{font:inherit;font-size:.88rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer}
+.btns button:disabled{opacity:.4;cursor:default}
+.btns button[aria-pressed="true"]{border-color:var(--fg);font-weight:700}
+/* bit strip */
+.bstrip{display:inline-grid;gap:2px;font-family:var(--font-m);font-size:.74rem;text-align:center;margin:.2rem 0}
+.bstrip span{border:1px solid var(--line);border-radius:3px;padding:1px 3px;min-width:1.6em;background:var(--panel)}
+.bstrip span.ch{background:color-mix(in srgb,var(--bad) 28%,var(--panel));border-color:var(--bad);font-weight:700}
+.bstrip span.k{background:none;border:0;color:var(--muted);font-size:.6rem}
+.bstrip span.f{background:color-mix(in srgb,var(--c,var(--per)) 18%,var(--panel))}
+/* lamps */
+.lamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:.5rem 0}
+.lamps div{border:1.5px solid var(--line);border-radius:6px;padding:4px 8px;font-size:.82rem;background:var(--panel)}
+.lamps div::before{content:"○ ";color:var(--muted)}
+.lamps div.on{border-color:var(--good);background:color-mix(in srgb,var(--good) 15%,var(--panel))}
+.lamps div.on::before{content:"● ";color:var(--good)}
+.lamps div.new{outline:2px solid var(--bad)}
+.stp{border:2px solid var(--per);border-radius:8px;padding:10px 14px;background:var(--panel);margin:.6rem 0}
+.stp .cl{font-family:var(--font-m);font-size:.85rem;background:var(--soft);border-left:4px solid var(--per);padding:4px 8px;border-radius:0 6px 6px 0;overflow-wrap:anywhere}
+.stp .who{display:inline-block;font-size:.72rem;color:var(--bg);background:var(--c);border-radius:4px;padding:0 6px;margin-right:6px}
+.stp h3{margin:.5rem 0 .2rem}
+svg.fig{display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+/* tools */
+.tool{border:1.5px solid var(--hw);border-radius:8px;padding:8px 12px;background:color-mix(in srgb,var(--hw) 5%,var(--panel));margin:.6rem 0}
+.tool input,.tool select{font:inherit;font-size:.88rem;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.tool .row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:.3rem 0}
+/* quiz & practice */
+.qz,.px{border-radius:8px;padding:8px 12px;margin:.7rem 0}
+.qz{border:1.5px dashed var(--gold);background:color-mix(in srgb,var(--gold) 6%,var(--panel))}
+.px{border:1.5px solid var(--per);background:color-mix(in srgb,var(--per) 6%,var(--panel))}
+.qz .qt,.px .pxq{font-weight:600;margin:.2rem 0}
+.qrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.qz input,.px input{font:inherit;width:120px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.qz button,.px button{font:inherit;font-size:.9rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer;text-align:left}
+.qz button.on,.px button.on{border-color:var(--fg)}
+.px .pxh{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.px .pxh b{color:var(--per)}
+.px .pxs{font-size:.82rem;color:var(--muted)}
+.px .pxNext{border-color:var(--per);color:var(--per)}
+.fb{display:none;padding:6px 10px;border-radius:6px;background:var(--soft);margin-top:.3rem}
+.fb.ok{display:block;border-left:4px solid var(--good)}
+.fb.no{display:block;border-left:4px solid var(--bad)}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.wrap{max-width:1400px}
+.bits{display:grid;gap:3px;font-family:var(--font-m);font-size:.8rem;text-align:center;margin:.4rem 0}
+.bits span{border:1px solid var(--line);border-radius:4px;padding:3px 2px;background:var(--panel);min-width:0}
+.bits span small{display:block;font-size:.62rem;color:var(--muted);font-family:var(--font-b)}
+.bits span.k{border:0;background:none;color:var(--muted);font-size:.66rem;padding:0}
+.bits span.on{background:color-mix(in srgb,var(--good) 30%,var(--panel));border-color:var(--good);font-weight:700}
+.bits span.pad{background:var(--soft);color:var(--muted)}
+.bits span.id{background:color-mix(in srgb,var(--muted) 20%,var(--panel))}
+.bits span.btn{background:color-mix(in srgb,var(--bad) 18%,var(--panel))}
+.bits span.xy{background:color-mix(in srgb,var(--per) 22%,var(--panel))}
+.bits span.wh{background:color-mix(in srgb,var(--gold) 28%,var(--panel))}
+.tog{display:flex;flex-wrap:wrap;gap:6px;margin:.3rem 0}
+.tog button{font:inherit;font-size:.86rem;padding:3px 12px;border:1.5px solid var(--line);border-radius:16px;background:var(--panel);color:var(--fg);cursor:pointer}
+.tog button[aria-pressed="true"]{border-color:var(--good);background:color-mix(in srgb,var(--good) 18%,var(--panel));font-weight:700}
+input[type=range]{width:min(320px,100%)}
+</style>
+<div class="wrap">
+<div class="eyebrow">T1A 主线 · 第 5 课 · 按键状态怎么报给电脑 · 代码 app/button.c:564~664、src/device.c:540~720、app/custom.c:722、1046、src/usbdesc.c:36、src/usb.c:244、src/usbhw.c:1241、1429</div>
+<h1>按键状态怎么变成 USB 包发给电脑</h1>
+<p class="lede">第 4 课的 <code>ProcessRecvSampleRawData()</code> 最后返回 2 位：第 0 位左键、第 1 位右键。这一课接着往下追：这 2 位怎么和其他按键拼在一起、怎么按“键位设置”翻译成鼠标按钮、怎么和光学传感器的移动量一起装进一个 <b>8 字节的鼠标报告</b>、放进 USB 的<b>端点缓冲区</b>，最后被电脑取走。还会讲清楚：<b>没有新数据时发什么</b>（答案：什么都不发）。</p>
+
+<div class="box"><b>🧭 本质</b>：鼠标不是“每 1 ms 把状态报一遍”，而是<b>有变化才报</b>：按键变了，或者光学传感器测到移动，才拼一个 8 字节的包放进 USB 缓冲区。电脑每 1 ms 来问一次“有新数据吗”，缓冲区里有就取走，没有就得到一个“没有”（NAK）。电脑那边会<b>一直记着上一次的按键状态</b>，所以按住不动时不需要重复发。</div>
+
+<h2>1. 全程：从 2 位到电脑</h2>
+<p>每一个方框是一个“数据容器”（变量），方框之间的箭头是做搬运的函数。主循环 <code>Device_Active()</code>（device.c:495）每圈依次调用 <code>Device_Scan()</code> → <code>Device_Pack()</code> → <code>Device_Report()</code>。</p>
+<div class="scroll"><svg id="pipe" class="fig" viewBox="0 0 1340 470" style="min-width:1150px" role="img" aria-label="按键状态到 USB 的全程"></svg></div>
+<div class="log" id="pipeLog">点任意一个方框看它装的是什么。</div>
+
+<h2>2. 每一个容器长什么样</h2>
+<h3>2.1 <code>ProcessRecvSampleRawData()</code> 的返回值：2 位</h3>
+<div class="bits" style="grid-template-columns:repeat(8,minmax(0,64px))"><span class="k">b7</span><span class="k">b6</span><span class="k">b5</span><span class="k">b4</span><span class="k">b3</span><span class="k">b2</span><span class="k">b1</span><span class="k">b0</span>
+<span class="pad">0</span><span class="pad">0</span><span class="pad">0</span><span class="pad">0</span><span class="pad">0</span><span class="pad">0</span><span class="btn">右<small>gbKeyState[0]</small></span><span class="btn">左<small>gbKeyState[1]</small></span></div>
+<p>my_misc.c:657~665。这个位序是故意的：和下面 <code>button_port_state</code> 的位号对上，可以直接“或”进去（button.c:598）。</p>
+
+<h3>2.2 <code>button_port_state</code> / <code>wheel_button_status</code>：所有物理按键的“现在按着没有”</h3>
+<p><code>Button_GetState()</code>（button.c:564）把中键、DPI 键、两个侧键（从 GPIO 读）和左右键（从霍尔算法来）拼成一个 32 位数，每个键占固定的一位（button.h:100~107，scroll.h:8~9）：</p>
+<div class="bits" style="grid-template-columns:repeat(10,minmax(0,1fr))"><span class="k">b9</span><span class="k">b8</span><span class="k">b7</span><span class="k">b6</span><span class="k">b5</span><span class="k">b4</span><span class="k">b3</span><span class="k">b2</span><span class="k">b1</span><span class="k">b0</span>
+<span>DPI 键<small>GPIO</small></span><span class="pad">音量−<small>T1A 无</small></span><span class="pad">音量+<small>T1A 无</small></span><span>K5 侧键<small>GPIO</small></span><span>K4 侧键<small>GPIO</small></span><span class="pad">滚轮下<small>滚轮暂关</small></span><span class="pad">滚轮上<small>滚轮暂关</small></span><span>中键<small>GPIO</small></span><span class="btn">右键<small>霍尔</small></span><span class="btn">左键<small>霍尔</small></span></div>
+<p><code>Button_Scan()</code>（button.c:605）比较这次和上次：有一位变了，就记进 <code>buttonScan_stru.scan_result_pre</code>、把 <code>button_changed</code> 置 TRUE，并让线圈振动（按下 / 松开振感，后面的课）。左右键没有消抖，中键、侧键有（按下等 5 次、松开等 8 次）。然后 <code>Device_Button_Scan()</code>（device.c:961~965）：</p>
+<pre class="code">if(Button_Scan())                                        // 有键变了
+{
+    wheel_button_status &amp;= ~ALL_BUTTON_REPORT_BIT;       // 清掉所有按键位（保留滚轮位）
+    wheel_button_status |= buttonScan_stru.scan_result_pre;  // 换成最新的按键状态
+    DEVICE_POST_EVENT(BUTTON_EVENT);                     // 在 deviceEvent 里挂一个“按键事件”标志
+}</pre>
+<p><code>DEVICE_POST_EVENT</code> 就是在全局变量 <code>deviceEvent</code> 里把 <code>BUTTON_EVENT</code> 这一位置 1，表示“有按键变化，等着打包”。<b>没变化就不挂</b>。</p>
+
+<h3>2.3 键位设置表 <code>key_function[10]</code>：物理键 → 发给电脑的功能</h3>
+<p>同一个物理键可以被 GUI / 驱动改成别的功能（鼠标键、键盘键、多媒体键、宏……）。<code>Custom_HandleKey()</code>（custom.c:1046）按位号逐个查这张表。默认值（custom.c:104~117）：</p>
+<div class="scroll"><table>
+<thead><tr><th>位号 ii</th><th>物理键</th><th>默认功能 id</th><th>翻译成</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>左键</td><td>0xB0</td><td>鼠标报告第 1 字节 |= 0x01（按钮 1）</td></tr>
+<tr><td>1</td><td>右键</td><td>0xB1</td><td>|= 0x02（按钮 2）</td></tr>
+<tr><td>2</td><td>中键</td><td>0xB2</td><td>|= 0x04（按钮 3）</td></tr>
+<tr><td>3 / 4</td><td>滚轮上 / 下</td><td>0xB5 / 0xB6</td><td>第 6 字节 = +1 / −1（0xFF）</td></tr>
+<tr><td>5</td><td>K4 侧键（前）</td><td>0xB3</td><td>|= 0x10（按钮 5，Windows 里通常是“前进”）</td></tr>
+<tr><td>6</td><td>K5 侧键</td><td>0xB4</td><td>|= 0x08（按钮 4，通常是“后退”）</td></tr>
+<tr><td>7 / 8</td><td>音量键</td><td>0 / 1</td><td>T1A 没有这两个键</td></tr>
+<tr><td>9</td><td>DPI 键</td><td>0xC1</td><td>不发给电脑，鼠标自己切 DPI</td></tr>
+</tbody></table></div>
+<p>翻译鼠标键的是 <code>Custom_Deal_MouseKey()</code>（custom.c:722）：只有按下的键会“或”进第 1 字节；只要某个键<b>变了</b>，就返回 <code>MOUSE_KEY</code>，表示“要发鼠标报告”。</p>
+
+<h3>2.4 鼠标报告：8 字节（报告 ID 1）</h3>
+<p>格式由 HID 报告描述符规定（usbdesc.c:36 <code>HID_ReportDescriptorMouse</code>），电脑一插上就读它，从此知道每个字节是什么意思：</p>
+<div class="bits" style="grid-template-columns:repeat(8,minmax(0,1fr))">
+<span class="k">字节 0</span><span class="k">字节 1</span><span class="k">字节 2</span><span class="k">字节 3</span><span class="k">字节 4</span><span class="k">字节 5</span><span class="k">字节 6</span><span class="k">字节 7</span>
+<span class="id">0x01<small>报告 ID</small></span><span class="btn">按钮<small>5 位 + 3 位填充</small></span><span class="xy">X 低<small>int16</small></span><span class="xy">X 高</span><span class="xy">Y 低<small>int16</small></span><span class="xy">Y 高</span><span class="wh">滚轮<small>int8</small></span><span class="wh">横滚<small>int8（AC Pan）</small></span></div>
+<p><b>字节 1 的每一位</b>：</p>
+<div class="bits" style="grid-template-columns:repeat(8,minmax(0,1fr))"><span class="k">b7</span><span class="k">b6</span><span class="k">b5</span><span class="k">b4</span><span class="k">b3</span><span class="k">b2</span><span class="k">b1</span><span class="k">b0</span>
+<span class="pad">填充<small>(M2 0x80)</small></span><span class="pad">填充<small>(M1 0x40)</small></span><span class="pad">填充</span><span class="btn">按钮 5<small>K4 侧键</small></span><span class="btn">按钮 4<small>K5 侧键</small></span><span class="btn">按钮 3<small>中键</small></span><span class="btn">按钮 2<small>右键</small></span><span class="btn">按钮 1<small>左键</small></span></div>
+<ul>
+<li>描述符写的是 5 个按钮（Usage 1~5，Report Count 5，每个 1 位），再加 3 位常量填充（usbdesc.c:46~57）。代码里功能 0xBA / 0xBB 会写 0x40 / 0x80，但描述符里那 3 位是“填充”，电脑会忽略。</li>
+<li>X、Y：有符号 16 位，<b>低字节在前</b>，−32767 ~ 32767，是“这次和上次之间移动了多少”（相对量），来自 PAW3950。</li>
+<li>滚轮、横滚：有符号 8 位，+1 / −1 表示滚了一格。T1A 现在滚轮扫描关着（ENABLE_WHEEL_SCAN = 0）。</li>
+<li>端点最大包长 16 字节（usbdesc.c 里 wMaxPacketSize = 0x10），8 字节装得下。</li>
+</ul>
+
+<h2>3. 动手：按几个键、动一动，看报告的每一位</h2>
+<div class="tool">
+<div class="row"><b>物理键：</b><span class="tog" id="kb"></span></div>
+<div class="row"><label>X 移动 <input type="range" id="gx" min="-300" max="300" value="0"></label><b id="gxv" style="font-family:var(--font-m)">0</b><label>Y 移动 <input type="range" id="gy" min="-300" max="300" value="0"></label><b id="gyv" style="font-family:var(--font-m)">0</b><button type="button" id="g0">移动归零</button></div>
+<div id="gOut"></div></div>
+
+<h2>4. 按时间看：哪一毫秒才真的发包</h2>
+<p>下面模拟一段 30 ms：第 3 ms 按下左键、一直按着，第 10 ~ 14 ms 鼠标在移动，第 20 ms 松开。每一列是 1 ms，看每一毫秒：有没有事件 → 有没有打包 → 缓冲区状态 → 电脑来问时得到什么。</p>
+<div class="tool">
+<div class="btns"><button type="button" id="tP">上一毫秒</button><button type="button" id="tN">下一毫秒</button><button type="button" id="tPlay">自动播放</button><button type="button" id="tR">重来</button><span class="note" id="tC"></span></div>
+<div class="scroll"><svg id="tl" class="fig" viewBox="0 0 1340 400" style="min-width:1150px" role="img" aria-label="30 毫秒内的事件、打包、缓冲区和电脑轮询"></svg></div>
+<div class="log" id="tLog"></div></div>
+
+<h2>5. 端点缓冲区：包放在哪、电脑怎么取、没数据怎么办</h2>
+<div class="scroll"><svg id="ep" class="fig" viewBox="0 0 1340 380" style="min-width:1150px" role="img" aria-label="USB 端点 1 的缓冲区和 ACTIVE 位"></svg></div>
+<div class="scroll"><table>
+<thead><tr><th>步骤</th><th>谁做</th><th>代码</th><th>缓冲区发生什么</th></tr></thead>
+<tbody>
+<tr><td>① 等缓冲区空</td><td>软件</td><td>device.c:694~701：最多问 60 次 <code>nsAPI_USB_EP_Status()</code>，每次之间等 <code>nsAPI_SSP_Delay1us(10)</code></td><td>看缓冲区的 <b>ACTIVE 位</b>：1 = 上一个包还没被电脑取走；0 = 空了（usbhw.c:1429~1450）</td></tr>
+<tr><td>② 写报告</td><td>软件</td><td>device.c:702~704 → <code>USB_LoadInEP_Data()</code>（usb.c:244）→ <code>nsAPI_USB_WriteEP()</code>（usbhw.c:1241）</td><td>把 8 字节复制进 USB RAM 里端点 1 的缓冲区，写好长度，<b>置 ACTIVE = 1</b>（usbhw.c:1294）</td></tr>
+<tr><td>③ 电脑来问</td><td>电脑 + USB 硬件</td><td>不用软件参与</td><td>电脑每 1 ms（bInterval = 1）发一个 IN 令牌问端点 1：ACTIVE = 1 → 硬件把 8 字节发出去，清 ACTIVE；ACTIVE = 0 → 硬件回 <b>NAK</b>（“没有新数据”）</td></tr>
+<tr><td>④ 电脑收到</td><td>Windows</td><td>—</td><td>按描述符解包：按钮状态<b>保存下来一直有效</b>；X / Y / 滚轮是“增量”，用一次就没了</td></tr>
+</tbody></table></div>
+<div class="box"><b>没有新数据时会怎样？</b>
+<ul>
+<li><b>软件</b>：<code>deviceEvent</code> 没有事件 → <code>Device_Pack()</code> 第 553 行直接 return；<code>data_type</code> = 0 → <code>Device_Report()</code> 第 674 行直接 return。什么都不写。</li>
+<li><b>USB 硬件</b>：缓冲区 ACTIVE = 0，电脑每 1 ms 来问，硬件自动回 NAK。这一来一回不需要 CPU 参与。</li>
+<li><b>电脑</b>：收到 NAK 就当“没变化”，按键状态保持上一次的。所以<b>按住左键不动，只在按下那一刻发一个包，松开那一刻再发一个</b>，中间一个包都不用发，电脑也一直认为左键是按着的。</li>
+</ul></div>
+<div class="box"><b>按住左键的同时移动鼠标，为什么左键状态不会丢？</b>
+<p>移动产生的是 <code>OPTICAL_EVENT</code>，打包时（device.c:584~598）<code>manual_mouseReport</code> 是新建的全 0 数组，所以要把按钮字节补回去：<code>manual_mouseReport[1] = mouseReport_back[1]</code>。<code>mouseReport_back</code>（device.c:77）是<b>上一次按键报告的备份</b>（device.c:571~574 每次按键报告后都存一份）。这样每个移动包都带着当前的按钮状态。</p></div>
+<div class="box"><b>如果等了 60 次缓冲区还是满的？</b>
+<p><code>Device_Report()</code> 等完 60 次（每次约 6 ~ 10 µs，估计总共不到 1 ms）不管结果，照样调 <code>USB_LoadInEP_Data()</code>，而它里面也不检查（usb.c:291 的检查被注释掉了）。端点开了双缓冲（usbhw.c:320 <code>EPBUFCFG = 0x3FC</code>），正常情况下来得及；但如果电脑长时间不来取（比如电脑卡住、USB 挂起），新包可能写进还没发出去的缓冲区，<b>覆盖掉上一个包</b>。<i>（推论，没有上板验证。）</i>如果被覆盖的正好是“按下”或“松开”的包，电脑会漏掉一次状态变化。</p></div>
+
+<h2>6. 这只鼠标的三个 USB 接口</h2>
+<div class="scroll"><table>
+<thead><tr><th>接口</th><th>端点</th><th>方向</th><th>装什么</th><th>代码</th></tr></thead>
+<tbody>
+<tr><td>0：鼠标（Boot 鼠标）</td><td>EP1 IN（0x81）</td><td>鼠标 → 电脑</td><td>鼠标报告（ID 1，8 字节）；多媒体报告（ID 5，3 字节）也走这里</td><td>Device_Report() device.c:683、704</td></tr>
+<tr><td>1：键盘</td><td>EP2 IN（0x82）</td><td>鼠标 → 电脑</td><td>键盘报告 8 字节：修饰键、保留、6 个键码（键被设成键盘键 / 宏时用）</td><td>device.c:728</td></tr>
+<tr><td>2：自定义（GUI 用）</td><td>EP3 IN（0x83）/ EP4 OUT（0x04）</td><td>双向</td><td>第 4 课（续）讲的 64 字节协议包</td><td>my_protocol_mouse.c</td></tr>
+</tbody></table></div>
+<p><b>两种格式</b>：电脑在 BIOS 等简单环境里会把鼠标切到“Boot 协议”（<code>HID_Protocol = 0</code>，hiduser.c:144），这时 <code>Device_Report()</code> 走 else 分支（device.c:706~719），只发 3 字节：按钮（只留低 3 位）、X 低字节、Y 低字节。正常进 Windows 后是“报告协议”（<code>HID_Protocol = 1</code>），发上面的 8 字节。</p>
+
+<h2>7. 本课所有变量</h2>
+<div class="scroll"><table>
+<thead><tr><th>名字</th><th>在哪</th><th>是什么</th></tr></thead>
+<tbody>
+<tr><td><code>ret</code></td><td>my_misc.c:433</td><td>霍尔算法的 2 位结果</td></tr>
+<tr><td><code>button_port_state</code></td><td>button.c:566 局部</td><td>所有物理键这一次的状态（位图）</td></tr>
+<tr><td><code>buttonScan_stru.scan_result_cur / _pre / button_changed / debounce[]</code></td><td>button.c:19</td><td>当前状态、确认后的状态、有没有变、消抖计数</td></tr>
+<tr><td><code>wheel_button_status</code></td><td>device.c:51</td><td>按键 + 滚轮位图，交给打包</td></tr>
+<tr><td><code>deviceEvent</code>、<code>BUTTON_EVENT / OPTICAL_EVENT / SCROLL_EVENT …</code></td><td>device.c / device.h</td><td>“有事要打包”的标志位</td></tr>
+<tr><td><code>key_function[10]</code></td><td>gloabSetting.settingMode（custom.h:129）</td><td>键位设置表</td></tr>
+<tr><td><code>manual_mouseReport[8]</code></td><td>device.c:543 局部</td><td>这一次正在拼的鼠标报告</td></tr>
+<tr><td><code>mouseReport_back[8]</code></td><td>device.c:77</td><td>上一次按键报告的备份（移动包用来补按钮字节）</td></tr>
+<tr><td><code>x_value_delta / y_value_delta</code></td><td>device.c:53</td><td>PAW3950 读到的移动量（16 位，分高低字节）</td></tr>
+<tr><td><code>data_type</code></td><td>device.c:50</td><td>要发哪几种报告：0x01 鼠标、0x02 键盘、0x04 多媒体</td></tr>
+<tr><td><code>report_data.mouse_report[8]</code></td><td>device.c:80</td><td>打包完成、等着发的鼠标报告</td></tr>
+<tr><td><code>HID_Protocol</code></td><td>hiduser.c</td><td>1 = 报告协议（8 字节），0 = Boot 协议（3 字节）</td></tr>
+<tr><td>端点 1 缓冲区、ACTIVE 位</td><td>USB RAM、EP 命令 / 状态表</td><td>硬件发送用的缓冲区；ACTIVE = 1 表示“有包等着被取走”</td></tr>
+</tbody></table></div>
+
+<h2>8. 练习</h2>
+<div class="px" id="px"></div>
+</div>
+<script>
+(function(){
+const $=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
+const el=(p,t,a,x)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e};
+const hx=v=>'0x'+((v&255)>>>0).toString(16).toUpperCase().padStart(2,'0');
+/* ===== pipeline ===== */
+(function(){const s=$('pipe');const info={};
+ const box=(k,x,y,w,h,t,lines,c,txt)=>{const g=el(s,'g',{style:'cursor:pointer',tabindex:0,role:'button','aria-label':t});el(g,'rect',{x,y,width:w,height:h,rx:8,style:`fill:color-mix(in srgb,var(--${c}) 14%,var(--panel));stroke:var(--${c});stroke-width:2`});
+  el(g,'text',{x:x+10,y:y+20,'font-size':13.5,'font-weight':700,fill:'var(--fg)',style:'font-family:var(--font-m)'},t);lines.forEach((l,i)=>el(g,'text',{x:x+10,y:y+40+i*17,'font-size':11.5,fill:'var(--fg)'},l));g.onclick=()=>{$('pipeLog').textContent=t+'：'+txt}};
+ const fn=(x1,y1,x2,y2,lab,ly,lx)=>{el(s,'path',{d:`M${x1},${y1} L${x2},${y2}`,stroke:'var(--muted)','stroke-width':2,fill:'none'});const a=Math.atan2(y2-y1,x2-x1);el(s,'path',{d:`M${x2},${y2} l${-8*Math.cos(a-0.4)},${-8*Math.sin(a-0.4)} M${x2},${y2} l${-8*Math.cos(a+0.4)},${-8*Math.sin(a+0.4)}`,stroke:'var(--muted)','stroke-width':2,fill:'none'});if(lab)el(s,'text',{x:lx??(x1+x2)/2,y:ly??(y1+y2)/2-6,'text-anchor':'middle','font-size':11,fill:'var(--hw)','font-weight':600,style:'font-family:var(--font-m)'},lab)};
+ el(s,'text',{x:20,y:24,'font-size':13,'font-weight':700,fill:'var(--fg)'},'Device_Scan()：每 1 ms 扫一次');el(s,'text',{x:20,y:250,'font-size':13,'font-weight':700,fill:'var(--fg)'},'Device_Pack() → Device_Report()：主循环每圈，只在有事件时干活');
+ box('ret',20,40,190,80,'ret（2 位）',['bit0 左键  bit1 右键','my_misc.c:667'],'bad','霍尔算法的结果，第 4 课。');
+ box('bps',270,40,230,80,'button_port_state',['32 位：每个物理键一位','左右键 + 中键、侧键、DPI'],'bad','Button_GetState()（button.c:564）把 GPIO 读的中键、侧键、DPI 键和 LR_GetState() 的左右键拼在一起。');
+ box('scan',560,40,240,80,'buttonScan_stru',['scan_result_pre：确认后的状态','button_changed：有没有变'],'bad','Button_Scan()（button.c:605）：和上次比，变了才算；同时触发线圈振感。');
+ box('wbs',860,40,220,80,'wheel_button_status',['按键位 + 滚轮位','device.c:51'],'gold','Device_Button_Scan()（device.c:963~964）把 scan_result_pre 放进来。');
+ box('ev',1140,40,180,80,'deviceEvent',['BUTTON_EVENT = 1','“有按键变化，等打包”'],'gold','DEVICE_POST_EVENT(BUTTON_EVENT)（device.c:965）。没变化就不挂。');
+ box('opt',1140,140,180,80,'x/y_value_delta',['PAW3950 的移动量','+ OPTICAL_EVENT'],'per','Device_Optical_Scan()（device.c:784）每 report_rate 毫秒读一次传感器，有移动就挂 OPTICAL_EVENT。');
+ fn(210,80,270,80,'|=',72,240);fn(500,80,560,80,'比较',72,530);fn(800,80,860,80,'',0);fn(1080,80,1140,80,'',0);
+ box('kf',20,270,230,90,'key_function[10]',['键位设置表','左键 → 0xB0 → 按钮 1','右键 → 0xB1 → 按钮 2'],'sw','Custom_HandleKey()（custom.c:1046）逐位查表；Custom_Deal_MouseKey()（custom.c:722）把鼠标键“或”进第 1 字节。');
+ box('man',320,270,250,90,'manual_mouseReport[8]',['这一次正在拼的鼠标报告','01 | 按钮 | X | Y | 滚轮 | 横滚','device.c:543'],'sw','Device_Pack() 的局部数组：按键事件填按钮字节，移动事件填 X、Y。');
+ box('back',320,380,250,70,'mouseReport_back[8]',['上一次按键报告的备份','device.c:77'],'muted','移动包要用它补按钮字节（device.c:598），否则按住时移动会把按钮报成松开。');
+ box('dt',640,270,190,90,'data_type',['0x01 要发鼠标报告','0x02 键盘  0x04 多媒体','device.c:50'],'gold','Device_Report() 看它决定发哪几种包；发完清掉对应位。');
+ box('rd',640,380,190,70,'report_data.mouse_report',['打包完成的 8 字节'],'sw','device.c:665 从 manual_mouseReport 复制过来。');
+ box('epb',900,270,210,180,'端点 1 缓冲区（USB RAM）',['8 字节 + 长度','ACTIVE 位：','1 = 有包等着被取','0 = 空','双缓冲（EPBUFCFG）'],'hw','nsAPI_USB_WriteEP()（usbhw.c:1241）复制进来并置 ACTIVE。电脑取走后硬件清 ACTIVE。');
+ box('pc',1180,270,140,180,'电脑',['每 1 ms 问一次','（IN 令牌）','ACTIVE=1 → 收包','ACTIVE=0 → NAK','按钮状态一直记着'],'pc','Windows 按报告描述符（usbdesc.c:36）解包。');
+ fn(1230,140,1230,120,'',0);fn(1230,220,600,268,'Device_Pack()',240,960);fn(135,360,320,330,'Custom_HandleKey',378,215);
+ fn(570,315,640,315,'|= MOUSE',305,605);fn(570,330,640,400,'复制',375,620);fn(445,360,445,380,'',0);fn(830,430,900,430,'Device_Report',452,865);fn(1110,360,1180,360,'USB 硬件',350,1145);
+ fn(1180,330,1110,330,'IN 令牌',322,1145);})();
+/* ===== report builder ===== */
+const KEYS=[['左键',0,0x01],['右键',1,0x02],['中键',2,0x04],['K4 侧键',5,0x10],['K5 侧键',6,0x08],['DPI 键',9,0]];
+const on=new Set();
+KEYS.forEach(([n,b])=>{const bt=document.createElement('button');bt.type='button';bt.textContent=n;bt.setAttribute('aria-pressed','false');bt.onclick=()=>{on.has(b)?on.delete(b):on.add(b);bt.setAttribute('aria-pressed',on.has(b));build()};$('kb').appendChild(bt)});
+function cells(n,arr,cls){return `<div class="bits" style="grid-template-columns:repeat(${n},minmax(0,1fr))">${arr.map((a,i)=>`<span class="${cls?cls(i,a):''}">${a}</span>`).join('')}</div>`}
+function build(){const x=+$('gx').value,y=+$('gy').value;$('gxv').textContent=x;$('gyv').textContent=y;
+ let wbs=0;on.forEach(b=>wbs|=1<<b);let btn=0;KEYS.forEach(([n,b,m])=>{if(on.has(b))btn|=m});
+ const xl=x&255,xh=(x>>8)&255,yl=y&255,yh=(y>>8)&255;const rep=[1,btn,xl,xh,yl,yh,0,0];
+ const wb=[];for(let i=9;i>=0;i--)wb.push((wbs>>i)&1);
+ const bb=[];for(let i=7;i>=0;i--)bb.push((btn>>i)&1);
+ const moved=x||y;
+ $('gOut').innerHTML=`<p><b>① wheel_button_status</b> = ${hx(wbs>>8)}${(wbs&255).toString(16).toUpperCase().padStart(2,'0')}（b9 ~ b0）：</p>`+
+  cells(10,wb.map((v,i)=>`${v}<small>${['DPI','音量−','音量+','K5','K4','滚轮下','滚轮上','中键','右键','左键'][i]}</small>`),(i,a)=>a[0]==='1'?'on':'')+
+  `<p><b>② 查键位表、拼按钮字节</b>：${[...on].filter(b=>b!==9).length?KEYS.filter(k=>on.has(k[1])&&k[2]).map(k=>`${k[0]} → |= ${hx(k[2])}`).join('，'):'没有鼠标键按着 → 0x00'}${on.has(9)?'；DPI 键不进报告（鼠标自己切 DPI）':''}　→ 字节 1 = <b>${hx(btn)}</b></p>`+
+  cells(8,bb.map((v,i)=>`${v}<small>${['填充','填充','填充','按钮5','按钮4','按钮3','按钮2','按钮1'][i]}</small>`),(i,a)=>i<3?'pad':a[0]==='1'?'on':'')+
+  `<p><b>③ 8 字节鼠标报告</b>（X = ${x} → ${x<0?`补码 ${hx(xh)}${(xl).toString(16).toUpperCase().padStart(2,'0')}`:`${hx(xh)}${xl.toString(16).toUpperCase().padStart(2,'0')}`}，低字节在前；Y 同理）：</p>`+
+  cells(8,rep.map((v,i)=>`${hx(v).slice(2)}<small>${['ID','按钮','X 低','X 高','Y 低','Y 高','滚轮','横滚'][i]}</small>`),i=>['id','btn','xy','xy','xy','xy','wh','wh'][i])+
+  `<div class="log">电脑解出来：按钮 1~5 = ${[0,1,2,3,4].map(i=>(btn>>i)&1).join(' ')}（左、右、中、后退、前进），X ${x>=0?'+':''}${x}，Y ${y>=0?'+':''}${y}（向下为正），滚轮 0\n这个包什么时候发？${'只有在“按键有变化”或“这次读到了移动”时才发；按着不动、也不移动，就一个包都不发'}${moved?'\n现在有移动：这是一个移动包，按钮字节来自 mouseReport_back[1]（上一次按键报告的备份）':''}</div>`}
+$('gx').oninput=build;$('gy').oninput=build;$('g0').onclick=()=>{$('gx').value=0;$('gy').value=0;build()};build();
+/* ===== timeline ===== */
+const N=30;const MS=[];(function(){let held=0,back=0,buf=[],act=0;for(let t=0;t<N;t++){let ev=[],pack=null,why='';const press=t===3,rel=t===20,mv=t>=10&&t<=14;
+ if(press){held=1;ev.push('BUTTON')}if(rel){held=0;ev.push('BUTTON')}if(mv)ev.push('OPTICAL');
+ if(ev.length){const btn=ev.includes('BUTTON')?held:back;if(ev.includes('BUTTON'))back=held;pack=[1,btn,mv?12:0,0,mv?(256-3)&255:0,mv?255:0,0,0];buf.push(pack)}
+ const host=buf.length?buf.shift():null;MS.push({t,ev,pack,host,held,pc:host?host[1]&1:null})}})();
+let tk=0,ttimer=null,pcState=0;
+function drawTL(){const s=$('tl');s.innerHTML='';const X0=150,W=(1320-X0)/N,X=t=>X0+t*W;
+ const rows=[['左键（手指）',40],['事件 deviceEvent',90],['打包 Device_Pack',140],['端点缓冲区',190],['电脑 IN 令牌',250],['电脑认为左键',310]];
+ rows.forEach(([n,y])=>el(s,'text',{x:10,y:y+18,'font-size':12,'font-weight':600,fill:'var(--fg)'},n));
+ for(let t=0;t<N;t++){el(s,'text',{x:X(t)+W/2,y:20,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},t);el(s,'line',{x1:X(t),x2:X(t),y1:26,y2:370,stroke:'var(--grid)'})}
+ let pc=0;for(let t=0;t<=tk;t++){const m=MS[t],x=X(t);
+  if(m.held)el(s,'rect',{x,y:40,width:W,height:26,style:'fill:color-mix(in srgb,var(--bad) 30%,transparent)'});
+  if(m.ev.length)el(s,'text',{x:x+W/2,y:108,'text-anchor':'middle','font-size':9,fill:'var(--gold)','font-weight':700},m.ev.map(e=>e==='BUTTON'?'键':'移').join('+'));
+  if(m.pack){el(s,'rect',{x:x+2,y:140,width:W-4,height:26,rx:3,style:'fill:color-mix(in srgb,var(--sw) 35%,var(--panel));stroke:var(--sw)'});el(s,'text',{x:x+W/2,y:157,'text-anchor':'middle','font-size':9,fill:'var(--fg)'},hx(m.pack[1]).slice(2))}
+  el(s,'rect',{x:x+2,y:190,width:W-4,height:26,rx:3,style:`fill:${m.pack?'color-mix(in srgb,var(--hw) 35%,var(--panel))':'var(--soft)'};stroke:var(--line)`});el(s,'text',{x:x+W/2,y:207,'text-anchor':'middle','font-size':8.5,fill:'var(--fg)'},m.pack?'满':'空');
+  el(s,'text',{x:x+W/2,y:270,'text-anchor':'middle','font-size':10,'font-weight':700,fill:m.host?'var(--good)':'var(--muted)'},m.host?'包':'NAK');
+  if(m.host)pc=m.host[1]&1;el(s,'rect',{x,y:310,width:W,height:26,style:`fill:${pc?'color-mix(in srgb,var(--bad) 30%,transparent)':'transparent'}`});el(s,'text',{x:x+W/2,y:328,'text-anchor':'middle','font-size':9,fill:'var(--fg)'},pc?'按':'')}
+ el(s,'line',{x1:X(tk)+W/2,x2:X(tk)+W/2,y1:26,y2:370,stroke:'var(--bad)','stroke-width':2});
+ el(s,'text',{x:X0,y:390,'font-size':11,fill:'var(--muted)'},'端点缓冲区“满” = ACTIVE 位 = 1，包等着被电脑取走；这里假设电脑在同一毫秒内就来问，取走后变空');
+ const m=MS[tk];let t=`第 ${tk} ms：`;
+ if(tk===3)t+='手指按下左键 → 霍尔算法判为按下 → Button_Scan 发现变化 → 挂 BUTTON_EVENT → 打包：按钮字节 0x01 → 写进端点缓冲区（ACTIVE = 1）→ 电脑来问，取走。电脑从此认为左键按着。';
+ else if(tk===20)t+='松开 → BUTTON_EVENT → 打包：按钮字节 0x00 → 电脑取走，认为左键松开。';
+ else if(m.ev.includes('OPTICAL'))t+=`鼠标在移动 → OPTICAL_EVENT → 打包：X = +12、Y = −3，按钮字节从 mouseReport_back[1] 补回 = ${hx(m.pack[1])}（左键还按着）→ 电脑取走。`;
+ else t+=`没有任何事件 → Device_Pack() 第 553 行直接 return，Device_Report() 第 674 行直接 return → 缓冲区空 → 电脑来问得到 NAK → 电脑${m.held?'继续认为左键按着':'继续认为左键松开'}。`;
+ $('tLog').textContent=t;$('tC').textContent=`第 ${tk} / ${N-1} ms`;$('tP').disabled=tk===0;$('tN').disabled=tk===N-1}
+const tStop=()=>{if(ttimer){clearInterval(ttimer);ttimer=null;$('tPlay').textContent='自动播放'}};
+$('tN').onclick=()=>{tStop();if(tk<N-1){tk++;drawTL()}};$('tP').onclick=()=>{tStop();if(tk>0){tk--;drawTL()}};$('tR').onclick=()=>{tStop();tk=0;drawTL()};
+$('tPlay').onclick=()=>{if(ttimer){tStop();return}if(tk>=N-1)tk=0;$('tPlay').textContent='暂停';ttimer=setInterval(()=>{if(tk>=N-1){tStop();return}tk++;drawTL()},500)};drawTL();
+/* ===== endpoint figure ===== */
+(function(){const s=$('ep');
+ const b=(x,y,w,h,c,t,l)=>{el(s,'rect',{x,y,width:w,height:h,rx:8,style:`fill:color-mix(in srgb,var(--${c}) 14%,var(--panel));stroke:var(--${c});stroke-width:2`});el(s,'text',{x:x+10,y:y+20,'font-size':13.5,'font-weight':700,fill:'var(--fg)'},t);l.forEach((q,i)=>el(s,'text',{x:x+10,y:y+42+i*18,'font-size':12,fill:'var(--fg)'},q))};
+ el(s,'rect',{x:10,y:10,width:880,height:360,rx:12,style:'fill:none;stroke:var(--fg);stroke-dasharray:6 4'});el(s,'text',{x:24,y:32,'font-size':13,'font-weight':700,fill:'var(--fg)'},'MCU LPC11U35');
+ b(30,50,250,120,'sw','CPU：Device_Report()',['① 问 ACTIVE（最多 60 次）','② 写 8 字节 + 置 ACTIVE','（device.c:694~704）']);
+ b(330,50,260,300,'hw','USB RAM：端点 1 IN',['缓冲区 0：8 字节','缓冲区 1：8 字节（双缓冲）','','EP 命令 / 状态表：','  长度、地址、ACTIVE 位','','ACTIVE = 1：有包，等电脑取','ACTIVE = 0：空，电脑来问回 NAK','','（usbhw.c:1241 写、1429 查）']);
+ b(640,50,230,170,'per','USB 控制器（硬件）',['收到电脑的 IN 令牌：','  ACTIVE = 1 → 发包、清 ACTIVE','  ACTIVE = 0 → 回 NAK','全自动，不用 CPU']);
+ b(960,50,360,300,'pc','电脑（Windows）',['每 1 ms 发 IN 令牌（bInterval = 1）','','收到包：','  按钮 → 更新并记住','  X / Y / 滚轮 → 移动一次','','收到 NAK：','  “没有新数据”，什么都不变','  按钮状态保持上一次','','只要不拔线，一直这样轮询']);
+ const ar=(d,l,lx,ly)=>{el(s,'path',{d,stroke:'var(--muted)','stroke-width':2,fill:'none'});if(l)el(s,'text',{x:lx,y:ly,'font-size':11.5,fill:'var(--hw)','font-weight':600},l)};
+ ar('M280,110 H330','写',290,100);ar('M590,130 H640','读',600,120);ar('M870,110 H960','包 / NAK →',880,100);ar('M960,160 H870','← IN 令牌',880,180);})();
+/* ===== practice ===== */
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),pick=a=>a[Math.floor(Math.random()*a.length)];
+function mc(q,opts,ans,sol){const idx=opts.map((_,i)=>i);for(let i=idx.length-1;i>0;i--){const j=ri(0,i);[idx[i],idx[j]]=[idx[j],idx[i]]}return{q,type:'mc',opts:idx.map(i=>opts[i]),ans:idx.indexOf(ans),sol}}
+const num=(q,ans,sol,h)=>({q,type:h?'hex':'num',ans,sol});
+const GEN=[
+ ()=>{const ks=[['左键',1],['右键',2],['中键',4],['K5',8],['K4',16]].filter(()=>Math.random()<.5);const v=ks.reduce((a,k)=>a|k[1],0);return num(`按着 ${ks.length?ks.map(k=>k[0]).join('、'):'（什么都没按）'}，鼠标报告字节 1 是多少？（写 0x..）`,v,`${ks.map(k=>`${k[0]} ${hx(k[1])}`).join(' | ')||'0'} = <b>${hx(v)}</b>`,1)},
+ ()=>{const x=ri(-200,200);const v=x&0xFFFF;return num(`X 移动 ${x}，报告字节 2（X 低字节）是多少？（写 0x..）`,v&255,`${x} 的 16 位${x<0?'补码':''} = 0x${v.toString(16).toUpperCase().padStart(4,'0')}，低字节 = <b>${hx(v&255)}</b>`,1)},
+ ()=>{const b=ri(0,31);return num(`报告字节 1 = ${hx(b)}，按钮 2（右键）是按着的吗？按着填 1，没按填 0`,(b>>1)&1,`${hx(b)} 的第 1 位 = <b>${(b>>1)&1}</b>`)},
+ ()=>mc('按住左键不动、也不移动鼠标，鼠标每 1 ms 发什么？',['什么都不发，电脑来问得到 NAK','每 1 ms 发一个“左键按着”的包','每 1 ms 发全 0'],0,'有变化才发；电脑记着上一次的状态。'),
+ ()=>mc('电脑来问时缓冲区是空的（ACTIVE = 0），会怎样？',['USB 硬件自动回 NAK','CPU 被中断去打包','电脑认为所有键都松开了'],0,'NAK = 没有新数据。'),
+ ()=>mc('按住左键时移动鼠标，移动包里的按钮字节从哪来？',['mouseReport_back[1]（上一次按键报告的备份）','重新读一遍霍尔芯片','固定写 0'],0,'device.c:598。'),
+ ()=>mc('wheel_button_status 的第 1 位是哪个键？',['右键','左键','中键'],0,'button.h:101 RIGHT_BUTTON_REPORT_BIT = 1。'),
+ ()=>mc('DPI 键按下会出现在鼠标报告里吗？',['不会，鼠标自己切 DPI','会，按钮 6','会，键盘报告'],0,'key_function[9] = 0xC1，特殊功能键。'),
+ ()=>mc('鼠标报告字节 0 的 0x01 是什么？',['报告 ID','左键','X 低字节'],0,'描述符 0x85 0x01。'),
+ ()=>mc('BIOS 里（Boot 协议）鼠标发几个字节？',['3 个：按钮、X、Y','8 个','64 个'],0,'device.c:706~719。'),
+ ()=>mc('Device_Report() 等了 60 次缓冲区还满，会怎样？',['照样写，可能覆盖没发出去的包（推论）','放弃这个包','一直等到空'],0,'usb.c:291 的检查被注释了。'),
+];
+let n=0,ok=0,cur=null,done=false;const pxb=$('px');
+pxb.innerHTML='<div class="pxh"><b>练习</b><span class="pxs" id="pxs"></span></div><div class="pxq" id="pxq"></div><div class="qrow" id="pxa"></div><div class="fb" id="pxfb"></div><div class="qrow"><button type="button" id="pxShow">看答案</button><button type="button" class="pxNext" id="pxNext">下一题 →</button></div>';
+const upd=()=>$('pxs').textContent=`已做 ${n} 题，对 ${ok} 题`;
+function judge(r){if(!done){n++;if(r)ok++}done=true;$('pxfb').className='fb '+(r?'ok':'no');$('pxfb').innerHTML=r?'✓ 对。'+cur.sol:'✗ 不对，再想想，或者点“看答案”。';upd()}
+function next(){cur=pick(GEN)();done=false;$('pxq').innerHTML=cur.q;$('pxfb').className='fb';$('pxfb').innerHTML='';const a=$('pxa');a.innerHTML='';
+ if(cur.type==='mc'){cur.opts.forEach((o,j)=>{const b=document.createElement('button');b.type='button';b.innerHTML=o;b.onclick=()=>{a.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');judge(j===cur.ans)};a.appendChild(b)})}
+ else{const inp=document.createElement('input');inp.type='text';inp.setAttribute('aria-label','答案');const c=document.createElement('button');c.type='button';c.textContent='检查';
+  const go=()=>{const s=inp.value.trim();if(!s)return;const v=cur.type==='hex'||/^0x/i.test(s)?parseInt(s,16):parseFloat(s);if(isNaN(v))return;judge(Math.abs(v-cur.ans)<0.01)};c.onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter'){if(done&&$('pxfb').classList.contains('ok'))next();else go()}});a.append(inp,c)}
+ upd()}
+$('pxShow').onclick=()=>{if(!done)n++;done=true;$('pxfb').className='fb no';$('pxfb').innerHTML='答案：'+(cur.type==='mc'?cur.opts[cur.ans]:cur.type==='hex'?hx(cur.ans):cur.ans)+'<br>'+cur.sol;upd()};
+$('pxNext').onclick=next;next();
+})();
+</script>
