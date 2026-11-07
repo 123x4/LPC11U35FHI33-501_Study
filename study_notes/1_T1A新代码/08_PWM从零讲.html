@@ -1,0 +1,357 @@
+<title>PWM 从零讲</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --hw:#7a5ea8; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.8}
+.wrap{max-width:880px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);line-height:1.3;text-wrap:balance}
+h1{font-size:1.9rem;margin:0}
+h2{font-size:1.3rem;margin:2.4rem 0 .4rem;padding-top:.6rem;border-top:1px solid var(--line)}
+h3{font-size:1.06rem;margin:1.3rem 0 .3rem}
+p{margin:.6rem 0}
+a{color:var(--per)}
+code{font-family:var(--font-m);font-size:.88em;background:var(--soft);padding:.05em .35em;border-radius:3px;overflow-wrap:anywhere}
+pre.code{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:10px 12px;overflow-x:auto;line-height:1.55;margin:.5rem 0}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.06em;color:var(--muted)}
+.lede{color:var(--muted)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:1rem 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-size:.88rem;margin:.4rem 0}
+td,th{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600}
+.note{font-size:.88rem;color:var(--muted)}
+.think{border-left:4px solid var(--per);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.8rem 0}
+.rule{border-left:4px solid var(--c,var(--per));background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.6rem 0}
+.log{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:6px 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.btns button,.tool button{font:inherit;font-size:.88rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer}
+.btns button:disabled{opacity:.4;cursor:default}
+.btns button[aria-pressed="true"]{border-color:var(--fg);font-weight:700}
+/* bit strip */
+.bstrip{display:inline-grid;gap:2px;font-family:var(--font-m);font-size:.74rem;text-align:center;margin:.2rem 0}
+.bstrip span{border:1px solid var(--line);border-radius:3px;padding:1px 3px;min-width:1.6em;background:var(--panel)}
+.bstrip span.ch{background:color-mix(in srgb,var(--bad) 28%,var(--panel));border-color:var(--bad);font-weight:700}
+.bstrip span.k{background:none;border:0;color:var(--muted);font-size:.6rem}
+.bstrip span.f{background:color-mix(in srgb,var(--c,var(--per)) 18%,var(--panel))}
+/* lamps */
+.lamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:.5rem 0}
+.lamps div{border:1.5px solid var(--line);border-radius:6px;padding:4px 8px;font-size:.82rem;background:var(--panel)}
+.lamps div::before{content:"○ ";color:var(--muted)}
+.lamps div.on{border-color:var(--good);background:color-mix(in srgb,var(--good) 15%,var(--panel))}
+.lamps div.on::before{content:"● ";color:var(--good)}
+.lamps div.new{outline:2px solid var(--bad)}
+.stp{border:2px solid var(--per);border-radius:8px;padding:10px 14px;background:var(--panel);margin:.6rem 0}
+.stp .cl{font-family:var(--font-m);font-size:.85rem;background:var(--soft);border-left:4px solid var(--per);padding:4px 8px;border-radius:0 6px 6px 0;overflow-wrap:anywhere}
+.stp .who{display:inline-block;font-size:.72rem;color:var(--bg);background:var(--c);border-radius:4px;padding:0 6px;margin-right:6px}
+.stp h3{margin:.5rem 0 .2rem}
+svg.fig{display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+/* tools */
+.tool{border:1.5px solid var(--hw);border-radius:8px;padding:8px 12px;background:color-mix(in srgb,var(--hw) 5%,var(--panel));margin:.6rem 0}
+.tool input,.tool select{font:inherit;font-size:.88rem;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.tool .row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:.3rem 0}
+/* quiz & practice */
+.qz,.px{border-radius:8px;padding:8px 12px;margin:.7rem 0}
+.qz{border:1.5px dashed var(--gold);background:color-mix(in srgb,var(--gold) 6%,var(--panel))}
+.px{border:1.5px solid var(--per);background:color-mix(in srgb,var(--per) 6%,var(--panel))}
+.qz .qt,.px .pxq{font-weight:600;margin:.2rem 0}
+.qrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.qz input,.px input{font:inherit;width:120px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.qz button,.px button{font:inherit;font-size:.9rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer;text-align:left}
+.qz button.on,.px button.on{border-color:var(--fg)}
+.px .pxh{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.px .pxh b{color:var(--per)}
+.px .pxs{font-size:.82rem;color:var(--muted)}
+.px .pxNext{border-color:var(--per);color:var(--per)}
+.fb{display:none;padding:6px 10px;border-radius:6px;background:var(--soft);margin-top:.3rem}
+.fb.ok{display:block;border-left:4px solid var(--good)}
+.fb.no{display:block;border-left:4px solid var(--bad)}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.wrap{max-width:1400px}
+input[type=range]{width:min(420px,100%)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}
+.terms{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:.6rem 0}
+.terms div{border:1.5px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--panel)}
+.terms div b{display:block;font-size:1.02rem;margin-bottom:2px}
+.rules{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:.6rem 0}
+.rules div{border:1.5px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--panel);font-size:.9rem}
+.rules div b{display:block}
+.rules svg{width:100%;height:auto;display:block;margin:.3rem 0}
+.mwcode{font-family:var(--font-m);font-size:.8rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px 0;max-height:520px;overflow:auto}
+.mwcode div{display:grid;grid-template-columns:3.4em 1fr;white-space:pre;line-height:1.5}
+.mwcode div span{color:var(--muted);text-align:right;padding-right:.8em;user-select:none}
+.mwcode div.cur{background:color-mix(in srgb,var(--bad) 22%,transparent);font-weight:700}
+.mwcode div.done{background:color-mix(in srgb,var(--per) 7%,transparent)}
+#inNote{border-left:4px solid var(--bad);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;min-height:5em}
+.bits{display:flex;flex-wrap:wrap;gap:2px;margin:.2rem 0 .6rem}
+.bits span{font-family:var(--font-m);font-size:.72rem;border:1px solid var(--line);border-radius:3px;min-width:2.6em;text-align:center;padding:1px 2px;background:var(--panel)}
+.bits span.on{background:color-mix(in srgb,var(--bad) 22%,var(--panel));border-color:var(--bad);font-weight:700}
+.bits span i{display:block;font-style:normal;font-size:.6rem;color:var(--muted)}
+details.ex{border:1.5px solid var(--per);border-radius:8px;padding:6px 12px;margin:.5rem 0;background:color-mix(in srgb,var(--per) 5%,var(--panel))}
+details.ex summary{cursor:pointer;font-weight:600}
+</style>
+<div class="wrap">
+<div class="eyebrow">T1A 主线 · 第 8 课 · PWM 从零讲 · src/my_pwm.c、inc/my_pwm.h、src/my_waveform.c · 芯片手册 UM10462 第 16 章（CT32B0/1）</div>
+<h1>PWM：用“开多久”代替“开多大”</h1>
+<p class="lede">线圈要的是“这一下用几成力”。可是 MCU 的脚只会输出两种电压：0 V 或 3.3 V，MOS 管 Q4 也最好只工作在“全开”或“全关”。那几成力怎么来？答案是：<b>开关得飞快，用“开着的时间占多少”来表示力度</b>。这就是 PWM（Pulse Width Modulation，脉冲宽度调制）。这一课从一盏灯讲起，一直讲到 CT32B1 里每一个寄存器、每一位。</p>
+
+<div class="box"><b>🧭 一句话</b>：CT32B1 从 0 数到 240 再归零，一圈约 5 µs；数到 MR0 那一刻把脚拉高，归零时拉低。MR0 越小，高电平越长，线圈的力越大。代码只要改 MR0，剩下的全是硬件自己做。</div>
+
+<h2>1. 先看一盏灯：开关快到看不出闪，就成了“调亮度”</h2>
+<p>拖动占空比和频率。频率很低时你能看到灯一闪一闪；频率一高，眼睛跟不上，看到的就是一个“平均亮度”。</p>
+<div class="tool"><div class="row">占空比 <input type="range" id="l1D" min="0" max="100" value="30"><b id="l1Dv"></b></div>
+<div class="row">频率 <select id="l1F"><option value="1">1 Hz（每秒开关 1 次）</option><option value="4">4 Hz</option><option value="200000" selected>200 kHz（本项目）</option></select></div></div>
+<div class="scroll"><svg id="l1" class="fig" viewBox="0 0 1360 250" style="min-width:1150px" role="img" aria-label="PWM 控制灯的亮度"></svg></div>
+<div class="terms">
+<div><b>周期 T</b>开一次 + 关一次，一共多久。本项目约 5 µs。</div>
+<div><b>频率 f</b>每秒多少个周期，f = 1 / T。本项目约 200 kHz（每秒 20 万次）。</div>
+<div><b>高电平时间</b>一个周期里“开着”的那一段。</div>
+<div><b>占空比</b>高电平时间 ÷ 周期。30% 就是每个周期开 30%、关 70%。</div>
+</div>
+<p>平均电压 = 占空比 × 高电平电压。脚上是 0 / 3.3 V，那平均就是 占空比 × 3.3 V；经过 MOS 管放大到线圈上，就是 占空比 × 7 V。</p>
+
+<h2>2. 线圈为什么能“吃”PWM：它像一个很重的飞轮</h2>
+<p>灯靠的是眼睛跟不上。线圈靠的是它自己的性质：线圈（电感）里的电流<b>不能突然变</b>，加上电压后电流慢慢涨，断开后电流经续流二极管 D28 慢慢减。就像推一个很重的飞轮：推一下松一下，它不会停下来，而是以一个平均速度转。开关越快，电流越平稳。</p>
+<div class="tool"><div class="row">占空比 <input type="range" id="l2D" min="0" max="100" value="60"><b id="l2Dv"></b>　频率 <select id="l2F"><option value="20000">20 kHz（周期 50 µs）</option><option value="50000">50 kHz</option><option value="200000" selected>200 kHz（周期 5 µs，本项目）</option></select></div></div>
+<div class="scroll"><svg id="l2" class="fig" viewBox="0 0 1360 300" style="min-width:1150px" role="img" aria-label="线圈电流随 PWM 的变化"></svg></div>
+<div class="log" id="l2Log"></div>
+<p class="note">这张图是示意：线圈的电感和电阻原理图上没有标，这里假设时间常数 L / R = 15 µs，只为了看清“频率越高电流越平”。纵轴是“电流 ÷ 一直通电时的最大电流”。另外 Q4 栅极前面有个 10 µs 的 RC（第 6 课 2.1），实际电路里 MOS 管可能不是理想开关（待确认问题第 12 条）。</p>
+<div class="box"><b>为什么偏偏是 200 kHz</b>
+<ul>
+<li><b>远高于人耳能听到的 20 kHz</b>：频率低的话线圈会跟着开关“唱歌”（啸叫）。GUI 文件夹名里的“静音”可能和这个有关（推断）。</li>
+<li><b>远快于线圈电流的变化</b>：一个周期 5 µs 里电流来不及大起大落，力度平稳。</li>
+<li><b>和 20 µs 的力度表配得上</b>：每格力度持续 20 µs，里面有约 4 个 PWM 周期（第 8 节）。</li>
+<li><b>上限是计数精度</b>：48 MHz 数一圈只有 241 个数，占空比最细只能调到 1/241 ≈ 0.4%。频率再高，能分的档就更少。</li>
+</ul></div>
+
+<h2>3. 芯片里怎么做出 PWM：一个计数器 + 两个比较</h2>
+<p>CT32B1 是一个 32 位定时器。里面最核心的是 <b>TC</b>（Timer Counter）：48 MHz 时钟每来一下，TC 加 1。再配两样东西：</p>
+<ul>
+<li><b>MR3 = 240</b>：TC 数到 240，下一下归零。所以 TC 在 0 ~ 240 之间一圈圈地转（MR3 管“周期”）。</li>
+<li><b>MR0</b>：TC 数到等于 MR0 的那一刻，PIO0_13 被拉高；TC 归零时被拉低。（MR0 管“什么时候开”。右线圈用 MR1 和 PIO0_14，一模一样。）</li>
+</ul>
+<p>下面把这个过程放慢了。可以直接拖 MR0，或者按力度百分比让它查表。</p>
+<div class="tool">
+<div class="row">力度 <input type="range" id="c3P" min="0" max="100" value="60"><b id="c3Pv"></b>　或直接设 MR0 = <input type="number" id="c3M" min="0" max="241" value="96" style="width:5em;font:inherit;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)"></div>
+<div class="row btns" style="margin:0"><button id="c3Run">暂停</button><button id="c3Step">走 10 下</button><span>特殊值：</span><button data-m="0">MR0 = 0</button><button data-m="1">1</button><button data-m="121">121</button><button data-m="240">240</button><button data-m="241">241</button></div></div>
+<div class="scroll"><svg id="c3" class="fig" viewBox="0 0 1360 380" style="min-width:1150px" role="img" aria-label="计数器和比较器做出 PWM"></svg></div>
+<div class="log" id="c3Log"></div>
+
+<h2>4. 手册里的五条规则（UM10462 16.7.13）</h2>
+<p>这种“数到 MR0 拉高、归零拉低”的 PWM 叫<b>单边沿 PWM</b>：下降沿永远在每圈开头，只有上升沿的位置在变。手册用五条规则把所有情况说清楚了，上面实验台里的特殊值就是对应这几条：</p>
+<div class="rules" id="rules"></div>
+<p class="note">手册还要求：做 PWM 时，除了管周期的那个 MR（这里是 MR3）可以设“匹配时归零”，其他 MR 的归零、停止位都必须是 0。本项目 MCR 只开了 bit10（MR3 归零），符合。</p>
+
+<h2>5. 本项目怎么配 CT32B1：一行一行看</h2>
+<p><code>MyPWM_CT32B1_Init(240)</code>（my_pwm.c:72）开机时由 <code>MyPWM_Freq200kHzInit()</code> → <code>MyWaveform_Init()</code> 调用一次（第 6 课第 6 节有完整单步）。这里换个角度：每一行改的是寄存器里的哪几位。</p>
+<div class="btns"><button id="inPrev">← 上一行</button><button id="inNext">下一行 →</button><span class="note" id="inPos"></span></div>
+<div class="two">
+ <div class="mwcode" id="inCode"></div>
+ <div><div id="inNote"></div><div id="inRegs"></div></div>
+</div>
+
+<h2>6. 力度怎么变成 MR0：查表 <code>Freq200kHzDuty[]</code></h2>
+<p>代码不算除法，而是查一张 101 项的表（my_pwm.c:19）：下标是力度 0 ~ 100，值是要写进 MR0 的数。我验算过，每一项都正好是 <b>MR0 = 四舍五入(241 − 2.41 × 力度)</b>。用 241 而不是 240，是因为 TC 在 240 这个数上也要停一整拍再归零（手册 16.8 节图 61），所以一圈是 0 ~ 240 共 <b>241 拍</b>。高电平占的拍数是 241 − MR0，正好等于 力度 × 2.41，也就是力度%。</p>
+<div class="tool"><div class="row">把鼠标放到图上任意一点看对应关系</div></div>
+<div class="scroll"><svg id="t6" class="fig" viewBox="0 0 1360 330" style="min-width:1150px" role="img" aria-label="力度到 MR0 的查表"></svg></div>
+<div class="log" id="t6Log">把鼠标移到图上。</div>
+<p>为什么查表而不现算：这个值每 20 µs 在中断里用一次。Cortex-M0 没有硬件除法，带小数的计算更慢；查表就是一次读内存，101 个字节换来中断里最快的速度。</p>
+<p class="note">真实频率：48 MHz ÷ 241 ≈ <b>199.17 kHz</b>，周期 ≈ 5.02 µs。代码注释里写 “periodCnt = MCU_OSC / pwmFreqHz” = 48 MHz ÷ 200 kHz = 240，差了 1 拍，所以不是精确的 200 kHz；但查表是按 241 拍做的，占空比是准的（最大误差 0.21%）。</p>
+
+<h2>7. 代码里的四个开关</h2>
+<div class="scroll"><table>
+<thead><tr><th>函数</th><th>做什么</th><th>改哪个寄存器</th><th>谁在什么时候调</th></tr></thead>
+<tbody>
+<tr><td><code>MyPWM_CT32B1_GlobalStart()</code>（:107）</td><td>让 TC 开始数</td><td>TCR bit0 = 1</td><td>开机一次。之后 TC 一直在转，不再停</td></tr>
+<tr><td><code>MyPWM_SetDuty(ch, %)</code>（my_pwm.h:39）</td><td>力度 &gt; 100 先截成 100，再查表写 MR0 / MR1</td><td>MR0 或 MR1</td><td>波形每一格（每 20 µs，在 CT32B0 中断里）</td></tr>
+<tr><td><code>MyPWM_Start(ch)</code>（:131）</td><td>让这只脚听 PWM 硬件的</td><td>PWMC bit0 / bit1 = 1</td><td>每次开始震（<code>MyWaveform_Start</code>）</td></tr>
+<tr><td><code>MyPWM_Stop(ch)</code>（:143）</td><td>让这只脚听 EMR 的 EM0 / EM1（= 0，低）</td><td>PWMC bit0 / bit1 = 0</td><td>震完（<code>MyWaveform_Stop</code>）、开机</td></tr>
+</tbody></table></div>
+<p>“开 / 关”不是让计数器停，而是<b>切换这只脚听谁的</b>：</p>
+<div class="scroll"><svg id="s7" class="fig" viewBox="0 0 1360 230" style="min-width:1150px" role="img" aria-label="PWMC 切换脚的控制来源"></svg></div>
+<div class="btns"><button id="s7On">MyPWM_Start(0)：PWMC bit0 = 1</button><button id="s7Off" aria-pressed="true">MyPWM_Stop(0)：PWMC bit0 = 0</button></div>
+
+<h2>8. 放回一次震动里看</h2>
+<p>第 6 课讲过：线圈通电 500 µs，力度每 20 µs 换一次（CT32B0 中断改 MR0）。把 PWM 放进去看，每 20 µs 一格里大约有 4 个 PWM 周期（20 ÷ 5.02 ≈ 3.98），整个 500 µs 约 99.6 个周期。</p>
+<div class="tool"><div class="row">驱动方式 <select id="w8M"><option value="1">pwm（默认表 51→100→51）</option><option value="0">level（全程 100%）</option></select>　看前 <select id="w8N"><option value="3">3</option><option value="6" selected>6</option><option value="25">25（全部）</option></select> 格</div></div>
+<div class="scroll"><svg id="w8" class="fig" viewBox="0 0 1360 260" style="min-width:1150px" role="img" aria-label="一次震动里的 PWM 波形"></svg></div>
+<div class="log" id="w8Log"></div>
+
+<h2>9. 几个细节</h2>
+<ul>
+<li><b>改 MR0 是立即生效的</b>：这个定时器没有“先存着、下一圈再用”的缓冲寄存器。中断在一圈的中间改 MR0，这一圈可能出现一个“过渡”的周期。按规则推：如果新 MR0 比 TC 当前值小、脚还是低，这一圈就碰不到了，这一圈剩下全是低，下一圈才按新值；如果脚已经高了，新值更大也不会让它变低（规则 3），要等这一圈结束。所以每 20 µs 换力度时，最多有一个 5 µs 周期的占空比不准，对线圈影响很小。</li>
+<li><b>左右两路共用一个 TC</b>：MR0 和 MR1 比的是同一个计数器，两路 PWM 的下降沿永远对齐在每圈开头。实际上同一时间只震一个线圈（第 6 课第 8 节）。</li>
+<li><b>MR2 和 PIO0_15 没用</b>：CT32B1_MAT2 在 PIO0_15（也就是 SWDIO），本项目没开它的 PWM。</li>
+<li><b>level 模式其实没在“调制”</b>：力度 100% → MR0 = 0 → 脚一直高（规则 5），CT32B1 照样在转，只是对这只脚不起作用了。</li>
+<li><b>栅极 RC</b>：脚上的方波经 R63 100 Ω 到栅极，栅极上还有 C60 0.1 µF，时间常数 10 µs 比周期 5 µs 长，所以 Q4 栅极看到的可能不是干净的方波（推断，待确认问题第 12 条）。示波器同时看 TP35 和 Q4 栅极就知道。</li>
+</ul>
+
+<h2>10. 练习</h2>
+<details class="ex"><summary>① 力度 25% 时 MR0 是多少？一圈里高电平多少拍、多少 µs？</summary><p>MR0 = 四舍五入(241 − 2.41 × 25) = 四舍五入(180.75) = 181（表里第 25 项就是 181）。高电平 241 − 181 = 60 拍，60 ÷ 48 MHz = 1.25 µs，占 5.02 µs 的 24.9%。</p></details>
+<details class="ex"><summary>② 有人把 Freq200kHzDuty[0] 改成 240，会怎样？</summary><p>规则 4：MR0 等于周期长度时，每圈会出一个 1 拍宽（约 0.02 µs）的高脉冲。力度 0% 就不再是“完全不开”，每 5 µs 有一个极窄的脉冲。所以 0% 必须写比 240 大的数，代码用了 241。</p></details>
+<details class="ex"><summary>③ 想把 PWM 改成 100 kHz，最少要改哪里？</summary><p>MR3 改成 480 − 1 = 479（一圈 480 拍，48 MHz ÷ 480 = 100 kHz），MR0 / MR1 的“关”值改成 480，查表改成 四舍五入(480 − 4.8 × 力度)。也就是 <code>MyPWM_CT32B1_Init()</code> 的参数、初值和整张表都要跟着改；而且表现在是 <code>uint8_t</code>（最大 255），装不下 480，类型也要改成 <code>uint16_t</code>。100 kHz 仍远高于人耳范围，但每 20 µs 只剩 2 个周期，电流纹波会变大。</p></details>
+<details class="ex"><summary>④ 为什么 <code>MyPWM_Stop()</code> 之后脚一定是低？</summary><p>PWMC bit0 = 0 时 MAT0 输出的是 EMR 里的 EM0。EM0 复位是 0，代码把 EMC0 设成 01（匹配时清 0，my_pwm.c:95~96），而且 MR0 在关的时候是 241 永远不匹配，所以 EM0 一直是 0，脚是低。</p></details>
+</div>
+<script>
+(function(){
+const $=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
+const el=(p,t,a,x)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e};
+const T=(s,x,y,t,o)=>el(s,'text',Object.assign({x,y,'font-size':12,fill:'var(--fg)'},o||{}),t);
+const DUTY=[241,239,236,234,231,229,227,224,222,219,217,214,212,210,207,205,202,200,198,195,193,190,188,186,183,181,178,176,174,171,169,166,164,161,159,157,154,152,149,147,145,142,140,137,135,133,130,128,125,123,121,118,116,113,111,108,106,104,101,99,96,94,92,89,87,84,82,80,77,75,72,70,67,65,63,60,58,55,53,51,48,46,43,41,39,36,34,31,29,27,24,22,19,17,14,12,10,7,5,2,0];
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* ===== 1 lamp ===== */
+(function(){const s=$('l1');let t0=performance.now();
+ function draw(){s.innerHTML='';const d=+$('l1D').value/100,f=+$('l1F').value;$('l1Dv').textContent=Math.round(d*100)+'%';
+  const x0=280,W=1040,y1=60,y0=170,cyc=f>=1000?6:3;
+  T(s,x0,30,f>=1000?`横轴：${(cyc/f*1e6).toFixed(0)} µs（${cyc} 个周期）`:`横轴：${cyc} 秒`,{'font-size':11.5,fill:'var(--muted)'});
+  let pts=`${x0},${y0}`;for(let c=0;c<cyc;c++){const a=x0+c*W/cyc,b=a+W/cyc;if(d>0){pts+=` ${a},${y1} ${a+d*W/cyc},${y1} ${a+d*W/cyc},${y0}`}pts+=` ${b},${y0}`}
+  if(d>=1)pts=`${x0},${y1} ${x0+W},${y1}`;
+  el(s,'polyline',{points:pts,fill:'none',stroke:'var(--per)','stroke-width':2.5});
+  const ya=y0-d*(y0-y1);el(s,'line',{x1:x0,x2:x0+W,y1:ya,y2:ya,stroke:'var(--bad)','stroke-dasharray':'6 4','stroke-width':1.6});
+  T(s,x0+W,30,`红虚线：平均 = ${Math.round(d*100)}% × 3.3 V = ${(d*3.3).toFixed(2)} V`,{'text-anchor':'end','font-size':12,fill:'var(--bad)','font-weight':700});
+  T(s,x0-8,y1+4,'3.3 V',{'text-anchor':'end','font-size':11,fill:'var(--muted)'});T(s,x0-8,y0+4,'0 V',{'text-anchor':'end','font-size':11,fill:'var(--muted)'});
+  if(f<1000){T(s,x0+W/cyc*d/2,y1-8,'开',{'text-anchor':'middle','font-size':11,fill:'var(--muted)'});T(s,x0+W/cyc*(1+d)/2,y0+16,'关',{'text-anchor':'middle','font-size':11,fill:'var(--muted)'});
+   el(s,'line',{x1:x0,x2:x0+W/cyc,y1:205,y2:205,stroke:'var(--muted)'});T(s,x0+W/cyc/2,222,'一个周期 T',{'text-anchor':'middle','font-size':11,fill:'var(--muted)'})}
+  const lamp=el(s,'circle',{id:'l1L',cx:120,cy:115,r:48,stroke:'var(--line)','stroke-width':2});
+  el(s,'rect',{x:100,y:165,width:40,height:22,rx:3,fill:'var(--muted)'});T(s,120,215,f>=1000?'看起来：一直亮，亮度 = 平均':'看起来：一闪一闪',{'text-anchor':'middle','font-size':12,'font-weight':600});}
+ function tick(){const d=+$('l1D').value/100,f=+$('l1F').value,L=$('l1L');if(L){let on;if(f>=1000)on=d;else{const ph=((performance.now()-t0)/1000*f)%1;on=ph<d?1:0}
+  L.setAttribute('fill',`color-mix(in srgb,var(--gold) ${Math.round(on*95)}%,var(--panel))`)}requestAnimationFrame(tick)}
+ $('l1D').oninput=draw;$('l1F').onchange=draw;draw();tick();
+})();
+/* ===== 2 coil current ===== */
+(function(){const s=$('l2'),tau=15;
+ function draw(){s.innerHTML='';const d=+$('l2D').value/100,f=+$('l2F').value,P=1e6/f,span=200;$('l2Dv').textContent=Math.round(d*100)+'%';
+  const x0=80,W=1240,yT=40,yB=230,X=t=>x0+t/span*W,Y=v=>yB-v*(yB-yT);
+  [0,.5,1].forEach(v=>{el(s,'line',{x1:x0,x2:x0+W,y1:Y(v),y2:Y(v),stroke:'var(--line)'});T(s,x0-8,Y(v)+4,v===1?'100%':v===.5?'50%':'0',{'text-anchor':'end','font-size':11,fill:'var(--muted)'})});
+  /* gate */
+  let gp='',i=0,ip=`${X(0)},${Y(0)}`,dt=span/2000,mn=1,mx=0;
+  for(let k=0;k<=2000;k++){const t=k*dt,on=((t%P)/P)<d;const tgt=on?1:0;i+= (tgt-i)*(1-Math.exp(-dt/tau));ip+=` ${X(t)},${Y(i)}`;if(t>span*0.6){mn=Math.min(mn,i);mx=Math.max(mx,i)}}
+  for(let c=0;c*P<span;c++){const a=c*P,b=Math.min(span,a+d*P);if(d>0)el(s,'rect',{x:X(a),y:yB+14,width:Math.max(.6,X(b)-X(a)),height:12,fill:'var(--per)',opacity:.7})}
+  T(s,x0,yB+44,`下面一条：PWM 开的时段（周期 ${P} µs）　横轴 0 ~ ${span} µs`,{'font-size':11,fill:'var(--muted)'});
+  el(s,'polyline',{points:ip,fill:'none',stroke:'var(--bad)','stroke-width':2.2});
+  el(s,'line',{x1:x0,x2:x0+W,y1:Y(d),y2:Y(d),stroke:'var(--good)','stroke-dasharray':'6 4'});T(s,x0+W,26,`绿虚线 = 占空比 ${Math.round(d*100)}%：电流最后围着它上下晃`,{'text-anchor':'end','font-size':11.5,fill:'var(--good)','font-weight':600});
+  T(s,x0,26,'线圈电流（示意，假设 L / R = 15 µs）',{'font-weight':700,'font-size':13});
+  $('l2Log').textContent=`稳定以后电流在 ${(mn*100).toFixed(0)}% ~ ${(mx*100).toFixed(0)}% 之间晃，上下差 ${((mx-mn)*100).toFixed(1)} 个百分点（叫“纹波”）。${f===200000?'200 kHz 时几乎是一条平线：线圈感觉到的就是平均值。':'频率低时晃得很明显，力度忽大忽小，还可能发出能听到的声音。'}\n开始那一段电流从 0 慢慢爬上来，要几个时间常数（这里约 45 µs）才稳定。所以一次 500 µs 的震动里，前面一小段力是在“起步”。`;}
+ $('l2D').oninput=draw;$('l2F').onchange=draw;draw();
+})();
+/* ===== 3 counter + compare ===== */
+(function(){const s=$('c3');let tc=0,run=!reduce,hist=[],mr=96,last=performance.now(),acc=0,pin=0;
+ const setP=p=>{mr=DUTY[p];$('c3M').value=mr;$('c3Pv').textContent=p+'% → MR0 = '+mr;reset()};
+ const reset=()=>{tc=0;hist=[];pin=(mr===0)?1:0};
+ function stepOne(){/* one clock */let next=tc>=240?0:tc+1;
+  if(tc>=240){/* wrap */pin=(mr===0)?1:0}else{if(next===mr&&mr<=240)pin=1}
+  /* rule 4: match equal to cycle length -> high for one tick at 240 then low at reset */
+  tc=next;if(tc===0&&mr===0)pin=1;hist.push([tc,pin]);if(hist.length>241*3)hist.shift()}
+ function draw(){s.innerHTML='';const x0=60,W=1240,yTop=40,yBot=220,Y=v=>yBot-v/241*(yBot-yTop);
+  T(s,x0,24,'TC（每拍 +1，数到 240 后归零）。这里放慢了约 10 万倍',{'font-size':12,'font-weight':700});
+  el(s,'line',{x1:x0,x2:x0+W,y1:Y(240),y2:Y(240),stroke:'var(--muted)','stroke-dasharray':'4 3'});T(s,x0+W+4,Y(240)+4,'MR3 = 240',{'font-size':11,fill:'var(--muted)'});
+  if(mr<=240){el(s,'line',{x1:x0,x2:x0+W,y1:Y(mr),y2:Y(mr),stroke:'var(--bad)','stroke-width':1.8});T(s,x0+W+4,Y(mr)+4,'MR0 = '+mr,{'font-size':11,fill:'var(--bad)','font-weight':700})}
+  else T(s,x0+W+4,Y(240)-12,'MR0 = 241（碰不到）',{'font-size':11,fill:'var(--bad)','font-weight':700});
+  const N=241*3,dx=W/N;let pts='',pp='';hist.forEach((h,i)=>{const x=x0+i*dx;pts+=` ${x},${Y(h[0])}`;pp+=` ${x},${h[1]?262:322}`});
+  el(s,'polyline',{points:pts,fill:'none',stroke:'var(--per)','stroke-width':2});
+  T(s,x0,250,'PIO0_13（MAT0）',{'font-size':12,'font-weight':700});
+  el(s,'polyline',{points:pp,fill:'none',stroke:'var(--good)','stroke-width':2.6,'stroke-linejoin':'round'});
+  T(s,x0-6,266,'高',{'text-anchor':'end','font-size':11,fill:'var(--muted)'});T(s,x0-6,326,'低',{'text-anchor':'end','font-size':11,fill:'var(--muted)'});
+  const hi=mr===0?241:mr>240?0:mr===240?1:241-mr;
+  T(s,x0,356,`现在 TC = ${tc}，脚 = ${pin?'高':'低'}　|　一圈 241 拍里高 ${hi} 拍 = ${(hi/241*100).toFixed(1)}%，高电平 ${(hi/48).toFixed(2)} µs / 周期 ${(241/48).toFixed(2)} µs`,{'font-size':12.5,'font-family':'var(--font-m)'});
+  let msg=mr===0?'MR0 = 0（规则 5）：归零那一刻就匹配，脚一直是高。力度 100%，level 模式就是这样。':mr===240?'MR0 = 240（规则 4）：TC 到 240 时变高，下一拍归零又变低，只有 1 拍（约 0.02 µs）的窄脉冲。所以“0%”不能用 240。':mr>240?'MR0 = 241（规则 2）：TC 最多到 240，永远碰不到 241，脚一直低。力度 0%，也是关闭时的值。':`TC 从 0 开始数，脚是低（规则 1）；数到 ${mr} 时匹配，脚变高（规则 2）；数完 240 归零，脚又变低。MR0 越小，变高得越早，高电平越长。`;
+  $('c3Log').textContent=msg;}
+ function loop(now){if(run){acc+=(now-last)*0.12;while(acc>=1){stepOne();acc-=1}}last=now;draw();requestAnimationFrame(loop)}
+ $('c3P').oninput=()=>setP(+$('c3P').value);
+ $('c3M').onchange=()=>{mr=Math.max(0,Math.min(241,Math.round(+$('c3M').value)));$('c3Pv').textContent='MR0 = '+mr;reset()};
+ $('c3Run').onclick=()=>{run=!run;$('c3Run').textContent=run?'暂停':'继续'};$('c3Step').onclick=()=>{for(let i=0;i<10;i++)stepOne()};
+ s.parentNode.parentNode.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mr=+b.dataset.m;$('c3M').value=mr;$('c3Pv').textContent='MR0 = '+mr;reset();for(let i=0;i<241*2+60;i++)stepOne()});
+ if(reduce)$('c3Run').textContent='继续';
+ setP(60);for(let i=0;i<300;i++)stepOne();requestAnimationFrame(loop);
+})();
+/* ===== 4 rules ===== */
+(function(){const R=[['① 每圈开头变低','TC 归零那一刻，所有 PWM 脚变低（MR = 0 的除外）。',60],['② 数到 MR 变高','碰到 MR 就变高；MR 比 240 大就永远碰不到，一直低。',241],['③ 中途改大不会立刻变低','脚已经高了，再写一个更大的 MR，要等这一圈结束才变低。',120],['④ MR = 周期 → 1 拍窄脉冲','MR = 240：在 240 那一拍变高，下一拍归零又变低。',240],['⑤ MR = 0 → 一直高','归零就匹配，一直高。',0]];
+ $('rules').innerHTML=R.map(r=>`<div><b>${r[0]}</b><svg viewBox="0 0 200 60" data-m="${r[2]}"></svg>${r[1]}</div>`).join('');
+ $('rules').querySelectorAll('svg').forEach((s,k)=>{const m=+s.dataset.m;let p='';for(let c=0;c<2;c++){const a=10+c*90,b=a+90;const hiX=m===0?a:m>240?null:a+m/241*90;
+   if(k===2&&c===0){p+=` ${a},50 ${a+30},50 ${a+30},15 ${b},15`;continue}
+   if(hiX===null)p+=` ${a},50 ${b},50`;else if(m===240)p+=` ${a},50 ${b-1.5},50 ${b-1.5},15 ${b},15 ${b},50`;else p+=` ${a},${m===0?15:50} ${hiX},${m===0?15:50} ${hiX},15 ${b},15 ${b},${m===0?15:50}`}
+  el(s,'polyline',{points:p.trim(),fill:'none',stroke:'var(--good)','stroke-width':2.2});[10,100,190].forEach(x=>el(s,'line',{x1:x,x2:x,y1:5,y2:58,stroke:'var(--line)','stroke-dasharray':'2 2'}));
+  if(k===2){el(s,'text',{x:42,y:12,'font-size':8,fill:'var(--bad)'},'这里改大')}});
+})();
+/* ===== 5 init stepper ===== */
+(function(){const C=[[72, "int32_t MyPWM_CT32B1_Init(uint32_t periodCnt)"], [73, "{"], [74, "  /* initialzation in InitGPIO function. */"], [75, "  /* selects pin function as CT32B1_MAT0 */"], [76, "  LPC_IOCON->TDO_PIO0_13 &= ~0x07 ;"], [77, "  LPC_IOCON->TDO_PIO0_13 |= 0x03 ;"], [78, "  /* selects pin function as CT32B1_MAT1 */"], [79, "  LPC_IOCON->TRST_PIO0_14 &= ~0x07 ;"], [80, "  LPC_IOCON->TRST_PIO0_14 |= 0x03 ;"], [81, ""], [82, "  LPC_SYSCON->SYSAHBCLKCTRL |= (0x01 << 10); //enables clock for 32bit counter/timer1"], [83, "  LPC_CT32B1->TCR = 0 ; //stop timer"], [84, ""], [85, "  LPC_CT32B1->PC = 0;"], [86, "  LPC_CT32B1->TC = 0;"], [87, "  LPC_CT32B1->PR = 0; //TC will increase by 1 every 0.0208333us(48MHz = 48MHz/1)."], [88, ""], [89, "  LPC_CT32B1->MR3 = periodCnt; // periodCnt = MCU_OSC / pwmFreqHz;"], [90, "  LPC_CT32B1->MCR &= ~(1u << 9 | 1u << 10 | 1u << 11);"], [91, "  LPC_CT32B1->MCR = (1u << 10); //the TC will be reset if MR3 matches it."], [92, ""], [93, "  //LPC_CT32B1->PWMC = 0;"], [94, "  LPC_CT32B1->PWMC &= ~(1u << 0 | 1u << 1); //CT32Bn_MAT0 and CT32Bn_MAT1 is controlled by EM0."], [95, "  LPC_CT32B1->EMR &= ~(3u << 4 | 3u << 6);"], [96, "  LPC_CT32B1->EMR |= (1u << 4 | 1u << 6); //[5:4]EMC0 [7:6]:EMC1 /* EMC0/1 = 0x1: Clear EMx on match (force LOW when exiting PWM) */"], [97, ""], [98, "//  LPC_CT32B1->PWMC = (0x01 << 0)  /* PWM mode is enabled for CT32Bn_MAT0. */"], [99, "//                   | (0x01 << 1); /* PWM mode is enabled for CT32Bn_MAT1. */"], [100, ""], [101, "  LPC_CT32B1->MR0 = periodCnt + 1; //default duty is 0;"], [102, "  LPC_CT32B1->MR1 = periodCnt + 1;"], [103, ""], [104, "  return 0;"], [105, "}"]];
+ const ST=[[[76,77],'PIO0_13（23 脚）的 IOCON 低 3 位 FUNC 改成 3 = CT32B1_MAT0：这只脚从此由定时器的“匹配输出 0”驱动，不再是普通 GPIO。','IOCON',{f13:3}],
+  [[79,80],'PIO0_14（24 脚）FUNC = 3 = CT32B1_MAT1，右线圈。','IOCON',{f14:3}],
+  [[82],'SYSAHBCLKCTRL 第 10 位 = 1：给 CT32B1 开时钟。不开时钟，这块硬件不工作。','SYS',{clk:1}],
+  [[83],'TCR = 0：先让计数器停住，配置期间别乱数。','TCR',{tcr:0}],
+  [[85,86,87],'PC = 0、TC = 0、PR = 0。PR 是“预分频”：每 PR + 1 个时钟 TC 才加 1。PR = 0 → 每个 48 MHz 时钟都加 1，一拍 ≈ 0.0208 µs。','PR',{pr:0}],
+  [[89],'MR3 = 240：管周期。','MR',{mr3:240}],
+  [[90,91],'MCR = 1 << 10。MCR 每 3 位管一个 MR：中断 / 归零 / 停止。MR3 那组是 bit9、10、11，这里只开 bit10“碰到 MR3 就归零”。手册要求 PWM 通道自己（MR0、MR1）的归零、停止位必须是 0，这里都是 0。','MCR',{mcr:0x400}],
+  [[94],'PWMC bit0、bit1 = 0：两只脚先“听 EMR 的”，不出 PWM。','PWMC',{pwmc:0}],
+  [[95,96],'EMR：EMC0（bit5:4）、EMC1（bit7:6）= 01，“匹配时把 EM 清 0”。EM0、EM1 本来就是 0，所以两只脚是低。','EMR',{emr:0x50}],
+  [[101,102],'MR0 = MR1 = 241：比 240 大，永远碰不到，占空比 0%。','MR',{mr0:241,mr1:241}],
+  [[104],'返回 0。之后 MyPWM_Freq200kHzInit 再调 GlobalStart：TCR bit0 = 1，TC 开始一圈圈地转，从此不停。','TCR',{tcr:1}]];
+ let k=0;const S0={f13:1,f14:1,clk:0,tcr:0,pr:0,mr3:0,mcr:0,pwmc:0,emr:0,mr0:0,mr1:0};const states=[];{let S=Object.assign({},S0);ST.forEach(st=>{S=Object.assign({},S,st[3]);states.push(S)})}
+ const bits=(v,n,names,hl)=>'<div class="bits">'+Array.from({length:n},(_,i)=>n-1-i).map(b=>`<span class="${(v>>b)&1?'on':''}">${(v>>b)&1}<i>${names[b]||'bit'+b}</i></span>`).join('')+'</div>';
+ function draw(){const st=ST[k],S=states[k],done=new Set();ST.slice(0,k).forEach(q=>q[0].forEach(l=>done.add(l)));
+  $('inCode').innerHTML=C.map(([n,t])=>`<div class="${st[0].includes(n)?'cur':done.has(n)?'done':''}"><span>${n}</span>${(t||' ').replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>`).join('');
+  $('inNote').innerHTML=st[1];$('inPos').textContent=`第 ${k+1} / ${ST.length} 步`;
+  const mcrN={0:'MR0I',1:'MR0R',2:'MR0S',3:'MR1I',4:'MR1R',5:'MR1S',6:'MR2I',7:'MR2R',8:'MR2S',9:'MR3I',10:'MR3R',11:'MR3S'};
+  const emrN={0:'EM0',1:'EM1',2:'EM2',3:'EM3',4:'EMC0₀',5:'EMC0₁',6:'EMC1₀',7:'EMC1₁',8:'EMC2₀',9:'EMC2₁',10:'EMC3₀',11:'EMC3₁'};
+  $('inRegs').innerHTML=`<p style="margin:.6rem 0 .2rem"><b>IOCON</b>：PIO0_13 FUNC = ${S.f13}${S.f13===3?'（MAT0）':'（GPIO）'}，PIO0_14 FUNC = ${S.f14}${S.f14===3?'（MAT1）':'（GPIO）'}　<b>时钟</b>：${S.clk?'开':'关'}　<b>TCR</b> = ${S.tcr}　<b>PR</b> = ${S.pr}</p>
+  <p style="margin:.2rem 0"><b>MR3</b> = ${S.mr3}　<b>MR0</b> = ${S.mr0}　<b>MR1</b> = ${S.mr1}</p>
+  <p style="margin:.4rem 0 0"><b>MCR</b>（bit11 ~ 0）</p>${bits(S.mcr,12,mcrN)}
+  <p style="margin:0"><b>PWMC</b>（bit3 ~ 0）</p>${bits(S.pwmc,4,{0:'PWMEN0',1:'PWMEN1',2:'PWMEN2',3:'PWMEN3'})}
+  <p style="margin:0"><b>EMR</b>（bit11 ~ 0）</p>${bits(S.emr,12,emrN)}`;
+  $('inPrev').disabled=k===0;$('inNext').disabled=k===ST.length-1;}
+ $('inPrev').onclick=()=>{if(k>0){k--;draw()}};$('inNext').onclick=()=>{if(k<ST.length-1){k++;draw()}};draw();
+})();
+/* ===== 6 table ===== */
+(function(){const s=$('t6');const x0=70,W=1240,yT=30,yB=280,X=p=>x0+p/100*W,Y=v=>yB-v/241*(yB-yT);
+ [0,60,121,181,241].forEach(v=>{el(s,'line',{x1:x0,x2:x0+W,y1:Y(v),y2:Y(v),stroke:'var(--line)'});T(s,x0-8,Y(v)+4,v,{'text-anchor':'end','font-size':11,fill:'var(--muted)'})});
+ for(let p=0;p<=100;p+=10)T(s,X(p),yB+18,p+'%',{'text-anchor':'middle','font-size':11,fill:'var(--muted)'});
+ T(s,x0,18,'纵轴：MR0（蓝点 = 表里的值）；横轴：力度 %；绿色 = 一圈里高电平的拍数 241 − MR0',{'font-size':11.5,fill:'var(--muted)'});
+ let g='';DUTY.forEach((v,p)=>{el(s,'circle',{cx:X(p),cy:Y(v),r:2.6,fill:'var(--per)'});g+=` ${X(p)},${Y(241-v)}`});el(s,'polyline',{points:g,fill:'none',stroke:'var(--good)','stroke-width':1.6});
+ const cur=el(s,'line',{x1:0,x2:0,y1:yT,y2:yB,stroke:'var(--bad)',opacity:0});
+ const hit=el(s,'rect',{x:x0,y:yT,width:W,height:yB-yT,fill:'transparent'});
+ hit.addEventListener('pointermove',e=>{const pt=s.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const q=pt.matrixTransform(s.getScreenCTM().inverse());const p=Math.max(0,Math.min(100,Math.round((q.x-x0)/W*100)));
+  cur.setAttribute('x1',X(p));cur.setAttribute('x2',X(p));cur.setAttribute('opacity',1);const v=DUTY[p];
+  $('t6Log').textContent=`力度 ${p}% → Freq200kHzDuty[${p}] = ${v}（= 四舍五入(241 − 2.41 × ${p}) = 四舍五入(${(241-2.41*p).toFixed(2)})）\n高电平 241 − ${v} = ${241-v} 拍 = ${((241-v)/48).toFixed(3)} µs，实际占空比 ${((241-v)/241*100).toFixed(2)}%`});
+})();
+/* ===== 7 PWMC switch ===== */
+(function(){const s=$('s7');let on=false;
+ function draw(){s.innerHTML='';const b=(x,y,w,h,t,sub,c,hl)=>{el(s,'rect',{x,y,width:w,height:h,rx:8,style:`fill:color-mix(in srgb,var(--${c}) ${hl?22:8}%,var(--panel));stroke:var(--${hl?c:'line'});stroke-width:${hl?2.4:1.4}`});T(s,x+w/2,y+h/2-3,t,{'text-anchor':'middle','font-weight':700});T(s,x+w/2,y+h/2+15,sub,{'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'})};
+  b(40,20,300,64,'PWM 硬件','TC 和 MR0 比较 → 方波','per',on);b(40,130,300,64,'EMR 的 EM0 位','= 0（EMC0 = 01，复位值 0）','muted',!on);
+  b(520,75,200,64,'选择开关','PWMC bit0 = '+(on?1:0),'gold',true);b(900,75,220,64,'PIO0_13 → Q4','IOCON FUNC = 3（MAT0）','good',true);
+  el(s,'line',{x1:340,x2:520,y1:52,y2:100,stroke:on?'var(--per)':'var(--line)','stroke-width':on?3:1.4});el(s,'line',{x1:340,x2:520,y1:162,y2:114,stroke:on?'var(--line)':'var(--muted)','stroke-width':on?1.4:3});
+  el(s,'line',{x1:720,x2:900,y1:107,y2:107,stroke:'var(--good)','stroke-width':3});
+  T(s,1130,107,on?'方波（力度 = 查表后的 MR0）':'一直低，Q4 关',{'font-size':12.5,'font-weight':700,fill:on?'var(--per)':'var(--muted)'});
+  T(s,40,220,'不管选哪边，TC 都在 0 ~ 240 一直转；开 / 关只是换了这只脚的“信号来源”，所以开始震的那一刻不用等计数器启动。',{'font-size':11.5,fill:'var(--muted)'});
+  $('s7On').setAttribute('aria-pressed',String(on));$('s7Off').setAttribute('aria-pressed',String(!on));}
+ $('s7On').onclick=()=>{on=true;draw()};$('s7Off').onclick=()=>{on=false;draw()};draw();
+})();
+/* ===== 8 waveform in a vibration ===== */
+(function(){const s=$('w8');const DEF=[];for(let i=0;i<50;i++){DEF[i]=i+51;DEF[99-i]=i+51}
+ function draw(){s.innerHTML='';const mode=+$('w8M').value,N=+$('w8N').value;const len=mode?100:1,ut=25,inc=Math.floor(len*32768/ut);let acc=inc>>1;const steps=[];for(let k=0;k<ut;k++){steps.push(mode?DEF[acc>>15]:100);acc+=inc}
+  const span=N*20,x0=60,W=1260,X=t=>x0+t/span*W,yH=60,yL=140,per=241/48;
+  let pts=`${X(0)},${yL}`;const sh=steps.slice(0,N);
+  for(let t=0;t<span;t+=per){const k=Math.floor(t/20),p=sh[Math.min(k,N-1)],m=DUTY[p];const hiStart=m===0?t:t+m/48,end=Math.min(span,t+per);
+   if(m===0){pts+=` ${X(t)},${yH} ${X(end)},${yH}`}else if(hiStart<end){pts+=` ${X(t)},${yL} ${X(hiStart)},${yL} ${X(hiStart)},${yH} ${X(end)},${yH} ${X(end)},${yL}`}else pts+=` ${X(end)},${yL}`}
+  el(s,'polyline',{points:pts,fill:'none',stroke:'var(--good)','stroke-width':N>10?1:1.8,'stroke-linejoin':'round'});
+  sh.forEach((p,k)=>{el(s,'line',{x1:X(k*20),x2:X(k*20),y1:40,y2:200,stroke:'var(--line)','stroke-dasharray':'3 3'});if(N<=6){T(s,X(k*20+10),186,`第 ${k+1} 格：${p}%`,{'text-anchor':'middle','font-size':11.5,'font-weight':600});T(s,X(k*20+10),204,`MR0 = ${DUTY[p]}`,{'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'})}else if(k%5===0)T(s,X(k*20),186,k*20+' µs',{'font-size':10,fill:'var(--muted)'})});
+  T(s,x0,30,`PIO0_13，前 ${span} µs（${N} 格 × 20 µs，每格约 4 个 5 µs 周期）`,{'font-weight':700,'font-size':13});
+  T(s,x0,236,'虚线 = CT32B0 中断改 MR0 的时刻（每 20 µs）。之间的方波全是 CT32B1 硬件自己出的。',{'font-size':11.5,fill:'var(--muted)'});
+  $('w8Log').textContent=mode?'pwm 模式：每格高电平宽度不同。第 1 格 53%，往中间越来越宽，第 13 格 100%（一直高），再变窄。':'level 模式：每格力度都是 100%，MR0 = 0，脚一直高，看不到方波。这时 PWM 硬件其实在“陪跑”。';}
+ $('w8M').onchange=draw;$('w8N').onchange=draw;draw();
+})();
+})();
+</script>
