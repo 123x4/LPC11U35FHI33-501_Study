@@ -1,0 +1,378 @@
+<title>本项目怎么调试</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --hw:#7a5ea8; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.8}
+.wrap{max-width:880px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);line-height:1.3;text-wrap:balance}
+h1{font-size:1.9rem;margin:0}
+h2{font-size:1.3rem;margin:2.4rem 0 .4rem;padding-top:.6rem;border-top:1px solid var(--line)}
+h3{font-size:1.06rem;margin:1.3rem 0 .3rem}
+p{margin:.6rem 0}
+a{color:var(--per)}
+code{font-family:var(--font-m);font-size:.88em;background:var(--soft);padding:.05em .35em;border-radius:3px;overflow-wrap:anywhere}
+pre.code{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:10px 12px;overflow-x:auto;line-height:1.55;margin:.5rem 0}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.06em;color:var(--muted)}
+.lede{color:var(--muted)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:1rem 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-size:.88rem;margin:.4rem 0}
+td,th{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600}
+.note{font-size:.88rem;color:var(--muted)}
+.think{border-left:4px solid var(--per);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.8rem 0}
+.rule{border-left:4px solid var(--c,var(--per));background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.6rem 0}
+.log{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:6px 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.btns button,.tool button{font:inherit;font-size:.88rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer}
+.btns button:disabled{opacity:.4;cursor:default}
+.btns button[aria-pressed="true"]{border-color:var(--fg);font-weight:700}
+/* bit strip */
+.bstrip{display:inline-grid;gap:2px;font-family:var(--font-m);font-size:.74rem;text-align:center;margin:.2rem 0}
+.bstrip span{border:1px solid var(--line);border-radius:3px;padding:1px 3px;min-width:1.6em;background:var(--panel)}
+.bstrip span.ch{background:color-mix(in srgb,var(--bad) 28%,var(--panel));border-color:var(--bad);font-weight:700}
+.bstrip span.k{background:none;border:0;color:var(--muted);font-size:.6rem}
+.bstrip span.f{background:color-mix(in srgb,var(--c,var(--per)) 18%,var(--panel))}
+/* lamps */
+.lamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:.5rem 0}
+.lamps div{border:1.5px solid var(--line);border-radius:6px;padding:4px 8px;font-size:.82rem;background:var(--panel)}
+.lamps div::before{content:"○ ";color:var(--muted)}
+.lamps div.on{border-color:var(--good);background:color-mix(in srgb,var(--good) 15%,var(--panel))}
+.lamps div.on::before{content:"● ";color:var(--good)}
+.lamps div.new{outline:2px solid var(--bad)}
+.stp{border:2px solid var(--per);border-radius:8px;padding:10px 14px;background:var(--panel);margin:.6rem 0}
+.stp .cl{font-family:var(--font-m);font-size:.85rem;background:var(--soft);border-left:4px solid var(--per);padding:4px 8px;border-radius:0 6px 6px 0;overflow-wrap:anywhere}
+.stp .who{display:inline-block;font-size:.72rem;color:var(--bg);background:var(--c);border-radius:4px;padding:0 6px;margin-right:6px}
+.stp h3{margin:.5rem 0 .2rem}
+svg.fig{display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+/* tools */
+.tool{border:1.5px solid var(--hw);border-radius:8px;padding:8px 12px;background:color-mix(in srgb,var(--hw) 5%,var(--panel));margin:.6rem 0}
+.tool input,.tool select{font:inherit;font-size:.88rem;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.tool .row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:.3rem 0}
+/* quiz & practice */
+.qz,.px{border-radius:8px;padding:8px 12px;margin:.7rem 0}
+.qz{border:1.5px dashed var(--gold);background:color-mix(in srgb,var(--gold) 6%,var(--panel))}
+.px{border:1.5px solid var(--per);background:color-mix(in srgb,var(--per) 6%,var(--panel))}
+.qz .qt,.px .pxq{font-weight:600;margin:.2rem 0}
+.qrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.qz input,.px input{font:inherit;width:120px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.qz button,.px button{font:inherit;font-size:.9rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer;text-align:left}
+.qz button.on,.px button.on{border-color:var(--fg)}
+.px .pxh{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.px .pxh b{color:var(--per)}
+.px .pxs{font-size:.82rem;color:var(--muted)}
+.px .pxNext{border-color:var(--per);color:var(--per)}
+.fb{display:none;padding:6px 10px;border-radius:6px;background:var(--soft);margin-top:.3rem}
+.fb.ok{display:block;border-left:4px solid var(--good)}
+.fb.no{display:block;border-left:4px solid var(--bad)}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.wrap{max-width:1400px}
+input[type=text]{font:inherit;font-family:var(--font-m);font-size:.85rem;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);width:min(520px,100%)}
+.cmp td,.cmp th{vertical-align:top}
+.cmp td:first-child{font-weight:700;white-space:nowrap}
+.ok{color:var(--good);font-weight:700}.no{color:var(--bad);font-weight:700}.mid{color:var(--gold);font-weight:700}
+pre.code{font-family:var(--font-m);font-size:.8rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 12px;overflow-x:auto;line-height:1.55}
+pre.code b{color:var(--bad)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}
+details.ex{border:1.5px solid var(--per);border-radius:8px;padding:6px 12px;margin:.5rem 0;background:color-mix(in srgb,var(--per) 5%,var(--panel))}
+details.ex summary{cursor:pointer;font-weight:600}
+ol.pit li{margin:.35rem 0}
+</style>
+<div class="wrap">
+<div class="eyebrow">T1A 主线 · 第 7 课 · 本项目怎么调试 · inc/my_debug.h、src/my_debug.c、src/device.c、src/PAW3950.c、Sample.uvproj、study_notes/tools、study_notes/sim · 按杰哥 11 月最新代码</div>
+<h1>本项目怎么调试：想看程序在干什么，有哪几扇窗</h1>
+<p class="lede">调试就是想办法“看见”芯片里正在发生的事：某个变量现在是多少、某段代码有没有走到、某个信号是什么波形。这个项目里能用的办法有八种，各有各的线、各有各的代价。这一课把它们画在一张图上，再一个个讲：怎么打开、能看到什么、在 T1A 上有什么限制、会踩什么坑。</p>
+
+<div class="box"><b>🧭 先记住三句话</b>
+<ul>
+<li><b>不改代码就能看</b>：GUI（MouseTest.exe）和 <code>hid_tool.py</code>，通过 USB 读霍尔读数、段号、配置。最安全，最常用。</li>
+<li><b>要看程序内部流程</b>：打开 <code>MYDEBUG_ENABLE</code>，用 <code>InfoLog()</code> 打日志，默认走 USB 发到电脑。</li>
+<li><b>要单步、看寄存器</b>：Keil + J-Link 走 SWD。但 T1A 上 SWCLK 脚开机约 0.5 秒后会被光学传感器借走当 SPI 时钟，之后调试器就连不上了（第 5 节）。</li>
+</ul></div>
+
+<h2>1. 全景：板子和电脑之间的八扇窗</h2>
+<p>左边是板子上能接线的地方，右边是电脑上的工具。点右边任意一个工具，看它走哪根线、能看到什么。</p>
+<div class="scroll"><svg id="mp" class="fig" viewBox="0 0 1360 560" style="min-width:1150px" role="img" aria-label="调试手段全景图"></svg></div>
+<div class="log" id="mpLog">点右边任意一个工具。</div>
+
+<h2>2. 八种办法对比</h2>
+<div class="scroll"><table class="cmp">
+<thead><tr><th>办法</th><th>能看到什么</th><th>要改代码吗</th><th>要什么硬件</th><th>T1A 上的情况</th></tr></thead>
+<tbody>
+<tr><td>① USB 升级工具</td><td>不是看，是把新固件写进去</td><td>不用</td><td>USB 线</td><td class="ok">能用（走公司 bootloader，见第 0-3 课笔记）</td></tr>
+<tr><td>② GUI MouseTest.exe</td><td>霍尔读数、上下基线、段号、RT / 线圈配置；能改配置</td><td>不用</td><td>USB 线</td><td class="ok">能用</td></tr>
+<tr><td>③ hid_tool.py</td><td>同上，可以连续记录、做统计、写成脚本</td><td>不用</td><td>USB 线 + Python</td><td class="mid">部分能用（第 4 节）</td></tr>
+<tr><td>④ USB 日志</td><td><code>InfoLog()</code> 打出的任意文字：流程走到哪、变量是多少</td><td>改 1 行宏，重新编译烧录</td><td>USB 线</td><td class="mid">能用，但会占用 GUI 的通道</td></tr>
+<tr><td>⑤ 串口日志</td><td>同上</td><td>改 2 行宏</td><td>USB 转 TTL 模块，接 SWDIO 焊盘</td><td class="no">占用 SWDIO，SWD 调试就不能用了</td></tr>
+<tr><td>⑥ Keil + J-Link</td><td>断点、单步、任意变量和寄存器</td><td>不用</td><td>J-Link，接 5 个 SWD 焊盘</td><td class="no">开机约 0.5 秒后断开（第 5 节）</td></tr>
+<tr><td>⑦ 示波器 / 逻辑分析仪</td><td>真实电压波形：PWM、线圈、7 V、霍尔 SPI 时序</td><td>不用</td><td>示波器或逻辑分析仪</td><td class="ok">能用，看测试点</td></tr>
+<tr><td>⑧ PC 仿真 key_sim</td><td>按键算法每一毫秒的中间变量</td><td>不用（仿真程序里改输入）</td><td>不用板子，电脑有 gcc 就行</td><td class="mid">目前按 IRPT 板的路径编译（第 8 节）</td></tr>
+</tbody></table></div>
+
+<h2>3. 日志：<code>InfoLog()</code> 从代码走到电脑屏幕</h2>
+<h3>3.1 怎么打开</h3>
+<p>全部开关在 <code>inc/my_debug.h</code>。默认是关的（第 19 行 <code>MYDEBUG_ENABLE 0</code>），这时 <code>InfoLog(...)</code> 被定义成空语句 <code>do{}while(0)</code>，编译后一个字节都不占。</p>
+<pre class="code">#define MYDEBUG_ENABLE          <b>1</b>            // inc/my_debug.h:19   0 → 1
+...
+#define MYDEBUG_PRINTF_ENABLE   (MYDEBUG_USB_PRINTF_MASK)    // :24   走 USB（默认就是这个）
+//                            (MYDEBUG_UART_PRINTF_MASK)   //       走串口（PIO0_15，115200）
+//   两个都要就写 (MYDEBUG_USB_PRINTF_MASK | MYDEBUG_UART_PRINTF_MASK)</pre>
+<p>打开后 <code>InfoLog("%u", tick)</code> 展开成 <code>printf("[I]%s: " "%u" "\r\n", __func__, tick)</code>：自动加上 <code>[I]</code>、所在函数名和换行。<code>printf</code> 每输出一个字节就调一次 <code>fputc()</code>，而 <code>my_debug.c:150</code> 把 <code>fputc</code> 改写成“把字节塞进队列”。打开后还会多编译进去一些调试代码（第 6 节的计时、第 3.4 节的打印点）。</p>
+
+<h3>3.2 USB 这条路：先排队，主循环再分批发</h3>
+<p>打日志的地方<b>不会等</b>：字节先进一个 400 字节的环形队列，主循环每圈调一次 <code>MyDebug_Task()</code>（device.c:529），端点空闲时最多取 64 字节，不够 64 的补 0，从 USB 端点 3（接口 2，和 GUI 用的是同一个）发出去。下面可以自己操作一遍。</p>
+<div class="tool">
+<div class="row">要打的日志 <input type="text" id="lgMsg" value="[I]Ele_LeftKeyPressProcess: 1000"> <span class="note">（末尾自动加 \r\n）</span></div>
+<div class="row btns" style="margin:0"><button id="lgPut">调一次 InfoLog</button><button id="lgBurst">按键算法那 3 行（每 300 ms 一次）</button><button id="lgLoop">主循环跑一圈</button><button id="lgPc">电脑取走包（端点变空闲）</button><button id="lgReset">清空</button></div></div>
+<div class="scroll"><svg id="lg" class="fig" viewBox="0 0 1360 300" style="min-width:1150px" role="img" aria-label="USB 日志路径"></svg></div>
+<div class="log" id="lgLog"></div>
+
+<h3>3.3 串口这条路：用软件“掰”出 115200 波特率</h3>
+<p>这块板子没有把硬件串口引出来，所以 <code>my_debug.c</code> 用软件模拟串口：把 <b>PIO0_15（25 脚，也就是 SWDIO）</b>当普通 GPIO，用 CT16B1 计时（48 MHz ÷ 6 = 8 MHz，每格 0.125 µs），一位一位地拉高拉低。每圈主循环只发 1 个字节（<code>MyDebug_UartTask</code>，my_debug.c:93），发一个字节要占住 CPU 约 86 µs。输入一个字符看它在线上的样子：</p>
+<div class="tool"><div class="row">字符 <input type="text" id="uaCh" value="I" maxlength="1" style="width:4em"></div></div>
+<div class="scroll"><svg id="ua" class="fig" viewBox="0 0 1360 230" style="min-width:1150px" role="img" aria-label="软件串口一个字节的波形"></svg></div>
+<div class="log" id="uaLog"></div>
+
+<h3>3.4 打开以后，T1A 上会打出哪些日志</h3>
+<div class="scroll"><table>
+<thead><tr><th>位置</th><th>什么时候</th><th>打什么</th></tr></thead>
+<tbody>
+<tr><td>device.c:502</td><td>进主循环前一次</td><td>芯片 UID、版本号 <code>0x0011_1139</code></td></tr>
+<tr><td>my_misc.c:631~635</td><td>每 300 ms</td><td>表头 + 左右键各一行：<code>sta--seg--now--min--max--dif--top--bottom</code> = 按键状态、段号、当前读数（翻转滤波后）、开机以来最小 / 最大值、差、上基线、下基线</td></tr>
+<tr><td>my_electromagnet.c:1064、1124、1185、1245</td><td>每次按下 / 松开触发线圈</td><td>当时的 <code>mySysTickMs</code></td></tr>
+<tr><td>my_electromagnet.c:1397</td><td>线圈消抖结束</td><td><code>release debounce end: 毫秒</code></td></tr>
+<tr><td>my_protocol_mouse.c:286~287</td><td>每 10 秒</td><td>参数结构大小、EEPROM 起止地址</td></tr>
+<tr><td>PAW3950.c:353、380、383、405</td><td>开机光学传感器初始化</td><td>成功 / 失败、寄存器 0x00 的值</td></tr>
+<tr><td>my_waveform.c:89~91、109~111</td><td>每次 20 µs 中断</td><td>不打印，只把这次中断用了多少 µs 存进 <code>costTime</code>（第 6 节）</td></tr>
+</tbody></table></div>
+<p class="note">button.c 里也有几处 InfoLog（:413~418、:525~538），但它们在 <code>return result;</code> 之后的 <code>#if 0</code> 里，T1A 上不会执行。</p>
+
+<h2>4. 不改代码就能看：GUI 和 hid_tool.py</h2>
+<p>两者都通过 USB 接口 2（自定义 HID，64 字节一包）按第 6 课第 7 节那套协议问答。<b>不能同时开</b>：同一个接口只能被一个程序占着。打开 USB 日志时，日志和协议回答也挤在同一个端点上，GUI 可能显示乱。</p>
+<div class="scroll"><table>
+<thead><tr><th><code>hid_tool.py</code> 命令（study_notes/tools）</th><th>用的协议</th><th>T1A 上</th></tr></thead>
+<tbody>
+<tr><td><code>list</code></td><td>列出鼠标的 HID 接口</td><td class="ok">能用</td></tr>
+<tr><td><code>watch LR</code></td><td>反复发 GET_INFO / 0x01（霍尔原始）+ 0x02（段号）</td><td class="ok">能用，相当于 GUI 的 RowData 面板</td></tr>
+<tr><td><code>stats L 5000</code></td><td>同上，采 5000 次做均值、标准差、直方图（手别碰按键）</td><td class="ok">能用，用来看噪声</td></tr>
+<tr><td><code>setcoil L 500</code></td><td>SET_CONFIG / 0x02（按下导通时间）</td><td class="ok">能用，<b>会写 EEPROM</b></td></tr>
+<tr><td><code>log</code></td><td>只收不发，显示 USB 日志</td><td class="ok">能用（固件要先开 3.1 的宏）</td></tr>
+<tr><td><code>info L</code>、<code>getcfg L</code></td><td>GET_INFO / GET_CONFIG 的子命令 0xFF（ALL，一次读全部）</td><td class="no">无响应：T1A 代码删掉了 0xFF（待确认问题第 4 条）</td></tr>
+</tbody></table></div>
+<p class="note">hid_tool.py 写好后还没在真板子上跑过；第一次用如果报错，把错误发给我。</p>
+
+<h2>5. Keil + J-Link 在线调试（SWD）</h2>
+<h3>5.1 线怎么接</h3>
+<p>原理图第 2 页右边有一块 “JTAG Program Interface”：5 个焊盘 <b>3V3、SWDIO、SWCLK、nRESET、GND</b>。nRESET 上有 R61 10 kΩ 上拉和 C57 0.1 µF。工程里调试器选的是 <b>J-Link</b>（<code>Sample.uvproj:166</code> <code>Segger\JL2CM3.dll</code>），勾了 “Run to main()”。</p>
+<div class="scroll"><table>
+<thead><tr><th>焊盘</th><th>MCU 脚</th><th>这只脚在程序里还被用来干什么</th></tr></thead>
+<tbody>
+<tr><td>SWDIO</td><td>25 脚 PIO0_15</td><td>打开<b>串口日志</b>时被设成 GPIO 发数据（my_debug.h:32）</td></tr>
+<tr><td>SWCLK</td><td>19 脚 PIO0_10</td><td><b>光学传感器 PAW3950 的 SPI 时钟 SCK0</b>：原理图上这根线同时叫 SWCLK 和 SCLK；<code>PAW3950_Init()</code> 里把它切成 SCK0（PAW3950.c:298~299）</td></tr>
+<tr><td>nRESET</td><td>2 脚 RESET/PIO0_0</td><td>只当复位用（原理图上这个网络也连到光学传感器的 NRESET 脚）</td></tr>
+</tbody></table></div>
+
+<h3>5.2 开机过程中，SWD 什么时候断</h3>
+<p>SWD 只靠两根线：SWDIO 和 SWCLK。哪一根被程序改成别的功能，调试器就连不上了（Keil 报通信失败）。按开机顺序看（间隔不按比例）：</p>
+<div class="btns">串口日志 <select id="btUart"><option value="0">关（默认，或只开 USB 日志）</option><option value="1">开（MYDEBUG_UART_PRINTF_MASK）</option></select></div>
+<div class="scroll"><svg id="bt" class="fig" viewBox="0 0 1360 260" style="min-width:1150px" role="img" aria-label="开机顺序与 SWD 可用时段"></svg></div>
+<div class="log" id="btLog">点时间线上任意一步。</div>
+<div class="box"><b>所以在 T1A 上</b>
+<ul>
+<li><b>能做</b>：用 J-Link 烧录（复位后脚先回到 SWD 功能，见 5.4 第三条）；在 <code>Device_Init()</code> 里 <code>PAW3950_Init()</code> 之前打断点、单步，看开机初始化。</li>
+<li><b>做不到</b>：程序跑进主循环以后再连上去、在按键算法或线圈代码里打断点。这部分只能靠日志、GUI 和示波器。</li>
+<li>如果确实要在主循环里打断点，得临时让光学传感器不初始化（不切 PIO0_10），鼠标移动就没了。这样改之前先问杰哥他平时怎么调。</li>
+</ul></div>
+
+<h3>5.3 停在断点上时要小心（推断）</h3>
+<ul>
+<li><b>线圈可能一直通电</b>：CT32B1 的 PWM 是硬件自己出的，CPU 停住它照样输出；而关 PWM 的是 CT32B0 中断（第 6 课第 5 节），CPU 停住就不会执行。所以断点如果正好停在线圈通电的那 500 µs 里，Q4 会一直导通、线圈一直通 7 V，可能发烫。别在 <code>MyWaveform_Start()</code> 之后、中断结束之前停住。</li>
+<li><b>USB 会掉线</b>：CPU 停住后不回应电脑的 USB 请求，电脑可能认为设备出错、重新枚举。</li>
+<li><b>看门狗</b>：开机 <code>wwdt_config(0xFFFF)</code>（device.c:419），主循环里喂狗。断点停住时它会不会继续计数、把芯片复位，要实际试。</li>
+</ul>
+<p class="note">这三条是按代码和硬件推出来的，没有上板验证。</p>
+
+<h3>5.4 用 J-Link 烧录前看一眼这三处</h3>
+<ul>
+<li><b>程序放在 0x4000 起</b>：工程里程序区是 0x4000 ~ 0xFFFF（<code>Sample.uvproj:316~319</code>，48 KB），0x0000 ~ 0x3FFF 是公司 bootloader。Keil 的 Utilities → Settings 里擦除方式要是 “Erase Sectors”（只擦用到的扇区）；如果选成 “Erase Full Chip”，会把 bootloader 一起擦掉，之后 USB 升级工具就不能用了。</li>
+<li><b>器件型号</b>：工程选的是 <b>LPC11U37/501</b>（<code>Sample.uvproj:17</code>，128 KB，烧录算法 <code>LPC1xxx_128</code>，Sample.uvopt:145），板上实际是 <b>LPC11U35FHI33/501</b>（64 KB）。因为程序区本身限制在 0x4000 ~ 0xFFFF，超了链接器会报错，所以目前不影响；程序约 44.6 KB，离 48 KB 上限不远。</li>
+<li><b>芯片已经在跑主循环时再连</b>：SWCLK 已经被光学传感器占着，正常方式连不上，要在 Debug → Settings 里把 Connect 改成 “under Reset”（先拉低 nRESET 再连，焊盘里的 nRESET 就是干这个的）。这一条按原理推的，没试过；你们平时一直用 USB 升级工具烧，可以先问杰哥用不用 J-Link。</li>
+</ul>
+
+<h2>6. 测一段代码花了多少时间</h2>
+<p>项目里有现成的写法：20 µs 中断（my_waveform.c:87）开头和结尾各读一次 CT32B0 的 TC（1 µs 一格），相减存进 <code>costTime</code>。</p>
+<pre class="code">void TIMER32_0_IRQHandler(void)
+{
+  #if MYDEBUG_ENABLE
+  timeStartTc = LPC_CT32B0->TC;                <b>// 进门记一下（:90）</b>
+  #endif
+  ...  // 正常的中断内容
+  #if MYDEBUG_ENABLE
+  costTime = LPC_CT32B0->TC - timeStartTc;     <b>// 出门再记，差就是用了几 µs（:110）</b>
+  #endif
+}</pre>
+<p>要点：<b>被测的代码里不要打印</b>，打印本身就很费时（串口一个字节约 86 µs），只把结果存进变量；再到别处（比如每 300 ms 那段）用 <code>InfoLog</code> 打出来，或在 J-Link 连着时看变量。CT32B0 只在线圈代码里用来定闹钟，TC 一直在走，主循环里也能这样借来测时间。这个中断每 20 µs 进一次，它本身必须远小于 20 µs，所以值得测一下。</p>
+<p>更准的办法是示波器：看 TP35（PWM1），每 20 µs 占空比换一次的时刻，就是中断里 <code>MyPWM_SetDuty</code> 执行的时刻。</p>
+
+<h2>7. 示波器 / 逻辑分析仪看哪里</h2>
+<div class="scroll"><table>
+<thead><tr><th>看什么</th><th>测试点 / 引脚</th><th>应该看到</th></tr></thead>
+<tbody>
+<tr><td>左 / 右线圈 PWM</td><td>TP35（PIO0_13）/ TP36（PIO0_14）</td><td>按下时出现约 500 µs 的信号：level 模式一直是高；pwm 模式是 200 kHz 方波，每 20 µs 占空比变一次</td></tr>
+<tr><td>MOS 栅极</td><td>Q4 / Q5 的 1 脚</td><td>和上面同时看，验证栅极 RC（待确认问题第 12 条）和开机上拉（第 13 条）</td></tr>
+<tr><td>线圈电源</td><td>TP19（H_VDD）</td><td>约 7 V；线圈通电时往下掉一点再回来</td></tr>
+<tr><td>线圈两端</td><td>TP31 / TP33（左），TP32 / TP34（右）</td><td>TP33 是 Q4 漏极那一端：通电时被拉到接近 0 V；关断瞬间冲高，被续流二极管 D28 钳在比 7 V 高一点的地方</td></tr>
+<tr><td>霍尔 SPI</td><td>PIO1_15（SCK）、PIO0_21（MOSI）、PIO0_22（MISO）</td><td>每 1 ms 一组 32 个时钟；“读按键”命令前那个 5 µs 高电平（待确认问题 0d）</td></tr>
+</tbody></table></div>
+
+<h2>8. 不用板子：PC 仿真 key_sim</h2>
+<p><code>study_notes/sim/</code> 里有一个小程序：把仓库里<b>原版</b>的 <code>src/my_misc.c</code> 和一些“替身”头文件一起用 gcc 编译，在电脑上模拟一次按压曲线，每 1 ms 调一次 <code>ProcessRecvSampleRawData()</code>，把滤波值、基线、段号、按键状态全部打印出来。</p>
+<pre class="code">sh study_notes/sim/build.sh            # 编译（Windows 用 MSYS2 或 WSL）
+./study_notes/sim/key_sim 10 30 20 1   # 参数：AP、RT 按下、RT 松开、是否模拟“震动期间冻结”</pre>
+<p>这次用新代码重新编译过，能编过、能跑。<b>限制</b>：替身里的板型宏是 <code>IRPT_V4</code>（study_notes/sim/stubs/my_board.h），走的是 ADC 板的输入路径，不是 T1A 的霍尔 SPI 路径；算法核心（滤波、分段、RT 判断）两块板是同一份代码，所以用来理解算法没问题。</p>
+
+<h2>9. 编译结果里也能查到东西</h2>
+<div class="scroll"><table>
+<thead><tr><th>文件</th><th>查什么</th><th>这次的值</th></tr></thead>
+<tbody>
+<tr><td><code>output/Sample.build_log.htm</code></td><td>有没有错误、警告</td><td>0 Error(s)、0 Warning(s)</td></tr>
+<tr><td><code>List/Sample.map</code> 最后几行</td><td>程序多大、RAM 用多少；某个变量放在哪个地址（J-Link 看内存时用）</td><td>ROM 45708 字节（44.6 KB），RAM 7032 字节（6.9 KB）</td></tr>
+<tr><td><code>output/Sample.htm</code></td><td>最深的函数调用要多少栈</td><td>328 字节（不算中断和函数指针）</td></tr>
+<tr><td><code>List/*.lst</code></td><td>每行 C 代码编成了哪些指令，算时间、查优化用</td><td>—</td></tr>
+</tbody></table></div>
+<p class="note">注意：这次随代码发来的编译结果是按 <code>HAPTIC_V4_PWM</code> 板型编的（待确认问题第 9 条），T1A 的数字会略有不同。</p>
+
+<h2>10. 调试时容易踩的坑</h2>
+<ol class="pit">
+<li><b>开了日志忘了关</b>：日志代码占 Flash、占时间，USB 日志还会挤占 GUI 的通道。调完把 <code>MYDEBUG_ENABLE</code> 改回 0 再交给别人。</li>
+<li><b>日志丢字</b>：队列只有 400 字节（USB）/ 256 字节（串口），满了 <code>MyQueue_Write</code> 直接返回 -3，这个字节就没了。在中断里打日志，如果主循环正好在写队列（<code>mutex</code> = 1），也会丢。一次别打太多，中断里尽量不打。</li>
+<li><b>开了串口日志，J-Link 就连不上了</b>（SWDIO 被占）。两者只能选一个。</li>
+<li><b>在被测代码里打印</b>，测出来的时间全是打印的时间。</li>
+<li><b>GUI 和 hid_tool.py 同时开</b>，后开的打不开接口。</li>
+<li><b>用 setcoil 或 GUI 改配置会写 EEPROM</b>，断电不丢。调完记得改回来，或者心里有数。</li>
+<li><b>板型宏</b>：编译前确认 <code>my_board.h</code> 选的是 <code>GT_LINA_T1A_H5_PWM</code>（现在是 <code>HAPTIC_V4_PWM</code>）。</li>
+<li><b>断点停在线圈通电期间</b>，线圈可能一直通电（5.3）。</li>
+</ol>
+
+<h2>11. 练习</h2>
+<details class="ex"><summary>① 想知道左键每次按下时 <code>wfPeriodUs</code> 实际是多少（开了动态导通时间以后会变），用哪种办法？要改哪几行？</summary><p>用 USB 日志。my_debug.h:19 改成 1（:24 默认已经是 USB），在 my_electromagnet.c:1022 之后加一行 <code>InfoLog("wf: %u", wfPeriodUs);</code>，编译烧录，电脑上 <code>python hid_tool.py log</code>，关掉 GUI。按下函数不在中断里，打印不会打乱 500 µs 的波形（波形由中断和硬件做）。</p></details>
+<details class="ex"><summary>② 为什么在 T1A 上不能在 <code>Hall_HandleKeyRapidTrigger()</code> 里打断点单步？</summary><p>这个函数在主循环里跑，而进主循环前 <code>PAW3950_Init()</code>（device.c:491）已经把 SWCLK 脚（PIO0_10）切成光学传感器的 SPI 时钟（PAW3950.c:298~299），J-Link 和芯片之间的 SWD 连接断了。</p></details>
+<details class="ex"><summary>③ 一行 35 个字符的日志（含 \r\n），走 USB 要几包？走串口大约多久发完？</summary><p>USB：35 &lt; 64，一包，后面补 29 个 0。串口：每圈主循环发 1 个字节，每个约 86 µs，至少 35 圈主循环、CPU 被占约 3 ms。</p></details>
+</div>
+<script>
+(function(){
+const $=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
+const el=(p,t,a,x)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e};
+const T=(s,x,y,t,o)=>el(s,'text',Object.assign({x,y,'font-size':12,fill:'var(--fg)'},o||{}),t);
+const box=(s,x,y,w,h,c,op)=>el(s,'rect',{x,y,width:w,height:h,rx:8,style:`fill:color-mix(in srgb,var(--${c}) ${op||12}%,var(--panel));stroke:var(--${c});stroke-width:1.8`});
+/* ===== map ===== */
+(function(){const s=$('mp');
+ box(s,20,20,640,520,'muted',5);T(s,36,46,'T1A 板子',{'font-weight':700,'font-size':15});
+ box(s,170,190,220,190,'pc',14);T(s,280,276,'LPC11U35',{'text-anchor':'middle','font-weight':700,'font-size':16});T(s,280,298,'Cortex-M0 · 48 MHz',{'text-anchor':'middle','font-size':11,fill:'var(--muted)'});
+ const ports=[['usb',90,'USB 口','D+ / D−，接口 0 / 1 / 2','per'],['swd',230,'SWD 焊盘 ×5','3V3 SWDIO SWCLK nRESET GND','bad'],['tp',380,'测试点','TP35 / 36 · TP19 · TP31~34','good']];
+ ports.forEach(([k,y,t,sub,c])=>{box(s,470,y,190,64,c,16);T(s,565,y+26,t,{'text-anchor':'middle','font-weight':700});T(s,565,y+48,sub,{'font-size':10.5,fill:'var(--muted)','text-anchor':'middle'});
+  el(s,'line',{x1:390,x2:470,y1:Math.min(Math.max(y+32,200),370),y2:y+32,stroke:`var(--${c})`,'stroke-width':2})});
+ T(s,40,450,'SWCLK 同时是光学传感器的 SPI 时钟（SCLK）',{'font-size':11.5,fill:'var(--bad)','font-weight':600});
+ T(s,40,470,'SWDIO 打开串口日志时被当成 TX 用',{'font-size':11.5,fill:'var(--bad)','font-weight':600});
+ T(s,40,500,'硬件串口的引脚没有引出来',{'font-size':11,fill:'var(--muted)'});
+ const tools=[
+  ['fw',30,'① USB 升级工具（Fw Update）','usb','per','走 USB。公司 bootloader（Flash 0x0000~0x3FFF）负责收新固件、写进 0x4000 起的应用区。你之前就是用它烧的。详见早期讲义 0-3「公司 Bootloader」。'],
+  ['gui',90,'② GUI MouseTest.exe','usb','per','走 USB 接口 2（自定义 HID），按协议问答：霍尔读数、基线、段号、RT 和线圈配置，也能改配置（会写 EEPROM）。第 4 课续专门讲过。'],
+  ['hid',150,'③ hid_tool.py','usb','per','study_notes/tools/hid_tool.py。和 GUI 走同一个接口、同一套协议，但可以连续记录（watch）、做统计（stats），也能写成自动脚本。不能和 GUI 同时开。'],
+  ['log',210,'④ USB 日志（hid_tool.py log）','usb','per','固件开 MYDEBUG_ENABLE 后，InfoLog 打的文字从 USB 端点 3（接口 2）发出来，hid_tool.py log 接收显示。第 3 节。'],
+  ['jl',280,'⑤ Keil + J-Link','swd','bad','走 5 个 SWD 焊盘：烧录、断点、单步、看变量和寄存器。T1A 上开机约 0.5 秒后 SWCLK 被光学传感器借走，之后连不上。第 5 节。'],
+  ['uart',340,'⑥ 串口助手 + USB 转 TTL','swd','bad','固件开串口日志后，PIO0_15（SWDIO 焊盘）被当成软件串口 TX，115200 波特率。USB 转 TTL 模块的 RX 接 SWDIO 焊盘、GND 接 GND。代价是 SWD 不能用。第 3.3 节。'],
+  ['osc',410,'⑦ 示波器 / 逻辑分析仪','tp','good','直接看测试点上的真实电压：PWM 波形、线圈两端、7 V、霍尔 SPI 时序。不用改代码，看到的就是硬件真实情况。第 7 节。'],
+  ['sim',480,'⑧ PC 仿真 key_sim','none','gold','不接板子：用 gcc 把原版 my_misc.c 编译到电脑上，喂一条模拟的按压曲线，打印按键算法每一毫秒的中间值。第 8 节。']];
+ const py={usb:122,swd:262,tp:412};
+ tools.forEach(([k,y,t,port,c,info])=>{const g=el(s,'g',{style:'cursor:pointer'});g.addEventListener('click',()=>{$('mpLog').textContent=t+'\n'+info;s.querySelectorAll('.mpH').forEach(e=>e.setAttribute('opacity',e.dataset.k===k?1:.15))});
+  if(port!=='none'){el(s,'path',{class:'mpH','data-k':k,d:`M660,${py[port]} C720,${py[port]} 720,${y+22} 780,${y+22}`,fill:'none',stroke:`var(--${c})`,'stroke-width':2.2,opacity:.6})}
+  el(g,'rect',{x:780,y,width:560,height:44,rx:8,style:`fill:color-mix(in srgb,var(--${c}) 10%,var(--panel));stroke:var(--${c});stroke-width:1.6`});
+  el(g,'text',{x:796,y:y+27,'font-size':13.5,'font-weight':700,fill:'var(--fg)'},t)});
+ T(s,1330,550,'电脑',{'text-anchor':'end','font-size':12,fill:'var(--muted)'});
+})();
+/* ===== USB log path ===== */
+(function(){const s=$('lg');const CAP=400;let q=[],dropped=0,busy=false,sent=0,last=null,note='';
+ const put=t=>{const b=[...new TextEncoder().encode(t+'\r\n')];let d=0;b.forEach(x=>{if(q.length<CAP)q.push(x);else d++});dropped+=d;note=d?`队列满了，丢了 ${d} 个字节（MyQueue_Write 返回 -3，my_queue.c:66~70）。`:`${b.length} 个字节进了队列。InfoLog 立刻返回，不等发送。`};
+ function draw(){s.innerHTML='';
+  const st=[[20,'InfoLog(...)','宏展开成 printf'],[200,'fputc()','每个字节一次 · my_debug.c:150'],[380,'环形队列 400 B','usbQueueHandle'],[860,'MyDebug_Task()','主循环每圈一次 · device.c:529'],[1060,'USB 端点 3','64 字节一包，不足补 0'],[1230,'电脑','hid_tool.py log']];
+  st.forEach(([x,t,sub],i)=>{const w=i===2?440:i===5?110:150;box(s,x,40,w,i===2?150:70,i===2?'gold':i===5?'good':'per',12);T(s,x+10,62,t,{'font-weight':700});T(s,x+10,82,sub,{'font-size':10.5,fill:'var(--muted)'});
+   if(i<5){const x2=st[i+1][0];el(s,'line',{x1:x+w,x2:x2-6,y1:75,y2:75,stroke:'var(--fg)','stroke-width':1.6});el(s,'path',{d:`M${x2},75 l-8,-5 v10z`,fill:'var(--fg)'})}});
+  /* queue cells 400 = 8 rows x 50 */
+  for(let i=0;i<CAP;i++){const r=Math.floor(i/50),c=i%50;el(s,'rect',{x:390+c*8.4,y:96+r*11,width:7.4,height:9.5,rx:1.5,fill:i<q.length?'var(--gold)':'color-mix(in srgb,var(--muted) 18%,var(--panel))'})}
+  T(s,390,206,`已用 ${q.length} / ${CAP} 字节　累计丢掉 ${dropped}`,{'font-size':12,'font-weight':700,fill:dropped?'var(--bad)':'var(--fg)'});
+  el(s,'rect',{x:1060,y:120,width:150,height:30,rx:6,style:`fill:${busy?'color-mix(in srgb,var(--bad) 20%,var(--panel))':'color-mix(in srgb,var(--good) 20%,var(--panel))'};stroke:var(--${busy?'bad':'good'})`});
+  T(s,1135,140,busy?'忙：上一包电脑还没取':'空闲：可以放新包',{'text-anchor':'middle','font-size':11});
+  T(s,1230,140,`已收 ${sent} 包`,{'font-size':12});
+  if(last){T(s,20,240,'最近一包（64 字节，· = 补的 0）：',{'font-size':12,'font-weight':700});
+   const txt=last.map(b=>b===0?'·':b===13?'⏎':b===10?'↵':String.fromCharCode(b)).join('');T(s,20,264,txt,{'font-family':'var(--font-m)','font-size':12.5})}
+  $('lgLog').textContent=note;}
+ $('lgPut').onclick=()=>{put($('lgMsg').value);draw()};
+ $('lgBurst').onclick=()=>{['[I]Hall_GetKeyStateTask: POS: sta--seg--now--min--max--dif--top--bottom','[I]Hall_GetKeyStateTask: L: 0--0--212--180--15890--15710--205--15800','[I]Hall_GetKeyStateTask: R: 0--0--198--170--15620--15450--190--15610'].forEach(put);note+=' 一次 3 行约 200 字节，队列一半就没了。';draw()};
+ $('lgLoop').onclick=()=>{if(!q.length){note='队列是空的，MyDebug_Task 什么都不做。'}else if(busy){note='端点还忙（上一包电脑没取走），这一圈什么都不发，字节继续留在队列里（my_debug.c:127 MYDEBUG_USB_EDP_IS_IDLE）。'}else{const n=Math.min(64,q.length);const b=q.splice(0,n);while(b.length<64)b.push(0);last=b;busy=true;sent++;note=`取出 ${n} 个字节，补 ${64-n} 个 0，交给 USB 端点 3（nsAPI_USB_WriteEP）。端点变忙，要等电脑来取。`}draw()};
+ $('lgPc').onclick=()=>{busy=false;note='电脑（hid_tool.py log）取走了这一包，端点重新空闲。主循环下一圈可以发下一包。电脑每 1 ms 来问一次（usbdesc.c 里端点的 bInterval = 1 ms）。';draw()};
+ $('lgReset').onclick=()=>{q=[];dropped=0;busy=false;sent=0;last=null;note='';draw()};
+ put($('lgMsg').value);draw();
+})();
+/* ===== UART waveform ===== */
+(function(){const s=$('ua');
+ function draw(){s.innerHTML='';const ch=($('uaCh').value||'I')[0],v=ch.charCodeAt(0)&255;
+  const bits=[0];for(let i=0;i<8;i++)bits.push((v>>i)&1);bits.push(1);
+  const x0=120,bw=110,hi=50,lo=120;let pts=`20,${hi} ${x0},${hi}`;
+  bits.forEach((b,i)=>{const y=b?hi:lo;pts+=` ${x0+i*bw},${y} ${x0+(i+1)*bw},${y}`});pts+=` ${x0+10*bw+60},${hi}`;
+  el(s,'polyline',{points:pts,fill:'none',stroke:'var(--good)','stroke-width':3,'stroke-linejoin':'round'});
+  T(s,20,hi-10,'高（空闲）',{'font-size':11,fill:'var(--muted)'});T(s,20,lo+16,'低',{'font-size':11,fill:'var(--muted)'});
+  bits.forEach((b,i)=>{const x=x0+i*bw;el(s,'line',{x1:x,x2:x,y1:30,y2:150,stroke:'var(--line)','stroke-dasharray':'3 3'});
+   T(s,x+bw/2,170,i===0?'起始位':i===9?'停止位':`bit${i-1}`,{'text-anchor':'middle','font-size':11.5,'font-weight':600});
+   T(s,x+bw/2,188,String(b),{'text-anchor':'middle','font-family':'var(--font-m)','font-size':13,'font-weight':700,fill:b?'var(--good)':'var(--bad)'});
+   T(s,x,206,`TC=${i*69}`,{'font-size':10,fill:'var(--muted)','font-family':'var(--font-m)'})});
+  T(s,x0+10*bw,206,`TC=${10*69}`,{'font-size':10,fill:'var(--muted)','font-family':'var(--font-m)'});
+  T(s,20,224,'TC 是 CT16B1 的计数，每格 0.125 µs；每位等 69 格（holdTimeValue = 10⁹ ÷ 125 ÷ 115200 = 69，整数除法）',{'font-size':11,fill:'var(--muted)'});
+  $('uaLog').textContent=`'${ch}' = 0x${v.toString(16).toUpperCase().padStart(2,'0')} = ${v.toString(2).padStart(8,'0')}（二进制）。串口先发最低位：起始位 0，然后 bit0 ~ bit7 = ${bits.slice(1,9).join(' ')}，最后停止位 1。\n每位 69 × 0.125 = 8.625 µs，标准 115200 波特是 8.681 µs，快了 0.65%，串口能容忍（一般 ±2% 以内都行）。一个字节 10 位 ≈ 86 µs，这期间 CPU 在 while 里干等（my_debug.c:40~76）。`;}
+ $('uaCh').oninput=draw;draw();
+})();
+/* ===== boot timeline ===== */
+(function(){const s=$('bt');
+ const E=[['上电 / 复位','',  'ROM 启动程序先跑：检查 PIO0_1 决定要不要进 ISP，不进就去 Flash 0x0000。此时 PIO0_10、PIO0_15 都是复位默认的 SWCLK、SWDIO 功能，J-Link 能连。'],
+  ['公司 bootloader','Flash 0x0000','检查升级标志，然后把我们程序的向量表拷到 RAM、跳到 0x4000 起的应用程序（早期讲义 0-3）。'],
+  ['main()','Main.c:16','进入 Device_Init()。Keil 勾了 Run to main()，下载后会停在这里。'],
+  ['时钟 / GPIO / 线圈','device.c:419~422','看门狗、48 MHz 主频、InitGPIO、Ele_Init（第 6 课第 6 节）。'],
+  ['MyDebug_Init','device.c:434','只开 USB 日志：只建队列，不碰引脚。开了串口日志：MyDebug_UartHardInit 把 PIO0_15 改成 GPIO 输出（my_debug.h:32），SWDIO 没了，SWD 从这里断。','uart'],
+  ['SPI1 / 1 ms 定时 / USB','device.c:441~451','霍尔用的 SPI1、CT16B0 1 ms 节拍、USB 初始化。'],
+  ['等 500 ms','device.c:457','TimerDelayMsec(500)。'],
+  ['霍尔芯片初始化','device.c:462','HallSensor_INIT：上电、校准、写寄存器（第 3 课下②）。'],
+  ['PAW3950_Init','device.c:491','光学传感器初始化：PAW3950.c:298~299 把 PIO0_10 的功能改成 2 = SCK0。SWCLK 没了，<SWD 从这里断>。','paw'],
+  ['主循环','device.c:505','Device_Scan → 按键、线圈、USB 上报……这里面的代码 J-Link 已经够不着了。']];
+ function draw(){s.innerHTML='';const uart=$('btUart').value==='1';const n=E.length,x0=70,W=1220,step=W/(n-1),X=i=>x0+i*step;
+  const cut=uart?4:8;
+  el(s,'rect',{x:X(0),y:30,width:X(cut)-X(0),height:24,rx:5,fill:'color-mix(in srgb,var(--good) 30%,var(--panel))',stroke:'var(--good)'});
+  T(s,(X(0)+X(cut))/2,47,'SWD 能用：可以下载、打断点、单步',{'text-anchor':'middle','font-size':12,'font-weight':700});
+  el(s,'rect',{x:X(cut),y:30,width:X(n-1)-X(cut),height:24,rx:5,fill:'color-mix(in srgb,var(--bad) 22%,var(--panel))',stroke:'var(--bad)'});
+  T(s,(X(cut)+X(n-1))/2,47,uart?'SWDIO 被串口日志占用 → 连不上':'连不上',{'text-anchor':'middle','font-size':12,'font-weight':700});
+  el(s,'line',{x1:X(0),x2:X(n-1),y1:110,y2:110,stroke:'var(--fg)','stroke-width':2});
+  E.forEach((e,i)=>{const g=el(s,'g',{style:'cursor:pointer'});g.addEventListener('click',()=>{$('btLog').innerHTML=`<b>${e[0]}</b>（${e[1]||'芯片'}）：${e[2].replace(/<|>/g,'')}`});
+   const hot=i===cut;el(g,'circle',{cx:X(i),cy:110,r:hot?10:7,fill:hot?'var(--bad)':'var(--per)'});
+   el(g,'text',{x:X(i),y:i%2?150:90,'text-anchor':'middle','font-size':12,'font-weight':hot?700:500,fill:hot?'var(--bad)':'var(--fg)'},e[0]);
+   el(g,'text',{x:X(i),y:i%2?168:72,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},e[1]);
+   el(g,'rect',{x:X(i)-step/2,y:60,width:step,height:115,fill:'transparent'})});
+  T(s,X(cut),205,uart?'device.c:434 → my_debug.h:32：PIO0_15 FUNC = 1（GPIO）':'PAW3950.c:298~299：PIO0_10 FUNC = 2（SCK0）',{'text-anchor':'middle','font-size':12,'font-weight':700,fill:'var(--bad)'});
+  T(s,X(cut),225,uart?'开机后几毫秒就断':'开机约 0.5 秒（500 ms 等待 + 霍尔初始化）之后断',{'text-anchor':'middle','font-size':11.5,fill:'var(--muted)'});}
+ $('btUart').onchange=draw;draw();
+})();
+})();
+</script>
