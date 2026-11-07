@@ -8,7 +8,7 @@
 *******************************************************************************/
 #include "my_board.h"
 
-#if (defined(IRPT_V4) || defined(V4_HALL_HPTIC_V4))
+#if (defined(IRPT_V4) || defined(V4_HALL_HPTIC_V4) || defined(GT_LINA_T1A_H5))
 
 #include "PAW3950.h"
 
@@ -55,6 +55,7 @@
 #define PAW3950_spi_put( addr, data )  SPI_Write((addr ), (data))//SPI_Write( (addr | 0x80), (data) )
 #define PAW3950_spi_get( addr )        SPI_Read (addr)
 
+static uint8_t initialized = 0;
 const uint8_t regSettingOfInit0[][2] =
 {
   {0x7F, 0x07},
@@ -280,6 +281,30 @@ static int32_t PA3950_ModuleInit(void)
   PAW3950_IO_CfgAsInput(PAW3950_IO_MOTION_PORT, PAW3950_IO_MOTION_PIN);
   
   //2. SPI
+  #if (defined(GT_LINA_T1A_H5))
+  //spi0
+    //-----SPI0-----
+    LPC_SYSCON->PRESETCTRL |= (0x1<<0) ;                            //SPI0 Reset De-Asserted
+    LPC_SYSCON->SYSAHBCLKCTRL |= (1<<11) ;                          //Setup AHB Clock To The SPI0 Domain 
+    LPC_SYSCON->SSP0CLKDIV = 0x1 ;                                  //SPI0 Clock Divider 1(48MHz/1=48MHz)
+	//-----GPIO TO SPI0-----
+    LPC_IOCON->PIO0_8           &= ~0x07 ;                          //Select GPIO0_8 To MISO0
+    LPC_IOCON->PIO0_8           |= 0x01 ;
+    
+    LPC_IOCON->PIO0_9           &= ~0x07 ;                          //Select GPIO0_9 To MOSI0
+    LPC_IOCON->PIO0_9           |= 0x01 ;
+
+
+	LPC_IOCON->SWCLK_PIO0_10	&= ~0x07 ;							//Select GPIO0_10 To CLK0
+	LPC_IOCON->SWCLK_PIO0_10	|= 0x02 ;
+
+		
+	LPC_SSP0->CR0 = 0x01C7  ;                                        //CPOL = 1 CPHA = 1 8Bits
+    LPC_SSP0->CPSR = 0x18 ;
+    //SPI SPEED = ((MCU_OSC/SSP1CLKDIV)/(CPSR*[CR0 High Byte+1]))
+    //((48MHz/1)/(24*[1+1])) = 1Mhz
+    LPC_SSP0->CR1 = SSPCR1_SSE ;                                    //Enable SSP0
+  #else
   //-----SPI1-----
   LPC_SYSCON->PRESETCTRL |= (0x1<<2) ;                            //SPI1 Reset De-Asserted
   LPC_SYSCON->SYSAHBCLKCTRL |= (1<<18) ;                          //Setup AHB Clock To The SPI1 Domain
@@ -305,6 +330,7 @@ static int32_t PA3950_ModuleInit(void)
 //      uint32_t dummy = LPC_SSP1->DR ;
 //  }
   LPC_SSP1->CR1 |= SSPCR1_SSE ;                               //Enable SSP1
+  #endif
   
   return 0;
 
@@ -320,6 +346,8 @@ int32_t PAW3950_Init(void)
 {
   uint8_t tmp = 0;
   uint8_t regNum = 0;
+  
+  initialized = 0;
   if(PA3950_ModuleInit())
   {
     PAW3950_Print("Failed to init.");
@@ -400,6 +428,7 @@ int32_t PAW3950_Init(void)
     return -2;
   }
 
+  initialized = 1;
   return 0;
 }
 
@@ -419,8 +448,13 @@ int32_t PAW3950_Write(uint8_t regAddr, uint8_t data)
 
   PAW3950_IO_LowLevel(PAW3950_IO_NCS_PORT, PAW3950_IO_NCS_PIN);
   PAW3950_DelayUs(3);
+  #if (defined(GT_LINA_T1A_H5))
+    SSP_Send(0, &aData[0], 1);
+  SSP_Send(0, &aData[1], 1);
+  #else
   SSP_Send(1, &aData[0], 1);
   SSP_Send(1, &aData[1], 1);
+  #endif
   PAW3950_DelayUs(3);
   PAW3950_IO_HighLevel(PAW3950_IO_NCS_PORT, PAW3950_IO_NCS_PIN);
   PAW3950_DelayUs(3);
@@ -436,13 +470,20 @@ int32_t PAW3950_Read(uint8_t regAddr, uint8_t *pData, uint16_t length)
 
   PAW3950_IO_LowLevel(PAW3950_IO_NCS_PORT, PAW3950_IO_NCS_PIN);
   PAW3950_DelayUs(3);
-  
+  #if (defined(GT_LINA_T1A_H5))
+    SSP_Send(0, &addr, 1);
+  #else
   SSP_Send(1, &addr, 1);
+  #endif
   PAW3950_DelayUs(3);
   
   for(uint16_t i = 0; i < length; i++)
   {
+    #if (defined(GT_LINA_T1A_H5))
+    SSP_Receive(0, pData, 1);
+    #else
     SSP_Receive(1, pData, 1);
+    #endif
   }
   
   PAW3950_IO_HighLevel(PAW3950_IO_NCS_PORT, PAW3950_IO_NCS_PIN);
@@ -534,7 +575,14 @@ static int32_t PAW3950_GetMotionDataSingleRead(int16_t *pX, int16_t *pY)
 
 int32_t PAW3950_GetMotionData(int16_t *pX, int16_t *pY)
 {
-  return PAW3950_GetMotionDataSingleRead(pX, pY);
+  if(initialized)
+  {
+    return PAW3950_GetMotionDataSingleRead(pX, pY);
+  }
+  else
+  {
+    return -1;
+  }
 }
 
 #endif

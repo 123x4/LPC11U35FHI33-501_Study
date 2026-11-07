@@ -45,3 +45,20 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -KeilPath 'C
 Program Size: Code=32084、RO-data=13236、RW-data=832、ZI-data=6016（字节）。
 
 工程的 After Build 两个命令均未启用，因此当前编译不生成新的 BIN。已有 `output\Sample.bin` 是目录，其中为历史文件，不应当作本次产物。本次只验证编译与链接，未进行硬件烧录或运行验证。
+
+## 充电芯片开发分支
+
+`feature/charging-chip` 以本地现有固件为开发基线，包含 PWM 和波形相关改动；尚未新增特定充电芯片驱动。
+
+2026-11-07 使用本机 Keil ARMCC 5 编译通过：0 Error(s)、0 Warning(s)。
+Program Size: Code=31672、RO-data=13648、RW-data=876、ZI-data=6156（字节）。未进行硬件运行验证。
+
+### 编辑器头文件标红排查
+
+请打开包含 `Sample.uvproj` 的工程根目录，并确保 `.vscode/c_cpp_properties.json` 存在。本地工程副本原先缺少 `.vscode`，现已恢复仓库配置：
+
+- 项目头文件：`${workspaceFolder}/inc` 和 `${workspaceFolder}/inc/Led_Effect_H`。
+- 标准库头文件：`D:/Keil5/Core/ARM/ARMCC/include`，更换安装目录时需同步调整。
+- IntelliSense 使用 ARM 模式和 `__CC_ARM` 等宏，以解析现有 CMSIS 头文件。
+
+VS Code 安装 Microsoft C/C++ 扩展后，如仍显示旧诊断，可执行 `C/C++: Reset IntelliSense Database` 并重载窗口。编辑器诊断与 Keil 编译结果应分别确认；当前仅验证 Keil 编译成功。

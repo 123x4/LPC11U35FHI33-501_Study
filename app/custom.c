@@ -393,7 +393,8 @@ void Custom_Set_DPI(UINT8 gear,BOOL save,BOOL send,BOOL ledAction)
 	}
 	
 	dpi_x = dpi_value_array[dpi_x - 2];
-#if ((!defined(IRPT_V4)) && (!defined(V4_HALL_HPTIC_V4)))
+#if (defined(IRPT_V4) || defined(V4_HALL_HPTIC_V4) || defined(GT_LINA_T1A_H5))
+#else
 	optical_set_dpi(dpi_x);
 #endif
   

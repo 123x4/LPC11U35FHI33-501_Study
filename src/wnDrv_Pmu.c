@@ -62,7 +62,8 @@ void wnDrv_Pmu_Init(void)
     }
 #endif      
 
-    #if (defined(HAPTIC_V2) || defined (HAPTIC_V3) || defined (HAPTIC_V4) || defined (IRPT_V4) || defined(V4_HALL_HPTIC_V4))
+    #if (defined(HAPTIC_V2) || defined (HAPTIC_V3) || defined (HAPTIC_V4) \
+        || defined (IRPT_V4) || defined(V4_HALL_HPTIC_V4) || defined(GT_LINA_T1A_H5))
     ENA[GPIO_PORT0] = (MIDDLE_BUTTON_MASK | K5_BUTTON_MASK | DPI_CYCLE_BUTTON_MASK | K4_BUTTON_MASK); 
     #elif (defined(P723_POC))
     ENA[GPIO_PORT0] = (MIDDLE_BUTTON_MASK | K5_BUTTON_MASK | DPI_CYCLE_BUTTON_MASK ); 

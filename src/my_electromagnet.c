@@ -8,6 +8,7 @@
 *******************************************************************************/
 /* 1. include section *********************************************************/
 #include "my_electromagnet.h"
+#include "my_protocol_mouse.h"
 #include "string.h"
 #include "Timer.h"
 #include "my_board.h"
@@ -15,9 +16,15 @@
 #include "TI_DRV8833.h"
 #endif
 
+#if (defined(GT_LINA_T1A_H5_PWM) || defined(HAPTIC_V4_PWM))
+#include "my_waveform.h"
+#endif
+
+
+
 
 /* 2. macro definition ********************************************************/
-#define MAX_VIBRATE_DURATION_US         2000 //2ms
+#define MAX_VIBRATE_DURATION_US         5000 //5ms
 #define SINGLE_COIL_AT_A_TIME           1    //1: enable, 0: disable
 #define VIBRATE_DEBOUNCE_TIME_MS        8    //ms
 #define DAEMON_LIMIT_TURN_ON_TIME_MS    40   //ms. multiples of 8. if < 8, disable daemon.
@@ -25,7 +32,11 @@
 #define DYN_ON_TIME_EN_DEFAULT          0    //0: default disable. 1: default enable
 #define DIFF_PRESS_RELEASE_TURN_ON_TIME 1    //0: disbale, 1: enable
 
+#if (defined(GT_LINA_T1A_H5_PWM) || defined(HAPTIC_V4_PWM))
+#define BRAKE_FUNC_ENABLE               0
+#else
 #define BRAKE_FUNC_ENABLE               1
+#endif
 //debug define
 #define DEBUG_STARTUP_FIX_VIB_PARAM_EN   0 //
 #define DEBUG_STARTUP_FIX_VIB_PARAM_US   1000000 //us //nend close  DAEMON_LIMIT_TURN_ON_TIME_MS
@@ -79,7 +90,7 @@
 #define Ele_RightOpen()    TI_DERV8833_Forward(&motorRight, BRIDGE_A)
 #define Ele_RightClose()   TI_DERV8833_Coast(&motorRight, BRIDGE_A)
 
-#elif (defined(IRPT_V4) || defined(V4_HALL_HPTIC_V4))
+#elif (defined(IRPT_V4) || defined(V4_HALL_HPTIC_V4) || defined(GT_LINA_T1A_H5))
 #define Ele_LeftOpen()        DrvGPIOOutput(PWM1_PORT, PWM1_PIN, 1)
 #define Ele_LeftClose()       DrvGPIOOutput(PWM1_PORT, PWM1_PIN, 0)
 #define Ele_RightOpen()       DrvGPIOOutput(PWM2_PORT, PWM2_PIN, 1)
@@ -111,6 +122,8 @@ typedef struct
   uint32_t debounceBeginTick;
   uint32_t pressVibrateDurationUs;
   uint32_t releaseVibrateDurationUs;
+  uint8_t pressDriveMode;
+  uint8_t releaseDriveMode;
 #if BRAKE_FUNC_ENABLE
   uint16_t brakeDelayUs;
   uint16_t brakeDurationUs;
@@ -142,6 +155,8 @@ Ele_Handle_ts leftEle = {
   .debounceBeginTick = 0,
   .pressVibrateDurationUs = 100,
   .releaseVibrateDurationUs = 100,
+  .pressDriveMode = 0,
+  .releaseDriveMode = 0,
 #if BRAKE_FUNC_ENABLE
   .brakeDelayUs = 0,
   .brakeDurationUs = 0,
@@ -221,6 +236,125 @@ CacheVibrate_ts gxCacheVibrate = {0};
 
 
 
+#if (defined(GT_LINA_T1A_H5_PWM) || defined(HAPTIC_V4_PWM))
+#if 0
+static const uint8_t wfHighTbl[] = {100};
+static WaveformInfo_ts wfHigh = {
+  .pWfData = wfHighTbl,
+  .wfDataLen = sizeof(wfHighTbl) / sizeof(wfHighTbl[0]),
+};
+
+static const uint8_t wfTrapzTbl[100] = {
+      0,   4,   8,  12,  16,  20,  24,  28,  32,  36,
+     40,  44,  48,  52,  56,  60,  64,  68,  72,  76,
+     80,  84,  88,  92,  96, 100, 100, 100, 100, 100,
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+    100, 100, 100, 100, 100,  96,  92,  88,  84,  80,
+     76,  72,  68,  64,  60,  56,  52,  48,  44,  40,
+     36,  32,  28,  24,  20,  16,  12,   8,   4,   0,
+};
+static WaveformInfo_ts wfTrapz = {
+  .pWfData = wfTrapzTbl,
+  .wfDataLen = sizeof(wfTrapzTbl) / sizeof(wfTrapzTbl[0]),
+};
+
+static const uint8_t wfHalfSineTbl[100] = {
+      0,  3,  6,  9, 12, 15, 18, 22, 25, 28,
+     31, 34, 37, 40, 42, 45, 48, 51, 54, 56,
+     59, 61, 64, 66, 69, 71, 73, 75, 77, 79,
+     81, 83, 84, 86, 88, 89, 90, 92, 93, 94,
+     95, 96, 97, 97, 98, 98, 99, 99, 99, 99,
+     99, 99, 99, 99, 98, 98, 97, 97, 96, 95,
+     94, 93, 92, 90, 89, 88, 86, 84, 83, 81,
+     79, 77, 75, 73, 71, 69, 66, 64, 61, 59,
+     56, 54, 51, 48, 45, 42, 40, 37, 34, 31,
+     28, 25, 22, 18, 15, 12,  9,  6,  3,  0,
+};
+static WaveformInfo_ts wfHalfSine = {
+  .pWfData = wfHalfSineTbl,
+  .wfDataLen = sizeof(wfHalfSineTbl) / sizeof(wfHalfSineTbl[0]),
+};
+
+static const uint8_t wfTriTbl[100] = {
+      0,  2,  4,  6,  8, 10, 12, 14, 16, 18,
+     20, 22, 24, 26, 28, 30, 32, 34, 36, 38,
+     40, 42, 44, 46, 48, 50, 52, 54, 56, 58,
+     60, 62, 64, 66, 68, 70, 72, 74, 76, 78,
+     80, 82, 84, 86, 88, 90, 92, 94, 96, 98,
+    100, 98, 96, 94, 92, 90, 88, 86, 84, 82,
+     80, 78, 76, 74, 72, 70, 68, 66, 64, 62,
+     60, 58, 56, 54, 52, 50, 48, 46, 44, 42,
+     40, 38, 36, 34, 32, 30, 28, 26, 24, 22,
+     20, 18, 16, 14, 12, 10,  8,  6,  4,  2,
+};
+static WaveformInfo_ts wfTri = {
+  .pWfData = wfTriTbl,
+  .wfDataLen = sizeof(wfTriTbl) / sizeof(wfTriTbl[0]),
+};
+/*
+static const uint8_t wfCustomTbl[100] = {
+     52, 53, 54, 55, 56, 57, 58, 59, 60, 61, //0
+     62, 63, 64, 65, 66, 67, 68, 69, 70, 71, //1
+     72, 73, 74, 75, 76, 77, 78, 79, 80, 81, //2
+     82, 83, 84, 85, 86, 87, 88, 89, 90, 91, //3
+     92, 93, 94, 95, 96, 97, 98, 99,100,100, //4
+    100,100, 99, 98, 97, 96, 95, 94, 93, 92, //5
+     91, 90, 89, 88, 87, 86, 85, 84, 83, 82, //6
+     81, 80, 79, 78, 77, 76, 75, 74, 73, 72, //7
+     71, 70, 69, 68, 67, 66, 65, 64, 63, 62, //8
+     61, 60, 59, 58, 57, 56, 55, 54, 53, 52, //9
+};
+
+*/
+/*
+static const uint8_t wfCustomTbl[100] = {
+     60, 61, 62, 62, 63, 64, 65, 66, 67, 67, //0
+     68, 69, 70, 71, 72, 72, 73, 74, 75, 76, //1
+     77, 77, 78, 79, 80, 81, 82, 82, 83, 84, //2
+     85, 86, 87, 87, 88, 89, 90, 91, 92, 92, //3
+     93, 94, 95, 96, 97, 97, 98, 99,100, 100,//4
+    100,100, 99, 98, 97, 97, 96, 95, 94, 93, //5
+     92, 92, 91, 90, 89, 88, 87, 87, 86, 85, //6
+     84, 83, 82, 82, 81, 80, 79, 78, 77, 77, //7
+     76, 75, 74, 73, 72, 72, 71, 70, 69, 68, //8
+     67, 67, 66, 65, 64, 63, 62, 62, 61, 60, //9
+};
+*/
+static const uint8_t wfCustomTbl[100] = {
+     43, 44, 46, 47, 49, 50, 52, 53, 54, 56, //0
+     57, 59, 60, 61, 63, 64, 66, 67, 69, 70, //1
+     71, 73, 74, 76, 77, 79, 80, 81, 83, 84, //2
+     86, 87, 88, 90, 91, 93, 94, 96, 97, 98, //3
+    100,100,100,100,100,100,100,100,100,100, //4
+    100,100,100,100,100,100,100,100,100,100, //5
+     98, 97, 96, 94, 93, 91, 90, 88, 87, 86, //6
+     84, 83, 81, 80, 79, 77, 76, 74, 73, 71, //7
+     70, 69, 67, 66, 64, 63, 61, 60, 59, 57, //8
+     56, 54, 53, 52, 50, 49, 47, 46, 44, 43, //9
+};
+static WaveformInfo_ts wfCustom = {
+  .pWfData = wfCustomTbl,
+  .wfDataLen = sizeof(wfCustomTbl) / sizeof(wfCustomTbl[0]),
+};
+#endif
+static const uint8_t wfHighTbl[] = {100};
+static WaveformInfo_ts wfHigh = {
+  .pWfData = wfHighTbl,
+  .wfDataLen = sizeof(wfHighTbl) / sizeof(wfHighTbl[0]),
+};
+static WaveformInfo_ts wfCustom = {0};
+
+static WaveformInfo_ts *pLeftWf = &wfHigh;
+static WaveformInfo_ts *pRightWf = &wfHigh;
+
+
+#endif
+
+
+
 #if (defined(GEN_2_H_V1))
 TI_DRV8833_ts motorLeft = {
   .io.nSleepPort = NSLEEP_PORT,
@@ -250,17 +384,25 @@ TI_DRV8833_ts motorRight = {
 #endif
 
 /* 5. fucntions declaration ***************************************************/
+#if (defined(GT_LINA_T1A_H5_PWM) || defined(HAPTIC_V4_PWM))
+#else
 static void Ele_InitCT32B0(void);
+#endif
 //static void Ele_InitDurationScaleArray(void);
 static uint32_t Ele_CalculateDuration(Ele_Position_te pos, uint8_t segment, uint32_t settingDuration);
 static void Ele_StatusTask(Ele_Handle_ts *pEle);
+#if (defined(GT_LINA_T1A_H5_PWM) || defined(HAPTIC_V4_PWM))
+#else
 static void Ele_Daemon(void);
+#endif
 static void Ele_OnlyOne(void);
 static void Ele_LeftAutoTrigger(void);
 static void Ele_RightAutoTrigger(void);
 static void Ele_DebugTask(void);
 
 
+#if (defined(GT_LINA_T1A_H5_PWM) || defined(HAPTIC_V4_PWM))
+#else
 /* 6. function definition *****************************************************/
 void TIMER32_0_IRQHandler(void)
 {
@@ -292,6 +434,7 @@ void TIMER32_0_IRQHandler(void)
     }
   }
 }
+#endif
 
 void Ele_Init(void)
 {
@@ -301,11 +444,12 @@ void Ele_Init(void)
   Ele_RightClose();
   Ele_EnableVoltageCfg0();
 //  Ele_EnableBoost();       //ETA1626_EN enable
-#elif (defined(HAPTIC_V4) || defined(IRPT_V4) || defined(V4_HALL_HPTIC_V4))
+#elif (defined(IRPT_V4) || defined(V4_HALL_HPTIC_V4))
   Ele_DisableBoost();      //ETA1628_EN disable
   Ele_LeftClose();
   Ele_RightClose();
   Ele_EnableBoost();       //ETA1628_EN enable
+  
 #elif (defined(GEN_2_H_V1))
   TI_DRV8833_Init(&motorLeft);
   TI_DRV8833_Init(&motorRight);
@@ -313,29 +457,84 @@ void Ele_Init(void)
   TI_DRV8833_ExitSleepMode(&motorRight);
   Ele_LeftClose();
   Ele_RightClose();
+  
+#elif (defined(GT_LINA_T1A_H5))
+
+#ifdef GT_LINA_T1A_H5_PWM
+  Ele_DisableBoost();      //ETA1628_EN disable
+  MyWaveform_Init();
+  Ele_EnableBoost();       //ETA1628_EN enable
+#else
+  Ele_DisableBoost();      //ETA1628_EN disable
+  Ele_LeftClose();
+  Ele_RightClose();
+  Ele_EnableBoost();       //ETA1628_EN enable
+#endif
+
+#elif (defined(HAPTIC_V4))
+#if (defined(HAPTIC_V4_PWM))
+  Ele_DisableBoost();      //ETA1628_EN disable
+  MyWaveform_Init();
+  Ele_EnableBoost();       //ETA1628_EN enable
+#else
+  Ele_DisableBoost();      //ETA1628_EN disable
+  Ele_LeftClose();
+  Ele_RightClose();
+  Ele_EnableBoost();       //ETA1628_EN enable
+#endif
+  
 #else
   #error "Hardware information is undefined."
 #endif
 
+
+#if (defined(GT_LINA_T1A_H5_PWM) || defined(HAPTIC_V4_PWM))
+
+#else
   Ele_InitCT32B0();
+#endif
+
 }
 
 void Ele_DisableVibrate(void)
 {
-  #if (defined(HAPTIC_V2) || defined (HAPTIC_V3) || defined(P723_POC) || defined (HAPTIC_V4) || defined (IRPT_V4) || defined(V4_HALL_HPTIC_V4))
+#if (defined(HAPTIC_V2) || defined (HAPTIC_V3) || defined(P723_POC) || defined (IRPT_V4) || defined(V4_HALL_HPTIC_V4))
   Ele_LeftClose();
   Ele_RightClose();
   Ele_DisableBoost(); //ETA1626_EN disable
-  #elif (defined(GEN_2_H_V1))
+#elif (defined(GEN_2_H_V1))
   Ele_LeftClose();
   Ele_RightClose();
   TI_DRV8833_EnterSleepMode(&motorLeft);
   TI_DRV8833_EnterSleepMode(&motorRight);
   TI_DRV8833_Deinit(&motorLeft);
   TI_DRV8833_Deinit(&motorRight);
-  #else
-    #error "Hardware information is undefined."
-  #endif
+#elif (defined(GT_LINA_T1A_H5))
+
+#ifdef GT_LINA_T1A_H5_PWM
+  MyWaveform_StopGenerate(CHANNEL_0);
+  MyWaveform_StopGenerate(CHANNEL_1);
+  Ele_DisableBoost(); //ETA1626_EN disable
+#else
+  Ele_LeftClose();
+  Ele_RightClose();
+  Ele_DisableBoost(); //ETA1626_EN disable
+#endif
+
+#elif (defined(HAPTIC_V4))
+#ifdef HAPTIC_V4_PWM
+  MyWaveform_StopGenerate(CHANNEL_0);
+  MyWaveform_StopGenerate(CHANNEL_1);
+  Ele_DisableBoost(); //ETA1626_EN disable
+#else
+  Ele_LeftClose();
+  Ele_RightClose();
+  Ele_DisableBoost(); //ETA1626_EN disable
+#endif
+
+#else
+  #error "Hardware information is undefined."
+#endif
 //  MyTick_DelayMs(5);
 }
 
@@ -656,7 +855,30 @@ void Ele_UpdateRelBrakeParam(uint8_t virtualKey, const CoilBrakeRelConfig_ts *px
 #endif
 }
 
+/*
+void Ele_UpdateCoilDriveMode(uint8_t virtualKey, const CoilDriveModeConfig_ts *pxCoilDriveModeCfg)
+{
+  Ele_Handle_ts *p = 0;
+  
+  switch(virtualKey)
+  {
+    case VK_LBUTTON:
+    {
+      p = &leftEle;
+    }
+    break;
+    case VK_RBUTTON:
+    {
+      p = &rightEle;
+    }
+    break;
+    default:
+      return;
+  }
+}
+*/
 
+#if 0
 uint8_t Ele_IsReleaseVibrating(Ele_Position_te pos)
 {
   uint8_t ret = 0;
@@ -690,6 +912,7 @@ uint8_t Ele_IsReleaseVibrating(Ele_Position_te pos)
   
   return ret;
 }
+#endif
 
 uint8_t Ele_IsVibrating(Ele_Position_te pos)
 {
@@ -729,6 +952,7 @@ uint8_t Ele_IsTureVibrating(Ele_Position_te pos)
   switch(pos)
   {
     case ELE_POS_LEFT:
+
       if(ELE_PRESS_VIBRATING == leftEle.status || ELE_RELEASE_VIBRATING == leftEle.status)
       {
         ret = 1;
@@ -758,9 +982,13 @@ uint8_t Ele_IsTureVibrating(Ele_Position_te pos)
 
 void Ele_PollingTask(void)
 {
-  Ele_Daemon();
   Ele_StatusTask(&leftEle);
   Ele_StatusTask(&rightEle);
+  
+#if (defined(GT_LINA_T1A_H5_PWM) || defined(HAPTIC_V4_PWM))
+#else
+  Ele_Daemon();
+#endif
   
   #if SINGLE_COIL_AT_A_TIME
   Ele_OnlyOne();
@@ -776,6 +1004,9 @@ void Ele_PollingTask(void)
 
 void Ele_LeftKeyPressProcess(void)
 {
+#if (defined(GT_LINA_T1A_H5_PWM) || defined(HAPTIC_V4_PWM))
+  uint32_t wfPeriodUs = 0;
+#endif
   if(leftEle.pressVibrateDurationUs)
   {
     #if SINGLE_COIL_AT_A_TIME
@@ -787,7 +1018,23 @@ void Ele_LeftKeyPressProcess(void)
       return;
     }
     #endif
-    
+#if (defined(GT_LINA_T1A_H5_PWM) || defined(HAPTIC_V4_PWM))
+    wfPeriodUs = Ele_CalculateDuration(ELE_POS_LEFT, nowHallSegment[0], leftEle.pressVibrateDurationUs);
+    leftEle.status = ELE_PRESS_VIBRATING;
+    leftEle.vibrateBeginTick = MyTick_GetTickMs();
+    if(Config_GetCoilDriveMode())
+    {
+      wfCustom.pWfData = Config_GetPwmTable();
+      wfCustom.wfDataLen = 100;
+      pLeftWf = &wfCustom;
+    }
+    else
+    {
+      pLeftWf = &wfHigh;
+    }
+    MyWaveform_StartGenerate(CHANNEL_0, pLeftWf, wfPeriodUs, 1);
+
+#else
     #if BRAKE_FUNC_ENABLE
     leftEle.status = ELE_PRESS_VIBRATING;
     Ele_LeftOpen(); //consider 1us ontime
@@ -812,11 +1059,15 @@ void Ele_LeftKeyPressProcess(void)
     LPC_CT32B0->MCR |= (0x01 << 0);   //Enable MR0 Interrupt
     __enable_irq ();
     #endif
+#endif
   }
   InfoLog("%u", MyTick_GetTickMs());
 }
 void Ele_LeftKeyReleaseProcess(void)
 {
+#if (defined(GT_LINA_T1A_H5_PWM) || defined(HAPTIC_V4_PWM))
+  uint32_t wfPeriodUs = 0;
+#endif
   if(leftEle.releaseVibrateDurationUs)
   {
     #if SINGLE_COIL_AT_A_TIME
@@ -829,6 +1080,22 @@ void Ele_LeftKeyReleaseProcess(void)
     }
     #endif
      
+#if (defined(GT_LINA_T1A_H5_PWM) || defined(HAPTIC_V4_PWM))
+    wfPeriodUs = Ele_CalculateDuration(ELE_POS_LEFT, nowHallSegment[0], leftEle.releaseVibrateDurationUs);
+    leftEle.status = ELE_RELEASE_VIBRATING;
+    leftEle.vibrateBeginTick = MyTick_GetTickMs();
+    if(Config_GetCoilDriveMode())
+    {
+      wfCustom.pWfData = Config_GetPwmTable();
+      wfCustom.wfDataLen = 100;
+      pLeftWf = &wfCustom;
+    }
+    else
+    {
+      pLeftWf = &wfHigh;
+    }
+    MyWaveform_StartGenerate(CHANNEL_0, pLeftWf, wfPeriodUs, 1);
+#else
     #if BRAKE_FUNC_ENABLE
     leftEle.status = ELE_PRESS_VIBRATING;
     Ele_LeftOpen(); //consider 1us ontime
@@ -852,12 +1119,16 @@ void Ele_LeftKeyReleaseProcess(void)
     LPC_CT32B0->MCR |= (0x01 << 0);   //Enable MR0 Interrupt
     __enable_irq ();
     #endif
+#endif
   }
   InfoLog("%u", MyTick_GetTickMs());
 }
 
 void Ele_RightKeyPressProcess(void)
 {
+#if (defined(GT_LINA_T1A_H5_PWM) || defined(HAPTIC_V4_PWM))
+  uint32_t wfPeriodUs = 0;
+#endif
   if(rightEle.pressVibrateDurationUs)
   {
     #if SINGLE_COIL_AT_A_TIME
@@ -870,6 +1141,22 @@ void Ele_RightKeyPressProcess(void)
     }
     #endif
      
+#if (defined(GT_LINA_T1A_H5_PWM) || defined(HAPTIC_V4_PWM))
+     wfPeriodUs = Ele_CalculateDuration(ELE_POS_RIGHT, nowHallSegment[1], rightEle.pressVibrateDurationUs);
+     rightEle.status = ELE_PRESS_VIBRATING;
+     rightEle.vibrateBeginTick = MyTick_GetTickMs();
+     if(Config_GetCoilDriveMode())
+     {
+        wfCustom.pWfData = Config_GetPwmTable();
+        wfCustom.wfDataLen = 100;
+        pRightWf = &wfCustom;
+     }
+     else
+     {
+        pRightWf = &wfHigh;
+     }
+     MyWaveform_StartGenerate(CHANNEL_1, pRightWf, wfPeriodUs, 1);
+#else
     #if BRAKE_FUNC_ENABLE
     rightEle.status = ELE_PRESS_VIBRATING;
     Ele_RightOpen(); //consider 1us ontime
@@ -893,11 +1180,15 @@ void Ele_RightKeyPressProcess(void)
     LPC_CT32B0->MCR |= (0x01 << 3);   //Enable MR1 Interrupt
     __enable_irq ();
     #endif
+#endif
   }
   InfoLog("%u", MyTick_GetTickMs());
 }
 void Ele_RightKeyReleaseProcess(void)
 {
+#if (defined(GT_LINA_T1A_H5_PWM) || defined(HAPTIC_V4_PWM))
+  uint32_t wfPeriodUs = 0;
+#endif
   if(rightEle.releaseVibrateDurationUs)
   {
     #if SINGLE_COIL_AT_A_TIME
@@ -910,6 +1201,22 @@ void Ele_RightKeyReleaseProcess(void)
     }
     #endif
      
+#if (defined(GT_LINA_T1A_H5_PWM) || defined(HAPTIC_V4_PWM))
+    wfPeriodUs = Ele_CalculateDuration(ELE_POS_RIGHT,nowHallSegment[1], rightEle.releaseVibrateDurationUs);
+    rightEle.status = ELE_RELEASE_VIBRATING;
+    rightEle.vibrateBeginTick = MyTick_GetTickMs();
+    if(Config_GetCoilDriveMode())
+    {
+       wfCustom.pWfData = Config_GetPwmTable();
+       wfCustom.wfDataLen = 100;
+       pRightWf = &wfCustom;
+    }
+    else
+    {
+       pRightWf = &wfHigh;
+    }
+    MyWaveform_StartGenerate(CHANNEL_1, pRightWf, wfPeriodUs, 1);
+#else
     #if BRAKE_FUNC_ENABLE
     rightEle.status = ELE_PRESS_VIBRATING;
     Ele_RightOpen(); //consider 1us ontime
@@ -933,6 +1240,7 @@ void Ele_RightKeyReleaseProcess(void)
     LPC_CT32B0->MCR |= (0x01 << 3);   //Enable MR1 Interrupt
     __enable_irq ();
     #endif
+#endif
   }
   InfoLog("%u", MyTick_GetTickMs());
 }
@@ -989,6 +1297,8 @@ void Ele_K5KeyPressProcess(void)
 
 
 /*****static functions*********************************************************/
+#if (defined(GT_LINA_T1A_H5_PWM) || defined(HAPTIC_V4_PWM))
+#else
 static void Ele_InitCT32B0(void)
 {
   NVIC_DisableIRQ(TIMER_32_0_IRQn);
@@ -1004,7 +1314,7 @@ static void Ele_InitCT32B0(void)
   LPC_CT32B0->TCR = 1 ;
   NVIC_EnableIRQ(TIMER_32_0_IRQn) ;
 }
-
+#endif
 //static void Ele_InitDurationScaleArray(void)
 //{
 //  /* actualDurationMs = (settingDuration * (100 / (segment * 2 + 100))) */
@@ -1056,6 +1366,41 @@ static uint32_t Ele_CalculateDuration(Ele_Position_te pos, uint8_t segment, uint
 
 static void Ele_StatusTask(Ele_Handle_ts *pEle)
 {
+#if (defined(GT_LINA_T1A_H5_PWM) || defined(HAPTIC_V4_PWM))
+  switch(pEle->status)
+  {
+    case ELE_NO_VIBRATING:
+      ;
+      break;
+    case ELE_PRESS_VIBRATING:
+    {
+      if((MyTick_GetTickMs() - pEle->vibrateBeginTick) * 1000U > (pEle->pressVibrateDurationUs + 999U))
+      {
+        pEle->status = ELE_RELEASE_DEBOUNCE;
+        pEle->debounceBeginTick = MyTick_GetTickMs();
+      }
+    }
+    break;
+    case ELE_RELEASE_VIBRATING:
+    {
+      if((MyTick_GetTickMs() - pEle->vibrateBeginTick) * 1000U > (pEle->releaseVibrateDurationUs + 999U))
+      {
+        pEle->status = ELE_RELEASE_DEBOUNCE;
+        pEle->debounceBeginTick = MyTick_GetTickMs();
+      }
+    }
+    break;
+    case ELE_RELEASE_DEBOUNCE:
+      if((MyTick_GetTickMs() - pEle->debounceBeginTick) > VIBRATE_DEBOUNCE_TIME_MS)
+      {
+        pEle->status = ELE_NO_VIBRATING;
+        InfoLog("%s release debounce end: %u", pEle->pStr, MyTick_GetTickMs());
+      }
+      break;
+    default:
+      break;
+  }
+#else
   switch(pEle->status)
   {
     case ELE_NO_VIBRATING:
@@ -1077,8 +1422,11 @@ static void Ele_StatusTask(Ele_Handle_ts *pEle)
     default:
       break;
   }
+#endif
 }
 
+#if (defined(GT_LINA_T1A_H5_PWM) || defined(HAPTIC_V4_PWM))
+#else
 static void Ele_Daemon(void)
 {
 #if (DAEMON_LIMIT_TURN_ON_TIME_MS >= 8)
@@ -1117,6 +1465,7 @@ static void Ele_Daemon(void)
   }
 #endif
 }
+#endif
 
 #if SINGLE_COIL_AT_A_TIME
 static void Ele_OnlyOne(void)

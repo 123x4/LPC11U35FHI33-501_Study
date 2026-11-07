@@ -235,9 +235,18 @@ const unsigned char sensor_reg_init_array[REG_CNT][2] = {
 	{0x12, 0x47},		//fix
 	{0x13, 0x01},		//Filter_Config, for continue conversion mode
 #if (defined(HAPTIC_V4))
-  {0x14, 0x1D},		//LNA_Config0, 16x gain
+#if (defined(HAPTIC_V4_PWM))
+  {0x14, 0x35},		//LNA_Config0, 64x gain
   {0x15, 0x44},		//fix
-  {0x16, 0x00},		//PGA_Config0, 13.2x gain
+  {0x16, 0x04},		//PGA_Config0, 18x gain
+#else
+  //{0x14, 0x1D},		//LNA_Config0, 16x gain
+  //{0x15, 0x44},		//fix
+  //{0x16, 0x00},		//PGA_Config0, 13.2x gain
+  {0x14, 0x35},		//LNA_Config0, 64x gain
+  {0x15, 0x44},		//fix
+  {0x16, 0x04},		//PGA_Config0, 18x gain
+#endif
 #elif (defined(P723_POC))
   {0x14, 0x1D},		//LNA_Config0, 16x gain
   {0x15, 0x44},		//fix
@@ -252,6 +261,10 @@ const unsigned char sensor_reg_init_array[REG_CNT][2] = {
   {0x15, 0x44},		//fix
   {0x16, 0x00},		//PGA_Config0, 13.2x gain
   #endif
+#elif (defined(GT_LINA_T1A_H5))
+  {0x14, 0x35},		//LNA_Config0, 64x gain
+  {0x15, 0x44},		//fix
+  {0x16, 0x04},		//PGA_Config0, 18x gain
 #else
   {0x14, 0x35},		//LNA_Config0, 64x gain
   {0x15, 0x44},		//fix
@@ -553,7 +566,7 @@ UINT32 Button_GetState(void)
 	UINT32 button_port_state = 0;
 	UINT32 button_port0_state=0;
   
-  #if (defined(HAPTIC_V2) || defined (HAPTIC_V3) || defined (HAPTIC_V4) || defined (IRPT_V4) || defined(V4_HALL_HPTIC_V4))
+  #if (defined(HAPTIC_V2) || defined (HAPTIC_V3) || defined (HAPTIC_V4) || defined (IRPT_V4) || defined(V4_HALL_HPTIC_V4) || defined(GT_LINA_T1A_H5))
   button_port0_state = BUTTON_PORT0;
   button_port_state |= Button_Location_Data(button_port0_state,MIDDLE_BUTTON_MASK,MIDDLE_BUTTON_POSITION,MIDDLE_BUTTON_REPORT_BIT);
   button_port_state |= Button_Location_Data(button_port0_state,DPI_CYCLE_BUTTON_MASK,DPI_CYCLE_BUTTON_POSITION,DPI_CYCLE_BUTTON_REPORT_BIT);
@@ -689,7 +702,8 @@ BOOL Button_Scan(void)
 			}
 		}
 	}
-	
+#if (defined(DISABLE_K4_K5_KEY))
+#else
 	for(i = 5; i <= 6; i++)
 	{
 		if((button ^ buttonScan_stru.scan_result_cur) & (0x01 << i))
@@ -739,7 +753,7 @@ BOOL Button_Scan(void)
 			}
 		}
 	}
-	
+#endif
 	for(i = 9; i <= 9; i++)
 	{
 		if((button ^ buttonScan_stru.scan_result_cur) & (0x01 << i))
@@ -786,12 +800,39 @@ BOOL Button_Scan(void)
 
 void Hall_CLK_Command_SET(unsigned short high_delay, unsigned short low_delay)
 {
+#if (defined(GT_LINA_T1A_H5))
+  	uint32_t reg;
+	
+	NVIC_DisableIRQ(USB_IRQn);
+//	NVIC_DisableIRQ(TIMER_16_0_IRQn);
+	reg = LPC_IOCON->PIO1_15;//	&= ~0x07 ;							//Select GPIO0_10 To CLK0
+
+	reg &= ~0x07;
+	reg |= 0x00;
+	LPC_IOCON->PIO1_15 = reg;	
+	DrvGPIOOutput(1,15,1) ;
+
+	//nsAPI_SSP_Delay1us(high_delay);
+	CT16B1_DelayUs(high_delay);
+
+	DrvGPIOOutput(1,15,0) ;
+
+	//nsAPI_SSP_Delay1us(low_delay);
+	CT16B1_DelayUs(low_delay);
+  reg = LPC_IOCON->PIO1_15;//	&= ~0x07 ;							//Select GPIO0_10 To CLK0
+	reg &= ~0x07;
+	reg |= 0x03;
+	LPC_IOCON->PIO1_15 = reg;
+	
+	NVIC_EnableIRQ(USB_IRQn);
+//	NVIC_DisableIRQ(TIMER_16_0_IRQn);
+#else
 	uint32_t reg;
 	
 	NVIC_DisableIRQ(USB_IRQn);
 //	NVIC_DisableIRQ(TIMER_16_0_IRQn);
-	
 	reg = LPC_IOCON->SWCLK_PIO0_10;//	&= ~0x07 ;							//Select GPIO0_10 To CLK0
+
 	reg &= ~0x07;
 	reg |= 0x01;
 	LPC_IOCON->SWCLK_PIO0_10 = reg;	
@@ -811,6 +852,7 @@ void Hall_CLK_Command_SET(unsigned short high_delay, unsigned short low_delay)
 	
 	NVIC_EnableIRQ(USB_IRQn);
 //	NVIC_DisableIRQ(TIMER_16_0_IRQn);
+#endif
 }
 
 

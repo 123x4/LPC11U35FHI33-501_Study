@@ -44,6 +44,8 @@ typedef enum {
   CMD_SAVE_CONFIG = 0x04,
   CMD_GET_DEBUG = 0x05,
   CMD_SET_DEBUG = 0x06,
+  CMD_GET_MFG = 0x07,
+  CMD_SET_MFG = 0x08,
 }CommandList_te;
 
 typedef enum{
@@ -54,7 +56,7 @@ typedef enum{
 /*********************INFO SubCommand******************************************/
 typedef enum {
   INFO_RESERVE_0X00 = 0x00,
-  INFO_ALL = 0xFF,
+  INFO_RESERVE_0XFF = 0xFF,
   INFO_HALL_RAW = 0x01,
   INFO_HALL_SEGMENT = 0x02,
   INFO_COIL = 0x03,
@@ -77,21 +79,25 @@ typedef struct __attribute__((packed)) { /* 6bytes */
   uint16_t wCoilVoltageMv2;
 }CoilInfo_ts;
 
+/*
 typedef struct __attribute__((packed)) {
   HallRawInfo_ts xRawInfo;
   HallSegmentInfo_ts xSegmentInfo;
   CoilInfo_ts xCoilInfo;
 }AllInfo_ts;
+*/
 
 /*********************CONFIG SubCommand****************************************/
 typedef enum {
   CFG_RESERVE_0X00 = 0x00,
-  CFG_ALL = 0xFF,
+  CFG_RESERVE_0XFF = 0xFF,
   CFG_RAPID_TRIGGER = 0x01,
   CFG_COIL = 0x02,
   CFG_COIL_RELEASE = 0x03,
   CFG_COIL_BRAKE = 0x04,
   CFG_COIL_BRAKE_REL = 0x05,
+  CFG_COIL_DRIVE_MODE = 0x06,
+  CFG_COIL_PWM = 0x07,
 }ConfigList_te;
 
 typedef struct __attribute__((packed)) {/* 8bytes */
@@ -131,7 +137,7 @@ typedef struct __attribute__((packed)) {/* 4bytes*/
   uint16_t wCoilOnTimeUs;
 }CoilReleaseConfig_ts;
 
-typedef struct __attribute__((packed)) {/* 4bytes*/
+typedef struct __attribute__((packed)) {/* 6bytes*/
   uint8_t bReserve;
   uint8_t bmEnableMask;
   /* bmEnableMask:
@@ -143,7 +149,7 @@ typedef struct __attribute__((packed)) {/* 4bytes*/
   uint16_t wBrakeDurUs; //duration
 }CoilBrakeConfig_ts;
 
-typedef struct __attribute__((packed)) {/* 4bytes*/
+typedef struct __attribute__((packed)) {/* 6bytes*/
   uint8_t bReserve;
   uint8_t bmEnableMask;
   /* bmEnableMask:
@@ -155,18 +161,25 @@ typedef struct __attribute__((packed)) {/* 4bytes*/
   uint16_t wBrakeDurUs; //duration
 }CoilBrakeRelConfig_ts;
 
+typedef struct __attribute__((packed)) {/* 1bytes*/
+  uint8_t bDriveMode;        //0: level    1: pwm
+}CoilDriveModeConfig_ts;
+
+
+
+/*
 typedef struct __attribute__((packed)) {
   RapidTriggerConfig_ts xRtCfg; 
   CoilConfig_ts xCoilCfg;
   CoilReleaseConfig_ts xCoilReleaseCfg;
   CoilBrakeConfig_ts xCoilBrakeCfg;
   CoilBrakeRelConfig_ts xCoilBrakeRelCfg;
-}AllConfig_ts;
+}AllConfig_ts;*/
 
 /*********************DEBUG SubCommand*****************************************/
 typedef enum {
   DEBUG_RESERVE_0X00 = 0x00,
-  DEBUG_ALL = 0xFF,
+  DEBUG_RESERVE_0XFF = 0xFF,
   DEBUG_COIL = 0x01,
 }DebugList_te;
 
@@ -175,6 +188,18 @@ typedef struct __attribute__((packed)) {/* 4bytes*/
   uint8_t bAutoVibrationEn;
   uint16_t wAutoVibTrigPeriodMs;
 }CoilDebug_ts;
+
+/*********************MFG SubCommand*****************************************/
+typedef enum {
+  MFG_RESERVE_0X00 = 0x00,
+  MFG_RESERVE_0XFF = 0xFF,
+  MFG_ALL = 0xFF,
+  MFG_VIB_ZERO_POINT = 0x01,
+}MfgList_te;
+
+typedef struct __attribute__((packed)) {/* 2bytes*/
+  uint16_t wZeroPoint;
+}ZeroPointMfg_ts;
 
 
 #endif /* __my_protocol_common_h__ */
