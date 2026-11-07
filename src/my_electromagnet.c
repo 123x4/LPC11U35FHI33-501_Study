@@ -8,6 +8,7 @@
 *******************************************************************************/
 /* 1. include section *********************************************************/
 #include "my_electromagnet.h"
+#include "my_protocol_mouse.h"
 #include "string.h"
 #include "Timer.h"
 #include "my_board.h"
@@ -293,7 +294,6 @@ static WaveformInfo_ts wfTri = {
   .pWfData = wfTriTbl,
   .wfDataLen = sizeof(wfTriTbl) / sizeof(wfTriTbl[0]),
 };
-#else
 /*
 static const uint8_t wfCustomTbl[100] = {
      52, 53, 54, 55, 56, 57, 58, 59, 60, 61, //0
@@ -309,6 +309,7 @@ static const uint8_t wfCustomTbl[100] = {
 };
 
 */
+/*
 static const uint8_t wfCustomTbl[100] = {
      60, 61, 62, 62, 63, 64, 65, 66, 67, 67, //0
      68, 69, 70, 71, 72, 72, 73, 74, 75, 76, //1
@@ -321,13 +322,35 @@ static const uint8_t wfCustomTbl[100] = {
      76, 75, 74, 73, 72, 72, 71, 70, 69, 68, //8
      67, 67, 66, 65, 64, 63, 62, 62, 61, 60, //9
 };
+*/
+static const uint8_t wfCustomTbl[100] = {
+     43, 44, 46, 47, 49, 50, 52, 53, 54, 56, //0
+     57, 59, 60, 61, 63, 64, 66, 67, 69, 70, //1
+     71, 73, 74, 76, 77, 79, 80, 81, 83, 84, //2
+     86, 87, 88, 90, 91, 93, 94, 96, 97, 98, //3
+    100,100,100,100,100,100,100,100,100,100, //4
+    100,100,100,100,100,100,100,100,100,100, //5
+     98, 97, 96, 94, 93, 91, 90, 88, 87, 86, //6
+     84, 83, 81, 80, 79, 77, 76, 74, 73, 71, //7
+     70, 69, 67, 66, 64, 63, 61, 60, 59, 57, //8
+     56, 54, 53, 52, 50, 49, 47, 46, 44, 43, //9
+};
 static WaveformInfo_ts wfCustom = {
   .pWfData = wfCustomTbl,
   .wfDataLen = sizeof(wfCustomTbl) / sizeof(wfCustomTbl[0]),
 };
 #endif
-static WaveformInfo_ts *pLeftWf = &wfCustom;
-static WaveformInfo_ts *pRightWf = &wfCustom;
+static const uint8_t wfHighTbl[] = {100};
+static WaveformInfo_ts wfHigh = {
+  .pWfData = wfHighTbl,
+  .wfDataLen = sizeof(wfHighTbl) / sizeof(wfHighTbl[0]),
+};
+static WaveformInfo_ts wfCustom = {0};
+
+static WaveformInfo_ts *pLeftWf = &wfHigh;
+static WaveformInfo_ts *pRightWf = &wfHigh;
+
+
 #endif
 
 
@@ -999,7 +1022,18 @@ void Ele_LeftKeyPressProcess(void)
     wfPeriodUs = Ele_CalculateDuration(ELE_POS_LEFT, nowHallSegment[0], leftEle.pressVibrateDurationUs);
     leftEle.status = ELE_PRESS_VIBRATING;
     leftEle.vibrateBeginTick = MyTick_GetTickMs();
+    if(Config_GetCoilDriveMode())
+    {
+      wfCustom.pWfData = Config_GetPwmTable();
+      wfCustom.wfDataLen = 100;
+      pLeftWf = &wfCustom;
+    }
+    else
+    {
+      pLeftWf = &wfHigh;
+    }
     MyWaveform_StartGenerate(CHANNEL_0, pLeftWf, wfPeriodUs, 1);
+
 #else
     #if BRAKE_FUNC_ENABLE
     leftEle.status = ELE_PRESS_VIBRATING;
@@ -1050,6 +1084,16 @@ void Ele_LeftKeyReleaseProcess(void)
     wfPeriodUs = Ele_CalculateDuration(ELE_POS_LEFT, nowHallSegment[0], leftEle.releaseVibrateDurationUs);
     leftEle.status = ELE_RELEASE_VIBRATING;
     leftEle.vibrateBeginTick = MyTick_GetTickMs();
+    if(Config_GetCoilDriveMode())
+    {
+      wfCustom.pWfData = Config_GetPwmTable();
+      wfCustom.wfDataLen = 100;
+      pLeftWf = &wfCustom;
+    }
+    else
+    {
+      pLeftWf = &wfHigh;
+    }
     MyWaveform_StartGenerate(CHANNEL_0, pLeftWf, wfPeriodUs, 1);
 #else
     #if BRAKE_FUNC_ENABLE
@@ -1101,6 +1145,16 @@ void Ele_RightKeyPressProcess(void)
      wfPeriodUs = Ele_CalculateDuration(ELE_POS_RIGHT, nowHallSegment[1], rightEle.pressVibrateDurationUs);
      rightEle.status = ELE_PRESS_VIBRATING;
      rightEle.vibrateBeginTick = MyTick_GetTickMs();
+     if(Config_GetCoilDriveMode())
+     {
+        wfCustom.pWfData = Config_GetPwmTable();
+        wfCustom.wfDataLen = 100;
+        pRightWf = &wfCustom;
+     }
+     else
+     {
+        pRightWf = &wfHigh;
+     }
      MyWaveform_StartGenerate(CHANNEL_1, pRightWf, wfPeriodUs, 1);
 #else
     #if BRAKE_FUNC_ENABLE
@@ -1151,6 +1205,16 @@ void Ele_RightKeyReleaseProcess(void)
     wfPeriodUs = Ele_CalculateDuration(ELE_POS_RIGHT,nowHallSegment[1], rightEle.releaseVibrateDurationUs);
     rightEle.status = ELE_RELEASE_VIBRATING;
     rightEle.vibrateBeginTick = MyTick_GetTickMs();
+    if(Config_GetCoilDriveMode())
+    {
+       wfCustom.pWfData = Config_GetPwmTable();
+       wfCustom.wfDataLen = 100;
+       pRightWf = &wfCustom;
+    }
+    else
+    {
+       pRightWf = &wfHigh;
+    }
     MyWaveform_StartGenerate(CHANNEL_1, pRightWf, wfPeriodUs, 1);
 #else
     #if BRAKE_FUNC_ENABLE

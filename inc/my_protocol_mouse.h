@@ -26,6 +26,9 @@
 //extern AllConfig_ts *pxgAllConfig;
 
 /**************Function Declaration********************************************/
+uint8_t* Config_GetPwmTable(void);
+uint8_t Config_GetCoilDriveMode(void);
+
 void Hall_SyncParam(uint8_t index, HallRawInfo_ts *pxRawInfo, HallSegmentInfo_ts *pxSegInfo);
 void Task_ParamGuard(void);
 void Param_Init(void);

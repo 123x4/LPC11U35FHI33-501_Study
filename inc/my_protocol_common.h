@@ -162,7 +162,7 @@ typedef struct __attribute__((packed)) {/* 6bytes*/
 }CoilBrakeRelConfig_ts;
 
 typedef struct __attribute__((packed)) {/* 1bytes*/
-  uint8_t bDriveMode;        //0: unknown;  1: level    2: pwm
+  uint8_t bDriveMode;        //0: level    1: pwm
 }CoilDriveModeConfig_ts;
 
 

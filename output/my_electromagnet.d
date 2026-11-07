@@ -24,7 +24,10 @@
 .\output\my_electromagnet.o: .\inc\hiduser.h
 .\output\my_electromagnet.o: C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
 .\output\my_electromagnet.o: .\inc\Led_Effect_H\test.h
+.\output\my_electromagnet.o: .\inc\my_protocol_mouse.h
 .\output\my_electromagnet.o: C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
+.\output\my_electromagnet.o: .\inc\usbhw.h
+.\output\my_electromagnet.o: .\inc\usbcfg.h
 .\output\my_electromagnet.o: .\inc\Timer.h
 .\output\my_electromagnet.o: .\inc\Led_Effect_H\led1.h
 .\output\my_electromagnet.o: .\inc\LedControl.h

@@ -27,8 +27,7 @@ typedef enum
 #define DEFAULT_CFG_BRAKE_EN              0   //0: diable, 1: enable
 #define DEFAULT_CFG_BRAKE_DELAY_US        10  //10us
 #define DEFAULT_CFG_BRAKE_DURATION_US     10  //10us
-#define DEFAULT_CFG_PRESS_DRIVE_MODE      1   //false(0): level   true(1): waveform
-#define DEFAULT_CFG_RELEASE_DRIVE_MODE    1   //false(0): level   true(1): waveform
+#define DEFAULT_CFG_DRIVE_MODE            0   //false: level   true: pwm
 
 #define USE_HALL_VALUE_DURING_VIBRATION   0
 #define PUSH_VIBRATING_HALL_VALUE_TO_GUI  0

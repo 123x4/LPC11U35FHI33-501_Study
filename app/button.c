@@ -702,7 +702,8 @@ BOOL Button_Scan(void)
 			}
 		}
 	}
-	
+#if (defined(DISABLE_K4_K5_KEY))
+#else
 	for(i = 5; i <= 6; i++)
 	{
 		if((button ^ buttonScan_stru.scan_result_cur) & (0x01 << i))
@@ -752,7 +753,7 @@ BOOL Button_Scan(void)
 			}
 		}
 	}
-	
+#endif
 	for(i = 9; i <= 9; i++)
 	{
 		if((button ^ buttonScan_stru.scan_result_cur) & (0x01 << i))

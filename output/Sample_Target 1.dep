@@ -26,7 +26,7 @@ I (.\inc\usbcfg.h)(0x6A704FED)
 I (.\inc\usbcore.h)(0x6A704FED)
 I (.\inc\gloab.h)(0x6A704FED)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x5E8E3CC2)
-I (.\inc\my_board.h)(0x6AE93A58)
+I (.\inc\my_board.h)(0x6AEADCB7)
 I (.\inc\device.h)(0x6A704FED)
 F (.\src\I2C.c)(0x6A704FED)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\RV31\INC-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\CMSIS\Include-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="543"-o .\output\i2c.o --omf_browse .\output\i2c.crf --depend .\output\i2c.d)
 I (src\../inc/LPC11Uxx.h)(0x6A704FED)
@@ -64,7 +64,7 @@ I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x5E8E3CC
 I (src\../inc/SPI.h)(0x6A704FED)
 I (src\../inc/../inc/led.h)(0x6A704FED)
 I (src\../inc/optical_3389.h)(0x6A704FED)
-I (.\inc\my_board.h)(0x6AE93A58)
+I (.\inc\my_board.h)(0x6AEADCB7)
 F (.\src\Timer.c)(0x6A704FED)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\RV31\INC-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\CMSIS\Include-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="543"-o .\output\timer.o --omf_browse .\output\timer.crf --depend .\output\timer.d)
 I (src\../inc/LPC11Uxx.h)(0x6A704FED)
 I (src\../inc/core_cm0.h)(0x6A704FED)
@@ -209,21 +209,21 @@ I (.\inc\Led_Effect_H\Production_line_test.h)(0x6A704FED)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\string.h)(0x5E8E3CC2)
 I (.\inc\Timer.h)(0x6A704FED)
 I (.\inc\gpio.h)(0x6A704FED)
-I (.\inc\my_electromagnet.h)(0x6AE4628D)
+I (.\inc\my_electromagnet.h)(0x6AE97785)
 I (.\inc\LPC11Uxx.h)(0x6A704FED)
 I (.\inc\core_cm0.h)(0x6A704FED)
 I (.\inc\core_cmInstr.h)(0x6A704FED)
 I (.\inc\core_cmFunc.h)(0x6A704FED)
 I (.\inc\system_LPC11Uxx.h)(0x6A704FED)
-I (.\inc\my_debug.h)(0x6AE7E9BD)
-I (.\inc\my_board.h)(0x6AE93A58)
+I (.\inc\my_debug.h)(0x6AEADCCC)
+I (.\inc\my_board.h)(0x6AEADCB7)
 I (.\inc\my_tick.h)(0x6A704FED)
-I (.\inc\my_protocol_common.h)(0x6AE863DE)
+I (.\inc\my_protocol_common.h)(0x6AEAC632)
 I (.\inc\my_protocol.h)(0x6A704FED)
 I (.\inc\my_misc.h)(0x6AE7EBA8)
 I (.\inc\my_hallkey_func.h)(0x6A8EC82E)
 I (.\inc\button.h)(0x6AD6D16A)
-I (.\inc\my_protocol_mouse.h)(0x6AE86217)
+I (.\inc\my_protocol_mouse.h)(0x6AE972C4)
 I (.\inc\usbhw.h)(0x6A704FED)
 I (.\inc\usbcfg.h)(0x6A704FED)
 F (.\src\macro.c)(0x6A704FED)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\RV31\INC-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\CMSIS\Include-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="543"-o .\output\macro.o --omf_browse .\output\macro.crf --depend .\output\macro.d)
@@ -295,7 +295,7 @@ I (.\inc\../inc/core_cm0.h)(0x6A704FED)
 I (.\inc\core_cmInstr.h)(0x6A704FED)
 I (.\inc\core_cmFunc.h)(0x6A704FED)
 I (.\inc\../inc/system_LPC11Uxx.h)(0x6A704FED)
-I (.\inc\my_board.h)(0x6AE93A58)
+I (.\inc\my_board.h)(0x6AEADCB7)
 I (.\inc\usbuser.h)(0x6A704FED)
 I (.\inc\pc_communicate.h)(0x6A704FED)
 I (.\inc\optical_3389.h)(0x6A704FED)
@@ -318,7 +318,7 @@ I (.\inc\usb.h)(0x6A704FED)
 I (.\inc\hiduser.h)(0x6A704FED)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x5E8E3CC2)
 I (.\inc\Led_Effect_H\test.h)(0x6A704FED)
-I (.\inc\my_board.h)(0x6AE93A58)
+I (.\inc\my_board.h)(0x6AEADCB7)
 F (.\src\eeprom.c)(0x6A704FED)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\RV31\INC-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\CMSIS\Include-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="543"-o .\output\eeprom.o --omf_browse .\output\eeprom.crf --depend .\output\eeprom.d)
 I (.\inc\eeprom.h)(0x6A704FED)
 I (.\inc\gloab.h)(0x6A704FED)
@@ -372,16 +372,16 @@ F (.\src\my_queue.c)(0x6A704FED)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --
 I (.\inc\my_queue.h)(0x6A704FED)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdint.h)(0x5E8E3CC2)
 F (.\src\my_debug.c)(0x6A704FED)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\RV31\INC-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\CMSIS\Include-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="543"-o .\output\my_debug.o --omf_browse .\output\my_debug.crf --depend .\output\my_debug.d)
-I (.\inc\my_debug.h)(0x6AE7E9BD)
+I (.\inc\my_debug.h)(0x6AEADCCC)
 I (.\inc\LPC11Uxx.h)(0x6A704FED)
 I (.\inc\core_cm0.h)(0x6A704FED)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdint.h)(0x5E8E3CC2)
 I (.\inc\core_cmInstr.h)(0x6A704FED)
 I (.\inc\core_cmFunc.h)(0x6A704FED)
 I (.\inc\system_LPC11Uxx.h)(0x6A704FED)
-I (.\inc\my_board.h)(0x6AE93A58)
-F (.\src\my_electromagnet.c)(0x6AE861FE)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\RV31\INC-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\CMSIS\Include-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="543"-o .\output\my_electromagnet.o --omf_browse .\output\my_electromagnet.crf --depend .\output\my_electromagnet.d)
-I (.\inc\my_electromagnet.h)(0x6AE4628D)
+I (.\inc\my_board.h)(0x6AEADCB7)
+F (.\src\my_electromagnet.c)(0x6AEA81CD)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\RV31\INC-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\CMSIS\Include-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="543"-o .\output\my_electromagnet.o --omf_browse .\output\my_electromagnet.crf --depend .\output\my_electromagnet.d)
+I (.\inc\my_electromagnet.h)(0x6AE97785)
 I (.\inc\LPC11Uxx.h)(0x6A704FED)
 I (.\inc\core_cm0.h)(0x6A704FED)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdint.h)(0x5E8E3CC2)
@@ -389,10 +389,10 @@ I (.\inc\core_cmInstr.h)(0x6A704FED)
 I (.\inc\core_cmFunc.h)(0x6A704FED)
 I (.\inc\system_LPC11Uxx.h)(0x6A704FED)
 I (.\inc\GPIO.h)(0x6A704FED)
-I (.\inc\my_debug.h)(0x6AE7E9BD)
-I (.\inc\my_board.h)(0x6AE93A58)
+I (.\inc\my_debug.h)(0x6AEADCCC)
+I (.\inc\my_board.h)(0x6AEADCB7)
 I (.\inc\my_tick.h)(0x6A704FED)
-I (.\inc\my_protocol_common.h)(0x6AE863DE)
+I (.\inc\my_protocol_common.h)(0x6AEAC632)
 I (.\inc\my_protocol.h)(0x6A704FED)
 I (.\inc\my_misc.h)(0x6AE7EBA8)
 I (.\inc\my_hallkey_func.h)(0x6A8EC82E)
@@ -405,7 +405,10 @@ I (.\inc\usb.h)(0x6A704FED)
 I (.\inc\hiduser.h)(0x6A704FED)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x5E8E3CC2)
 I (.\inc\Led_Effect_H\test.h)(0x6A704FED)
+I (.\inc\my_protocol_mouse.h)(0x6AE972C4)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\string.h)(0x5E8E3CC2)
+I (.\inc\usbhw.h)(0x6A704FED)
+I (.\inc\usbcfg.h)(0x6A704FED)
 I (.\inc\Timer.h)(0x6A704FED)
 I (.\inc\Led_Effect_H\led1.h)(0x6A704FED)
 I (.\inc\LedControl.h)(0x6A704FED)
@@ -434,23 +437,23 @@ I (.\inc\usb.h)(0x6A704FED)
 I (.\inc\hiduser.h)(0x6A704FED)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x5E8E3CC2)
 I (.\inc\Led_Effect_H\test.h)(0x6A704FED)
-I (.\inc\my_board.h)(0x6AE93A58)
-I (.\inc\my_protocol_common.h)(0x6AE863DE)
+I (.\inc\my_board.h)(0x6AEADCB7)
+I (.\inc\my_protocol_common.h)(0x6AEAC632)
 I (.\inc\my_protocol.h)(0x6A704FED)
-I (.\inc\my_debug.h)(0x6AE7E9BD)
+I (.\inc\my_debug.h)(0x6AEADCCC)
 I (.\inc\my_tick.h)(0x6A704FED)
-I (.\inc\my_electromagnet.h)(0x6AE4628D)
+I (.\inc\my_electromagnet.h)(0x6AE97785)
 I (.\inc\GPIO.h)(0x6A704FED)
-I (.\inc\my_protocol_mouse.h)(0x6AE86217)
+I (.\inc\my_protocol_mouse.h)(0x6AE972C4)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\string.h)(0x5E8E3CC2)
 I (.\inc\usbhw.h)(0x6A704FED)
 I (.\inc\usbcfg.h)(0x6A704FED)
 F (.\src\my_protocol.c)(0x6A704FED)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\RV31\INC-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\CMSIS\Include-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="543"-o .\output\my_protocol.o --omf_browse .\output\my_protocol.crf --depend .\output\my_protocol.d)
 I (.\inc\my_protocol.h)(0x6A704FED)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdint.h)(0x5E8E3CC2)
-F (.\src\my_protocol_mouse.c)(0x6AE87C07)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\RV31\INC-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\CMSIS\Include-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="543"-o .\output\my_protocol_mouse.o --omf_browse .\output\my_protocol_mouse.crf --depend .\output\my_protocol_mouse.d)
-I (.\inc\my_protocol_mouse.h)(0x6AE86217)
-I (.\inc\my_protocol_common.h)(0x6AE863DE)
+F (.\src\my_protocol_mouse.c)(0x6AEACF6A)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\RV31\INC-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\CMSIS\Include-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="543"-o .\output\my_protocol_mouse.o --omf_browse .\output\my_protocol_mouse.crf --depend .\output\my_protocol_mouse.d)
+I (.\inc\my_protocol_mouse.h)(0x6AE972C4)
+I (.\inc\my_protocol_common.h)(0x6AEAC632)
 I (.\inc\my_protocol.h)(0x6A704FED)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdint.h)(0x5E8E3CC2)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\string.h)(0x5E8E3CC2)
@@ -460,13 +463,13 @@ I (.\inc\Usb.h)(0x6A704FED)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x5E8E3CC2)
 I (.\inc\hiduser.h)(0x6A704FED)
 I (.\inc\usbcfg.h)(0x6A704FED)
-I (.\inc\my_debug.h)(0x6AE7E9BD)
+I (.\inc\my_debug.h)(0x6AEADCCC)
 I (.\inc\LPC11Uxx.h)(0x6A704FED)
 I (.\inc\core_cm0.h)(0x6A704FED)
 I (.\inc\core_cmInstr.h)(0x6A704FED)
 I (.\inc\core_cmFunc.h)(0x6A704FED)
 I (.\inc\system_LPC11Uxx.h)(0x6A704FED)
-I (.\inc\my_board.h)(0x6AE93A58)
+I (.\inc\my_board.h)(0x6AEADCB7)
 I (.\inc\IAP_CMD.h)(0x6A704FED)
 I (.\inc\OSC.h)(0x6A704FED)
 I (.\inc\my_misc.h)(0x6AE7EBA8)
@@ -477,7 +480,7 @@ I (.\inc\gloab.h)(0x6A704FED)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x5E8E3CC2)
 I (.\inc\Led_Effect_H\test.h)(0x6A704FED)
 I (.\inc\my_tick.h)(0x6A704FED)
-I (.\inc\my_electromagnet.h)(0x6AE4628D)
+I (.\inc\my_electromagnet.h)(0x6AE97785)
 I (.\inc\GPIO.h)(0x6A704FED)
 I (.\inc\operation_flash.h)(0x6A704FED)
 I (.\inc\gtech_flash.h)(0x6A704FED)
@@ -493,47 +496,24 @@ I (.\inc\macro.h)(0x6A704FED)
 F (.\src\TI_DRV8833.c)(0x6A8BF925)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\RV31\INC-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\CMSIS\Include-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="543"-o .\output\ti_drv8833.o --omf_browse .\output\ti_drv8833.crf --depend .\output\ti_drv8833.d)
 I (.\inc\TI_DRV8833.h)(0x6A8BFC58)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdint.h)(0x5E8E3CC2)
-I (.\inc\my_board.h)(0x6AE93A58)
+I (.\inc\my_board.h)(0x6AEADCB7)
 I (.\inc\LPC11Uxx.h)(0x6A704FED)
 I (.\inc\core_cm0.h)(0x6A704FED)
 I (.\inc\core_cmInstr.h)(0x6A704FED)
 I (.\inc\core_cmFunc.h)(0x6A704FED)
 I (.\inc\system_LPC11Uxx.h)(0x6A704FED)
 F (.\src\PAW3950.c)(0x6AD72BA1)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\RV31\INC-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\CMSIS\Include-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="543"-o .\output\paw3950.o --omf_browse .\output\paw3950.crf --depend .\output\paw3950.d)
-I (.\inc\my_board.h)(0x6AE93A58)
+I (.\inc\my_board.h)(0x6AEADCB7)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdint.h)(0x5E8E3CC2)
 I (.\inc\LPC11Uxx.h)(0x6A704FED)
 I (.\inc\core_cm0.h)(0x6A704FED)
 I (.\inc\core_cmInstr.h)(0x6A704FED)
 I (.\inc\core_cmFunc.h)(0x6A704FED)
 I (.\inc\system_LPC11Uxx.h)(0x6A704FED)
-I (.\inc\PAW3950.h)(0x6AD6D16A)
-I (.\inc\GPIO.h)(0x6A704FED)
-I (.\inc\my_tick.h)(0x6A704FED)
-I (.\inc\my_debug.h)(0x6AE7E9BD)
-I (.\inc\SPI.h)(0x6A704FED)
-I (.\inc\../inc/led.h)(0x6A704FED)
-I (.\inc\../inc/gloab.h)(0x6A704FED)
-I (.\inc\../inc/usb.h)(0x6A704FED)
-I (.\inc\../inc/Type.h)(0x6A704FED)
-I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x5E8E3CC2)
-I (.\inc\../inc/hiduser.h)(0x6A704FED)
-I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x5E8E3CC2)
-I (.\inc\Timer.h)(0x6A704FED)
-I (.\inc\Led_Effect_H\led1.h)(0x6A704FED)
-I (.\inc\device.h)(0x6A704FED)
-I (.\inc\LedControl.h)(0x6A704FED)
-I (.\inc\Led_Effect_H\custom.h)(0x6A704FED)
-I (.\inc\keydef.h)(0x6A704FED)
-I (.\inc\Led_Effect_H\led_effect.h)(0x6A704FED)
-I (.\inc\Led_Effect_H\led_effect_group_code.h)(0x6A704FED)
-I (.\inc\Led_Effect_H\external_configuration.h)(0x6A704FED)
-I (.\inc\Led_Effect_H\ram_malloc.h)(0x6A704FED)
-I (.\inc\Led_Effect_H\test.h)(0x6A704FED)
 F (.\src\my_adc.c)(0x6A8EC738)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\RV31\INC-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\CMSIS\Include-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="543"-o .\output\my_adc.o --omf_browse .\output\my_adc.crf --depend .\output\my_adc.d)
 I (.\inc\my_adc.h)(0x6A8D5AEC)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdint.h)(0x5E8E3CC2)
-I (.\inc\my_board.h)(0x6AE93A58)
+I (.\inc\my_board.h)(0x6AEADCB7)
 I (.\inc\LPC11Uxx.h)(0x6A704FED)
 I (.\inc\core_cm0.h)(0x6A704FED)
 I (.\inc\core_cmInstr.h)(0x6A704FED)
@@ -558,11 +538,11 @@ I (.\inc\Led_Effect_H\external_configuration.h)(0x6A704FED)
 I (.\inc\Led_Effect_H\ram_malloc.h)(0x6A704FED)
 I (.\inc\Led_Effect_H\test.h)(0x6A704FED)
 I (.\inc\my_tick.h)(0x6A704FED)
-I (.\inc\my_debug.h)(0x6AE7E9BD)
+I (.\inc\my_debug.h)(0x6AEADCCC)
 F (.\src\my_pwm.c)(0x6AE44057)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\RV31\INC-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\CMSIS\Include-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="543"-o .\output\my_pwm.o --omf_browse .\output\my_pwm.crf --depend .\output\my_pwm.d)
 I (.\inc\my_pwm.h)(0x6AE449B3)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdint.h)(0x5E8E3CC2)
-I (.\inc\my_board.h)(0x6AE93A58)
+I (.\inc\my_board.h)(0x6AEADCB7)
 I (.\inc\LPC11Uxx.h)(0x6A704FED)
 I (.\inc\core_cm0.h)(0x6A704FED)
 I (.\inc\core_cmInstr.h)(0x6A704FED)
@@ -572,14 +552,14 @@ I (.\inc\OSC.h)(0x6A704FED)
 F (.\src\my_waveform.c)(0x6AE44042)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\RV31\INC-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\CMSIS\Include-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="543"-o .\output\my_waveform.o --omf_browse .\output\my_waveform.crf --depend .\output\my_waveform.d)
 I (.\inc\my_waveform.h)(0x6AE449B3)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdint.h)(0x5E8E3CC2)
-I (.\inc\my_board.h)(0x6AE93A58)
+I (.\inc\my_board.h)(0x6AEADCB7)
 I (.\inc\LPC11Uxx.h)(0x6A704FED)
 I (.\inc\core_cm0.h)(0x6A704FED)
 I (.\inc\core_cmInstr.h)(0x6A704FED)
 I (.\inc\core_cmFunc.h)(0x6A704FED)
 I (.\inc\system_LPC11Uxx.h)(0x6A704FED)
 I (.\inc\my_pwm.h)(0x6AE449B3)
-I (.\inc\my_debug.h)(0x6AE7E9BD)
+I (.\inc\my_debug.h)(0x6AEADCCC)
 F (.\src\hiduser.c)(0x6A704FED)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\RV31\INC-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\CMSIS\Include-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="543"-o .\output\hiduser.o --omf_browse .\output\hiduser.crf --depend .\output\hiduser.d)
 I (.\inc\type.h)(0x6A704FED)
 I (.\inc\usb.h)(0x6A704FED)
@@ -597,14 +577,14 @@ I (.\inc\hiduser.h)(0x6A704FED)
 I (.\inc\hid.h)(0x6A704FED)
 I (.\inc\usbcfg.h)(0x6A704FED)
 I (.\inc\usbdesc.h)(0x6A704FED)
-I (.\inc\my_debug.h)(0x6AE7E9BD)
+I (.\inc\my_debug.h)(0x6AEADCCC)
 I (.\inc\LPC11Uxx.h)(0x6A704FED)
 I (.\inc\core_cm0.h)(0x6A704FED)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdint.h)(0x5E8E3CC2)
 I (.\inc\core_cmInstr.h)(0x6A704FED)
 I (.\inc\core_cmFunc.h)(0x6A704FED)
 I (.\inc\system_LPC11Uxx.h)(0x6A704FED)
-I (.\inc\my_board.h)(0x6AE93A58)
+I (.\inc\my_board.h)(0x6AEADCB7)
 F (.\src\usbhw.c)(0x6AD6BC38)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\RV31\INC-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\CMSIS\Include-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="543"-o .\output\usbhw.o --omf_browse .\output\usbhw.crf --depend .\output\usbhw.d)
 I (.\inc\LPC11Uxx.h)(0x6A704FED)
 I (.\inc\core_cm0.h)(0x6A704FED)
@@ -636,15 +616,15 @@ I (.\inc\Led_Effect_H\ram_malloc.h)(0x6A704FED)
 I (.\inc\Led_Effect_H\test.h)(0x6A704FED)
 I (.\inc\wnDrv_Pmu.h)(0x6A704FED)
 I (.\inc\button.h)(0x6AD6D16A)
-I (.\inc\my_board.h)(0x6AE93A58)
+I (.\inc\my_board.h)(0x6AEADCB7)
 I (.\inc\GPIO.h)(0x6A704FED)
 I (.\inc\WWDT.h)(0x6A704FED)
 I (.\inc\OSC.h)(0x6A704FED)
 I (.\inc\optical_3325.h)(0x6A704FED)
-I (.\inc\my_electromagnet.h)(0x6AE4628D)
-I (.\inc\my_debug.h)(0x6AE7E9BD)
+I (.\inc\my_electromagnet.h)(0x6AE97785)
+I (.\inc\my_debug.h)(0x6AEADCCC)
 I (.\inc\my_tick.h)(0x6A704FED)
-I (.\inc\my_protocol_common.h)(0x6AE863DE)
+I (.\inc\my_protocol_common.h)(0x6AEAC632)
 I (.\inc\my_protocol.h)(0x6A704FED)
 I (.\inc\my_misc.h)(0x6AE7EBA8)
 I (.\inc\my_hallkey_func.h)(0x6A8EC82E)
@@ -677,7 +657,7 @@ I (.\inc\core_cmInstr.h)(0x6A704FED)
 I (.\inc\core_cmFunc.h)(0x6A704FED)
 I (.\inc\../inc/system_LPC11Uxx.h)(0x6A704FED)
 I (.\inc\Led_Effect_H\test.h)(0x6A704FED)
-I (.\inc\my_board.h)(0x6AE93A58)
+I (.\inc\my_board.h)(0x6AEADCB7)
 I (.\inc\optical_3389.h)(0x6A704FED)
 F (.\src\usb.c)(0x6A704FED)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\RV31\INC-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\CMSIS\Include-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="543"-o .\output\usb.o --omf_browse .\output\usb.crf --depend .\output\usb.d)
 I (.\inc\usb.h)(0x6A704FED)
@@ -701,14 +681,14 @@ I (.\inc\usbcfg.h)(0x6A704FED)
 I (.\inc\usbhw.h)(0x6A704FED)
 I (.\inc\usbcore.h)(0x6A704FED)
 I (.\inc\usbdesc.h)(0x6A704FED)
-I (.\inc\my_debug.h)(0x6AE7E9BD)
+I (.\inc\my_debug.h)(0x6AEADCCC)
 I (.\inc\LPC11Uxx.h)(0x6A704FED)
 I (.\inc\core_cm0.h)(0x6A704FED)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdint.h)(0x5E8E3CC2)
 I (.\inc\core_cmInstr.h)(0x6A704FED)
 I (.\inc\core_cmFunc.h)(0x6A704FED)
 I (.\inc\system_LPC11Uxx.h)(0x6A704FED)
-I (.\inc\my_board.h)(0x6AE93A58)
+I (.\inc\my_board.h)(0x6AEADCB7)
 I (.\inc\usbuser.h)(0x6A704FED)
 I (.\inc\uart.h)(0x6A704FED)
 I (.\inc\hid.h)(0x6A704FED)
@@ -760,7 +740,7 @@ I (.\inc\../inc/core_cm0.h)(0x6A704FED)
 I (.\inc\core_cmInstr.h)(0x6A704FED)
 I (.\inc\core_cmFunc.h)(0x6A704FED)
 I (.\inc\../inc/system_LPC11Uxx.h)(0x6A704FED)
-I (.\inc\my_board.h)(0x6AE93A58)
+I (.\inc\my_board.h)(0x6AEADCB7)
 I (.\inc\gtech_flash.h)(0x6A704FED)
 I (.\inc\operation_flash.h)(0x6A704FED)
 I (.\inc\macro.h)(0x6A704FED)
@@ -774,14 +754,14 @@ I (.\inc\OSC.h)(0x6A704FED)
 I (.\inc\WWDT.h)(0x6A704FED)
 I (.\inc\Led_Effect_H\Production_line_test.h)(0x6A704FED)
 I (.\inc\usbdesc.h)(0x6A704FED)
-I (.\inc\my_debug.h)(0x6AE7E9BD)
-I (.\inc\my_electromagnet.h)(0x6AE4628D)
+I (.\inc\my_debug.h)(0x6AEADCCC)
+I (.\inc\my_electromagnet.h)(0x6AE97785)
 I (.\inc\my_tick.h)(0x6A704FED)
-I (.\inc\my_protocol_common.h)(0x6AE863DE)
+I (.\inc\my_protocol_common.h)(0x6AEAC632)
 I (.\inc\my_protocol.h)(0x6A704FED)
 I (.\inc\my_misc.h)(0x6AE7EBA8)
 I (.\inc\my_hallkey_func.h)(0x6A8EC82E)
-I (.\inc\my_protocol_mouse.h)(0x6AE86217)
+I (.\inc\my_protocol_mouse.h)(0x6AE972C4)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\string.h)(0x5E8E3CC2)
 I (.\inc\PAW3950.h)(0x6AD6D16A)
 I (.\inc\my_adc.h)(0x6A8D5AEC)
@@ -796,7 +776,7 @@ I (app\../inc/../inc/gloab.h)(0x6A704FED)
 I (app\../inc/../inc/usb.h)(0x6A704FED)
 I (app\../inc/../inc/hiduser.h)(0x6A704FED)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x5E8E3CC2)
-I (.\inc\my_board.h)(0x6AE93A58)
+I (.\inc\my_board.h)(0x6AEADCB7)
 I (.\inc\LPC11Uxx.h)(0x6A704FED)
 I (.\inc\core_cm0.h)(0x6A704FED)
 I (.\inc\core_cmInstr.h)(0x6A704FED)
@@ -838,7 +818,7 @@ I (.\inc\system_LPC11Uxx.h)(0x6A704FED)
 I (.\inc\GPIO.h)(0x6A704FED)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\string.h)(0x5E8E3CC2)
 I (.\inc\button.h)(0x6AD6D16A)
-I (.\inc\my_board.h)(0x6AE93A58)
+I (.\inc\my_board.h)(0x6AEADCB7)
 I (.\inc\Led_Effect_H\reaction.h)(0x6A704FED)
 I (.\inc\eeprom.h)(0x6A704FED)
 I (.\inc\timer.h)(0x6A704FED)
@@ -891,7 +871,7 @@ I (.\inc\Led_Effect_H\external_configuration.h)(0x6A704FED)
 I (.\inc\Led_Effect_H\ram_malloc.h)(0x6A704FED)
 I (.\inc\operation_flash.h)(0x6A704FED)
 I (.\inc\gtech_flash.h)(0x6A704FED)
-F (.\app\button.c)(0x6AE7EC57)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\RV31\INC-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\CMSIS\Include-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="543"-o .\output\button.o --omf_browse .\output\button.crf --depend .\output\button.d)
+F (.\app\button.c)(0x6AE94126)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork -I .\inc -I .\inc\Led_Effect_H-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\RV31\INC-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\CMSIS\Include-IC:\Users\GT028615\AppData\Local\Keil_v5\ARM\INC\NXP\LPC11Uxx-D__UVISION_VERSION="543"-o .\output\button.o --omf_browse .\output\button.crf --depend .\output\button.d)
 I (.\inc\button.h)(0x6AD6D16A)
 I (.\inc\../inc/LPC11Uxx.h)(0x6A704FED)
 I (.\inc\../inc/core_cm0.h)(0x6A704FED)
@@ -907,16 +887,16 @@ I (.\inc\usb.h)(0x6A704FED)
 I (.\inc\hiduser.h)(0x6A704FED)
 I (C:\Users\GT028615\AppData\Local\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x5E8E3CC2)
 I (.\inc\Led_Effect_H\test.h)(0x6A704FED)
-I (.\inc\my_board.h)(0x6AE93A58)
+I (.\inc\my_board.h)(0x6AEADCB7)
 I (.\inc\GPIO.h)(0x6A704FED)
 I (.\inc\SPI.h)(0x6A704FED)
 I (.\inc\../inc/led.h)(0x6A704FED)
 I (.\inc\pc_communicate.h)(0x6A704FED)
 I (.\inc\optical_3389.h)(0x6A704FED)
-I (.\inc\my_electromagnet.h)(0x6AE4628D)
-I (.\inc\my_debug.h)(0x6AE7E9BD)
+I (.\inc\my_electromagnet.h)(0x6AE97785)
+I (.\inc\my_debug.h)(0x6AEADCCC)
 I (.\inc\my_tick.h)(0x6A704FED)
-I (.\inc\my_protocol_common.h)(0x6AE863DE)
+I (.\inc\my_protocol_common.h)(0x6AEAC632)
 I (.\inc\my_protocol.h)(0x6A704FED)
 I (.\inc\my_misc.h)(0x6AE7EBA8)
 I (.\inc\my_hallkey_func.h)(0x6A8EC82E)
@@ -955,7 +935,7 @@ I (.\inc\../inc/core_cm0.h)(0x6A704FED)
 I (.\inc\core_cmInstr.h)(0x6A704FED)
 I (.\inc\core_cmFunc.h)(0x6A704FED)
 I (.\inc\../inc/system_LPC11Uxx.h)(0x6A704FED)
-I (.\inc\my_board.h)(0x6AE93A58)
+I (.\inc\my_board.h)(0x6AEADCB7)
 I (.\inc\pc_communicate.h)(0x6A704FED)
 I (.\inc\optical_3389.h)(0x6A704FED)
 I (.\inc\spi.h)(0x6A704FED)

@@ -13,7 +13,7 @@
 #include "my_board.h"
 
 #define MY_MAIN_VERSION 0x0011//product version
-#define DEBUG_VER  1132
+#define DEBUG_VER  1139
 
 /********************************/
 #define MYDEBUG_ENABLE          0

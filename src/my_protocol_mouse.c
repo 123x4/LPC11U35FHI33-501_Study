@@ -16,7 +16,8 @@
 
 #define my_assert(x)    do{if(!(x)){return -1;}}while(0)
 
-#define EEPROM_ADDR_START     0xF00 /*0xF00 ~ 0xFBF, 192Bytes*/
+//#define EEPROM_ADDR_START     0xF00 /*0xF00 ~ 0xFBF, 192Bytes*/
+#define EEPROM_ADDR_START     0xE00 /*0xE00 ~ 0xFBF, 448Bytes*/
 #define EEPROM_ADDR_VERSION   (EEPROM_ADDR_START + 0x00) //4bytes
 #define EEPROM_ADDR_CHECKSUM  (EEPROM_ADDR_START + 0x04) //1bytes
 #define EEPROM_ADDR_PARAM     (EEPROM_ADDR_START + 0x06)
@@ -65,6 +66,8 @@ static uint8_t updateCoilBrakeCfgFlagR = 0;
 static uint8_t updateCoilBrakeRelCfgFlagL = 0;
 static uint8_t updateCoilBrakeRelCfgFlagR = 0;
 static uint8_t updateRtCfgFlag = 0;
+static uint8_t updateCoilDriveModeFlag = 0;
+static uint8_t updateCoilPwmFlag = 0;
 
 
 static uint8_t CalculateChecksum(const uint8_t *pData, uint16_t len)
@@ -95,6 +98,16 @@ void Hall_SyncParam(uint8_t index, HallRawInfo_ts *pxRawInfo, HallSegmentInfo_ts
   
 }
 
+uint8_t* Config_GetPwmTable(void)
+{
+  return &(xgAllParam.gPwmWf[0]);
+}
+uint8_t Config_GetCoilDriveMode(void)
+{
+  return xgAllParam.xDriveMode.bDriveMode;
+}
+
+
 static void Init_CfgParamToRun(void)
 {
   RapidTriggerConfig_ts *pxRapidTriggerCfg = &((pxgAllConfig + ConvertVKeyToArrayIndex(VK_LBUTTON))->xRtCfg);
@@ -124,13 +137,62 @@ static void Init_CfgParamToRun(void)
   
 }
 
+static void ResetDefaultConfig(void)
+{
+  // Debug
+    for(uint8_t i = 0; i < 2; i++)
+    {
+  //    xgAllParam.xInfo[i].xRawInfo.wCurrentRaw = Protocol_ConvertWord(8880 + i);
+  //    xgAllParam.xInfo[i].xRawInfo.wBaselineBottom = Protocol_ConvertWord(12000  + i);
+  //    xgAllParam.xInfo[i].xRawInfo.wBaselineTop = Protocol_ConvertWord(6660 + i);
+  //    xgAllParam.xInfo[i].xSegmentInfo.wCurrentSegmentValue = Protocol_ConvertWord(0 + i);
+      xgAllParam.xInfo[i].xSegmentInfo.wMaxSegmentValue = Protocol_ConvertWord(100);
+      xgAllParam.xInfo[i].xCoilInfo.wCoilVoltageMv0 = Protocol_ConvertWord(12000);
+      xgAllParam.xInfo[i].xCoilInfo.wCoilVoltageMv1 = Protocol_ConvertWord(15000);
+      xgAllParam.xInfo[i].xCoilInfo.wCoilVoltageMv2 = Protocol_ConvertWord(18000);
+      
+      xgAllParam.xConfig[i].xRtCfg.bReserve = Protocol_ConvertWord(0xAA);
+      xgAllParam.xConfig[i].xRtCfg.bmEnableMask = Protocol_ConvertWord((0x01 << 7) | (0x01 << 6) | (0x01 << 5) | (0x01 << 4));
+      
+      xgAllParam.xConfig[i].xRtCfg.wSegmentActuationPoint = Protocol_ConvertWord(DEFAULT_AP);
+      xgAllParam.xConfig[i].xRtCfg.wSegmentRapidTriggerPress = Protocol_ConvertWord(DEFAULT_RTP);
+      xgAllParam.xConfig[i].xRtCfg.wSegmentRapidTriggerRelease = Protocol_ConvertWord(DEFAULT_RTR);
+      
+      xgAllParam.xConfig[i].xCoilCfg.bReserve = Protocol_ConvertWord(0xAA);
+      xgAllParam.xConfig[i].xCoilCfg.bmEnableMask = Protocol_ConvertWord((0x01 << 7));
+      xgAllParam.xConfig[i].xCoilCfg.wCoilOnTimeUs = Protocol_ConvertWord(DEFAULT_CFG_ONTIME_US); //coil press cfg
+      
+      xgAllParam.xConfig[i].xCoilReleaseCfg.bReserve = Protocol_ConvertWord(0xAA);
+      xgAllParam.xConfig[i].xCoilReleaseCfg.bmEnableMask = Protocol_ConvertWord((0x01 << 7));
+      xgAllParam.xConfig[i].xCoilReleaseCfg.wCoilOnTimeUs = Protocol_ConvertWord(DEFAULT_CFG_ONTIME_US); //coil reease cfg
+      
+      xgAllParam.xConfig[i].xCoilBrakeCfg.bReserve = Protocol_ConvertWord(0xAA);
+      xgAllParam.xConfig[i].xCoilBrakeCfg.bmEnableMask = Protocol_ConvertWord(((DEFAULT_CFG_BRAKE_EN & 0x1) << 7)); //Default close
+      xgAllParam.xConfig[i].xCoilBrakeCfg.wBrakeDlyUs = Protocol_ConvertWord(DEFAULT_CFG_BRAKE_DELAY_US);
+      xgAllParam.xConfig[i].xCoilBrakeCfg.wBrakeDurUs = Protocol_ConvertWord(DEFAULT_CFG_BRAKE_DURATION_US);
+      
+      xgAllParam.xConfig[i].xCoilBrakeRelCfg.bReserve = Protocol_ConvertWord(0xAA);
+      xgAllParam.xConfig[i].xCoilBrakeRelCfg.bmEnableMask = Protocol_ConvertWord(((DEFAULT_CFG_BRAKE_EN & 0x1) << 7)); //Default close
+      xgAllParam.xConfig[i].xCoilBrakeRelCfg.wBrakeDlyUs = Protocol_ConvertWord(DEFAULT_CFG_BRAKE_DELAY_US);
+      xgAllParam.xConfig[i].xCoilBrakeRelCfg.wBrakeDurUs = Protocol_ConvertWord(DEFAULT_CFG_BRAKE_DURATION_US);
+      
+    }
+    xgAllParam.xDriveMode.bDriveMode = DEFAULT_CFG_DRIVE_MODE;
+    for(uint8_t i = 0; i < 50; i++)
+    {
+      xgAllParam.gPwmWf[i] = i+51;
+      xgAllParam.gPwmWf[99 - i] = i+51;
+    }
+}
+
 void Task_ParamGuard(void)
 {
   if(updateRtCfgFlag || 
     updateCoilCfgFlagL || updateCoilCfgFlagR || 
     updateCoilReleaseCfgFlagL || updateCoilReleaseCfgFlagR ||
     updateCoilBrakeCfgFlagL || updateCoilBrakeCfgFlagR ||
-    updateCoilBrakeRelCfgFlagL || updateCoilBrakeRelCfgFlagR)
+    updateCoilBrakeRelCfgFlagL || updateCoilBrakeRelCfgFlagR ||
+    updateCoilDriveModeFlag || updateCoilPwmFlag)
   {
     uint8_t sum = 0;
     sum = CalculateChecksum((uint8_t *)(&xgAllParam), sizeof(xgAllParam));
@@ -203,6 +265,16 @@ void Task_ParamGuard(void)
     Ele_UpdateRelBrakeParam(VK_RBUTTON, pxCoilBrakeRelCfg);
   }
   
+  if(updateCoilDriveModeFlag)
+  {
+    updateCoilDriveModeFlag = 0;
+  }
+  if(updateCoilPwmFlag)
+  {
+    updateCoilPwmFlag = 0;
+  }
+  
+  
   
   
   
@@ -211,7 +283,7 @@ void Task_ParamGuard(void)
   if((MyTick_GetTickMs() - tickStamp) >= 10000) // 10 seconds
   {
     tickStamp = MyTick_GetTickMs();
-    InfoLog("sizeof(AllParam_ts): %u, endAddr: %u", sizeof(AllParam_ts), EEPROM_ADDR_START + sizeof(AllParam_ts) - 1); //Do not exceed 0xFBF
+    InfoLog("sizeof(AllParam_ts): %u, startAddr: 0x%X, endAddr: 0x%X", sizeof(AllParam_ts), EEPROM_ADDR_START, EEPROM_ADDR_START + sizeof(AllParam_ts) - 1); //Do not exceed 0xFBF
     InfoLog("OPERATE_FLASH_MAX_SPACE : %u", OPERATE_FLASH_MAX_SPACE);
   
   }
@@ -236,44 +308,7 @@ void Param_Init(void)
   
   if(eepromVer != codeVer || (eepromSum != calSum))
   {
-  // Debug
-    for(uint8_t i = 0; i < 2; i++)
-    {
-  //    xgAllParam.xInfo[i].xRawInfo.wCurrentRaw = Protocol_ConvertWord(8880 + i);
-  //    xgAllParam.xInfo[i].xRawInfo.wBaselineBottom = Protocol_ConvertWord(12000  + i);
-  //    xgAllParam.xInfo[i].xRawInfo.wBaselineTop = Protocol_ConvertWord(6660 + i);
-  //    xgAllParam.xInfo[i].xSegmentInfo.wCurrentSegmentValue = Protocol_ConvertWord(0 + i);
-      xgAllParam.xInfo[i].xSegmentInfo.wMaxSegmentValue = Protocol_ConvertWord(100);
-      xgAllParam.xInfo[i].xCoilInfo.wCoilVoltageMv0 = Protocol_ConvertWord(12000);
-      xgAllParam.xInfo[i].xCoilInfo.wCoilVoltageMv1 = Protocol_ConvertWord(15000);
-      xgAllParam.xInfo[i].xCoilInfo.wCoilVoltageMv2 = Protocol_ConvertWord(18000);
-      
-      xgAllParam.xConfig[i].xRtCfg.bReserve = Protocol_ConvertWord(0xAA);
-      xgAllParam.xConfig[i].xRtCfg.bmEnableMask = Protocol_ConvertWord((0x01 << 7) | (0x01 << 6) | (0x01 << 5) | (0x01 << 4));
-      
-      xgAllParam.xConfig[i].xRtCfg.wSegmentActuationPoint = Protocol_ConvertWord(DEFAULT_AP);
-      xgAllParam.xConfig[i].xRtCfg.wSegmentRapidTriggerPress = Protocol_ConvertWord(DEFAULT_RTP);
-      xgAllParam.xConfig[i].xRtCfg.wSegmentRapidTriggerRelease = Protocol_ConvertWord(DEFAULT_RTR);
-      
-      xgAllParam.xConfig[i].xCoilCfg.bReserve = Protocol_ConvertWord(0xAA);
-      xgAllParam.xConfig[i].xCoilCfg.bmEnableMask = Protocol_ConvertWord((0x01 << 7));
-      xgAllParam.xConfig[i].xCoilCfg.wCoilOnTimeUs = Protocol_ConvertWord(DEFAULT_CFG_ONTIME_US); //coil press cfg
-      
-      xgAllParam.xConfig[i].xCoilReleaseCfg.bReserve = Protocol_ConvertWord(0xAA);
-      xgAllParam.xConfig[i].xCoilReleaseCfg.bmEnableMask = Protocol_ConvertWord((0x01 << 7));
-      xgAllParam.xConfig[i].xCoilReleaseCfg.wCoilOnTimeUs = Protocol_ConvertWord(DEFAULT_CFG_ONTIME_US); //coil reease cfg
-      
-      xgAllParam.xConfig[i].xCoilBrakeCfg.bReserve = Protocol_ConvertWord(0xAA);
-      xgAllParam.xConfig[i].xCoilBrakeCfg.bmEnableMask = Protocol_ConvertWord(((DEFAULT_CFG_BRAKE_EN & 0x1) << 7)); //Default close
-      xgAllParam.xConfig[i].xCoilBrakeCfg.wBrakeDlyUs = Protocol_ConvertWord(DEFAULT_CFG_BRAKE_DELAY_US);
-      xgAllParam.xConfig[i].xCoilBrakeCfg.wBrakeDurUs = Protocol_ConvertWord(DEFAULT_CFG_BRAKE_DURATION_US);
-      
-      xgAllParam.xConfig[i].xCoilBrakeRelCfg.bReserve = Protocol_ConvertWord(0xAA);
-      xgAllParam.xConfig[i].xCoilBrakeRelCfg.bmEnableMask = Protocol_ConvertWord(((DEFAULT_CFG_BRAKE_EN & 0x1) << 7)); //Default close
-      xgAllParam.xConfig[i].xCoilBrakeRelCfg.wBrakeDlyUs = Protocol_ConvertWord(DEFAULT_CFG_BRAKE_DELAY_US);
-      xgAllParam.xConfig[i].xCoilBrakeRelCfg.wBrakeDurUs = Protocol_ConvertWord(DEFAULT_CFG_BRAKE_DURATION_US);
-      
-    }
+    ResetDefaultConfig();
     
     calSum = CalculateChecksum((uint8_t *)(&xgAllParam), sizeof(xgAllParam));
     Chip_EEPROM_Write(EEPROM_ADDR_PARAM, (uint8_t *)(&xgAllParam), sizeof(xgAllParam));
@@ -459,7 +494,7 @@ static int8_t ProcessRequest_CMD_GET_CONFIG(uint8_t subCommand, uint8_t virtualK
   Packet_ts *pxPack = 0;
   PacketHeader_ts *pxPackHeader = 0;
   PayloadHeader_ts *pxPayloadHeader = 0;
-  
+  //allow pData and wDataLen is 0.
   //if(virtualKeyCode != VK_LBUTTON && virtualKeyCode != VK_RBUTTON) {return 0;}
   switch(subCommand)
   {
@@ -848,6 +883,7 @@ static int8_t ProcessRequest_CMD_SET_CONFIG(uint8_t subCommand, uint8_t virtualK
           CoilDriveModeConfig_ts *pxCoilDriveModeCfg = &(xgAllParam.xDriveMode);
           memcpy(pxCoilDriveModeCfg, pData, sizeof(CoilDriveModeConfig_ts));
           statusResponse = STATUS_SUCCESS;
+          updateCoilDriveModeFlag = 1;
           //if(virtualKeyCode == VK_LBUTTON) updateCoilBrakeRelCfgFlagL = 1;
           //if(virtualKeyCode == VK_RBUTTON) updateCoilBrakeRelCfgFlagR = 1;
         }
@@ -886,8 +922,7 @@ static int8_t ProcessRequest_CMD_SET_CONFIG(uint8_t subCommand, uint8_t virtualK
         {
           memcpy(&(xgAllParam.gPwmWf[index]), pValid, validLen);
           statusResponse = STATUS_SUCCESS;
-          //if(virtualKeyCode == VK_LBUTTON) updateCoilBrakeRelCfgFlagL = 1;
-          //if(virtualKeyCode == VK_RBUTTON) updateCoilBrakeRelCfgFlagR = 1;
+          updateCoilPwmFlag = 1;
         }
         else
         {
