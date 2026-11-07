@@ -81,12 +81,29 @@ svg.fig{display:block;width:100%;height:auto;background:var(--panel);border:1px 
 .fb.ok{display:block;border-left:4px solid var(--good)}
 .fb.no{display:block;border-left:4px solid var(--bad)}
 button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+
 .wrap{max-width:1400px}
 .lv{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:.6rem 0}
 .lv div{border:1.5px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--panel)}
 .lv div b{display:block;font-size:1.05rem}
 .lv div.a{border-color:var(--bad)}.lv div.b{border-color:var(--gold)}.lv div.c{border-color:var(--per)}
-input[type=range]{width:min(380px,100%)}
+input[type=range]{width:min(420px,100%)}
+.chg td:first-child{font-family:var(--font-m);font-size:.8rem;white-space:nowrap}
+.tag{display:inline-block;font-size:.72rem;border-radius:4px;padding:0 6px;margin-right:4px;color:var(--bg);background:var(--c,var(--per))}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}
+.nums{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:8px 10px;line-height:1.6;white-space:pre-wrap}
+.nums b{color:var(--bad)}
+.bytes{display:flex;flex-wrap:wrap;gap:3px;margin:.4rem 0}
+.bytes div{border:1.5px solid var(--line);border-radius:5px;padding:2px 6px;text-align:center;background:var(--panel);min-width:3.4em}
+.bytes div b{display:block;font-family:var(--font-m);font-size:.95rem}
+.bytes div span{display:block;font-size:.66rem;color:var(--muted);white-space:nowrap}
+.bytes div.h{border-color:var(--muted)}.bytes div.p{border-color:var(--per)}.bytes div.d{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 8%,var(--panel))}.bytes div.c{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,var(--panel))}
+details.ex{border:1.5px solid var(--per);border-radius:8px;padding:6px 12px;margin:.5rem 0;background:color-mix(in srgb,var(--per) 5%,var(--panel))}
+details.ex summary{cursor:pointer;font-weight:600}
+#dbVars{font-family:var(--font-m);font-size:.78rem;width:100%}
+#dbVars td{padding:2px 6px}
+#dbVars td.ch{background:color-mix(in srgb,var(--gold) 40%,var(--panel));font-weight:700}
+#dbVars tr.g td{background:var(--soft);font-family:var(--font-b);font-weight:700;font-size:.78rem}
 .mwdbg{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:12px;align-items:start;margin-top:.5rem}
 .mwfile{font-family:var(--font-m);font-size:.78rem;color:var(--muted);margin-bottom:2px}
 .mwcode{font-family:var(--font-m);font-size:.8rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px 0;max-height:560px;overflow:auto}
@@ -100,34 +117,39 @@ input[type=range]{width:min(380px,100%)}
 #mwStack span:last-child{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,var(--panel));font-weight:700}
 </style>
 <div class="wrap">
-<div class="eyebrow">T1A 主线 · 第 6 课 · 线圈“咔哒”一下的完整过程 · 代码 src/my_electromagnet.c、src/my_waveform.c、src/my_pwm.c、inc/my_pwm.h（只看 GT_LINA_T1A_H5_PWM 编译进去的部分）</div>
-<h1>线圈震一下：从“判出按下”到手指感到“咔”</h1>
-<p class="lede">这只鼠标的左右键没有机械开关，手指感到的“咔哒”是旁边一个<b>线圈</b>通电半毫秒、把按键往上“踢”一下产生的。这一课从第 5 课的 <code>Button_Scan()</code> 发现“左键刚按下”开始，一路讲到线圈里的电流：谁下命令、电压从哪来、怎么用 PWM 控制力度、半毫秒里力度怎么按“波形”变化、震完之后为什么还要“冷静”十来毫秒。</p>
+<div class="eyebrow">T1A 主线 · 第 6 课（按杰哥 11 月最新代码重讲）· src/my_electromagnet.c、src/my_waveform.c、src/my_pwm.c、src/my_protocol_mouse.c、app/button.c · 只看 GT_LINA_T1A_H5_PWM 编译进去的部分</div>
+<h1>线圈震一下：从零讲一遍（新代码）</h1>
+<p class="lede">这只鼠标左右键下面没有机械开关，手指感到的“咔哒”，是按键下方一个<b>线圈</b>通电零点几毫秒、产生磁力把按键“踢”一下造成的。这一课从头讲：电从哪来、谁在什么时候下命令、一次震动里每 20 µs 发生什么、每 5 µs 的开关怎么做出来，以及杰哥这次新加的<b>两种驱动方式</b>。每一节先给图，再落到代码行。</p>
 
-<div class="box"><b>🧭 本质（打个比方）</b>：线圈像一面鼓，MCU 是鼓手。<b>导通时间</b>是“这一下敲多久”（默认 500 µs）；<b>PWM 占空比</b>是“每一瞬间用多大力”（0 ~ 100%）；<b>波形表</b>是“这一下里力度怎么变”（先轻后重再轻，像一个小山包）。敲完以后鼓面还在晃，旁边的霍尔芯片会被干扰，所以要等十来毫秒（<b>消抖</b>）再相信霍尔读数。</div>
+<div class="box"><b>🧭 一句话版本</b>：按键算法判出“左键刚按下” → <code>Ele_LeftKeyPressProcess()</code> 算出这一下要通电多久（默认 500 µs）、选一张“力度表” → <b>CT32B0</b> 每 20 µs 进一次中断，从表里取一个力度 → <b>CT32B1</b> 按这个力度在 PIO0_13 上输出 200 kHz 的开关信号 → MOS 管 Q4 导通 → 7 V 加到线圈上。通电结束后，再等约 9 ms 让按键停稳，这期间不看这个键的霍尔读数。</div>
 
-<p>三个时间尺度，一层套一层，后面会逐层放大：</p>
+<p>三个时间尺度，一层套一层：</p>
 <div class="lv">
-<div class="a"><b>毫秒级：状态机</b>按下 → 震动中（约 2 ms）→ 消抖（约 9 ms）→ 空闲。主循环里的 <code>Ele_PollingTask()</code> 管</div>
-<div class="b"><b>20 µs 级：波形</b>500 µs 的一次震动分成 25 段，每 20 µs 换一个力度。CT32B0 定时器中断管</div>
-<div class="c"><b>5 µs 级：PWM</b>每 5 µs 一个开关周期（200 kHz），“开”的比例就是力度。CT32B1 定时器硬件自己产生</div>
+<div class="a"><b>毫秒级：状态机</b>震动中（约 2 ms）→ 消抖（约 9 ms）→ 空闲。主循环里的 <code>Ele_PollingTask()</code> 管。</div>
+<div class="b"><b>20 µs 级：力度表</b>500 µs 分成 25 格，每格从表里取一个力度。CT32B0 定时器中断管。</div>
+<div class="c"><b>5 µs 级：PWM</b>每 5 µs 开关一次（200 kHz），“开”的比例就是力度。CT32B1 硬件自己做。</div>
 </div>
 
-<h2>1. 硬件：电从哪来、怎么开关</h2>
-<p>原理图上：7 V 升压芯片 ETA1628 产生线圈电源 H_VDD → 线圈 → MOS 管 MS3416K → 地。MCU 的 PWM 脚（左 PIO0_13、右 PIO0_14）接 MOS 管的栅极：脚为高，MOS 管导通，线圈有电流；脚为低，MOS 管断开。旁边的二极管 DS32W 在断开瞬间给线圈电流一条回路（续流），保护 MOS 管。点按钮看电流怎么走：</p>
-<div class="btns"><button type="button" id="hwOn">PIO0_13 = 高（导通）</button><button type="button" id="hwOff">PIO0_13 = 低（刚断开）</button><button type="button" id="hwIdle">空闲</button></div>
-<div class="scroll"><svg id="hw" class="fig" viewBox="0 0 1340 330" style="min-width:1100px" role="img" aria-label="线圈驱动电路"></svg></div>
-<div class="log" id="hwLog"></div>
-<pre class="code">#define Ele_EnableBoost()   DrvGPIOOutput(HP_EN_PORT, HP_EN_PIN, 1)   // my_electromagnet.c:97，HP_EN = PIO1_19
-void Ele_Init(void)                    // 416，开机时 Device_Init() 调（device.c:422）
-{
-  Ele_DisableBoost();                  // 441 先关升压
-  MyWaveform_Init();                   // 442 配好 PWM（CT32B1）和波形定时器（CT32B0）
-  Ele_EnableBoost();                   // 443 再开升压：从此 H_VDD = 7 V 一直有电
-}</pre>
-<p class="note">注意（第 1 课已列为待确认）：代码用 PIO1_19 控制升压，但原理图上 ETA1628 的 EN 接的是电源开关来的 PWR_EN，PIO1_19 没有网络。如果原理图是对的，这两行实际不起作用，升压一直开着。</p>
+<h2>0. 这次代码改了什么</h2>
+<p>和你仓库里上一版相比，真正改了的源文件只有 8 个（其余是换行符和编译产物），跟线圈有关的是下面这些：</p>
+<div class="scroll"><table class="chg">
+<thead><tr><th>文件</th><th>改了什么</th><th>对线圈的影响</th></tr></thead>
+<tbody>
+<tr><td>my_electromagnet.c</td><td>四个按下 / 松开函数里新加了 <code>if(Config_GetCoilDriveMode())</code> 分支（:1025 等）；可用的表只剩 <code>wfHighTbl[] = {100}</code>，原来的 <code>wfCustomTbl</code>（60→100→60）被 <code>#if 0</code> 关掉了</td><td><b>驱动方式终于生效了</b>。0 = level：全程 100%；1 = pwm：用 GUI 发下来的 100 格力度表 <code>gPwmWf[]</code></td></tr>
+<tr><td>my_electromagnet.h</td><td><code>DEFAULT_CFG_DRIVE_MODE = 0</code>（原来是按下 / 松开各一个，都是 1）</td><td><b>默认是 level：一下子全力 500 µs</b>，不再是“先轻后重再轻”</td></tr>
+<tr><td>my_protocol_mouse.c</td><td>新增 <code>Config_GetPwmTable()</code>、<code>Config_GetCoilDriveMode()</code>（:101、:105）；默认值抽成 <code>ResetDefaultConfig()</code>，<code>gPwmWf</code> 默认 51→100→51；设置驱动方式 / 力度表以后会写回 EEPROM；EEPROM 参数区起点 0xF00 → <b>0xE00</b></td><td>GUI 改的驱动方式和力度表断电也记得；因为参数区搬了家，新固件第一次开机会读不到旧参数，恢复成默认值</td></tr>
+<tr><td>my_protocol_common.h</td><td><code>bDriveMode</code> 的注释改成 0 = level、1 = pwm</td><td>和协议表一致</td></tr>
+<tr><td>button.c / my_board.h</td><td>新增 <code>DISABLE_K4_K5_KEY</code>：T1A 下不扫描侧键 K4 / K5</td><td>无</td></tr>
+<tr><td>my_board.h</td><td>板型宏改成了 <code>HAPTIC_V4_PWM</code>，<code>GT_LINA_T1A_H5_PWM</code> 被注释掉</td><td><b>注意</b>：按这个设置编出来的是 HAPTIC_V4 板的固件。这一课仍然按 T1A 讲（两块板的线圈代码基本共用），但要问杰哥这是不是有意的</td></tr>
+</tbody></table></div>
 
-<h3>1.1 整体接线图（照原理图 V0.1：Power ON/OFF、Haptic BOOST 7V、LB &amp; RB Haptics Driver 三块）</h3>
+<h2>1. 先看全貌：六个角色接力</h2>
+<p>点任意一个框看它做什么、在哪个文件哪一行。</p>
+<div class="scroll"><svg id="ov" class="fig" viewBox="0 0 1360 400" style="min-width:1150px" role="img" aria-label="线圈震动的六个角色"></svg></div>
+<div class="log" id="ovLog">点任意一个框。</div>
+
+<h2>2. 硬件：电从哪来、电流怎么走</h2>
+<h3>2.1 整体接线图（照原理图 V0.1：Power ON/OFF、Haptic BOOST 7V、LB &amp; RB Haptics Driver 三块）</h3>
 <p>下面把 MCU 到两个线圈的所有元件都画出来了，位号和数值都照原理图。<b>点任意元件或连线</b>，下面会说明它是干什么的。红色粗线是线圈的大电流路径，蓝色是 MCU 的控制信号。</p>
 <div class="scroll"><svg id="wire6" class="fig" viewBox="0 0 1360 660" style="min-width:1150px" role="img" aria-label="MCU 与两个线圈的整体接线图"></svg></div>
 <div class="log" id="wire6Log">点任意元件看它的作用。</div>
@@ -139,101 +161,47 @@ void Ele_Init(void)                    // 416，开机时 Device_Init() 调（de
 <li><b>栅极前面有一个 RC</b>：PWM → R63 100 Ω → 栅极，栅极又经 C60 0.1 µF 接地（右边是 R64、C61）。时间常数 R × C = 100 Ω × 0.1 µF = <b>10 µs</b>，比 PWM 周期 5 µs 还长。按这个算，200 kHz 的方波到了栅极会被抹平成接近“占空比 × 3.3 V”的电压，MOS 管可能不是“全开 / 全关”地快速开关，而是被调到“半开”（线性区），用栅极电压直接控制线圈电流。这是按元件值推的，<i>没有上板验证</i>，可以用示波器同时看 PWM1（TP35）和 Q4 栅极确认，或问杰哥是不是有意这样设计。</li>
 </ul></div>
 
-<h2>2. 全程：按下那一刻之后的 14 毫秒</h2>
-<p>一步一步走：每一步是一个时间点，看每个“角色”在干什么。</p>
+
+<h3>2.2 电流怎么走</h3>
+<p>在上面的接线图里按下面的按钮，图上会用流动的虚线画出左线圈那一路的电流。</p>
+<div class="btns"><button id="flOn">Q4 导通（PWM1 高）</button><button id="flOff">Q4 刚关断（PWM1 低）</button><button id="flIdle" aria-pressed="true">空闲</button></div>
+<div class="log" id="flLog">空闲：PWM1 是低，Q4 断开，线圈里没有电流。C58 / C59 经 R62 充满到 7 V，等着。</div>
+
+<h2>3. 按下那一刻之后的 11 毫秒</h2>
+<p>拖动时间，看每个角色此刻在干什么。时间从 <code>Button_Scan()</code> 发现左键刚按下那一刻算起。<code>mySysTickMs</code> 是 1 ms 加 1 的计数器，状态机只能按它整毫秒地判断。</p>
+<div class="tool"><div class="row">时间 t = <input type="range" id="tlT" min="0" max="160" value="3"><b id="tlTv"></b></div>
+<div class="row">导通时间（GUI“按下震动时间”）<select id="tlOn"><option>100</option><option selected>500</option><option>1000</option><option>2000</option><option>5000</option></select> µs</div></div>
+<div class="scroll"><svg id="tl" class="fig" viewBox="0 0 1360 330" style="min-width:1150px" role="img" aria-label="11 毫秒时间线"></svg></div>
+<div class="log" id="tlLog"></div>
+
+<h2>4. 两种驱动方式（这次新加的重点）</h2>
+<p>不管哪种方式，通电时长都是“导通时间”（默认 500 µs）。区别在于<b>这段时间里每 20 µs 用多大的力度</b>：</p>
+<div class="two">
+<div class="box" style="margin:0"><span class="tag" style="--c:var(--bad)">0 · level（默认）</span>用 <code>wfHigh</code>：表里只有<b>一个数 100</b>。从头到尾都是 100%，PIO0_13 一直是高，Q4 一直导通，相当于“直接通电 500 µs”。</div>
+<div class="box" style="margin:0"><span class="tag" style="--c:var(--per)">1 · pwm</span>用 <code>wfCustom</code>，它指向 GUI 发下来的 <code>xgAllParam.gPwmWf[100]</code>：一张 100 格的力度表（0 ~ 100%）。默认值 51→100→51（先轻、中间最重、再轻）。</div>
+</div>
+<p>两种方式走的是<b>同一套代码</b>（<code>MyWaveform_StartGenerate</code> + 20 µs 中断），只是交给它的表不一样：一张长度 1，一张长度 100。表比格子多的时候（100 格表、500 µs 只有 25 格），代码用一个“相位累加器”均匀地跳着取。下面这个实验台用的是固件里一模一样的整数算法。</p>
 <div class="tool">
-<div class="btns"><button type="button" id="mP">上一步</button><button type="button" id="mN">下一步</button><button type="button" id="mPlay">自动播放</button><button type="button" id="mR">重来</button><span class="note" id="mC"></span></div>
-<div class="scroll"><svg id="ms" class="fig" viewBox="0 0 1340 420" style="min-width:1100px" role="img" aria-label="按下后 14 毫秒的时间线"></svg></div>
-<div class="log" id="mLog"></div></div>
+<div class="row">驱动方式 <select id="dmMode"><option value="0">0 · level（默认）</option><option value="1">1 · pwm</option></select>
+导通时间 <input type="range" id="dmT" min="1" max="250" value="25" style="width:260px"><b id="dmTv"></b></div>
+<div class="row" id="dmTblRow">pwm 表（gPwmWf）<select id="dmTbl"><option value="def">默认 51→100→51</option><option value="old">旧版 wfCustomTbl 60→100→60</option><option value="flat">全部 100</option><option value="ramp">0 → 100 斜坡</option><option value="half">前一半 100，后一半 0</option></select><span class="note">也可以在下面的表上按住鼠标拖动，自己画</span></div>
+</div>
+<div class="scroll"><svg id="dm" class="fig" viewBox="0 0 1360 600" style="min-width:1150px" role="img" aria-label="驱动方式实验台"></svg></div>
+<div class="two"><div class="nums" id="dmNums"></div><div class="log" id="dmLog" style="margin:0"></div></div>
 
-<h2>3. 放大到 20 µs：一次震动里力度怎么变</h2>
-<p>力度不是一下子开满，而是按<b>波形表</b> <code>wfCustomTbl[100]</code>（my_electromagnet.c:312）变化：从 60% 慢慢升到 100%，再慢慢降回 60%，像一个小山包。导通时间由 GUI 的“按下振感强度”设定（默认 500 µs，最大 5000 µs）。拖动滑块看它被切成几段、每段用表里的哪个数：</p>
-<div class="tool">
-<div class="row"><label>导通时间（µs）：<input type="range" id="onT" min="20" max="5000" step="20" value="500"></label><b id="onV" style="font-family:var(--font-m)"></b>
-<label>放大看第 <input type="number" id="seg" value="0" min="0" style="width:4em"> 段</label></div>
-<div class="scroll"><svg id="wf" class="fig" viewBox="0 0 1340 520" style="min-width:1100px" role="img" aria-label="波形表、每 20 微秒一段的占空比、和其中一段的 PWM"></svg></div>
-<div class="log" id="wfLog"></div></div>
-<pre class="code">MyWaveform_StartGenerate(CHANNEL_0, pLeftWf, wfPeriodUs, 1)          // my_waveform.c:155；左线圈用通道 0，右线圈通道 1
-  periodUs    = wfPeriodUs，限制在 20 ~ 5000                            // 170~178
-  updateTimes = periodUs / 20                                            // 179：要换几次力度（UPDATE_PERIOD_US = 20）
-  inc         = (表长 100 &lt;&lt; 15) / updateTimes                         // 195：每次在表里往前走多少格（放大 2¹⁵ 倍保留小数）
-  acc         = inc &gt;&gt; 1                                              // 196：从“半步”开始，取每一段的中间
-  MyWaveform_Start(): 先用 表[acc &gt;&gt; 15] 设占空比、开 PWM、定 20 µs 后的闹钟  // 278~291
-TIMER32_0_IRQHandler(): 每 20 µs 闹一次                                  // 87~99
-  MyWaveform_UpdateFromIsr(): acc += inc；idx = acc &gt;&gt; 15                // 237~238
-    idx &lt; 100 → MyPWM_SetDuty(表[idx])，闹钟再往后定 20 µs               // 239~243
-    idx ≥ 100 → 走完一遍（cycles = 1）→ MyWaveform_Stop()：PWM 关，脚拉低  // 244~251</pre>
+<h2>5. 对着代码走一遍：左键按下 → 线圈震完</h2>
+<p>单步调试器。左边是当前所在函数的代码（行号是新代码的原行号，T1A 不编译的 <code>#if</code> 分支已经折叠），右边是这一步改了哪些变量和寄存器（<span style="background:color-mix(in srgb,var(--gold) 40%,var(--panel));font-weight:700;padding:0 4px">黄底</span> = 这一步刚改的）。导通时间按默认 500 µs，<code>mySysTickMs</code> 假设当时是 1000。</p>
+<div class="btns">驱动方式 <select id="dbMode"><option value="0">0 · level（默认）</option><option value="1">1 · pwm（默认表 51→100→51）</option></select>
+<button id="dbPrev">← 上一步</button><button id="dbNext">下一步 →</button><button id="dbSkip">跳过中间的中断</button><button id="dbEnd">走到最后</button><button id="dbReset">回到开头</button><span class="note" id="dbPos"></span></div>
+<div class="mwdbg">
+ <div><div class="mwfile" id="dbFile"></div><div class="mwcode" id="dbCode"></div></div>
+ <div><div class="stack" id="dbStack"></div><div id="dbNote" style="border-left:4px solid var(--bad);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;min-height:5em"></div>
+ <table id="dbVars"></table></div>
+</div>
 
-<h2>4. 放大到 5 µs：PWM 怎么做出“百分之几的力”</h2>
-<p>CT32B1 定时器的计数器 TC 从 0 数到 240 再回 0，每数一下 1/48 µs，所以一圈 240 ÷ 48 = <b>5 µs</b>（200 kHz）。另有一个比较值 MR0（左）/ MR1（右）：TC 小于它时脚为低，大于等于它时脚为高。比较值越小，高电平越长，力越大。百分比到比较值的换算查表 <code>Freq200kHzDuty[101]</code>（my_pwm.c:19）。</p>
-<div class="tool"><div class="row"><label>占空比（%）：<input type="range" id="dt" min="0" max="100" value="75"></label><b id="dtV" style="font-family:var(--font-m)"></b></div>
-<div class="scroll"><svg id="pwm" class="fig" viewBox="0 0 1340 280" style="min-width:1100px" role="img" aria-label="CT32B1 计数器、比较值和 PWM 输出"></svg></div>
-<div class="log" id="pwmLog"></div></div>
-<div class="scroll"><table>
-<thead><tr><th>寄存器</th><th>写成</th><th>意思（my_pwm.c:72~105）</th></tr></thead>
-<tbody>
-<tr><td><code>IOCON PIO0_13 / PIO0_14</code></td><td>FUNC 3</td><td>脚接到 CT32B1_MAT0 / MAT1（定时器直接驱动脚）</td></tr>
-<tr><td><code>SYSAHBCLKCTRL</code> 第 10 位</td><td>1</td><td>给 CT32B1 时钟</td></tr>
-<tr><td><code>PR</code></td><td>0</td><td>不分频，TC 每 1/48 µs 加 1</td></tr>
-<tr><td><code>MR3</code></td><td>240</td><td>TC 到 240 清零 → 周期 5 µs = 200 kHz（MCR 第 10 位）</td></tr>
-<tr><td><code>MR0 / MR1</code></td><td>表里的值，开机 241</td><td>比较值；241 &gt; 240 永远比不上 = 0%</td></tr>
-<tr><td><code>PWMC</code> 第 0 / 1 位</td><td>开始震时 1，停止时 0</td><td>1 = 这只脚由 PWM 控制；0 = 交给 EMR，EMR 设成“清零”= 一直低（MOS 关）</td></tr>
-</tbody></table></div>
+<h2>6. 开机时的准备：<code>MyWaveform_Init()</code></h2>
+<p>上面那些都建立在“两个定时器已经准备好”的基础上。开机时 <code>Ele_Init()</code>（my_electromagnet.c:465）调一次 <code>MyWaveform_Init()</code>（my_waveform.c:135）。这部分代码这次没改。</p>
 
-<h2>5. 毫秒级：震完以后的状态机</h2>
-<div class="scroll"><svg id="sm" class="fig" viewBox="0 0 1340 300" style="min-width:1100px" role="img" aria-label="线圈状态机"></svg></div>
-<pre class="code">static void Ele_StatusTask(Ele_Handle_ts *pEle)          // 1303，主循环每圈：Ele_PollingTask() → 左、右各一次（960~963）
-  ELE_PRESS_VIBRATING / ELE_RELEASE_VIBRATING:
-    if((现在毫秒 − vibrateBeginTick) × 1000 &gt; 导通时间 + 999)   // 1313 / 1322：按毫秒算，“向上取整再多 1 ms”
-      → ELE_RELEASE_DEBOUNCE，记下 debounceBeginTick
-  ELE_RELEASE_DEBOUNCE:
-    if(现在毫秒 − debounceBeginTick &gt; 8)                         // 1330：VIBRATE_DEBOUNCE_TIME_MS = 8
-      → ELE_NO_VIBRATING</pre>
-<div class="tool"><b>算一算：导通时间是多少，这一侧霍尔要“闭眼”多久</b>
-<div class="row"><label>导通时间（µs）：<input type="number" id="smT" value="500" min="0" max="5000" style="width:6em"></label></div>
-<div class="log" id="smLog"></div></div>
-<p><b>为什么要这一段“闭眼”</b>：第 4 课讲过，<code>Ele_IsVibrating()</code>（894 行）只要状态不是 <code>ELE_NO_VIBRATING</code> 就返回 1，按键算法就跳过这个键。线圈电流只有半毫秒，但通电产生的磁场、按键被踢以后的机械晃动都会让霍尔读数乱跳一阵，消抖就是等它平静下来。另一个函数 <code>Ele_IsTureVibrating()</code>（926 行）只认“真正在震”的两个状态，不含消抖，给调试推送用。</p>
-
-<h2>6. 几条附加规则</h2>
-<h3>6.1 同一时间只震一个线圈（SINGLE_COIL_AT_A_TIME = 1）</h3>
-<p>两个线圈共用一个 7 V 升压，同时震电流太大。所以左键要震时，如果右线圈正在“按下震 / 松开震”（不算消抖），就先不震，把请求<b>存起来</b>（990~996 行，<code>gxCacheVibrate</code>），等 5 ms 后由 <code>Ele_OnlyOne()</code>（1407 行）补震。</p>
-<div class="box"><b>读代码时注意到</b>：补震时调用的<b>总是 <code>Ele_…KeyReleaseProcess()</code></b>（1416、1420 行），不管存起来的是按下还是松开；也就是说被推迟的“按下振感”会用<b>释放振感的导通时间</b>来补。而且只存得下一个请求，后来的会覆盖先来的。按下、释放导通时间设得一样时没区别。</div>
-<h3>6.2 动态导通时间（GUI“调试配置 → 动态导通时间”，默认关）</h3>
-<p>打开后，导通时间按<b>按下时的段位</b>打折（1263 行 <code>Ele_CalculateDuration()</code>）：<code>实际 = 设定 × durationScale[段位] ÷ 1024</code>，表在 209 行，近似 设定 × 100 ÷ (段位 × 2 + 100)。段位越深，震得越短。段位来自第 4 课的 <code>Ele_UpadteSegment()</code>（每 1 ms 存进 <code>nowHallSegment[]</code>）。</p>
-<div class="tool"><div class="row"><label>设定导通时间 <input type="number" id="dyT" value="500" style="width:6em"> µs</label><label>按下时段位：<input type="range" id="dyS" min="0" max="100" value="30"></label><b id="dyV" style="font-family:var(--font-m)"></b></div><div class="log" id="dyLog"></div></div>
-<h3>6.3 自动振动（GUI“调试配置 → 自动振动”）</h3>
-<p>打开后不用按键，每隔“振动触发周期”（最少 20 ms）自动调一次按下振动（1428~1453 行），用来连续测试手感。这两项调试参数只存在 RAM 里，重启恢复默认。</p>
-<h3>6.4 GUI 的参数到了哪</h3>
-<div class="scroll"><table>
-<thead><tr><th>GUI</th><th>固件变量</th><th>说明</th></tr></thead>
-<tbody>
-<tr><td>按下振感配置 → 强度（0 ~ 5000）</td><td><code>leftEle.pressVibrateDurationUs</code></td><td>就是导通时间（µs），<code>Ele_UpdateParam()</code>（603 行）写入，超过 5000 按 5000；生效位为 0 时 = 0（不震）</td></tr>
-<tr><td>释放振感配置 → 强度</td><td><code>leftEle.releaseVibrateDurationUs</code></td><td><code>Ele_UpdateReleaseParam()</code>（721 行），按下、释放分开设（DIFF_PRESS_RELEASE_TURN_ON_TIME = 1）</td></tr>
-<tr><td>驱动方式 Level / Waveform</td><td><code>pressDriveMode / releaseDriveMode</code></td><td>能收能存，但 T1A 的按下 / 松开函数<b>不看它</b>，永远用波形表 <code>wfCustomTbl</code>；GUI 下发的波形表 <code>gPwmWf[100]</code> 也没用上（待确认问题 2）</td></tr>
-<tr><td>调试配置</td><td><code>xCoilDebugCfg[2]</code>（193 行）</td><td>动态导通时间、自动振动、周期</td></tr>
-</tbody></table></div>
-
-<h2>7. 代码地图</h2>
-<div class="scroll"><table>
-<thead><tr><th>函数</th><th>在哪</th><th>谁调用、什么时候</th><th>干什么</th></tr></thead>
-<tbody>
-<tr><td><code>Ele_Init()</code></td><td>my_electromagnet.c:416</td><td>开机 Device_Init()</td><td>关升压 → 配 PWM、波形定时器 → 开升压</td></tr>
-<tr><td><code>Ele_LeftKeyPressProcess()</code></td><td>:982</td><td>Button_Scan() 发现左键刚按下（button.c:639）</td><td>导通时间 ≠ 0、右线圈没在震 → 算时长 → 状态 = 按下震动中、记开始毫秒 → 启动波形</td></tr>
-<tr><td><code>Ele_LeftKeyReleaseProcess()</code></td><td>:1032</td><td>左键刚松开（button.c:655）；补震</td><td>同上，用释放导通时间，状态 = 松开震动中</td></tr>
-<tr><td><code>Ele_Right…Process()</code></td><td>:1083、1133</td><td>右键</td><td>同上，波形通道 1</td></tr>
-<tr><td><code>Ele_CalculateDuration()</code></td><td>:1263</td><td>上面四个函数</td><td>动态导通时间关：原样返回；开：按段位打折</td></tr>
-<tr><td><code>MyWaveform_StartGenerate()</code></td><td>my_waveform.c:155</td><td>上面四个函数</td><td>算 updateTimes、inc、acc，开 PWM，定第一个 20 µs 闹钟</td></tr>
-<tr><td><code>TIMER32_0_IRQHandler()</code></td><td>my_waveform.c:87</td><td>CT32B0 每 20 µs 中断（MR0 左 / MR1 右）</td><td>走一步波形表，改占空比；走完就停</td></tr>
-<tr><td><code>MyPWM_SetDuty()</code></td><td>my_pwm.h:39</td><td>波形每一步</td><td>百分比 → 查 Freq200kHzDuty → 写 MR0 / MR1</td></tr>
-<tr><td><code>Ele_PollingTask()</code></td><td>my_electromagnet.c:960</td><td>主循环每圈（device.c:525）</td><td>两个状态机、补震、自动振动</td></tr>
-<tr><td><code>Ele_IsVibrating()</code></td><td>:894</td><td>按键算法每 1 ms（my_misc.c:490、502）</td><td>状态 ≠ 空闲 → 1 → 按键算法跳过这个键</td></tr>
-<tr><td><code>Ele_K4/K5KeyPressProcess()</code></td><td>:1184、1208</td><td>侧键按下</td><td>T1A 上什么都不做（#if 1 空函数，以前是调试用的“每按一次加 100 µs”）</td></tr>
-</tbody></table></div>
-
-<h2>8. 代码精读：一个函数一个函数读</h2>
-<p>前面几节是按“过程”讲的，这一节换个方式：<b>以代码为主</b>，一次只读一个函数，读到它调用的函数就跟进去，每一行都讲它改了哪个寄存器、哪个变量。读完一个再加下一个。</p>
-
-<h3>8.1 <code>MyWaveform_Init()</code>（my_waveform.c:135）：开机时把两个定时器准备好</h3>
 
 <div class="box"><b>一句话</b>：开机时调一次。它让 <b>CT32B1</b> 开始以 200 kHz 一圈一圈地数，但两只 PWM 脚先<b>锁在低电平</b>（占空比 0%）；让 <b>CT32B0</b> 变成一块每 1 µs 加 1 的<b>秒表</b>，但上面的闹钟全关。两样都准备好以后，把左右两个波形通道的状态从“没初始化”改成“停着，随时可以启动”。<br>它<b>不让线圈震</b>。真正开始震，要等按键按下时 <code>MyWaveform_StartGenerate()</code> 去开 PWM、定闹钟（第 3 节）。</div>
 
@@ -258,13 +226,13 @@ TIMER32_0_IRQHandler(): 每 20 µs 闹一次                                  //
 <tr><td>140</td><td><code>ret = ret | MyWaveform_InitCT32B0();</code></td><td>配 CT32B0：1 µs 一格的秒表。<b>用“按位或”把两个结果并起来</b>：两个都是 0，结果才是 0；任何一个非 0，结果就非 0。第二个函数<b>不管第一个成不成功都会执行</b>（和 <code>||</code> 不一样，<code>|</code> 不会“短路”）</td></tr>
 <tr><td>142</td><td><code>if(!ret)</code></td><td>ret == 0（两个都成功）才进去</td></tr>
 <tr><td>144~145</td><td><code>wfCh0.sta = WF_STATE_STOPPED;</code><br><code>wfCh1.sta = WF_STATE_STOPPED;</code></td><td>两个通道（0 = 左，1 = 右）从 <code>WF_STATE_UNINIT</code> 改成 <code>WF_STATE_STOPPED</code>。这一步是“发通行证”：<code>MyWaveform_StartGenerate()</code> 第 162 行、<code>MyWaveform_StopGenerate()</code> 第 208 行一看到 <code>UNINIT</code> 就直接返回 -1，不碰硬件</td></tr>
-<tr><td>148</td><td><code>return ret;</code></td><td>把结果交回 <code>Ele_Init()</code>。但 my_electromagnet.c:442 写的是 <code>MyWaveform_Init();</code>，<b>返回值没人接</b></td></tr>
+<tr><td>148</td><td><code>return ret;</code></td><td>把结果交回 <code>Ele_Init()</code>。但 my_electromagnet.c:465 写的是 <code>MyWaveform_Init();</code>，<b>返回值没人接</b></td></tr>
 </tbody></table></div>
 
 <div class="box"><b>读这个函数时值得留意的几点</b>
 <ul>
 <li><b>“失败”其实不会发生</b>：<code>MyPWM_CT32B1_Init()</code> 最后无条件 <code>return 0</code>，<code>MyWaveform_InitCT32B0()</code> 也是。所以 ret 永远是 0，<code>if(!ret)</code> 永远成立，返回值也没人看。这套“攒错误码”的写法是给以后留的框架，现在不起作用。</li>
-<li><b>为什么开机时线圈不会乱震</b>：一路上 PWM 脚都是低电平。InitGPIO 时它是 GPIO 输入，MCU 不驱动，栅极靠 R65 / R66 1 MΩ 下拉到地（见 1.1 接线图）；换成 CT32B1_MAT 功能以后，由 EM0 / EM1 驱动，它们是 0；MR0 = MR1 = 241 比 MR3 = 240 大，计数器永远数不到，所以永远不会变高。</li>
+<li><b>开机这段时间栅极是不是一直低？（推断，待测）</b>：换成 CT32B1_MAT 功能以后，脚由 EM0 / EM1 = 0 主动拉低，MR0 = MR1 = 241 永远碰不到，这段肯定是低。但<b>在这之前</b>（上电复位 → InitGPIO → 走到这里），脚是复位功能或 GPIO 输入，MCU 不驱动它；而 IOCON 里 MODE（bit4:3）的复位值是 10 = <b>内部上拉打开</b>，代码只改了 FUNC 那 3 位、没关上拉。内部上拉（几十 µA 量级）比外面的 R65 / R66 1 MΩ 下拉强得多，按分压算栅极会往接近 3 V 走，C60 / C61 会让它慢慢升。所以开机最初那一小段，MOS 管有可能被半开。这只是按手册和原理图推的，<b>没上板验证</b>：可以用示波器在上电 / 复位时看 Q4 栅极。</li>
 <li><b>CT32B0 的中断“通道开了但没有闹钟”</b>：NVIC 里 TIMER_32_0 开了，但 MCR = 0，三个比较寄存器都不会产生中断，所以开机后 <code>TIMER32_0_IRQHandler</code> 一次也不会进。等 <code>MyWaveform_Start()</code> 把 MCR 的 bit0（左）或 bit3（右）置 1，才开始每 20 µs 进一次。</li>
 <li><b>PR = 47 依赖 48 MHz 主频</b>：它前面的 <code>InitSystemOSC()</code>（device.c:420）先把主频配成 48 MHz，48 ÷ (47 + 1) = 1 MHz，TC 才是 1 µs 加 1。CT32B1 的 240 也是按 48 MHz 算的。</li>
 <li><b>CT32B0 的 TC 会绕回</b>：32 位最大约 42.9 亿，按 1 µs 一格大约 71.6 分钟数满后回到 0。闹钟写的是 <code>TC + 20</code>，无符号加法溢出也会正确绕回，比较器比的是“相等”，所以绕回那一刻也不会出错。</li>
@@ -272,162 +240,98 @@ TIMER32_0_IRQHandler(): 每 20 µs 闹一次                                  //
 <li><b>前后那两行升压开关不起作用</b>：<code>Ele_DisableBoost()</code> / <code>Ele_EnableBoost()</code> 操作的是 PIO1_19，按原理图它没接线，升压 EN 接的是电源开关的 PWR_EN（见 1.1 节）。</li>
 </ul></div>
 
-<h2>9. 练习</h2>
-<div class="px" id="px"></div>
+
+<h2>7. GUI 怎么改线圈参数（对照杰哥给的协议表）</h2>
+<p>协议表放在 <code>materials/协议2026-11-04.xlsx</code>。和线圈有关的命令如下。包格式：<code>55 | 目的 | 来源 | 校验和 | 负载长度 2 字节 | 负载类型 | 命令 | 子命令 | 值 | 数据…</code>。校验和 = 除第 0 字节（0x55）和第 3 字节（校验和本身）以外所有字节相加，取低 8 位。</p>
+<div class="scroll"><table>
+<thead><tr><th>GUI 里的操作</th><th>命令 / 子命令 / 值</th><th>数据</th><th>固件收到后（my_protocol_mouse.c）</th><th>什么时候生效</th></tr></thead>
+<tbody>
+<tr><td>按下震动时间</td><td>0x03 / 0x02 / 键（01 左、02 右）</td><td>bReserve、bmEnableMask（bit7 = 开）、CoilOnTimeUs 2 字节</td><td>存进 <code>xgAllParam.xConfig[].xCoilCfg</code>，置 <code>updateCoilCfgFlagL/R</code></td><td>主循环 <code>Task_ParamGuard()</code>：先写 EEPROM，再调 <code>Ele_UpdateParam()</code> → <code>leftEle.pressVibrateDurationUs</code>（超过 5000 截到 5000；bit7 = 0 时为 0，不震）</td></tr>
+<tr><td>松开震动时间</td><td>0x03 / 0x03 / 键</td><td>同上</td><td>存 <code>xCoilReleaseCfg</code></td><td>同上，→ <code>releaseVibrateDurationUs</code></td></tr>
+<tr><td><b>驱动方式</b>（新）</td><td>0x03 / 0x06 / <b>0xFF</b>（全局，不分左右）</td><td>bDriveMode：0 = level、1 = pwm</td><td>:879 拷进 <code>xgAllParam.xDriveMode</code>，置 <code>updateCoilDriveModeFlag</code></td><td><b>下一次按键</b>就用：四个按下 / 松开函数每次都现读 <code>Config_GetCoilDriveMode()</code>。标志只用来触发写 EEPROM</td></tr>
+<tr><td><b>力度表</b>（新）</td><td>0x03 / 0x07 / 0xFF</td><td>起始下标 + 最多 50 个力度，分两包发：下标 0x00 带 data0~49，下标 0x32 带 data50~99</td><td>:916 检查 <code>index &lt; 100</code>、长度 ≤ 50、不越界，拷进 <code>gPwmWf[index…]</code></td><td>下一次按键（且驱动方式 = 1 时）就用；同样会写 EEPROM</td></tr>
+<tr><td>动态导通时间 / 自动振动</td><td>0x06 / 0x01 / 键</td><td>bDynOnTimeEn、bAutoVibrationEn、周期 ms</td><td>直接调 <code>Ele_UpdateDebugParam()</code></td><td>立即；<b>不存 EEPROM</b>，断电恢复默认</td></tr>
+</tbody></table></div>
+<p><b>拼一个包看看</b>（校验和自动算）：</p>
+<div class="btns"><select id="pkSel">
+<option value="dm1">设置驱动方式 = 1（pwm）</option><option value="dm0">设置驱动方式 = 0（level）</option><option value="dmg">读取驱动方式</option>
+<option value="pw0">设置力度表前半（下标 0，默认值）</option><option value="pwg">读取力度表前半</option><option value="on">设置左键按下震动 500 µs</option></select></div>
+<div class="bytes" id="pkBytes"></div>
+<div class="log" id="pkLog"></div>
+
+<div class="box"><b>对协议时发现的几处出入</b>
+<ul>
+<li><b>“vib_zero_point”（命令 0x08 / 0x07、子命令 0x01）固件里没有实现</b>：<code>my_protocol_common.h</code> 定义了 <code>CMD_GET_MFG = 0x07</code>、<code>CMD_SET_MFG = 0x08</code>、<code>MFG_VIB_ZERO_POINT = 0x01</code>，但 <code>my_protocol_mouse.c</code> 收包分发（:1078~1096）只处理 0x01、0x02、0x03、0x05、0x06，GUI 发这两条不会有回应。</li>
+<li><b>驱动方式没有检查取值</b>：<code>Config_GetCoilDriveMode()</code> 直接返回原值，<code>if(...)</code> 判断，所以 2、3、0xFF 这些也都算 pwm。</li>
+<li><b>力度表的每个值没有检查 ≤ 100</b>：收包时不检查，但用的时候 <code>MyPWM_SetDuty()</code>（my_pwm.h:39）会把大于 100 的截成 100，不会越界。</li>
+<li>协议表“set global coil pwm”第二包的格子写的是“data50 | data1 | … | data99”，“data1”应该是 data51，笔误。</li>
+<li><b>驱动方式只有一个、两个键共用</b>（值 = 0xFF）。<code>Ele_Handle_ts</code> 里还留着 <code>pressDriveMode / releaseDriveMode</code> 两个字段，现在没人用；<code>Ele_UpdateCoilDriveMode()</code> 也整段注释掉了。</li>
+</ul></div>
+
+<h2>8. 几条附加规则</h2>
+<div class="scroll"><table>
+<thead><tr><th>规则</th><th>代码</th><th>做什么</th></tr></thead>
+<tbody>
+<tr><td>震动期间不看这个键的霍尔</td><td>my_misc.c:490、502 <code>Ele_IsVibrating()</code></td><td>状态 ≠ 空闲（震动中 + 消抖，约 11 ms）时，按键算法跳过这个键，按键状态沿用上一次的。原因：线圈的磁场会让旁边的霍尔芯片读数乱跳</td></tr>
+<tr><td>同一时间只震一个线圈</td><td>my_electromagnet.c:28 <code>SINGLE_COIL_AT_A_TIME = 1</code>，:1012~1019、:1471 <code>Ele_OnlyOne()</code></td><td>右线圈正在通电时左键要震，先记下来（<code>gxCacheVibrate</code>），5 ms 后补震。注意补震调的<b>总是松开函数</b>（:1480），哪怕当初记下的是按下</td></tr>
+<tr><td>动态导通时间（默认关）</td><td>:1327 <code>Ele_CalculateDuration()</code>，:210 <code>durationScale[]</code></td><td>打开后按当前段号缩短导通时间：时长 × 100 ÷ (段号 × 2 + 100)。段号 0 不缩，段号 100 缩到 1/3</td></tr>
+<tr><td>自动振动（调试用，默认关）</td><td>:1492 <code>Ele_LeftAutoTrigger()</code></td><td>每隔设定的毫秒数（最少 20 ms）自动调一次按下函数</td></tr>
+<tr><td>侧键 K4 / K5 调导通时间</td><td>:1248</td><td>T1A 上是空函数；而且这次 <code>DISABLE_K4_K5_KEY</code> 让 button.c 连侧键都不扫了</td></tr>
+</tbody></table></div>
+
+<h2>9. 要找杰哥确认的</h2>
+<ol>
+<li><code>my_board.h</code> 这次选的是 <code>HAPTIC_V4_PWM</code>。T1A 要用 <code>GT_LINA_T1A_H5_PWM</code>：是忘了改回来，还是现在主要在调 V4 板？</li>
+<li>默认驱动方式改成 level（全程 100%）是有意的吗？手感上是不是 level 更脆？以后打算用 pwm 表调手感吗？</li>
+<li>升压芯片 EN 接的是电源开关的 PWR_EN，MCU 的 PIO1_19 在原理图上没接（2.1 节）。<code>Ele_EnableBoost / DisableBoost</code> 是不是可以去掉？</li>
+<li>栅极 RC = 100 Ω × 0.1 µF = 10 µs，比 PWM 周期 5 µs 还长。pwm 模式下 MOS 管是不是在“半开”状态工作？（2.1 节，推断）</li>
+<li>开机时 PIO0_13 / 14 的内部上拉没关，上电到 <code>MyWaveform_Init()</code> 之间栅极可能被拉高（6 节，推断，待测）。</li>
+<li>协议里的 vib_zero_point 命令固件还没实现，是后面要加吗？</li>
+</ol>
+
+<h2>10. 练习</h2>
+<details class="ex"><summary>① 驱动方式 = 0，导通时间设成 1000 µs。从 <code>MyWaveform_Start()</code> 开始，CT32B0 中断一共进几次？PIO0_13 高电平一共多久？</summary><p>updateTimes = 1000 ÷ 20 = 50，表长 1，inc = (1 &lt;&lt; 15) ÷ 50 = 655，acc 起点 = 327。第 n 次中断后 acc = 327 + 655n，到 n = 50 时 acc = 33077 ≥ 32768，下标变成 1，超出表长 → 停。所以中断进 50 次，第 50 次里关掉。高电平从 Start 到第 50 次中断：50 × 20 = <b>1000 µs</b>。</p></details>
+<details class="ex"><summary>② 驱动方式 = 1，导通时间 500 µs，默认表。第一格和中间那格分别用表里哪个下标、多大力度？</summary><p>inc = (100 &lt;&lt; 15) ÷ 25 = 131072 = 4 × 32768，acc 起点 = 65536 → 下标 2。之后每次 +4：2、6、10 … 98，共 25 个。gPwmWf[2] = 53%；中间第 13 格是下标 50，gPwmWf[50] = 100%。可以在第 4 节实验台里验证。</p></details>
+<details class="ex"><summary>③ 为什么状态机里“震动中”持续约 2 ms，而不是 0.5 ms？</summary><p>状态机用的是 1 ms 一格的 <code>mySysTickMs</code>，条件是 (现在 − 开始) × 1000 &gt; 导通时间 + 999（:1377）。导通 500 µs 时要 (现在 − 开始) ≥ 2 才成立。“+ 999”是故意的：保证状态机切走时，20 µs 中断那边的波形一定已经放完了。</p></details>
+<details class="ex"><summary>④ GUI 把驱动方式改成 1，但没发力度表，按下会怎样？</summary><p>用的是 <code>gPwmWf</code> 里现有的值。新固件第一次开机，参数区（0xE00 起）校验不对，会调 <code>ResetDefaultConfig()</code> 写入默认 51→100→51，所以是“先轻后重再轻”。如果之前 GUI 写过表，就用 EEPROM 里存的那张。</p></details>
 </div>
 <script>
 (function(){
 const $=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
 const el=(p,t,a,x)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e};
-const WF=[60,61,62,62,63,64,65,66,67,67,68,69,70,71,72,72,73,74,75,76,77,77,78,79,80,81,82,82,83,84,85,86,87,87,88,89,90,91,92,92,93,94,95,96,97,97,98,99,100,100,100,100,99,98,97,97,96,95,94,93,92,92,91,90,89,88,87,87,86,85,84,83,82,82,81,80,79,78,77,77,76,75,74,73,72,72,71,70,69,68,67,67,66,65,64,63,62,62,61,60];
-const DT=[241,239,236,234,231,229,227,224,222,219,217,214,212,210,207,205,202,200,198,195,193,190,188,186,183,181,178,176,174,171,169,166,164,161,159,157,154,152,149,147,145,142,140,137,135,133,130,128,125,123,121,118,116,113,111,108,106,104,101,99,96,94,92,89,87,84,82,80,77,75,72,70,67,65,63,60,58,55,53,51,48,46,43,41,39,36,34,31,29,27,24,22,19,17,14,12,10,7,5,2,0];
-const DS=[1024,1003,984,966,948,930,914,898,882,867,853,839,825,812,800,787,775,764,752,742,731,721,711,701,691,682,673,664,656,648,640,632,624,616,609,602,595,588,581,575,568,562,556,550,544,538,533,527,522,517,512,506,501,497,492,487,483,478,474,469,465,461,457,453,449,445,441,437,433,430,426,423,419,416,412,409,406,403,400,396,393,390,387,384,382,379,376,373,371,368,365,363,360,358,355,353,350,348,345,343,341];
-/* ===== hardware ===== */
-let hwSt='idle';
-function drawHW(){const s=$('hw');s.innerHTML='';const on=hwSt==='on',off=hwSt==='off';
- const box=(x,y,w,h,t,l,c)=>{el(s,'rect',{x,y,width:w,height:h,rx:8,style:`fill:color-mix(in srgb,var(--${c}) 14%,var(--panel));stroke:var(--${c});stroke-width:2`});el(s,'text',{x:x+w/2,y:y+22,'text-anchor':'middle','font-size':13.5,'font-weight':700,fill:'var(--fg)'},t);l.forEach((q,i)=>el(s,'text',{x:x+w/2,y:y+42+i*17,'text-anchor':'middle','font-size':11.5,fill:'var(--fg)'},q))};
- box(20,30,180,90,'电池 / USB 3.x V',['PWR'],'muted');box(260,30,200,90,'ETA1628 升压',['EN ← HP_EN（PIO1_19）','输出 H_VDD = 7 V'],'gold');
- box(20,190,200,110,'MCU LPC11U35',['PIO0_13 = CT32B1_MAT0（左）','PIO0_14 = CT32B1_MAT1（右）','200 kHz PWM'],'pc');
- /* coil */
- const cx=640,cy=40;el(s,'rect',{x:cx-60,y:cy,width:120,height:110,rx:10,style:`fill:${on?'color-mix(in srgb,var(--bad) 22%,var(--panel))':'var(--panel)'};stroke:var(--fg);stroke-width:2`});
- for(let i=0;i<5;i++)el(s,'path',{d:`M${cx-40},${cy+20+i*16} q40,-10 80,0`,fill:'none',stroke:'var(--gold)','stroke-width':3});
- el(s,'text',{x:cx,y:cy+130,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--fg)'},'左线圈');
- /* MOS */
- el(s,'rect',{x:cx-50,y:200,width:100,height:70,rx:8,style:`fill:${on?'color-mix(in srgb,var(--good) 25%,var(--panel))':'var(--soft)'};stroke:var(--fg);stroke-width:2`});
- el(s,'text',{x:cx,y:228,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--fg)'},'MOS 管');el(s,'text',{x:cx,y:248,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'MS3416K　'+(on?'导通':'断开'));
- /* diode */
- el(s,'rect',{x:820,y:60,width:110,height:70,rx:8,style:`fill:${off?'color-mix(in srgb,var(--per) 25%,var(--panel))':'var(--soft)'};stroke:var(--fg);stroke-width:2`});el(s,'text',{x:875,y:90,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--fg)'},'二极管');el(s,'text',{x:875,y:110,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'DS32W 续流');
- /* wires */
- const w=(d,c,lw)=>el(s,'path',{d,fill:'none',stroke:c,'stroke-width':lw||2.5,'stroke-linejoin':'round'});
- w('M200,75 H260','var(--muted)');w('M460,75 H580','var(--bad)',3.5);el(s,'text',{x:520,y:66,'text-anchor':'middle','font-size':12,fill:'var(--bad)','font-weight':700},'H_VDD 7 V');
- w(`M${cx},150 V200`,on?'var(--bad)':'var(--line)',on?4:2.5);w(`M${cx},270 V305 H1000`,on?'var(--bad)':'var(--line)',on?4:2.5);el(s,'text',{x:1010,y:309,'font-size':12,fill:'var(--fg)'},'地');
- w('M220,245 H590','var(--pc)',on?3.5:2);el(s,'text',{x:400,y:236,'text-anchor':'middle','font-size':12,fill:'var(--pc)','font-weight':700},on?'PWM 脚 = 高 → 栅极有电压':off?'PWM 脚 = 低':'PWM 脚 = 低（PWMC = 0，EMR 清零）');
- w(`M${cx+60},60 H820`,off?'var(--per)':'var(--line)',off?4:2);w(`M930,95 H960 V160 H${cx} V150`,off?'var(--per)':'var(--line)',off?4:2);
- if(on){el(s,'text',{x:cx+75,y:180,'font-size':12.5,fill:'var(--bad)','font-weight':700},'电流 ↓：7 V → 线圈 → MOS → 地，线圈产生磁场，把按键“踢”一下')}
- if(off){el(s,'text',{x:960,y:200,'font-size':12.5,fill:'var(--per)','font-weight':700},'线圈电流不能突然停，经二极管绕回自己，慢慢消失')}
- $('hwLog').textContent={on:'PWM 输出高：MOS 管导通，7 V 加在线圈两端，电流从 H_VDD 经线圈、MOS 管流到地。线圈变成电磁铁，推动按键。',off:'PWM 刚变低：MOS 管断开。线圈像一个“有惯性的水流”，电流不能瞬间变 0，二极管给它一条回路（续流），否则线圈两端会冒出很高的电压击穿 MOS 管。',idle:'空闲：PWMC 第 0 位 = 0，PIO0_13 由 EMR 控制，固定为低，MOS 管断开，线圈没电。升压芯片一直开着，H_VDD 一直是 7 V。'}[hwSt];
- ['hwOn','hwOff','hwIdle'].forEach((id,i)=>$(id).setAttribute('aria-pressed',hwSt===['on','off','idle'][i]))}
-$('hwOn').onclick=()=>{hwSt='on';drawHW()};$('hwOff').onclick=()=>{hwSt='off';drawHW()};$('hwIdle').onclick=()=>{hwSt='idle';drawHW()};drawHW();
-/* ===== 8.1 MyWaveform_Init ===== */
-(function(){if(!$('mwReg'))return;
- const SN={"E": ["src/my_electromagnet.c", "Ele_Init()", [[438, "#elif (defined(GT_LINA_T1A_H5))"], [439, ""], [440, "#ifdef GT_LINA_T1A_H5_PWM"], [441, "  Ele_DisableBoost();      //ETA1628_EN disable"], [442, "  MyWaveform_Init();"], [443, "  Ele_EnableBoost();       //ETA1628_EN enable"], [444, "#else"], [445, "  Ele_DisableBoost();      //ETA1628_EN disable"], [446, "  Ele_LeftClose();"]]], "W": ["src/my_waveform.c", "MyWaveform_Init()", [[135, "int32_t MyWaveform_Init(void)"], [136, "{"], [137, "  int32_t ret = 0;"], [138, ""], [139, "  ret = MyPWM_Freq200kHzInit();"], [140, "  ret = ret | MyWaveform_InitCT32B0();"], [141, ""], [142, "  if(!ret)"], [143, "  {"], [144, "    wfCh0.sta = WF_STATE_STOPPED;"], [145, "    wfCh1.sta = WF_STATE_STOPPED;"], [146, "  }"], [147, ""], [148, "  return ret;"], [149, "}"]]], "P1": ["src/my_pwm.c", "MyPWM_Freq200kHzInit()", [[33, "int32_t MyPWM_Freq200kHzInit(void)"], [34, "{"], [35, "  if(0 == MyPWM_CT32B1_Init(240))"], [36, "  {"], [37, "    MyPWM_CT32B1_Stop(0); //channel 0"], [38, "    MyPWM_CT32B1_Stop(1); //channel 1"], [39, "    MyPWM_CT32B1_GlobalStart();"], [40, "    return 0;"], [41, "  }"], [42, "  else"], [43, "  {"], [44, "    return -1;"], [45, "  }"], [46, "}"]]], "P2": ["src/my_pwm.c", "MyPWM_CT32B1_Init(240)", [[72, "int32_t MyPWM_CT32B1_Init(uint32_t periodCnt)"], [73, "{"], [74, "  /* initialzation in InitGPIO function. */"], [75, "  /* selects pin function as CT32B1_MAT0 */"], [76, "  LPC_IOCON->TDO_PIO0_13 &= ~0x07 ;"], [77, "  LPC_IOCON->TDO_PIO0_13 |= 0x03 ;"], [78, "  /* selects pin function as CT32B1_MAT1 */"], [79, "  LPC_IOCON->TRST_PIO0_14 &= ~0x07 ;"], [80, "  LPC_IOCON->TRST_PIO0_14 |= 0x03 ;"], [81, ""], [82, "  LPC_SYSCON->SYSAHBCLKCTRL |= (0x01 << 10); //enables clock for 32bit counter/timer1"], [83, "  LPC_CT32B1->TCR = 0 ; //stop timer"], [84, ""], [85, "  LPC_CT32B1->PC = 0;"], [86, "  LPC_CT32B1->TC = 0;"], [87, "  LPC_CT32B1->PR = 0; //TC will increase by 1 every 0.0208333us(48MHz = 48MHz/1)."], [88, ""], [89, "  LPC_CT32B1->MR3 = periodCnt; // periodCnt = MCU_OSC / pwmFreqHz;"], [90, "  LPC_CT32B1->MCR &= ~(1u << 9 | 1u << 10 | 1u << 11);"], [91, "  LPC_CT32B1->MCR = (1u << 10); //the TC will be reset if MR3 matches it."], [92, ""], [93, "  //LPC_CT32B1->PWMC = 0;"], [94, "  LPC_CT32B1->PWMC &= ~(1u << 0 | 1u << 1); //CT32Bn_MAT0 and CT32Bn_MAT1 is controlled by EM0."], [95, "  LPC_CT32B1->EMR &= ~(3u << 4 | 3u << 6);"], [96, "  LPC_CT32B1->EMR |= (1u << 4 | 1u << 6); //[5:4]EMC0 [7:6]:EMC1 /* EMC0/1 = 0x1: Clear EMx on match (force LOW when exiting PWM) */"], [97, ""], [98, "//  LPC_CT32B1->PWMC = (0x01 << 0)  /* PWM mode is enabled for CT32Bn_MAT0. */"], [99, "//                   | (0x01 << 1); /* PWM mode is enabled for CT32Bn_MAT1. */"], [100, ""], [101, "  LPC_CT32B1->MR0 = periodCnt + 1; //default duty is 0;"], [102, "  LPC_CT32B1->MR1 = periodCnt + 1;"], [103, ""], [104, "  return 0;"]]], "C0": ["src/my_waveform.c", "MyWaveform_InitCT32B0()", [[68, "int32_t MyWaveform_InitCT32B0(void)"], [69, "{"], [70, "  NVIC_DisableIRQ(TIMER_32_0_IRQn);"], [71, "  LPC_CT32B0->TCR = 0 ;"], [72, ""], [73, "  LPC_SYSCON->SYSAHBCLKCTRL |= (0x01 << 9);"], [74, "  LPC_CT32B0->TC = 0;"], [75, "  LPC_CT32B0->PC = 0;"], [76, "  LPC_CT32B0->PR = 47; //TC will increase by 1 every 1us(1MHz = 48MHz/48)."], [77, "//  LPC_CT32B0->MR0 = Time;"], [78, "  LPC_CT32B0->MCR = 0;"], [79, ""], [80, "  LPC_CT32B0->TCR = 1 ;"], [81, "  NVIC_ClearPendingIRQ(TIMER_32_0_IRQn);"], [82, "  NVIC_EnableIRQ(TIMER_32_0_IRQn) ;"], [83, ""], [84, "  return 0;"], [85, "}"]]]};
- /* ---- call chain ---- */
- (function(){const s=$('mwCall');
-  const bx=(x,y,w,h,t,sub,c,hl)=>{el(s,'rect',{x,y,width:w,height:h,rx:8,style:`fill:color-mix(in srgb,var(--${c}) ${hl?24:10}%,var(--panel));stroke:var(--${hl?'bad':c});stroke-width:${hl?2.6:1.6}`});el(s,'text',{x:x+w/2,y:y+h/2-3,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--fg)'},t);el(s,'text',{x:x+w/2,y:y+h/2+15,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},sub)};
-  const ar=(x1,x2,y)=>{el(s,'line',{x1,x2:x2-6,y1:y,y2:y,stroke:'var(--fg)','stroke-width':1.6});el(s,'path',{d:`M${x2},${y} l-8,-5 v10z`,fill:'var(--fg)'})};
-  bx(10,20,130,56,'main()','Main.c:16','muted');ar(140,170,48);
-  bx(170,20,170,56,'Device_Init()','device.c:415','muted');ar(340,370,48);
-  bx(370,20,170,56,'Ele_Init()','device.c:422 调用','muted');
-  el(s,'text',{x:10,y:118,'font-size':11,fill:'var(--muted)'},'Device_Init 在这之前已经做完：');el(s,'text',{x:10,y:136,'font-size':11,fill:'var(--muted)'},'InitSystemOSC（主频 48 MHz）→ InitGPIO（PIO0_13 / 14 先设成 GPIO）');
-  el(s,'line',{x1:455,x2:455,y1:76,y2:140,stroke:'var(--fg)','stroke-width':1.6});
-  const row=[[560,'Ele_DisableBoost()','my_electromagnet.c:441','muted',0],[790,'MyWaveform_Init()',':442  ← 这一节','bad',1],[1020,'Ele_EnableBoost()','my_electromagnet.c:443','muted',0]];
-  el(s,'line',{x1:455,x2:560,y1:140,y2:140,stroke:'var(--fg)','stroke-width':1.6});
-  row.forEach(([x,t,sub,c,hl],i)=>{bx(x,112,200,56,t,sub,c,hl);if(i<2)ar(x+200,x+230,140)});
-  el(s,'text',{x:560,y:186,'font-size':11,fill:'var(--muted)'},'先后顺序：① 关升压  ② 配定时器  ③ 开升压（①③ 在 T1A 上不起作用，见下方注意点）');
- })();
- /* ---- state model ---- */
- const S0=()=>({clk9:0,clk10:0,nvic:0,
-  b1:{TCR:0,PC:0,PR:0,TC:0,MR3:0,MCR:0,PWMC:0,EMC:0,EM:0,MR0:0,MR1:0},
-  b0:{TCR:0,PC:0,PR:0,TC:0,MCR:0,MR0:0,MR1:0},f13:1,f14:1,ret:null,s0:'UNINIT',s1:'UNINIT'});
- const ST=[
-  ['E',[442],['Ele_Init'],'开机走到 <b>my_electromagnet.c:442</b>，调用 <code>MyWaveform_Init()</code>。<br>此刻的样子：两个定时器的<b>时钟都没开</b>（灰色）；PIO0_13 / PIO0_14 被 InitGPIO 设成了普通 GPIO（FUNC = 1，默认是输入），MCU 不驱动它们，Q4 / Q5 的栅极靠 R65 / R66 1 MΩ 下拉保持低电平，线圈不通电。两个通道的状态是 <code>UNINIT</code>。',S=>{}],
-  ['W',[137],['Ele_Init','MyWaveform_Init'],'<code>ret = 0</code>：先假设没出错。',S=>{S.ret=0}],
-  ['W',[139],['Ele_Init','MyWaveform_Init'],'调用 <code>MyPWM_Freq200kHzInit()</code>，进去看。',S=>{}],
-  ['P1',[35],['…','MyWaveform_Init','MyPWM_Freq200kHzInit'],'它一上来就调 <code>MyPWM_CT32B1_Init(240)</code>，参数 240 = 一个 PWM 周期要数的数（periodCnt）。48 MHz ÷ 240 = 200 kHz。再进去。',S=>{}],
-  ['P2',[76,77],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'<b>IOCON：</b>把 PIO0_13（23 脚）的功能号低 3 位先清 0 再写 3。功能 3 = <b>CT32B1_MAT0</b>，从此这只脚不再是普通 GPIO，而是听 CT32B1 的“匹配输出 0”。<br>这时 MAT0 的输出值是 EMR 里的 EM0，复位值 0，所以脚被<b>主动拉低</b>，栅极仍然是低。',S=>{S.f13=3}],
-  ['P2',[79,80],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'同样把 PIO0_14（24 脚）改成功能 3 = <b>CT32B1_MAT1</b>，管右线圈。',S=>{S.f14=3}],
-  ['P2',[82],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'<b>SYSAHBCLKCTRL 第 10 位置 1</b>：给 CT32B1 开时钟。没开时钟前这块硬件不工作、写它的寄存器也没用，所以必须先开。左边的框从灰变亮。',S=>{S.clk10=1}],
-  ['P2',[83],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'<b>TCR = 0</b>：先让计数器停住，配置期间别乱数。',S=>{S.b1.TCR=0}],
-  ['P2',[85,86,87],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'<b>PC = 0、TC = 0、PR = 0</b>。TC 是正在数的数；PR 是“每多少个时钟 TC 加 1”减 1。PR = 0 → 每 1 个时钟就加 1，也就是每 1/48 µs ≈ 0.0208 µs 加 1（注释里写的就是这个）。',S=>{S.b1.PC=0;S.b1.TC=0;S.b1.PR=0}],
-  ['P2',[89],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'<b>MR3 = 240</b>：第 4 个比较寄存器当“周期”用。下一行会让 TC 数到 240 就归零，所以一圈 = 240 个时钟 = 5 µs。',S=>{S.b1.MR3=240}],
-  ['P2',[90,91],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'<b>MCR = 1 &lt;&lt; 10</b>：MCR 每 3 位管一个比较寄存器（中断 / 归零 / 停止）。MR3 那组是 bit9、10、11，这里只开 <b>bit10 = 碰到 MR3 就归零</b>，不开中断（bit9）、不停（bit11）。第 90 行先清这三位，可第 91 行是整个赋值，所以第 90 行其实白做。',S=>{S.b1.MCR=0x400}],
-  ['P2',[94],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'<b>PWMC 的 bit0、bit1 清 0</b>：PWMC 决定 MAT0 / MAT1 这两只脚是“PWM 模式”（硬件自动出方波）还是“听 EMR 的”。清 0 = 听 EMR 的，也就是先不出方波。以后要震时 <code>MyPWM_Start()</code> 把对应位置 1。',S=>{S.b1.PWMC=0}],
-  ['P2',[95,96],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'<b>EMR</b>：bit[5:4] 是 EMC0，bit[7:6] 是 EMC1，都写成 01 = “碰到 MR0 / MR1 时把 EM0 / EM1 清 0”。注释写明用意：<b>从 PWM 模式退出来时，脚保证是低</b>。EM0、EM1（bit0、bit1）没动，还是 0。',S=>{S.b1.EMC=1}],
-  ['P2',[101,102],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'<b>MR0 = MR1 = 241</b>（periodCnt + 1）。按 my_pwm.c:118 的注释：TC 在 0 ~ MRx 之间输出低，MRx ~ MR3 之间输出高。241 比 240 大，TC 还没数到就归零了，所以<b>永远是低 = 占空比 0%</b>。这也是 Freq200kHzDuty 表第 0 项是 241 的原因。',S=>{S.b1.MR0=241;S.b1.MR1=241}],
-  ['P2',[104],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'<code>return 0</code>：无条件返回成功。',S=>{}],
-  ['P1',[37,38],['…','MyWaveform_Init','MyPWM_Freq200kHzInit'],'回到上一层。<code>MyPWM_CT32B1_Stop(0)</code>、<code>Stop(1)</code>：再把 PWMC 的 bit0、bit1 清一次（上面第 94 行已经清过，这里是保险）。',S=>{S.b1.PWMC=0}],
-  ['P1',[39],['…','MyWaveform_Init','MyPWM_Freq200kHzInit'],'<code>MyPWM_CT32B1_GlobalStart()</code>：<b>TCR 的 bit0 置 1，CT32B1 开始数</b>：0、1、2 … 240、归零、0、1 …，每秒 20 万圈。<br>但两只脚还是低：PWMC = 0 → 听 EMR；EM0 = EM1 = 0；就算以后切到 PWM 模式，MR0 / MR1 = 241 也永远碰不到。下面的标尺是示意（真实速度每 5 µs 一圈）。',S=>{S.b1.TCR=1}],
-  ['P1',[40],['…','MyWaveform_Init','MyPWM_Freq200kHzInit'],'<code>return 0</code>。',S=>{}],
-  ['W',[139],['Ele_Init','MyWaveform_Init'],'回到 <code>MyWaveform_Init()</code>：<code>ret = 0</code>。',S=>{S.ret=0}],
-  ['W',[140],['Ele_Init','MyWaveform_Init'],'第 140 行调用 <code>MyWaveform_InitCT32B0()</code>，进去看。',S=>{}],
-  ['C0',[70],['…','MyWaveform_Init','MyWaveform_InitCT32B0'],'<b>NVIC_DisableIRQ(TIMER_32_0_IRQn)</b>：先在 NVIC（CPU 的中断总开关）里把 CT32B0 的中断关了，配置期间不被打断。',S=>{S.nvic=0}],
-  ['C0',[71],['…','MyWaveform_Init','MyWaveform_InitCT32B0'],'<b>TCR = 0</b>：停计数器。注意这时 CT32B0 的时钟<b>还没开</b>（下一行才开），这次写不生效；不过 TCR 复位值本来就是 0，所以没影响。',S=>{}],
-  ['C0',[73],['…','MyWaveform_Init','MyWaveform_InitCT32B0'],'<b>SYSAHBCLKCTRL 第 9 位置 1</b>：给 CT32B0 开时钟，右边的框亮起来。',S=>{S.clk9=1}],
-  ['C0',[74,75,76],['…','MyWaveform_Init','MyWaveform_InitCT32B0'],'<b>TC = 0、PC = 0、PR = 47</b>。PR = 47 → 每 47 + 1 = 48 个时钟 TC 加 1，48 MHz ÷ 48 = 1 MHz，<b>TC 每 1 µs 加 1</b>。它就是一块微秒秒表。',S=>{S.b0.TC=0;S.b0.PC=0;S.b0.PR=47}],
-  ['C0',[78],['…','MyWaveform_Init','MyWaveform_InitCT32B0'],'<b>MCR = 0</b>：MR0 ~ MR3 都不产生中断、不归零、不停止。也就是“闹钟全关”，TC 一直往上数，到 2³² − 1 再绕回 0。',S=>{S.b0.MCR=0}],
-  ['C0',[80],['…','MyWaveform_Init','MyWaveform_InitCT32B0'],'<b>TCR = 1</b>：秒表开始走。右边的 TC 现在按<b>真实速度</b>在涨（每秒涨 100 万）。',S=>{S.b0.TCR=1}],
-  ['C0',[81,82],['…','MyWaveform_Init','MyWaveform_InitCT32B0'],'清掉可能残留的“待处理”中断，然后在 NVIC 里<b>打开</b> TIMER_32_0 中断。<br>通道开了，但 MCR = 0，没有任何闹钟，所以 <code>TIMER32_0_IRQHandler</code> 现在一次都不会进。等 <code>MyWaveform_Start()</code> 写 MR0 = TC + 20、把 MCR bit0 置 1，才开始每 20 µs 进一次（第 3 节）。',S=>{S.nvic=1}],
-  ['C0',[84],['…','MyWaveform_Init','MyWaveform_InitCT32B0'],'<code>return 0</code>：同样无条件成功。',S=>{}],
-  ['W',[140],['Ele_Init','MyWaveform_Init'],'<code>ret = ret | 0</code> = 0 | 0 = <b>0</b>。',S=>{S.ret=0}],
-  ['W',[142,143,144,145,146],['Ele_Init','MyWaveform_Init'],'<code>!ret</code> 成立，两个通道的状态 <code>UNINIT → STOPPED</code>。从现在起 <code>MyWaveform_StartGenerate()</code> 才肯干活（它第 162 行检查的就是这个）。',S=>{S.s0='STOPPED';S.s1='STOPPED'}],
-  ['W',[148],['Ele_Init','MyWaveform_Init'],'<code>return 0</code>。',S=>{}],
-  ['E',[443],['Ele_Init'],'回到 <code>Ele_Init()</code>，返回值被丢掉；接着 <code>Ele_EnableBoost()</code>。<br><b>结果</b>：CT32B1 在转但输出锁在低；CT32B0 秒表在走但没闹钟；两个通道 STOPPED。线圈要等按键按下才会震。',S=>{}]
- ];
- const states=[];{let S=S0();ST.forEach(st=>{S=JSON.parse(JSON.stringify(S));st[4](S);states.push(S)})}
- let k=0,t0=0;
- const flat=(S,pre='',o={})=>{for(const q in S){const v=S[q];if(v&&typeof v==='object')flat(v,pre+q+'.',o);else o[pre+q]=v}return o};
- function draw(){const s=$('mwReg');s.innerHTML='';const S=states[k],P=k?flat(states[k-1]):flat(S0()),F=flat(S);
-  const chg=q=>P[q]!==F[q];
-  const T=(x,y,t,o)=>el(s,'text',Object.assign({x,y,'font-size':12,fill:'var(--fg)'},o||{}),t);
-  const cell=(x,y,w,lab,val,key,dis,hint)=>{const c=key&&chg(key);
-   el(s,'rect',{x,y,width:w,height:28,rx:4,style:`fill:${c?'color-mix(in srgb,var(--bad) 18%,var(--panel))':'var(--panel)'};stroke:var(--${c?'bad':'line'});stroke-width:${c?2.4:1}`,opacity:dis?.45:1});
-   T(x+8,y+18,lab,{'font-size':11.5,fill:'var(--muted)','font-family':'var(--font-m)',opacity:dis?.5:1});
-   T(x+w-8,y+18,val,{'font-size':12.5,'font-weight':700,'text-anchor':'end','font-family':'var(--font-m)',opacity:dis?.5:1});
-   if(hint)T(x+w+10,y+18,hint,{'font-size':11,fill:'var(--muted)',opacity:dis?.5:1});};
-  const frame=(x,y,w,h,t,c,on)=>{el(s,'rect',{x,y,width:w,height:h,rx:10,style:`fill:${on?`color-mix(in srgb,var(--${c}) 6%,var(--panel))`:'var(--soft)'};stroke:var(--${on?c:'line'});stroke-width:1.8;${on?'':'stroke-dasharray:6 4'}`});T(x+12,y+22,t,{'font-weight':700,'font-size':13.5});};
-  /* SYSCON & NVIC */
-  frame(20,10,560,74,'SYSCON → SYSAHBCLKCTRL（给各个外设开时钟的开关）','muted',1);
-  cell(36,44,240,'bit10  CT32B1 时钟',S.clk10?'1 开':'0 关','clk10');cell(300,44,240,'bit9   CT32B0 时钟',S.clk9?'1 开':'0 关','clk9');
-  frame(860,10,480,74,'NVIC（CPU 的中断总开关）','muted',1);
-  cell(876,44,300,'TIMER_32_0（CT32B0 中断）',S.nvic?'1 开':'0 关','nvic',0,S.nvic?'通道开了':'');
-  /* CT32B1 */
-  const on1=S.clk10;frame(20,100,560,430,'CT32B1：200 kHz PWM 发生器（my_pwm.c）','pc',on1);
-  if(!on1)T(568,122,'时钟没开：还没工作',{'font-size':11.5,fill:'var(--bad)','text-anchor':'end'});
-  const b=S.b1,r1=[['TCR',b.TCR?'1 在数':'0 停','b1.TCR','bit0 = 1 计数器走'],['PC',b.PC,'b1.PC','预分频的内部计数'],['PR',b.PR,'b1.PR','0 → 每 1 个时钟 TC + 1'],['TC',b.TCR?'0→240 循环':b.TC,'b1.TC','正在数的数'],['MR3',b.MR3,'b1.MR3','周期：数到它就归零'],['MCR',b.MCR?'0x400':'0','b1.MCR','bit10 = 碰到 MR3 归零'],['PWMC',b.PWMC?'…':'bit1..0 = 00','b1.PWMC','00 → 两只脚听 EMR 的'],['EMR',b.EMC?'EMC0/1=01 EM=0':'0','b1.EMC','01：碰到 MRx 就拉低'],['MR0',b.MR0,'b1.MR0','左：241 > 240 → 0%'],['MR1',b.MR1,'b1.MR1','右：同上']];
-  r1.forEach((q,i)=>cell(36,132+i*34,250,q[0],String(q[1]),q[2],!on1,q[3]));
-  /* ruler */
-  const rx=36,rw=500,ry=490;el(s,'line',{x1:rx,x2:rx+rw,y1:ry,y2:ry,stroke:'var(--fg)','stroke-width':2,opacity:on1?1:.3});
-  [[0,'0'],[240,'MR3 240'],[241,'']].forEach(([v,t])=>{const x=rx+v/245*rw;el(s,'line',{x1:x,x2:x,y1:ry-6,y2:ry+6,stroke:'var(--fg)','stroke-width':1.4,opacity:on1?1:.3});if(t)T(x,ry+20,t,{'font-size':10.5,'text-anchor':v?'end':'start',fill:'var(--muted)'})});
-  if(b.MR0){const x=rx+241/245*rw;T(x+4,ry-10,'MR0/MR1 = 241（永远碰不到）',{'font-size':10.5,fill:'var(--bad)','text-anchor':'end'})}
-  el(s,'circle',{id:'mwDot',cx:rx,cy:ry,r:6,fill:'var(--pc)',opacity:b.TCR?1:0});
-  /* pins */
-  frame(600,100,240,430,'引脚 → MOS 栅极','per',1);
-  [[13,23,'Q4 栅极（左）',S.f13,'f13'],[14,24,'Q5 栅极（右）',S.f14,'f14']].forEach(([n,pin,g,f,key],i)=>{const y=140+i*190;
-   cell(612,y,216,`PIO0_${n}（${pin} 脚）FUNC`,String(f),key);
-   T(616,y+50,f===1?'普通 GPIO（InitGPIO 设的）':`CT32B1_MAT${i}`,{'font-weight':700,'font-size':12});
-   T(616,y+70,f===1?'输入，MCU 不驱动':`由 EM${i} 驱动（= 0）`,{'font-size':11.5,fill:'var(--muted)'});
-   T(616,y+88,f===1?`靠 ${i?'R66':'R65'} 1 MΩ 下拉 → 低`:'MCU 主动拉低',{'font-size':11.5,fill:'var(--muted)'});
-   el(s,'polyline',{points:`620,${y+130} 720,${y+130}`,stroke:'var(--per)','stroke-width':2.4,fill:'none'});T(620,y+118,'电平：一直低',{'font-size':11,fill:'var(--per)'});
-   T(730,y+134,'→ '+g,{'font-size':11.5,'font-weight':700});});
-  /* CT32B0 */
-  const on0=S.clk9;frame(860,100,480,430,'CT32B0：1 µs 秒表 + 20 µs 闹钟（my_waveform.c）','gold',on0);
-  if(!on0)T(1328,146,'时钟没开：还没工作',{'font-size':11.5,fill:'var(--bad)','text-anchor':'end'});
-  const c=S.b0,r0=[['TCR',c.TCR?'1 在走':'0 停','b0.TCR','bit0 = 1 秒表走'],['PC',c.PC,'b0.PC','预分频的内部计数'],['PR',c.PR,'b0.PR',c.PR?'48 个时钟 +1 = 1 µs':''],['TC',c.TC,'b0.TC','单位 µs'],['MCR',c.MCR,'b0.MCR','0 → 闹钟全关'],['MR0','—','b0.MR0','左通道闹钟（启动时才写）'],['MR1','—','b0.MR1','右通道闹钟（启动时才写）']];
-  r0.forEach((q,i)=>cell(876,132+i*34,230,q[0],String(q[1]),q[2],!on0,q[3]));
-  const tcT=[...s.querySelectorAll('text')].find(t=>t.textContent===String(c.TC)&&+t.getAttribute('y')===132+3*34+18&&+t.getAttribute('x')>1000);if(tcT)tcT.id='mwTC';
-  if(c.TCR)T(876,400,'TC 正按真实速度涨：每秒 + 1 000 000',{'font-size':11.5,fill:'var(--gold)','font-weight':700});
-  T(876,430,'中断要两道门都开才会进：',{'font-size':11.5});T(876,450,`NVIC ${S.nvic?'✓ 开':'✗ 关'}　+　MCR 的 bit0 / bit3（闹钟）${c.MCR?'✓':'✗ 关'}`,{'font-size':11.5,fill:S.nvic&&c.MCR?'var(--good)':'var(--muted)'});
-  T(876,470,'→ 现在 TIMER32_0_IRQHandler 不会进',{'font-size':11.5,fill:'var(--muted)'});
-  /* variables */
-  frame(20,546,1320,96,'变量','muted',1);
-  cell(36,580,200,'ret',S.ret===null?'（还没有）':String(S.ret),'ret');
-  ['s0','s1'].forEach((q,i)=>{const x=290+i*520;T(x,598,`wfCh${i}.sta（${i?'右':'左'}）`,{'font-size':12,'font-weight':700});
-   ['UNINIT','STOPPED','RUNNING'].forEach((n,j)=>{const xx=x+120+j*128,cur=S[q]===n,c2=cur&&chg(q);el(s,'rect',{x:xx,y:580,width:112,height:28,rx:14,style:`fill:${cur?'color-mix(in srgb,var(--'+(c2?'bad':'per')+') 22%,var(--panel))':'var(--panel)'};stroke:var(--${cur?(c2?'bad':'per'):'line'});stroke-width:${cur?2.4:1}`});T(xx+56,598,n,{'text-anchor':'middle','font-size':11.5,'font-weight':cur?700:400,'font-family':'var(--font-m)'});if(j<2)T(xx+114,598,'→',{'font-size':12,fill:'var(--muted)'})});
-   T(x+120,630,'STOPPED → RUNNING 由按键按下时的 StartGenerate 做',{'font-size':10.5,fill:'var(--muted)'})});
-  /* code */
-  const st=ST[k],sn=SN[st[0]];$('mwFile').textContent=`${sn[0]} · ${sn[1]}`;
-  const prevDone=new Set();ST.slice(0,k).forEach(q=>{if(q[0]===st[0])q[1].forEach(l=>prevDone.add(l))});
-  $('mwCode').innerHTML=sn[2].map(([n,t])=>`<div class="${st[1].includes(n)?'cur':prevDone.has(n)?'done':''}"><span>${n}</span>${t.replace(/&/g,'&amp;').replace(/</g,'&lt;')||' '}</div>`).join('');
-  const cur=$('mwCode').querySelector('.cur');if(cur)cur.scrollIntoView({block:'nearest'});
-  $('mwStack').innerHTML='调用栈：'+st[2].map(f=>`<span>${f}</span>`).join(' → ');
-  $('mwNote').innerHTML=st[3];$('mwPos').textContent=`第 ${k+1} / ${ST.length} 步`;
-  $('mwPrev').disabled=k===0;$('mwNext').disabled=$('mwEnd').disabled=k===ST.length-1;
-  if(c.TCR&&!t0)t0=performance.now();if(!c.TCR)t0=0;
- }
- const go=n=>{k=Math.max(0,Math.min(ST.length-1,n));draw()};
- $('mwPrev').onclick=()=>go(k-1);$('mwNext').onclick=()=>go(k+1);$('mwEnd').onclick=()=>go(ST.length-1);$('mwReset').onclick=()=>go(0);
- let ph=0;setInterval(()=>{const S=states[k];const d=$('mwDot');if(d&&S.b1.TCR){ph=(ph+0.035)%1;d.setAttribute('cx',36+ph*240/245*500)}const tc=$('mwTC');if(tc&&t0)tc.textContent=Math.floor((performance.now()-t0)*1000).toLocaleString('en-US')},60);
- draw();
+const DUTY=[241,239,236,234,231,229,227,224,222,219,217,214,212,210,207,205,202,200,198,195,193,190,188,186,183,181,178,176,174,171,169,166,164,161,159,157,154,152,149,147,145,142,140,137,135,133,130,128,125,123,121,118,116,113,111,108,106,104,101,99,96,94,92,89,87,84,82,80,77,75,72,70,67,65,63,60,58,55,53,51,48,46,43,41,39,36,34,31,29,27,24,22,19,17,14,12,10,7,5,2,0];
+const DEF=[];for(let i=0;i<50;i++){DEF[i]=i+51;DEF[99-i]=i+51}
+const OLD=[60,61,62,62,63,64,65,66,67,67,68,69,70,71,72,72,73,74,75,76,77,77,78,79,80,81,82,82,83,84,85,86,87,87,88,89,90,91,92,92,93,94,95,96,97,97,98,99,100,100,100,100,99,98,97,97,96,95,94,93,92,92,91,90,89,88,87,87,86,85,84,83,82,82,81,80,79,78,77,77,76,75,74,73,72,72,71,70,69,68,67,67,66,65,64,63,62,62,61,60];
+/* firmware-identical waveform math */
+function wave(len,T){let p=Math.min(5000,Math.max(20,T));const ut=Math.floor(p/20);const inc=Math.floor((len*32768)/ut);let acc=inc>>1;const seq=[{t:0,idx:acc>>15,acc}];let k=0;
+ while(true){k++;acc+=inc;const idx=Math.floor(acc/32768);if(idx<len)seq.push({t:k*20,idx,acc});else return {p,ut,inc,acc0:inc>>1,seq,stop:k*20,stopAcc:acc,n:k}}}
+/* ===== overview ===== */
+(function(){const s=$('ov');
+ const A=[
+  ['hall',20,150,170,96,'① 霍尔 + 按键算法','my_misc.c · 每 1 ms','muted','每 1 ms 读一次两个霍尔芯片（第 3 课），算出 0 ~ 100 的段号，再按 RT 规则判出按下 / 松开（第 4 课），结果放在 gbKeyState[]。\n同时把段号交给线圈：Ele_UpadteSegment()（my_misc.c:554、558），给“动态导通时间”用。'],
+  ['scan',250,150,170,96,'② Button_Scan()','button.c:614 · 主循环','muted','比较这一次和上一次的按键状态。左键从 0 变 1（button.c:630~639）→ 调 Ele_LeftKeyPressProcess()；从 1 变 0（:653~655）→ 调 Ele_LeftKeyReleaseProcess()。右键同理。'],
+  ['ele',480,150,200,96,'③ 线圈管家 Ele_','my_electromagnet.c','bad','按下函数（:1005）做四件事：算导通时间（默认 500 µs）→ 状态记成“按下震动中”、记下开始的毫秒 → 按驱动方式选表（level：{100}；pwm：gPwmWf）→ 调 MyWaveform_StartGenerate()。\n之后主循环每圈调 Ele_PollingTask()（device.c:525），按毫秒推进状态机：震动中 → 消抖 → 空闲。'],
+  ['wf',740,150,180,96,'④ 波形发生器','my_waveform.c · CT32B0 · 每 20 µs','gold','StartGenerate 算出要换几次力度（导通时间 ÷ 20 µs）、每次在表里前进多少；然后定一个 20 µs 后的闹钟（CT32B0 的 MR0）。\n每次闹钟响（TIMER32_0_IRQHandler，my_waveform.c:87），取表里下一格的力度交给 PWM，再定下一个闹钟。表走完就关 PWM、关闹钟。'],
+  ['pwm',980,150,150,96,'⑤ PWM','my_pwm.c · CT32B1 · 每 5 µs','per','CT32B1 从 0 数到 240 再归零，一圈 5 µs（200 kHz）。MyPWM_SetDuty() 把力度 0 ~ 100% 查表换成比较值 MR0（Freq200kHzDuty，100% → 0，0% → 241）。TC ≥ MR0 时 PIO0_13 输出高。全程硬件做，CPU 不参与。'],
+  ['coil',1190,150,150,96,'⑥ Q4 + 线圈','PIO0_13 → 栅极','good','PIO0_13（23 脚）经 R63 100 Ω 接 MOS 管 Q4 的栅极。高 → Q4 导通 → H_VDD 7 V 经线圈、Q4 到地，线圈变成电磁铁，把按键往上“踢”一下。低 → Q4 断开，线圈电流经续流二极管 D28 慢慢消失。'],
+  ['gui',480,20,460,66,'GUI（上位机）','导通时间、驱动方式、力度表 → EEPROM','hw','GUI 通过 USB 自定义协议（第 7 节）发参数：按下 / 松开导通时间、驱动方式（0 level / 1 pwm）、100 格力度表。固件存进 xgAllParam 并写 EEPROM。导通时间经 Task_ParamGuard() 生效，驱动方式和力度表每次按下时现读。']];
+ const show=a=>{$('ovLog').textContent=a[5]+'\n'+a[9]};
+ A.forEach(a=>{const[k,x,y,w,h,t,sub,c]=a;const g=el(s,'g',{style:'cursor:pointer'});g.addEventListener('click',()=>show(a));
+  el(g,'rect',{x,y,width:w,height:h,rx:10,style:`fill:color-mix(in srgb,var(--${c}) 13%,var(--panel));stroke:var(--${c});stroke-width:2`});
+  el(g,'text',{x:x+w/2,y:y+h/2-4,'text-anchor':'middle','font-size':14,'font-weight':700,fill:'var(--fg)'},t);
+  el(g,'text',{x:x+w/2,y:y+h/2+16,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},sub)});
+ const ar=(x1,y1,x2,y2,t,c,dy)=>{el(s,'line',{x1,y1,x2:x2-(x2>x1?7:0),y2:y2-(y2>y1?7:y2<y1?-7:0),stroke:`var(--${c||'fg'})`,'stroke-width':1.8});
+  const ang=Math.atan2(y2-y1,x2-x1);el(s,'path',{d:`M${x2},${y2} l${-9*Math.cos(ang)+5*Math.sin(ang)},${-9*Math.sin(ang)-5*Math.cos(ang)} l${-10*Math.sin(ang)},${10*Math.cos(ang)}z`,fill:`var(--${c||'fg'})`});
+  if(t)el(s,'text',{x:(x1+x2)/2,y:(y1+y2)/2+(dy||-8),'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},t)};
+ ar(190,198,250,198,'gbKeyState');ar(420,198,480,198,'按下了');ar(680,198,740,198,'Start');ar(920,198,980,198,'力度 %');ar(1130,198,1190,198,'PIO0_13');
+ ar(710,86,710,150,'',  'hw');el(s,'text',{x:718,y:124,'font-size':11,fill:'var(--muted)'},'每次按下现读');
+ /* feedback */
+ el(s,'path',{d:'M580,246 L580,300 L105,300 L105,253',fill:'none',stroke:'var(--bad)','stroke-width':1.8,'stroke-dasharray':'6 4'});el(s,'path',{d:'M105,246 l-5,9 h10z',fill:'var(--bad)'});
+ el(s,'text',{x:352,y:318,'text-anchor':'middle','font-size':12,fill:'var(--bad)','font-weight':600},'震动 + 消抖期间（约 11 ms）Ele_IsVibrating() = 1 → 按键算法跳过这个键（my_misc.c:490）');
+ /* time scales */
+ [[20,'每 1 ms','muted',190],[250,'主循环每圈（远快于 1 ms）','muted',420],[480,'按下时一次 + 主循环里按毫秒','bad',680],[740,'每 20 µs 一次中断','gold',920],[980,'每 5 µs 一圈（硬件）','per',1130],[1190,'电流 µs 级变化','good',1340]].forEach(([x,t,c,x2])=>{
+  el(s,'line',{x1:x,x2,y1:360,y2:360,stroke:`var(--${c})`,'stroke-width':4});el(s,'text',{x,y:384,'font-size':11.5,fill:`var(--${c})`,'font-weight':600},t)});
+ el(s,'text',{x:20,y:346,'font-size':11,fill:'var(--muted)'},'各自的节奏：');
 })();
 /* ===== full wiring ===== */
 (function(){const s=$('wire6');if(!s)return;
@@ -524,109 +428,286 @@ $('hwOn').onclick=()=>{hwSt='on';drawHW()};$('hwOff').onclick=()=>{hwSt='off';dr
  /* table */
  const order=['SW1','D2','R30','C29','L4','U5','R34','D10','R32','C31','R31','R62','C58','Coil1','Coil2','D28','D31','Q4','R67','R63','C60','R65','D30','MCU','PWM1','PWM2','HVDD','PWREN','HPEN'];
  $('wire6Tab').innerHTML=order.map(k=>`<tr><td>${P[k][0]}</td><td>${P[k][1]}</td><td>${P[k][2]}</td></tr>`).join('');})();
-/* ===== ms timeline ===== */
-const ST=[
- {t:0,a:'第 4 课：霍尔算法判出左键按下（gbKeyState[1] = 1）',b:'Button_Scan() 发现左键 0 → 1（button.c:632~639）→ 调 Ele_LeftKeyPressProcess()',s:'NO',v:0,h:0},
- {t:0.01,a:'Ele_LeftKeyPressProcess()（982）',b:'导通时间 500 ≠ 0；右线圈没在震 → Ele_CalculateDuration() = 500 µs → status = ELE_PRESS_VIBRATING，vibrateBeginTick = 现在毫秒 → MyWaveform_StartGenerate(通道 0, 波形表, 500, 1)',s:'PRESS',v:1,h:1},
- {t:0.25,a:'波形进行中（CT32B0 每 20 µs 中断一次）',b:'25 段力度：62% → 100% → 61%，PWM 200 kHz 一直在开关',s:'PRESS',v:1,h:1},
- {t:0.5,a:'500 µs 到：波形表走完',b:'MyWaveform_UpdateFromIsr() 发现 idx ≥ 100 → MyWaveform_Stop()：PWMC 清 0，PIO0_13 拉低，MOS 关，线圈电流经二极管消失',s:'PRESS',v:0,h:1},
- {t:1,a:'主循环 Ele_StatusTask()（1311）',b:'现在 − 开始 = 1 ms，1 × 1000 = 1000，不大于 500 + 999 = 1499 → 还算“按下震动中”',s:'PRESS',v:0,h:1},
- {t:2,a:'主循环 Ele_StatusTask()',b:'2 × 1000 = 2000 > 1499 → status = ELE_RELEASE_DEBOUNCE，debounceBeginTick = 现在',s:'DEB',v:0,h:1},
- {t:6,a:'消抖中',b:'磁场、机械晃动慢慢平息；按键算法仍跳过左键（Ele_IsVibrating = 1）',s:'DEB',v:0,h:1},
- {t:10,a:'主循环 Ele_StatusTask()（1329）',b:'现在 − 消抖开始 = 8，不大于 8 → 继续消抖',s:'DEB',v:0,h:1},
- {t:11,a:'主循环 Ele_StatusTask()',b:'11 − 2 = 9 > 8 → status = ELE_NO_VIBRATING',s:'NO',v:0,h:0},
- {t:12,a:'按键算法恢复处理左键',b:'Ele_IsVibrating(左) = 0，从这 1 ms 起左键的霍尔读数重新参与判断'}].map(o=>Object.assign({s:'NO',v:0,h:0},o));
-let mi=0,mt=null;
-function drawMS(){const s=$('ms');s.innerHTML='';const X0=170,W=1150,X=t=>X0+t/14*W;
- const rows=[['手指 / 按键状态',40],['线圈状态机 status',100],['PWM（线圈通电）',170],['线圈电流',230],['按键算法看左键吗',300]];
- rows.forEach(([n,y])=>el(s,'text',{x:10,y:y+18,'font-size':12.5,'font-weight':600,fill:'var(--fg)'},n));
- for(let t=0;t<=14;t++){el(s,'line',{x1:X(t),x2:X(t),y1:30,y2:340,stroke:'var(--grid)'});el(s,'text',{x:X(t),y:360,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},t+' ms')}
- el(s,'rect',{x:X(0),y:40,width:X(14)-X(0),height:26,style:'fill:color-mix(in srgb,var(--bad) 22%,transparent)'});el(s,'text',{x:X(0)+6,y:58,'font-size':11.5,fill:'var(--fg)'},'左键按着（gbKeyState[1] = 1）');
- const seg=(a,b,y,c,txt)=>{el(s,'rect',{x:X(a),y,width:X(b)-X(a),height:26,rx:3,style:`fill:color-mix(in srgb,var(--${c}) 30%,var(--panel));stroke:var(--${c})`});if(txt)el(s,'text',{x:(X(a)+X(b))/2,y:y+17,'text-anchor':'middle','font-size':11,fill:'var(--fg)'},txt)};
- seg(0,2,100,'bad','PRESS_VIBRATING');seg(2,11,100,'gold','RELEASE_DEBOUNCE（> 8 ms）');seg(11,14,100,'line','NO_VIBRATING');
- seg(0,0.5,170,'pc','');el(s,'text',{x:X(0.5)+6,y:188,'font-size':11,fill:'var(--pc)','font-weight':700},'← 只有 0.5 ms！');
- let d=`M${X(0)},256`;for(let i=0;i<=40;i++){const t=i/40*1.4;const I=t<0.5?(1-Math.exp(-t/0.15))*0.9:0.9*(1-Math.exp(-0.5/0.15))*Math.exp(-(t-0.5)/0.12);d+=` L${X(t)},${256-I*24}`}d+=` L${X(14)},256`;el(s,'path',{d,fill:'none',stroke:'var(--bad)','stroke-width':2});
- seg(0,11,300,'muted','跳过（Ele_IsVibrating = 1）');seg(11,14,300,'good','照常判断');
- const cur=ST[mi];el(s,'line',{x1:X(cur.t),x2:X(cur.t),y1:26,y2:345,stroke:'var(--bad)','stroke-width':2.5});
- el(s,'text',{x:X0,y:395,'font-size':11.5,fill:'var(--muted)'},'导通时间按默认 500 µs；毫秒数按主循环每次检查的时刻取整，实际可能早晚零点几毫秒');
- $('mLog').textContent=`t ≈ ${cur.t} ms　${cur.a}\n${cur.b}`;$('mC').textContent=`第 ${mi+1} / ${ST.length} 步`;$('mP').disabled=mi===0;$('mN').disabled=mi===ST.length-1}
-const mStop=()=>{if(mt){clearInterval(mt);mt=null;$('mPlay').textContent='自动播放'}};
-$('mN').onclick=()=>{mStop();if(mi<ST.length-1){mi++;drawMS()}};$('mP').onclick=()=>{mStop();if(mi>0){mi--;drawMS()}};$('mR').onclick=()=>{mStop();mi=0;drawMS()};
-$('mPlay').onclick=()=>{if(mt){mStop();return}if(mi>=ST.length-1)mi=0;$('mPlay').textContent='暂停';mt=setInterval(()=>{if(mi>=ST.length-1){mStop();return}mi++;drawMS()},1300)};drawMS();
-/* ===== waveform zoom ===== */
-function samples(T){let p=Math.min(5000,Math.max(20,T));const up=Math.floor(p/20);const inc=Math.floor((100<<15)/up);let acc=inc>>1;const out=[{idx:acc>>15,acc}];while(true){acc+=inc;const idx=acc>>15;if(idx>=100)break;out.push({idx,acc})}return{p,up,inc,out}}
-function drawWF(){const T=+$('onT').value;$('onV').textContent=T+' µs';const r=samples(T);let k=Math.min(Math.max(0,+$('seg').value),r.out.length-1);$('seg').max=r.out.length-1;$('seg').value=k;
- const s=$('wf');s.innerHTML='';
- /* table */
- const X0=80,W=1220,Y=v=>150-(v-50)/50*120;el(s,'text',{x:10,y:20,'font-size':12.5,'font-weight':700,fill:'var(--fg)'},'波形表 wfCustomTbl[100]（灰）和这次真正用到的格子（金点）');
- el(s,'polyline',{points:WF.map((v,i)=>(X0+i/99*W)+','+Y(v)).join(' '),fill:'none',stroke:'var(--muted)','stroke-width':1.5});
- r.out.forEach((o,i)=>el(s,'circle',{cx:X0+o.idx/99*W,cy:Y(WF[o.idx]),r:i===k?6:3.5,fill:i===k?'var(--bad)':'var(--gold)'}));
- [60,80,100].forEach(v=>{el(s,'text',{x:X0-6,y:Y(v)+4,'text-anchor':'end','font-size':10.5,fill:'var(--muted)'},v+'%')});el(s,'text',{x:X0,y:168,'font-size':10.5,fill:'var(--muted)'},'格 0');el(s,'text',{x:X0+W,y:168,'text-anchor':'end','font-size':10.5,fill:'var(--muted)'},'格 99');
- /* steps over time */
- const Y2=v=>330-v*1.3,n=r.out.length,sw=W/n;el(s,'text',{x:10,y:195,'font-size':12.5,'font-weight':700,fill:'var(--fg)'},`时间轴：${r.p} µs 分成 ${n} 段，每段 20 µs，每段的占空比`);
- r.out.forEach((o,i)=>{const v=WF[o.idx];el(s,'rect',{x:X0+i*sw+1,y:Y2(v),width:Math.max(1,sw-2),height:v*1.3,style:`fill:${i===k?'var(--bad)':'color-mix(in srgb,var(--gold) 55%,var(--panel))'}`});if(sw>26)el(s,'text',{x:X0+i*sw+sw/2,y:Y2(v)-4,'text-anchor':'middle','font-size':9.5,fill:'var(--fg)'},v)});
- el(s,'text',{x:X0,y:350,'font-size':10.5,fill:'var(--muted)'},'0 µs');el(s,'text',{x:X0+W,y:350,'text-anchor':'end','font-size':10.5,fill:'var(--muted)'},r.p+' µs → 停');
- /* zoom one segment: 4 PWM periods */
- const v=WF[r.out[k].idx],cmp=DT[v],hi=(240-Math.min(cmp,240))/240;const zx=X0,zw=W,zy=400;el(s,'text',{x:10,y:385,'font-size':12.5,'font-weight':700,fill:'var(--fg)'},`再放大第 ${k} 段（${k*20} ~ ${k*20+20} µs）：占空比 ${v}% → 4 个 5 µs 的 PWM 周期，每个周期高 ${(hi*5).toFixed(2)} µs`);
- let d=`M${zx},${zy+80}`;for(let i=0;i<4;i++){const x=zx+i*zw/4,lo=(1-hi)*zw/4;d+=` H${x+lo} V${zy+20} H${x+zw/4} V${zy+80}`}el(s,'path',{d,fill:'none',stroke:'var(--pc)','stroke-width':2.4});
- for(let i=0;i<=4;i++)el(s,'text',{x:zx+i*zw/4,y:zy+100,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},(k*20+i*5)+' µs');
- $('wfLog').textContent=`periodUs = ${r.p}；updateTimes = ${r.p} ÷ 20 = ${r.up}；inc = (100 << 15) ÷ ${r.up} = ${r.inc}（= ${(r.inc/32768).toFixed(3)} 格 / 步）；acc 起点 = inc >> 1 = ${r.inc>>1}\n第 ${k} 段：acc = ${r.out[k].acc}，idx = acc >> 15 = ${r.out[k].idx} → 表[${r.out[k].idx}] = ${v}% → Freq200kHzDuty[${v}] = 比较值 ${cmp} → 每 5 µs 里 TC 从 ${cmp} 到 240 为高 = ${(hi*100).toFixed(1)}%\n一共 ${n} 段 × 20 µs = ${n*20} µs 后 idx ≥ 100 → 停止 PWM（cycles = 1，只走一遍）`}
-$('onT').oninput=()=>{$('seg').value=0;drawWF()};$('seg').oninput=drawWF;drawWF();
-/* ===== pwm ===== */
-function drawPWM(){const p=+$('dt').value;$('dtV').textContent=p+'%';const cmp=DT[p];const s=$('pwm');s.innerHTML='';const X0=80,W=1220,X=t=>X0+t/15*W,Yt=v=>150-v/240*120;
- el(s,'text',{x:10,y:20,'font-size':12.5,'font-weight':700,fill:'var(--fg)'},'CT32B1 的 TC（锯齿，0 → 240 每 5 µs 一圈）和比较值 MR0（红线）');
- let d='';for(let c=0;c<3;c++){d+=`${c?'L':'M'}${X(c*5)},${Yt(0)} L${X(c*5+5)},${Yt(240)} `}el(s,'path',{d,fill:'none',stroke:'var(--muted)','stroke-width':1.8});
- if(cmp<=240){el(s,'line',{x1:X0,x2:X0+W,y1:Yt(cmp),y2:Yt(cmp),stroke:'var(--bad)','stroke-width':2,'stroke-dasharray':'6 4'});el(s,'text',{x:X0+W,y:Yt(cmp)-5,'text-anchor':'end','font-size':11,fill:'var(--bad)'},'MR0 = '+cmp)}
- else el(s,'text',{x:X0+W,y:28,'text-anchor':'end','font-size':11,fill:'var(--bad)'},'MR0 = 241 > 240：永远比不上');
- [0,120,240].forEach(v=>el(s,'text',{x:X0-6,y:Yt(v)+4,'text-anchor':'end','font-size':10.5,fill:'var(--muted)'},v));
- const hi=cmp>240?0:(240-cmp)/240;let o=`M${X0},${250}`;for(let c=0;c<3;c++){const lo=(1-hi)*5;o+=` H${X(c*5+lo)} V${hi>0?185:250} H${X(c*5+5)} V250`}
- el(s,'path',{d:o,fill:'none',stroke:'var(--pc)','stroke-width':2.4});el(s,'text',{x:10,y:225,'font-size':12,'font-weight':700,fill:'var(--pc)'},'PIO0_13');
- for(let c=0;c<=3;c++)el(s,'text',{x:X(c*5),y:270,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},c*5+' µs');
- $('pwmLog').textContent=`MyPWM_SetDuty(0, ${p}) → Freq200kHzDuty[${p}] = ${cmp} → MR0 = ${cmp}\nTC < ${cmp} 时脚为低，TC ≥ ${cmp} 时为高 → 高电平 ${(hi*100).toFixed(1)}%（每 5 µs 高 ${(hi*5).toFixed(2)} µs）${p===0?'\n0%：比较值 241 比 240 大，永远比不上，一直低':p===100?'\n100%：比较值 0，一开始就比上，一直高':''}`}
-$('dt').oninput=drawPWM;drawPWM();
-/* ===== state machine ===== */
-(function(){const s=$('sm');const st=(x,y,t,sub,c)=>{el(s,'rect',{x,y,width:250,height:80,rx:40,style:`fill:color-mix(in srgb,var(--${c}) 18%,var(--panel));stroke:var(--${c});stroke-width:2.5`});el(s,'text',{x:x+125,y:y+33,'text-anchor':'middle','font-size':14,'font-weight':700,fill:'var(--fg)',style:'font-family:var(--font-m)'},t);el(s,'text',{x:x+125,y:y+55,'text-anchor':'middle','font-size':11.5,fill:'var(--muted)'},sub)};
- st(40,110,'NO_VIBRATING','空闲，霍尔照常用','good');st(420,20,'PRESS_VIBRATING','按下振动中（≈ 导通时间 + 1 ms）','bad');st(420,190,'RELEASE_VIBRATING','松开振动中','bad');st(860,110,'RELEASE_DEBOUNCE','消抖（> 8 ms）','gold');
- const df=el(s,'defs',{});const mk=el(df,'marker',{id:'ah6',markerWidth:10,markerHeight:10,refX:9,refY:5,orient:'auto'});el(mk,'path',{d:'M0,0 L10,5 L0,10 z',fill:'var(--muted)'});const ar=(d,l,lx,ly)=>{el(s,'path',{d,fill:'none',stroke:'var(--muted)','stroke-width':2,'marker-end':'url(#ah6)'});if(l)el(s,'text',{x:lx,y:ly,'font-size':11.5,fill:'var(--hw)','font-weight':600},l)};
- ar('M290,135 L420,70','按键刚按下：…PressProcess()',250,90);ar('M290,165 L420,225','按键刚松开：…ReleaseProcess()',250,225);
- ar('M670,60 L860,130','(现在−开始)×1000 > 时长+999',690,80);ar('M670,230 L860,170','同左',760,225);
- ar('M985,190 V270 H165 V190','现在 − 消抖开始 > 8',500,288);
- [[860,150],[420,60],[420,230],[165,190]].forEach(([x,y])=>{});})();
-function smCalc(){const T=Math.max(0,Math.min(5000,+$('smT').value||0));if(!T){$('smLog').textContent='导通时间 0：…PressProcess() 第 987 行判断不成立，什么都不做，状态不变，不闭眼，也没有振感。';return}
- let m=1;while(m*1000<=T+999)m++;const tot=m+9;$('smLog').textContent=`振动中：要 (现在 − 开始) × 1000 > ${T} + 999 = ${T+999} → 毫秒差至少 ${m}\n消抖：要 现在 − 消抖开始 > 8 → 至少 9 ms\n合计：这一侧霍尔大约“闭眼” ${m} + 9 = ${tot} ms（主循环检查时刻有零点几毫秒误差）；线圈真正通电只有 ${T} µs`}
-$('smT').oninput=smCalc;smCalc();
-function dyCalc(){const T=+$('dyT').value||0,sg=+$('dyS').value;$('dyV').textContent=sg;const r=Math.floor(T*DS[sg]/1024);$('dyLog').textContent=`durationScale[${sg}] = ${DS[sg]}；${T} × ${DS[sg]} >> 10 = ${r} µs（${(DS[sg]/10.24).toFixed(1)}%）；近似公式 ${T} × 100 ÷ (${sg} × 2 + 100) = ${(T*100/(sg*2+100)).toFixed(0)}`}
-$('dyT').oninput=dyCalc;$('dyS').oninput=dyCalc;dyCalc();
-/* ===== practice ===== */
-const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),pick=a=>a[Math.floor(Math.random()*a.length)];
-function mc(q,opts,ans,sol){const idx=opts.map((_,i)=>i);for(let i=idx.length-1;i>0;i--){const j=ri(0,i);[idx[i],idx[j]]=[idx[j],idx[i]]}return{q,type:'mc',opts:idx.map(i=>opts[i]),ans:idx.indexOf(ans),sol}}
-const num=(q,ans,sol)=>({q,type:'num',ans,sol});
-const GEN=[
- ()=>{const T=pick([100,200,300,500,1000,2000]);return num(`导通时间 ${T} µs，波形分成几段（updateTimes）？`,T/20,`${T} ÷ 20 = <b>${T/20}</b>`)},
- ()=>{const T=pick([200,500,1000]);const up=T/20,inc=Math.floor((100<<15)/up);return num(`导通时间 ${T} µs，每一步在表里走几格？（inc ÷ 32768，保留 2 位小数）`,+(inc/32768).toFixed(2),`inc = (100 << 15) ÷ ${up} = ${inc}，÷ 32768 = <b>${(inc/32768).toFixed(2)}</b>`)},
- ()=>{const p=ri(0,100);return num(`MyPWM_SetDuty(0, ${p}) 写进 MR0 的是多少？（查 Freq200kHzDuty）`,DT[p],`Freq200kHzDuty[${p}] = <b>${DT[p]}</b>`)},
- ()=>{const c=ri(0,240);return num(`MR0 = ${c}，一个 5 µs 周期里高电平占百分之几？（(240 − MR0) ÷ 240，保留 1 位小数）`,+((240-c)/240*100).toFixed(1),`(240 − ${c}) ÷ 240 = <b>${((240-c)/240*100).toFixed(1)}</b>%`)},
- ()=>{const T=pick([500,1000,1500,2000,3000]);let m=1;while(m*1000<=T+999)m++;return num(`导通时间 ${T} µs，“按下振动中”至少要毫秒差多少才转消抖？`,m,`要 差 × 1000 > ${T+999}，最小整数 <b>${m}</b>`)},
- ()=>{const T=pick([300,500,800]),sg=ri(0,100);const r=Math.floor(T*DS[sg]/1024);return num(`动态导通时间开着，设定 ${T} µs，按下时段位 ${sg}。实际导通多少 µs？（durationScale[${sg}] = ${DS[sg]}）`,r,`${T} × ${DS[sg]} >> 10 = <b>${r}</b>`)},
- ()=>mc('线圈的电从哪来？',['ETA1628 升压出的 7 V（H_VDD）','MCU 的 PWM 脚直接供电','USB 5 V 直接接线圈'],0,'PWM 脚只控制 MOS 管的开关。'),
- ()=>mc('PWM 频率 200 kHz 是怎么来的？',['48 MHz ÷ 240（MR3 = 240，PR = 0）','48 MHz ÷ 200','CT32B0 每 20 µs'],0,'my_pwm.c:89、Freq200kHzInit 传 240。'),
- ()=>mc('谁每 20 µs 改一次占空比？',['CT32B0 的 MR0 / MR1 中断（TIMER32_0_IRQHandler）','主循环','CT32B1 自己'],0,'my_waveform.c:87。'),
- ()=>mc('波形走完以后脚是什么电平？',['低：PWMC 清 0，EMR 设成清零','高','悬空'],0,'MyPWM_CT32B1_Stop()。'),
- ()=>mc('线圈电流 0.5 ms 就没了，为什么霍尔要跳过十来毫秒？',['还有“振动中”约 2 ms 和消抖 > 8 ms，等磁场和机械晃动平息','因为 PWM 一直开着','因为 USB 要发包'],0,'Ele_StatusTask()。'),
- ()=>mc('右线圈正在按下振动，这时左键按下会怎样？',['先存起来，5 ms 后用“释放”函数补震','两个同时震','左键这次不震也不补'],0,'SINGLE_COIL_AT_A_TIME，Ele_OnlyOne() 调的是 ReleaseProcess。'),
- ()=>mc('GUI 上“按下振感强度”实际改的是？',['导通时间（µs）','PWM 占空比','升压电压'],0,'pressVibrateDurationUs。'),
- ()=>mc('驱动方式选 Level，T1A 会怎样？',['没影响，仍按波形表震','变成一直 100% 占空比','不震'],0,'T1A 的 PressProcess 不看 driveMode。'),
-];
-let n=0,ok=0,cur=null,done=false;const pxb=$('px');
-pxb.innerHTML='<div class="pxh"><b>练习</b><span class="pxs" id="pxs"></span></div><div class="pxq" id="pxq"></div><div class="qrow" id="pxa"></div><div class="fb" id="pxfb"></div><div class="qrow"><button type="button" id="pxShow">看答案</button><button type="button" class="pxNext" id="pxNext">下一题 →</button></div>';
-const upd=()=>$('pxs').textContent=`已做 ${n} 题，对 ${ok} 题`;
-function judge(r){if(!done){n++;if(r)ok++}done=true;$('pxfb').className='fb '+(r?'ok':'no');$('pxfb').innerHTML=r?'✓ 对。'+cur.sol:'✗ 不对，再想想，或者点“看答案”。';upd()}
-function next(){cur=pick(GEN)();done=false;$('pxq').innerHTML=cur.q;$('pxfb').className='fb';$('pxfb').innerHTML='';const a=$('pxa');a.innerHTML='';
- if(cur.type==='mc'){cur.opts.forEach((o,j)=>{const b=document.createElement('button');b.type='button';b.innerHTML=o;b.onclick=()=>{a.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');judge(j===cur.ans)};a.appendChild(b)})}
- else{const inp=document.createElement('input');inp.type='text';inp.setAttribute('aria-label','答案');const c=document.createElement('button');c.type='button';c.textContent='检查';
-  const go=()=>{const v=parseFloat(inp.value);if(isNaN(v))return;judge(Math.abs(v-cur.ans)<0.051)};c.onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter'){if(done&&$('pxfb').classList.contains('ok'))next();else go()}});a.append(inp,c)}
- upd()}
-$('pxShow').onclick=()=>{if(!done)n++;done=true;$('pxfb').className='fb no';$('pxfb').innerHTML='答案：'+(cur.type==='mc'?cur.opts[cur.ans]:cur.ans)+'<br>'+cur.sol;upd()};
-$('pxNext').onclick=next;next();
+
+/* ===== current flow on wiring ===== */
+(function(){const s=$('wire6');if(!s)return;
+ const st=document.createElement('style');st.textContent='@keyframes flw{to{stroke-dashoffset:-28}}.flw{animation:flw .6s linear infinite}';document.head.appendChild(st);
+ const g=el(s,'g',{id:'flG','pointer-events':'none'});
+ const on=['856,60 980,60 980,150','980,210 980,315','980,385 980,452'],off=['980,210 980,235 1058,235 1058,210','1058,150 1058,140 980,140 980,150'];
+ const draw=(m)=>{g.innerHTML='';const pts=m==='on'?on:m==='off'?off:[];pts.forEach(p=>el(g,'polyline',{points:p,fill:'none',stroke:m==='on'?'var(--gold)':'var(--per)','stroke-width':7,opacity:.75,'stroke-dasharray':'10 4',class:'flw','stroke-linecap':'round'}));
+  ['flOn','flOff','flIdle'].forEach(id=>$(id).setAttribute('aria-pressed',String(id===({on:'flOn',off:'flOff',idle:'flIdle'})[m])));
+  $('flLog').textContent=m==='on'?'Q4 导通：电流从 H_VDD（经 R62，大部分由 C58 / C59 提供）→ 线圈 Coil1 从上往下 → Q4 漏极 → 源极 → R67 → 地。线圈两端加着约 7 V，电流逐渐上升，磁力把按键往上踢。':m==='off'?'Q4 刚关断：线圈的电流不能突然变成 0（电感的性质），它会经 D28 从线圈下端绕回上端，在“线圈 + D28”这个小圈里转几圈慢慢消失。没有 D28 的话，Q4 漏极会冒出很高的电压尖峰；D31 TVS 是第二道保险。':'空闲：PWM1 是低，Q4 断开，线圈里没有电流。C58 / C59 经 R62 充满到 7 V，等着。'};
+ $('flOn').onclick=()=>draw('on');$('flOff').onclick=()=>draw('off');$('flIdle').onclick=()=>draw('idle');
+})();
+/* ===== 11 ms timeline ===== */
+(function(){const s=$('tl');
+ function draw(){s.innerHTML='';const t=+$('tlT').value/10,on=+$('tlOn').value;$('tlTv').textContent=t.toFixed(1)+' ms';
+  const x0=230,W=1100,X=v=>x0+v/16*W;
+  const d1=Math.floor((on+999)/1000)+1,d2=d1+VD;const wfEnd=Math.floor(Math.min(5000,Math.max(20,on))/20)*20/1000;
+  for(let m=0;m<=16;m++){el(s,'line',{x1:X(m),x2:X(m),y1:30,y2:290,stroke:'var(--line)','stroke-width':1});el(s,'text',{x:X(m),y:22,'text-anchor':'middle','font-size':11,fill:'var(--muted)','font-family':'var(--font-m)'},1000+m)}
+  el(s,'text',{x:20,y:22,'font-size':11,fill:'var(--muted)'},'mySysTickMs →');
+  const lane=(y,name,sub,segs)=>{el(s,'text',{x:20,y:y+16,'font-size':12.5,'font-weight':700,fill:'var(--fg)'},name);el(s,'text',{x:20,y:y+32,'font-size':10.5,fill:'var(--muted)'},sub);
+   segs.forEach(([a,b,txt,c,op])=>{if(b<=a)return;el(s,'rect',{x:X(a),y,width:X(b)-X(a),height:30,rx:4,style:`fill:color-mix(in srgb,var(--${c}) ${op||28}%,var(--panel));stroke:var(--${c})`});if(X(b)-X(a)>40)el(s,'text',{x:(X(a)+X(b))/2,y:y+19,'text-anchor':'middle','font-size':11,fill:'var(--fg)'},txt)})};
+  lane(40,'左键（Button_Scan 看到的）','scan_result_cur 第 0 位',[[0,16,'按着 = 1','muted',14]]);
+  lane(90,'leftEle.status','状态机（主循环）',[[0,d1,'PRESS_VIBRATING','bad'],[d1,d2,'RELEASE_DEBOUNCE','gold'],[d2,16,'NO_VIBRATING','muted',8]]);
+  lane(140,'线圈通电（波形在跑）','CT32B0 中断 + CT32B1 PWM',[[0,wfEnd,'','good',60]]);el(s,'text',{x:X(wfEnd)+6,y:159,'font-size':11,fill:'var(--good)','font-weight':700},(wfEnd*1000)+' µs 后关');
+  lane(190,'按键算法跳过左键','Ele_IsVibrating(LEFT) = 1',[[0,d2,'不看左键霍尔，沿用上次的状态','per']]);
+  lane(240,'右键此刻要震的话','SINGLE_COIL_AT_A_TIME',[[0,d1,'先缓存','bad',14],[d1,16,'可以','muted',8]]);
+  el(s,'line',{x1:X(t),x2:X(t),y1:28,y2:300,stroke:'var(--bad)','stroke-width':2.2});
+  el(s,'text',{x:X(t)+4,y:318,'font-size':11.5,fill:'var(--bad)','font-weight':700},'t = '+t.toFixed(1)+' ms');
+  const st=t<d1?'PRESS_VIBRATING':t<d2?'RELEASE_DEBOUNCE':'NO_VIBRATING',tk=1000+Math.floor(t);
+  let msg=`此刻 mySysTickMs = ${tk}，leftEle.status = ${st}。\n`;
+  if(t<wfEnd)msg+=`线圈正在通电（${Math.floor(t*1000/20)+1} / ${wfEnd*1000/20} 格），CT32B0 每 20 µs 进一次中断换力度。`;
+  else if(t<d1)msg+=`波形已经放完（${wfEnd*1000} µs），PWM 关了；但状态机要等 (现在 − 1000) × 1000 > ${on} + 999，也就是 mySysTickMs ≥ ${1000+d1}，才切到消抖（:1377）。`;
+  else if(t<d2)msg+=`消抖：按键可能还在弹，霍尔读数还不稳。要等 现在 − ${1000+d1} > 8（VIBRATE_DEBOUNCE_TIME_MS，:29），也就是 mySysTickMs ≥ ${1000+d2}，才回到空闲（:1394）。`;
+  else msg+='回到空闲。按键算法从这一毫秒起重新看左键的霍尔读数。';
+  $('tlLog').textContent=msg;}
+ const VD=9;$('tlT').oninput=draw;$('tlOn').onchange=draw;draw();
+})();
+/* ===== drive mode lab ===== */
+(function(){const s=$('dm');let tbl=DEF.slice(),sel=0,drag=false;
+ const presets={def:()=>DEF.slice(),old:()=>OLD.slice(),flat:()=>Array(100).fill(100),ramp:()=>Array.from({length:100},(_,i)=>Math.round(i*100/99)),half:()=>Array.from({length:100},(_,i)=>i<50?100:0)};
+ function draw(){s.innerHTML='';const mode=+$('dmMode').value,T=+$('dmT').value*20;$('dmTv').textContent=T+' µs';$('dmTblRow').style.opacity=mode?1:.45;
+  const data=mode?tbl:[100],len=data.length,w=wave(len,T);if(sel>=w.seq.length)sel=0;
+  const T2=(x,y,t,o)=>el(s,'text',Object.assign({x,y,'font-size':12,fill:'var(--fg)'},o||{}),t);
+  /* table */
+  T2(20,22,mode?'① 力度表 gPwmWf[0..99]（GUI 发下来的，存 EEPROM）':'① 力度表 wfHighTbl[] = {100}（只有 1 格）',{'font-weight':700,'font-size':13});
+  const tx=20,ty=40,tw=1320,th=150,bw=mode?tw/100:120;
+  el(s,'rect',{x:tx,y:ty,width:tw,height:th,fill:'var(--soft)',rx:4});
+  [0,50,100].forEach(v=>{const y=ty+th-v/100*th;el(s,'line',{x1:tx,x2:tx+tw,y1:y,y2:y,stroke:'var(--line)'});T2(tx+tw-4,y-3,v+'%',{'font-size':10,fill:'var(--muted)','text-anchor':'end'})});
+  const used=new Map();w.seq.forEach((q,i)=>used.set(q.idx,i));
+  data.forEach((v,i)=>{const h=Math.min(100,v)/100*th,u=used.has(i),cur=w.seq[sel]&&w.seq[sel].idx===i;
+   el(s,'rect',{x:tx+i*bw+.5,y:ty+th-h,width:Math.max(1,bw-1),height:h,fill:cur?'var(--bad)':u?'var(--per)':'color-mix(in srgb,var(--muted) 35%,var(--panel))'});
+   if(!mode){T2(tx+bw/2,ty+th-h+20,'100',{'text-anchor':'middle','font-weight':700,fill:'var(--bg)'});T2(tx+bw+14,ty+80,'level 模式只有这一格。下面每一格取到的都是下标 0 → 100%。',{'font-size':12.5,fill:'var(--muted)'})}});
+  if(mode){for(let i=0;i<100;i+=10)T2(tx+i*bw+1,ty+th+13,i,{'font-size':9.5,fill:'var(--muted)'});
+   const hit=el(s,'rect',{x:tx,y:ty,width:tw,height:th,fill:'transparent',style:'cursor:crosshair'});
+   const paint=e=>{const p=s.createSVGPoint();p.x=e.clientX;p.y=e.clientY;const q=p.matrixTransform(s.getScreenCTM().inverse());const i=Math.floor((q.x-tx)/bw);if(i<0||i>99)return;tbl[i]=Math.max(0,Math.min(100,Math.round((ty+th-q.y)/th*100)));draw()};
+   hit.addEventListener('pointerdown',e=>{drag=true;paint(e)});hit.addEventListener('pointermove',e=>{if(drag)paint(e)});}
+  T2(20,ty+th+30,`蓝色 = 这次会被取到的 ${w.seq.length} 格；红色 = 下面选中的那一格。`,{'font-size':11.5,fill:'var(--muted)'});
+  /* duty over time */
+  const gy=250,gh=130;T2(20,gy-12,`② 实际力度随时间（每 20 µs 一格，共 ${w.seq.length} 格，${w.stop} µs 后关）`,{'font-weight':700,'font-size':13});
+  el(s,'rect',{x:tx,y:gy,width:tw,height:gh,fill:'var(--soft)',rx:4});
+  const span=Math.max(w.stop,20),XT=t=>tx+t/span*tw;
+  w.seq.forEach((q,i)=>{const v=Math.min(100,data[q.idx]),h=v/100*gh;const g=el(s,'g',{style:'cursor:pointer'});g.addEventListener('click',()=>{sel=i;draw()});
+   el(g,'rect',{x:XT(q.t)+.5,y:gy+gh-h,width:Math.max(1,XT(q.t+20)-XT(q.t)-1),height:h,fill:i===sel?'var(--bad)':'var(--per)',opacity:i===sel?1:.8});
+   el(g,'rect',{x:XT(q.t),y:gy,width:XT(q.t+20)-XT(q.t),height:gh,fill:'transparent'});});
+  const nt=w.seq.length>60?Math.ceil(w.seq.length/12):w.seq.length>25?5:1;
+  w.seq.forEach((q,i)=>{if(i%nt===0&&XT(w.stop)-XT(q.t)>60)T2(XT(q.t),gy+gh+14,q.t,{'font-size':9.5,fill:'var(--muted)'})});T2(XT(w.stop),gy+gh+14,w.stop+' µs 停',{'font-size':10,fill:'var(--bad)','text-anchor':'end'});
+  /* zoom */
+  const q=w.seq[sel],v=Math.min(100,data[q.idx]),mr=DUTY[v];const zy=440,zh=110,zx=20,zw=640;
+  T2(zx,zy-12,`③ 放大第 ${sel+1} 格（${q.t} ~ ${q.t+20} µs）里的一个 PWM 周期（5 µs）`,{'font-weight':700,'font-size':13});
+  el(s,'rect',{x:zx,y:zy,width:zw,height:zh,fill:'var(--soft)',rx:4});
+  const XZ=c=>zx+20+c/241*(zw-40),YZ=c=>zy+zh-12-c/241*(zh-40);
+  el(s,'polyline',{points:`${XZ(0)},${YZ(0)} ${XZ(240)},${YZ(240)} ${XZ(240)},${YZ(0)}`,fill:'none',stroke:'var(--muted)','stroke-width':1.5});
+  T2(XZ(240)-6,YZ(240)-4,'TC 数到 240 → 归零',{'font-size':10,fill:'var(--muted)','text-anchor':'end'});
+  if(mr<=240){el(s,'line',{x1:XZ(0),x2:XZ(240),y1:YZ(mr),y2:YZ(mr),stroke:'var(--bad)','stroke-dasharray':'4 3'});T2(XZ(0)+2,YZ(mr)-4,`MR0 = Freq200kHzDuty[${v}] = ${mr}`,{'font-size':10.5,fill:'var(--bad)'})}
+  else T2(XZ(0)+2,zy+22,`MR0 = Freq200kHzDuty[${v}] = 241（比 240 大，永远碰不到）`,{'font-size':10.5,fill:'var(--bad)'});
+  const py=zy+zh+40,hi=py-22;T2(zx,py+20,'PIO0_13：',{'font-size':11,fill:'var(--muted)'});
+  const pts=mr>240?`${XZ(0)},${py} ${XZ(240)},${py}`:mr===0?`${XZ(0)},${hi} ${XZ(240)},${hi}`:`${XZ(0)},${py} ${XZ(mr)},${py} ${XZ(mr)},${hi} ${XZ(240)},${hi} ${XZ(240)},${py}`;
+  el(s,'polyline',{points:pts,fill:'none',stroke:'var(--good)','stroke-width':2.5});
+  /* numbers box on right of zoom */
+  const nx=700;T2(nx,zy-12,'④ 这一格的算账',{'font-weight':700,'font-size':13});
+  [`第 ${sel+1} 格：acc = ${q.acc}`,`下标 idx = acc >> 15 = ${q.idx}`,`力度 = 表[${q.idx}] = ${data[q.idx]}%${data[q.idx]>100?'（> 100 被截成 100）':''}`,`MR0 = Freq200kHzDuty[${v}] = ${mr}`,`高电平占一圈的 ${mr>240?0:((240-mr)/240*100).toFixed(1)}%（TC 在 ${Math.min(mr,240)} ~ 240 之间为高）`].forEach((t,i)=>T2(nx,zy+12+i*22,t,{'font-family':'var(--font-m)','font-size':12}));
+  $('dmNums').innerHTML=`<b>MyWaveform_StartGenerate(CHANNEL_0, ${mode?'&wfCustom':'&wfHigh'}, ${T}, 1)</b>（my_waveform.c:155）
+periodUs    = ${w.p}            （限制在 20 ~ 5000，:170~178）
+updateTimes = ${w.p} / 20 = <b>${w.ut}</b>      （要换几次力度，:179）
+wfDataLen   = ${len}             （表有几格）
+inc = (${len} << 15) / ${w.ut} = <b>${w.inc}</b>   （每次在表里前进 ${(w.inc/32768).toFixed(3)} 格，:195）
+acc 起点 = inc >> 1 = ${w.acc0}     （从半格处开始，取每段的中间，:196）
+取到的下标：${w.seq.slice(0,30).map(q=>q.idx).join(', ')}${w.seq.length>30?' …':''}
+第 ${w.n} 次中断时 acc = ${w.stopAcc}，下标 ${Math.floor(w.stopAcc/32768)} ≥ ${len} → 停（:244~251）`;
+  $('dmLog').textContent=mode?`pwm 模式：表有 100 格，这次只有 ${w.seq.length} 格时间，所以每次跳 ${(w.inc/32768).toFixed(2)} 格取一个。导通时间越长，取得越密；超过 2000 µs（100 格）就会有格子被重复取。\n点 ② 里的任意一格，看它在 ③④ 里怎么变成 PIO0_13 上的方波。`:`level 模式：表只有 1 格（100）。inc = 32768 / ${w.ut} 很小，acc 要累加 ${w.n} 次才能从下标 0 跨到下标 1，这正好就是导通时间 ÷ 20 µs。所以“表长 1”就等于“全程 100%，到点就停”。\nMR0 = 0：TC 从 0 起就 ≥ MR0，整圈都是高，PIO0_13 实际上是一条直线，Q4 一直导通。`;}
+ window.addEventListener('pointerup',()=>drag=false);
+ $('dmMode').onchange=()=>{sel=0;draw()};$('dmT').oninput=()=>{sel=0;draw()};$('dmTbl').onchange=()=>{tbl=presets[$('dmTbl').value]();draw()};draw();
+})();
+/* ===== press debugger ===== */
+(function(){const SN={"B": ["app/button.c", "Button_Scan()", [[614, "  for(i = 0; i <= 1; i++) // 0: left; 1: right"], [615, "  {"], [616, "    if((button ^ buttonScan_stru.scan_result_cur) & (0x01 << i))"], [617, "    {"], [618, "      if(button & (0x01 << i))"], [619, "      {"], [620, "        buttonScan_stru.scan_result_cur |= (0x01 << i);"], [621, "        //buttonScan_stru.debounce[i] = 5;"], [622, "      }"], [623, "      else"], [624, "      {"], [625, "        buttonScan_stru.scan_result_cur &= ~(0x01 << i);"], [626, "        //buttonScan_stru.debounce[i] = 8;"], [627, "      }"], [628, "    }"], [629, ""], [630, "    if((buttonScan_stru.scan_result_pre ^ buttonScan_stru.scan_result_cur) & (0x01 << i))"], [631, "    {"], [632, "      if(buttonScan_stru.scan_result_cur & (0x01 << i))"], [633, "      {"], [634, "        buttonScan_stru.scan_result_pre |= (0x01 << i);"], [635, "        buttonScan_stru.button_changed = TRUE;"], [636, "        //****************code press begin****************/"], [637, "        if(0 == i)// left button"], [638, "        {"], [639, "          Ele_LeftKeyPressProcess();"], [640, "        }"], [641, "        else //if(1 == i)//right button"], [642, "        {"], [643, "          Ele_RightKeyPressProcess();"], [644, ""], [645, "        }"], [646, "        //****************code press end****************/"]]], "L": ["src/my_electromagnet.c", "Ele_LeftKeyPressProcess()", [[1005, "void Ele_LeftKeyPressProcess(void)"], [1006, "{"], [1007, ""], [1008, "  uint32_t wfPeriodUs = 0;"], [1009, ""], [1010, "  if(leftEle.pressVibrateDurationUs)"], [1011, "  {"], [1012, "    #if SINGLE_COIL_AT_A_TIME"], [1013, "    if(ELE_PRESS_VIBRATING == rightEle.status || ELE_RELEASE_VIBRATING == rightEle.status)"], [1014, "    {"], [1015, "      gxCacheVibrate.flag = 1;"], [1016, "      gxCacheVibrate.pos = ELE_POS_LEFT;"], [1017, "      gxCacheVibrate.tick = MyTick_GetTickMs();"], [1018, "      return;"], [1019, "    }"], [1020, "    #endif"], [1021, ""], [1022, "    wfPeriodUs = Ele_CalculateDuration(ELE_POS_LEFT, nowHallSegment[0], leftEle.pressVibrateDurationUs);"], [1023, "    leftEle.status = ELE_PRESS_VIBRATING;"], [1024, "    leftEle.vibrateBeginTick = MyTick_GetTickMs();"], [1025, "    if(Config_GetCoilDriveMode())"], [1026, "    {"], [1027, "      wfCustom.pWfData = Config_GetPwmTable();"], [1028, "      wfCustom.wfDataLen = 100;"], [1029, "      pLeftWf = &wfCustom;"], [1030, "    }"], [1031, "    else"], [1032, "    {"], [1033, "      pLeftWf = &wfHigh;"], [1034, "    }"], [1035, "    MyWaveform_StartGenerate(CHANNEL_0, pLeftWf, wfPeriodUs, 1);"], [0, "      ⋯（这里是别的板子的代码，T1A 不编译）"], [1063, "  }"], [1064, "  InfoLog(\"%u\", MyTick_GetTickMs());"], [1065, "}"]]], "CD": ["src/my_electromagnet.c", "Ele_CalculateDuration()", [[1327, "static uint32_t Ele_CalculateDuration(Ele_Position_te pos, uint8_t segment, uint32_t settingDuration)"], [1328, "{"], [1329, "  /* actualDurationMs = (settingDuration * (100 / (segment * 2 + 100))) */"], [1330, "  uint32_t duty = settingDuration;"], [1331, "  uint8_t index = 0xFF;"], [1332, ""], [1333, "  switch(pos)"], [1334, "  {"], [1335, "    case ELE_POS_LEFT:"], [1336, "      {"], [1337, "        index = 0;"], [1338, "      }"], [1339, "      break;"], [1340, "    case ELE_POS_RIGHT:"], [1341, "      {"], [1342, "        index = 1;"], [1343, "      }"], [1344, "      break;"], [1345, "    default:"], [1346, "      return (uint32_t)duty;"], [1347, "  }"], [1348, "  if(xCoilDebugCfg[index].bDynOnTimeEn)"], [1349, "  {"], [1350, "    if(segment <= MAX_SEGMENT)"], [1351, "    {"], [1352, "      duty = (settingDuration * durationScale[segment]) >> 10;"], [1353, "    }"], [1354, "    else"], [1355, "    {"], [1356, "      duty = (settingDuration * durationScale[MAX_SEGMENT]) >> 10;"], [1357, "    }"], [1358, "  }"], [1359, "  else"], [1360, "  {"], [1361, "    duty = settingDuration;"], [1362, "  }"], [1363, ""], [1364, "  return (uint32_t)duty;"], [1365, "}"]]], "CG": ["src/my_protocol_mouse.c", "Config_GetCoilDriveMode()", [[101, "uint8_t* Config_GetPwmTable(void)"], [102, "{"], [103, "  return &(xgAllParam.gPwmWf[0]);"], [104, "}"], [105, "uint8_t Config_GetCoilDriveMode(void)"], [106, "{"], [107, "  return xgAllParam.xDriveMode.bDriveMode;"], [108, "}"]]], "SG": ["src/my_waveform.c", "MyWaveform_StartGenerate()", [[155, "int32_t MyWaveform_StartGenerate(WaveformChannel_te ch, WaveformInfo_ts *pInfo, uint32_t wfPeriodUs, uint8_t cycles)"], [156, "{"], [157, "  WaveformGen_ts *pGen = 0;"], [158, "  uint32_t periodUs = 0;"], [159, "  uint32_t updateTimes = 0;"], [160, ""], [161, "  pGen = MyWaveform_GetHandle(ch);"], [162, "  if(!pInfo || !cycles || !pGen || (pGen->sta == WF_STATE_UNINIT))"], [163, "  {"], [164, "    return -1;"], [165, "  }"], [166, "  if(!wfPeriodUs) // zero"], [167, "  {"], [168, "    return -2;"], [169, "  }"], [170, "  periodUs = wfPeriodUs;"], [171, "  if(periodUs > MAX_WAVEFORM_PERIOD_US) //200Hz, period 5ms"], [172, "  {"], [173, "    periodUs = MAX_WAVEFORM_PERIOD_US;"], [174, "  }"], [175, "  else if(periodUs < MIN_WAVEFORM_PERIOD_US)"], [176, "  {"], [177, "    periodUs = MIN_WAVEFORM_PERIOD_US;"], [178, "  }"], [179, "  updateTimes = periodUs / UPDATE_PERIOD_US;"], [180, "//  if(updateTimes == 0)"], [181, "//  {"], [182, "//    return -3;"], [183, "//  }"], [184, ""], [185, "  MyWaveform_Stop(pGen);"], [186, "  pGen->sta = WF_STATE_STOPPED;"], [187, ""], [188, "  //update waveform information"], [189, "  pGen->info.pWfData = pInfo->pWfData;"], [190, "  pGen->info.wfDataLen = pInfo->wfDataLen;"], [191, "  pGen->periodUs = periodUs;"], [192, ""], [193, "  pGen->cycles = cycles > MAX_WAVEFORM_CYCLES_CNT ? MAX_WAVEFORM_CYCLES_CNT : cycles;"], [194, "  pGen->curCnt = 0;"], [195, "  pGen->inc = ((uint32_t)(pGen->info.wfDataLen) << PHASE_SCALE) / updateTimes;"], [196, "  pGen->acc = pGen->inc >> 1; //init_val"], [197, "  pGen->updateInterval = UPDATE_PERIOD_US;"], [198, ""], [199, "  pGen->sta = WF_STATE_RUNNING;"], [200, "  MyWaveform_Start(pGen);"], [201, "  return 0;"], [202, "}"], [203, ""]]], "ST": ["src/my_waveform.c", "MyWaveform_Start()", [[278, "static void MyWaveform_Start(WaveformGen_ts *p)"], [279, "{"], [280, "  switch(p->id)"], [281, "  {"], [282, "    case 0:"], [283, "      MyPWM_SetDuty(p->id, p->info.pWfData[p->acc >> PHASE_SCALE]);"], [284, "      MyPWM_Start(p->id);"], [285, ""], [286, "      __disable_irq();"], [287, "      p->nextUpdateTick = LPC_CT32B0->TC + p->updateInterval;"], [288, "      LPC_CT32B0->MR0 = p->nextUpdateTick;"], [289, "      LPC_CT32B0->MCR |= (0x01 << 0);   //Enable MR0 Interrupt"], [290, "      __enable_irq ();"], [291, "      break;"], [292, "    case 1:"], [293, "      MyPWM_SetDuty(p->id, p->info.pWfData[p->acc >> PHASE_SCALE]);"], [294, "      MyPWM_Start(p->id);"], [295, ""], [296, "      __disable_irq();"], [297, "      p->nextUpdateTick = LPC_CT32B0->TC + p->updateInterval;"], [298, "      LPC_CT32B0->MR1 = p->nextUpdateTick;"], [299, "      LPC_CT32B0->MCR |= (0x01 << 3);   //Enable MR1 Interrupt"], [300, "      __enable_irq ();"], [301, "      break;"], [302, "  }"], [303, "}"]]], "IS": ["src/my_waveform.c", "TIMER32_0_IRQHandler()", [[87, "void TIMER32_0_IRQHandler(void)"], [88, "{"], [89, "  #if MYDEBUG_ENABLE"], [90, "  timeStartTc = LPC_CT32B0->TC;"], [91, "  #endif"], [92, "  if(LPC_CT32B0->IR & (0x01 << 0))   //MR0INT"], [93, "  {"], [94, "    // Writing a logic one to the corresponding IR bit will reset the interrupt. Writing a zero has no effect."], [95, "    LPC_CT32B0->IR = (0x01 << 0);    //clear MR0 interrupt"], [96, "    MyWaveform_UpdateFromIsr(&wfCh0);"], [97, "    // The next matching value"], [98, "    LPC_CT32B0->MR0 = wfCh0.nextUpdateTick;"], [99, "  }"], [100, ""], [101, "  if(LPC_CT32B0->IR & (0x01 << 1))   //MR1INT"], [102, "  {"], [103, "    // Writing a logic one to the corresponding IR bit will reset the interrupt. Writing a zero has no effect."], [104, "    LPC_CT32B0->IR = (0x01 << 1);   //clear MR1 interrupt"], [105, "    MyWaveform_UpdateFromIsr(&wfCh1);"], [106, "    // The next matching value"], [107, "    LPC_CT32B0->MR1 = wfCh1.nextUpdateTick;;"], [108, "  }"], [109, "  #if MYDEBUG_ENABLE"], [110, "  costTime = LPC_CT32B0->TC - timeStartTc;"], [111, "  #endif"]]], "UP": ["src/my_waveform.c", "MyWaveform_UpdateFromIsr()", [[233, "static void MyWaveform_UpdateFromIsr(WaveformGen_ts *pGen)"], [234, "{"], [235, "  uint32_t idx = 0;"], [236, ""], [237, "  pGen->acc += pGen->inc;"], [238, "  idx = (pGen->acc >> PHASE_SCALE);"], [239, "  if(idx < pGen->info.wfDataLen)"], [240, "  {"], [241, "    MyPWM_SetDuty(pGen->id, pGen->info.pWfData[idx]);"], [242, "    pGen->nextUpdateTick += pGen->updateInterval;"], [243, "  }"], [244, "  else"], [245, "  {"], [246, "    pGen->curCnt++;"], [247, "    if(pGen->curCnt >= pGen->cycles)"], [248, "    {"], [249, "      MyWaveform_Stop(pGen);"], [250, "      pGen->sta = WF_STATE_STOPPED;"], [251, "    }"], [252, "    else"], [253, "    {"], [254, "      pGen->acc = pGen->inc >> 1; //init_val"], [255, "      //pGen->sta = WF_STATE_RUNNING; //It is already in the \"running\" state."], [256, "      MyWaveform_Start(pGen);"], [257, "    }"], [258, "  }"], [259, "}"]]], "SP": ["src/my_waveform.c", "MyWaveform_Stop()", [[305, "static void MyWaveform_Stop(WaveformGen_ts *p)"], [306, "{"], [307, "  switch(p->id)"], [308, "  {"], [309, "    case 0:"], [310, "      MyPWM_Stop(p->id);"], [311, "      LPC_CT32B0->MCR &= ~(0x01 << 0);    //disable MR0 interrupt"], [312, "      break;"], [313, "    case 1:"], [314, "      MyPWM_Stop(p->id);"], [315, "      LPC_CT32B0->MCR &= ~(0x01 << 3);    //disable MR1 interrupt"], [316, "      break;"], [317, "  }"], [318, "}"]]], "PT": ["src/my_electromagnet.c", "Ele_PollingTask()", [[983, "void Ele_PollingTask(void)"], [984, "{"], [985, "  Ele_StatusTask(&leftEle);"], [986, "  Ele_StatusTask(&rightEle);"], [0, "      ⋯（这里是别的板子的代码，T1A 不编译）"], [993, "  #if SINGLE_COIL_AT_A_TIME"], [994, "  Ele_OnlyOne();"], [995, "  #endif"], [996, ""], [997, "  Ele_LeftAutoTrigger();"], [998, "  Ele_RightAutoTrigger();"], [999, ""], [1000, "  Ele_DebugTask();"], [1001, ""], [1002, "}"]]], "SS": ["src/my_electromagnet.c", "Ele_StatusTask()", [[1367, "static void Ele_StatusTask(Ele_Handle_ts *pEle)"], [1368, "{"], [1369, ""], [1370, "  switch(pEle->status)"], [1371, "  {"], [1372, "    case ELE_NO_VIBRATING:"], [1373, "      ;"], [1374, "      break;"], [1375, "    case ELE_PRESS_VIBRATING:"], [1376, "    {"], [1377, "      if((MyTick_GetTickMs() - pEle->vibrateBeginTick) * 1000U > (pEle->pressVibrateDurationUs + 999U))"], [1378, "      {"], [1379, "        pEle->status = ELE_RELEASE_DEBOUNCE;"], [1380, "        pEle->debounceBeginTick = MyTick_GetTickMs();"], [1381, "      }"], [1382, "    }"], [1383, "    break;"], [1384, "    case ELE_RELEASE_VIBRATING:"], [1385, "    {"], [1386, "      if((MyTick_GetTickMs() - pEle->vibrateBeginTick) * 1000U > (pEle->releaseVibrateDurationUs + 999U))"], [1387, "      {"], [1388, "        pEle->status = ELE_RELEASE_DEBOUNCE;"], [1389, "        pEle->debounceBeginTick = MyTick_GetTickMs();"], [1390, "      }"], [1391, "    }"], [1392, "    break;"], [1393, "    case ELE_RELEASE_DEBOUNCE:"], [1394, "      if((MyTick_GetTickMs() - pEle->debounceBeginTick) > VIBRATE_DEBOUNCE_TIME_MS)"], [1395, "      {"], [1396, "        pEle->status = ELE_NO_VIBRATING;"], [1397, "        InfoLog(\"%s release debounce end: %u\", pEle->pStr, MyTick_GetTickMs());"], [1398, "      }"], [1399, "      break;"], [1400, "    default:"], [1401, "      break;"], [1402, "  }"]]]};
+ const DSTR=['ELE_NO_VIBRATING','ELE_PRESS_VIBRATING','ELE_RELEASE_VIBRATING','ELE_RELEASE_DEBOUNCE'];
+ let ST=[],states=[],k=0;
+ function build(mode){const len=mode?100:1,data=mode?DEF:[100],w=wave(len,500);
+  const S={tick:1000,btn:'0 → 1',status:0,begin:0,dbBegin:0,wfPeriodUs:'—',drive:'—',pWf:'&wfHigh（初值）',sta:'STOPPED',periodUs:0,cycles:0,curCnt:0,inc:0,acc:0,idx:'—',next:0,upd:0,TC:500000,MR0a:0,MCR0:0,PWMC0:0,MR0b:241,duty:0,pin:'低',skip:0};
+  const L=[];const add=(f,lines,stack,note,fn)=>L.push([f,lines,stack,note,fn||(()=>{})]);
+  add('B',[630,631,632,633,634,635,636,637,638,639],['Device_Scan','Button_Scan'],'主循环里 <code>Button_Scan()</code> 发现左键（i = 0）这一位：上一次（scan_result_pre）是 0，这一次（scan_result_cur）是 1 → 刚按下。先把 pre 也记成 1，再调 <code>Ele_LeftKeyPressProcess()</code>。',S=>{S.btn='刚按下'});
+  add('L',[1010],['Button_Scan','Ele_LeftKeyPressProcess'],'<code>leftEle.pressVibrateDurationUs</code> 是开机时从 EEPROM 读来的“按下导通时间”，默认 500。不为 0 才震（GUI 里关掉按下震动时它是 0）。');
+  add('L',[1012,1013,1014,1015,1016,1017,1018,1019,1020],['Button_Scan','Ele_LeftKeyPressProcess'],'同一时间只震一个线圈：如果右线圈正在通电，就把这次记进 <code>gxCacheVibrate</code>，5 ms 后补震，直接 return。现在右边空闲，跳过。');
+  add('CD',[1330,1348,1359,1360,1361,1362,1364],['…','Ele_LeftKeyPressProcess','Ele_CalculateDuration'],'算真正的导通时间。<code>xCoilDebugCfg[0].bDynOnTimeEn</code> 默认 0（动态导通时间关），所以原样返回 500。',S=>{S.wfPeriodUs=500});
+  add('L',[1022,1023,1024],['Button_Scan','Ele_LeftKeyPressProcess'],'<code>wfPeriodUs = 500</code>。状态改成 <b>ELE_PRESS_VIBRATING</b>，记下开始的毫秒 <code>vibrateBeginTick = 1000</code>。从这一刻起 <code>Ele_IsVibrating(LEFT)</code> = 1，按键算法会跳过左键。',S=>{S.status=1;S.begin=1000;S.skip=1});
+  add('CG',[105,106,107],['…','Ele_LeftKeyPressProcess','Config_GetCoilDriveMode'],`读全局驱动方式 <code>xgAllParam.xDriveMode.bDriveMode</code>（GUI 用 0x03 / 0x06 设置，存 EEPROM）。这次是 <b>${mode}</b>。`,S=>{S.drive=mode});
+  add('L',mode?[1025,1026,1027,1028,1029]:[1025,1031,1032,1033,1034],['Button_Scan','Ele_LeftKeyPressProcess'],mode?'驱动方式 = 1：让 <code>wfCustom</code> 指向 GUI 的力度表 <code>gPwmWf</code>，长度 100，<code>pLeftWf = &amp;wfCustom</code>。':'驱动方式 = 0：<code>pLeftWf = &amp;wfHigh</code>，表 <code>{100}</code>，长度 1。',S=>{S.pWf=mode?'&wfCustom → gPwmWf[100]':'&wfHigh → {100}'});
+  add('SG',[155,161,162,166],['…','Ele_LeftKeyPressProcess','MyWaveform_StartGenerate'],'<code>MyWaveform_StartGenerate(CHANNEL_0, pLeftWf, 500, 1)</code>：通道 0 = 左；最后的 1 = 放 1 遍。先拿到通道 0 的句柄 <code>wfCh0</code>，检查：表不为空、遍数不为 0、通道已初始化（开机时 <code>MyWaveform_Init</code> 设成了 STOPPED）、时长不为 0。都通过。');
+  add('SG',[170,171,175,179],['…','MyWaveform_StartGenerate'],`时长限制在 20 ~ 5000 µs，500 不用改。<code>updateTimes = 500 / 20 = 25</code>：这一下要换 25 次力度。`,S=>{S.periodUs=500;S.upd=25});
+  add('SG',[185,186],['…','MyWaveform_StartGenerate'],'先停一下（万一上一次还没放完）：<code>MyWaveform_Stop</code> 把 CT32B1 的 PWMC bit0 清 0（脚回到低），CT32B0 的 MCR bit0 清 0（关闹钟）。现在本来就停着，没变化。');
+  add('SG',[189,190,191,193,194,195,196,197],['…','MyWaveform_StartGenerate'],`记下表和参数：cycles = 1，curCnt = 0。<br><b>inc = (${len} &lt;&lt; 15) / 25 = ${w.inc}</b>：每过 20 µs，在表里前进 ${(w.inc/32768).toFixed(3)} 格（用 32768 当“1 格”，免得用小数）。<br><b>acc = inc &gt;&gt; 1 = ${w.acc0}</b>：从半格处开始。下标 = acc &gt;&gt; 15 = ${w.acc0>>15}。`,S=>{S.cycles=1;S.curCnt=0;S.inc=w.inc;S.acc=w.acc0;S.idx=w.acc0>>15});
+  add('SG',[199,200],['…','MyWaveform_StartGenerate'],'状态改成 RUNNING，调 <code>MyWaveform_Start(pGen)</code>。',S=>{S.sta='RUNNING'});
+  const d0=data[w.seq[0].idx];
+  add('ST',[283],['…','MyWaveform_StartGenerate','MyWaveform_Start'],`先设第一格的力度：<code>pWfData[acc &gt;&gt; 15]</code> = 表[${w.seq[0].idx}] = <b>${d0}%</b> → <code>MyPWM_SetDuty</code> 查表：CT32B1 的 MR0 = Freq200kHzDuty[${d0}] = <b>${DUTY[d0]}</b>。`,S=>{S.duty=d0;S.MR0b=DUTY[d0]});
+  add('ST',[284],['…','MyWaveform_StartGenerate','MyWaveform_Start'],`<code>MyPWM_Start(0)</code>：CT32B1 的 PWMC bit0 置 1，PIO0_13 从“听 EMR 的（低）”切换成 PWM 输出。<b>从这一刻起 Q4 开始导通，线圈通电。</b>${d0===100?'力度 100% → MR0 = 0，整圈都是高，PIO0_13 是一条直线。':''}`,S=>{S.PWMC0=1;S.pin=d0===100?'一直高':`PWM ${d0}%`});
+  add('ST',[286,287,288,289,290],['…','MyWaveform_StartGenerate','MyWaveform_Start'],`定第一个闹钟：<code>nextUpdateTick = TC + 20 = ${S.TC+20}</code>（CT32B0 的 TC 是 1 µs 一格的秒表），写进 CT32B0 的 MR0，再把 MCR bit0 置 1 打开“MR0 匹配时中断”。前后关中断，防止写到一半中断进来。`,S=>{S.next=S.TC+20;S.MR0a=S.next;S.MCR0=1});
+  add('L',[1064,1065],['Button_Scan','Ele_LeftKeyPressProcess'],'返回按下函数，打一行日志（MYDEBUG_ENABLE = 0 时什么都不做），回到 <code>Button_Scan()</code> 继续。<b>CPU 不用等</b>：接下来 500 µs 的事都由中断和硬件做。');
+  /* ISRs */
+  w.seq.slice(1).forEach((q,i)=>{const n=i+1,v=data[q.idx];
+   add(n===1?'IS':'UP',n===1?[87,92,95,96]:[237,238,239,240,241,242,243],['TIMER32_0_IRQHandler','MyWaveform_UpdateFromIsr'],n===1?`<b>第 1 次中断</b>（TC 到了 ${S.TC+20}）：MR0 匹配 → 进 <code>TIMER32_0_IRQHandler</code>。IR bit0 = 1，写 1 清掉，调 <code>MyWaveform_UpdateFromIsr(&amp;wfCh0)</code>：acc += inc = ${q.acc}，下标 = ${q.idx} &lt; ${len} → 力度 = 表[${q.idx}] = ${v}%，MR0（CT32B1）= ${DUTY[v]}；nextUpdateTick += 20。`:`<b>第 ${n} 次中断</b>（${n*20} µs）：acc = ${q.acc}，下标 = ${q.idx} → 力度 ${v}%，CT32B1 MR0 = ${DUTY[v]}，下一个闹钟 +20。`,S=>{S.TC=500000+n*20;S.acc=q.acc;S.idx=q.idx;S.duty=v;S.MR0b=DUTY[v];S.next=500000+(n+1)*20;S.MR0a=S.next;S.pin=v===100?'一直高':`PWM ${v}%`})});
+  const n=w.n;
+  add('UP',[237,238,239,244,246,247,248,249,250],['TIMER32_0_IRQHandler','MyWaveform_UpdateFromIsr'],`<b>第 ${n} 次中断</b>（${n*20} µs）：acc = ${w.stopAcc}，下标 = ${Math.floor(w.stopAcc/32768)}，<b>已经 ≥ 表长 ${len}</b> → 走 else：curCnt = 1，≥ cycles（1）→ <code>MyWaveform_Stop</code>，状态 STOPPED。`,S=>{S.TC=500000+n*20;S.acc=w.stopAcc;S.idx=Math.floor(w.stopAcc/32768);S.curCnt=1;S.sta='STOPPED'});
+  add('SP',[309,310,311,312],['…','MyWaveform_UpdateFromIsr','MyWaveform_Stop'],'<code>MyPWM_Stop(0)</code>：PWMC bit0 清 0，PIO0_13 回到“听 EMR 的”= 低，Q4 关断，线圈电流经 D28 续流消失。CT32B0 的 MCR bit0 清 0：闹钟关了，不会再进中断。<b>一次 500 µs 的通电结束。</b>',S=>{S.PWMC0=0;S.MCR0=0;S.pin='低'});
+  add('IS',[98],['TIMER32_0_IRQHandler'],'回到中断函数第 98 行，还是会把 MR0 写成 nextUpdateTick，但闹钟已经关了，不会再响。中断返回。');
+  /* status machine */
+  add('SS',[1375,1376,1377],['Device_Active','Ele_PollingTask','Ele_StatusTask'],'主循环里的 <code>Ele_PollingTask()</code>（device.c:525）每圈都调 <code>Ele_StatusTask(&amp;leftEle)</code>。mySysTickMs = 1001：(1001 − 1000) × 1000 = 1000，不大于 500 + 999 = 1499 → 还算“震动中”。',S=>{S.tick=1001});
+  add('SS',[1377,1378,1379,1380,1381],['Device_Active','Ele_PollingTask','Ele_StatusTask'],'mySysTickMs = 1002：2000 &gt; 1499 → 切到 <b>ELE_RELEASE_DEBOUNCE</b>，记下 <code>debounceBeginTick = 1002</code>。“+ 999”保证切走时波形一定放完了。',S=>{S.tick=1002;S.status=3;S.dbBegin=1002});
+  add('SS',[1393,1394,1395,1396,1397,1398],['Device_Active','Ele_PollingTask','Ele_StatusTask'],'消抖：等按键停稳、霍尔读数恢复正常。mySysTickMs = 1011 时 1011 − 1002 = 9 &gt; 8 → 回到 <b>ELE_NO_VIBRATING</b>。从这以后按键算法重新看左键的霍尔。从按下到这里约 11 ms。',S=>{S.tick=1011;S.status=0;S.skip=0});
+  ST=L;states=[];let cur=JSON.parse(JSON.stringify(S));ST.forEach(st=>{cur=JSON.parse(JSON.stringify(cur));st[4](cur);states.push(cur)});}
+ const rows=[['g','按键 / 线圈管家（my_electromagnet.c）'],['mySysTickMs','tick'],['左键','btn'],['leftEle.status','status',v=>DSTR[v]],['leftEle.vibrateBeginTick','begin'],['leftEle.debounceBeginTick','dbBegin'],['wfPeriodUs','wfPeriodUs'],['驱动方式 bDriveMode','drive'],['pLeftWf','pWf'],['Ele_IsVibrating(LEFT)','skip'],
+  ['g','波形发生器 wfCh0（my_waveform.c）'],['sta','sta'],['periodUs','periodUs'],['updateTimes（局部）','upd'],['cycles / curCnt','cycles',(v,S)=>v+' / '+S.curCnt],['inc','inc'],['acc','acc'],['下标 acc >> 15','idx'],['nextUpdateTick','next'],
+  ['g','CT32B0（20 µs 闹钟）'],['TC（µs）','TC'],['MR0','MR0a'],['MCR bit0（MR0 中断）','MCR0'],
+  ['g','CT32B1（200 kHz PWM）→ PIO0_13'],['力度 %','duty'],['MR0','MR0b'],['PWMC bit0','PWMC0'],['PIO0_13 / Q4','pin']];
+ function draw(){const st=ST[k],S=states[k],P=k?states[k-1]:null,sn=SN[st[0]];
+  $('dbFile').textContent=`${sn[0]} · ${sn[1]}`;
+  $('dbCode').innerHTML=sn[2].map(([n,t])=>`<div class="${st[1].includes(n)?'cur':''}"><span>${n||''}</span>${(t||' ').replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>`).join('');
+  const c=$('dbCode').querySelector('.cur');if(c)c.scrollIntoView({block:'nearest'});
+  $('dbStack').innerHTML='调用栈：'+st[2].map(f=>`<span>${f}</span>`).join(' → ');
+  $('dbNote').innerHTML=st[3];$('dbPos').textContent=`第 ${k+1} / ${ST.length} 步`;
+  $('dbVars').innerHTML=rows.map(r=>{if(r[0]==='g')return `<tr class="g"><td colspan="2">${r[1]}</td></tr>`;const v=r[2]?r[2](S[r[1]],S):S[r[1]],ch=P&&JSON.stringify(P[r[1]])!==JSON.stringify(S[r[1]])||(r[1]==='cycles'&&P&&P.curCnt!==S.curCnt);return `<tr><td>${r[0]}</td><td class="${ch?'ch':''}">${v}</td></tr>`}).join('');
+  $('dbPrev').disabled=k===0;$('dbNext').disabled=$('dbEnd').disabled=k===ST.length-1;}
+ const go=n=>{k=Math.max(0,Math.min(ST.length-1,n));draw()};
+ $('dbPrev').onclick=()=>go(k-1);$('dbNext').onclick=()=>go(k+1);$('dbEnd').onclick=()=>go(ST.length-1);$('dbReset').onclick=()=>go(0);
+ $('dbSkip').onclick=()=>{const i=ST.findIndex((s,j)=>j>k&&s[0]==='UP'&&s[1].includes(244));if(i>0)go(i-1)};
+ $('dbMode').onchange=()=>{build(+$('dbMode').value);go(0)};
+ build(0);draw();
+})();
+/* ===== packet builder ===== */
+(function(){const P={
+ dm1:['设置驱动方式 = 1',[0x02,0x03,0x06,0xFF],[[1,'bDriveMode']]],dm0:['设置驱动方式 = 0',[0x02,0x03,0x06,0xFF],[[0,'bDriveMode']]],dmg:['读取驱动方式',[0x02,0x02,0x06,0xFF],[]],
+ pw0:['设置力度表前半',[0x02,0x03,0x07,0xFF],[[0,'index'],...Array.from({length:50},(_,i)=>[i+51,'data'+i])]],pwg:['读取力度表前半',[0x02,0x02,0x07,0xFF],[[0,'start index']]],
+ on:['设置左键按下震动 500 µs',[0x02,0x03,0x02,0x01],[[0xAA,'bReserve'],[0x80,'bmEnableMask'],[0xF4,'OnTimeUs[7:0]'],[0x01,'OnTimeUs[15:8]']]]};
+ function draw(){const k=$('pkSel').value,p=P[k],pay=[...p[1],...p[2].map(d=>d[0])],len=pay.length;
+  const b=[[0x55,'bPreamble','h'],[0x02,'目的 = 鼠标','h'],[0x01,'来源 = 主机','h'],[0,'bChecksum','c'],[len&255,'PayloadLen[7:0]','h'],[len>>8,'PayloadLen[15:8]','h'],[p[1][0],'类型 = 请求','p'],[p[1][1],p[1][1]===3?'命令 SET_CONFIG':'命令 GET_CONFIG','p'],[p[1][2],'子命令','p'],[p[1][3],p[1][3]===0xFF?'值 = 全局':'值 = 左键','p'],...p[2].map(d=>[d[0],d[1],'d'])];
+  let sum=0;b.forEach((x,i)=>{if(i!==0&&i!==3)sum+=x[0]});b[3][0]=sum&255;
+  const show=b.length>24?[...b.slice(0,14),[null,'…（中间省略）','h'],...b.slice(-3)]:b;
+  $('pkBytes').innerHTML=show.map((x,i)=>`<div class="${x[2]}"><b>${x[0]===null?'…':x[0].toString(16).toUpperCase().padStart(2,'0')}</b><span>${x[1]}</span></div>`).join('');
+  $('pkLog').textContent=`${p[0]}：共 ${b.length} 字节，负载长度 = ${len}（从“类型”算到最后）。\n校验和 = 第 1、2、4 ~ ${b.length-1} 字节相加 = 0x${sum.toString(16).toUpperCase()} → 取低 8 位 0x${(sum&255).toString(16).toUpperCase().padStart(2,'0')}。`+(k==='dmg'?'\n协议表里这条写的 Checksum:0X10，和这里算的一致。':k==='pwg'?'\n协议表里这条写的 Checksum:0X12，和这里算的一致。':'')+'\n固件收到后回一个响应包：类型 0x03，命令 / 子命令 / 值照抄，数据是状态（1 = 成功）或读到的值。';}
+ $('pkSel').onchange=draw;draw();
+})();
+/* ===== 8.1 MyWaveform_Init ===== */
+(function(){if(!$('mwReg'))return;
+ const SN={"E": ["src/my_electromagnet.c", "Ele_Init()", [[0, "      ⋯（这里是别的板子的代码，T1A 不编译）"], [464, "  Ele_DisableBoost();      //ETA1628_EN disable"], [465, "  MyWaveform_Init();"], [466, "  Ele_EnableBoost();       //ETA1628_EN enable"], [467, ""]]], "W": ["src/my_waveform.c", "MyWaveform_Init()", [[135, "int32_t MyWaveform_Init(void)"], [136, "{"], [137, "  int32_t ret = 0;"], [138, ""], [139, "  ret = MyPWM_Freq200kHzInit();"], [140, "  ret = ret | MyWaveform_InitCT32B0();"], [141, ""], [142, "  if(!ret)"], [143, "  {"], [144, "    wfCh0.sta = WF_STATE_STOPPED;"], [145, "    wfCh1.sta = WF_STATE_STOPPED;"], [146, "  }"], [147, ""], [148, "  return ret;"], [149, "}"]]], "P1": ["src/my_pwm.c", "MyPWM_Freq200kHzInit()", [[33, "int32_t MyPWM_Freq200kHzInit(void)"], [34, "{"], [35, "  if(0 == MyPWM_CT32B1_Init(240))"], [36, "  {"], [37, "    MyPWM_CT32B1_Stop(0); //channel 0"], [38, "    MyPWM_CT32B1_Stop(1); //channel 1"], [39, "    MyPWM_CT32B1_GlobalStart();"], [40, "    return 0;"], [41, "  }"], [42, "  else"], [43, "  {"], [44, "    return -1;"], [45, "  }"], [46, "}"]]], "P2": ["src/my_pwm.c", "MyPWM_CT32B1_Init(240)", [[72, "int32_t MyPWM_CT32B1_Init(uint32_t periodCnt)"], [73, "{"], [74, "  /* initialzation in InitGPIO function. */"], [75, "  /* selects pin function as CT32B1_MAT0 */"], [76, "  LPC_IOCON->TDO_PIO0_13 &= ~0x07 ;"], [77, "  LPC_IOCON->TDO_PIO0_13 |= 0x03 ;"], [78, "  /* selects pin function as CT32B1_MAT1 */"], [79, "  LPC_IOCON->TRST_PIO0_14 &= ~0x07 ;"], [80, "  LPC_IOCON->TRST_PIO0_14 |= 0x03 ;"], [81, ""], [82, "  LPC_SYSCON->SYSAHBCLKCTRL |= (0x01 << 10); //enables clock for 32bit counter/timer1"], [83, "  LPC_CT32B1->TCR = 0 ; //stop timer"], [84, ""], [85, "  LPC_CT32B1->PC = 0;"], [86, "  LPC_CT32B1->TC = 0;"], [87, "  LPC_CT32B1->PR = 0; //TC will increase by 1 every 0.0208333us(48MHz = 48MHz/1)."], [88, ""], [89, "  LPC_CT32B1->MR3 = periodCnt; // periodCnt = MCU_OSC / pwmFreqHz;"], [90, "  LPC_CT32B1->MCR &= ~(1u << 9 | 1u << 10 | 1u << 11);"], [91, "  LPC_CT32B1->MCR = (1u << 10); //the TC will be reset if MR3 matches it."], [92, ""], [93, "  //LPC_CT32B1->PWMC = 0;"], [94, "  LPC_CT32B1->PWMC &= ~(1u << 0 | 1u << 1); //CT32Bn_MAT0 and CT32Bn_MAT1 is controlled by EM0."], [95, "  LPC_CT32B1->EMR &= ~(3u << 4 | 3u << 6);"], [96, "  LPC_CT32B1->EMR |= (1u << 4 | 1u << 6); //[5:4]EMC0 [7:6]:EMC1 /* EMC0/1 = 0x1: Clear EMx on match (force LOW when exiting PWM) */"], [97, ""], [98, "//  LPC_CT32B1->PWMC = (0x01 << 0)  /* PWM mode is enabled for CT32Bn_MAT0. */"], [99, "//                   | (0x01 << 1); /* PWM mode is enabled for CT32Bn_MAT1. */"], [100, ""], [101, "  LPC_CT32B1->MR0 = periodCnt + 1; //default duty is 0;"], [102, "  LPC_CT32B1->MR1 = periodCnt + 1;"], [103, ""], [104, "  return 0;"]]], "C0": ["src/my_waveform.c", "MyWaveform_InitCT32B0()", [[68, "int32_t MyWaveform_InitCT32B0(void)"], [69, "{"], [70, "  NVIC_DisableIRQ(TIMER_32_0_IRQn);"], [71, "  LPC_CT32B0->TCR = 0 ;"], [72, ""], [73, "  LPC_SYSCON->SYSAHBCLKCTRL |= (0x01 << 9);"], [74, "  LPC_CT32B0->TC = 0;"], [75, "  LPC_CT32B0->PC = 0;"], [76, "  LPC_CT32B0->PR = 47; //TC will increase by 1 every 1us(1MHz = 48MHz/48)."], [77, "//  LPC_CT32B0->MR0 = Time;"], [78, "  LPC_CT32B0->MCR = 0;"], [79, ""], [80, "  LPC_CT32B0->TCR = 1 ;"], [81, "  NVIC_ClearPendingIRQ(TIMER_32_0_IRQn);"], [82, "  NVIC_EnableIRQ(TIMER_32_0_IRQn) ;"], [83, ""], [84, "  return 0;"], [85, "}"]]]};
+ /* ---- call chain ---- */
+ (function(){const s=$('mwCall');
+  const bx=(x,y,w,h,t,sub,c,hl)=>{el(s,'rect',{x,y,width:w,height:h,rx:8,style:`fill:color-mix(in srgb,var(--${c}) ${hl?24:10}%,var(--panel));stroke:var(--${hl?'bad':c});stroke-width:${hl?2.6:1.6}`});el(s,'text',{x:x+w/2,y:y+h/2-3,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--fg)'},t);el(s,'text',{x:x+w/2,y:y+h/2+15,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},sub)};
+  const ar=(x1,x2,y)=>{el(s,'line',{x1,x2:x2-6,y1:y,y2:y,stroke:'var(--fg)','stroke-width':1.6});el(s,'path',{d:`M${x2},${y} l-8,-5 v10z`,fill:'var(--fg)'})};
+  bx(10,20,130,56,'main()','Main.c:16','muted');ar(140,170,48);
+  bx(170,20,170,56,'Device_Init()','device.c:415','muted');ar(340,370,48);
+  bx(370,20,170,56,'Ele_Init()','device.c:422 调用','muted');
+  el(s,'text',{x:10,y:118,'font-size':11,fill:'var(--muted)'},'Device_Init 在这之前已经做完：');el(s,'text',{x:10,y:136,'font-size':11,fill:'var(--muted)'},'InitSystemOSC（主频 48 MHz）→ InitGPIO（PIO0_13 / 14 先设成 GPIO）');
+  el(s,'line',{x1:455,x2:455,y1:76,y2:140,stroke:'var(--fg)','stroke-width':1.6});
+  const row=[[560,'Ele_DisableBoost()','my_electromagnet.c:464','muted',0],[790,'MyWaveform_Init()',':465  ← 这一节','bad',1],[1020,'Ele_EnableBoost()','my_electromagnet.c:466','muted',0]];
+  el(s,'line',{x1:455,x2:560,y1:140,y2:140,stroke:'var(--fg)','stroke-width':1.6});
+  row.forEach(([x,t,sub,c,hl],i)=>{bx(x,112,200,56,t,sub,c,hl);if(i<2)ar(x+200,x+230,140)});
+  el(s,'text',{x:560,y:186,'font-size':11,fill:'var(--muted)'},'先后顺序：① 关升压  ② 配定时器  ③ 开升压（①③ 在 T1A 上不起作用，见下方注意点）');
+ })();
+ /* ---- state model ---- */
+ const S0=()=>({clk9:0,clk10:0,nvic:0,
+  b1:{TCR:0,PC:0,PR:0,TC:0,MR3:0,MCR:0,PWMC:0,EMC:0,EM:0,MR0:0,MR1:0},
+  b0:{TCR:0,PC:0,PR:0,TC:0,MCR:0,MR0:0,MR1:0},f13:1,f14:1,ret:null,s0:'UNINIT',s1:'UNINIT'});
+ const ST=[
+  ['E',[465],['Ele_Init'],'开机走到 <b>my_electromagnet.c:465</b>，调用 <code>MyWaveform_Init()</code>。<br>此刻的样子：两个定时器的<b>时钟都没开</b>（灰色）；PIO0_13 / PIO0_14 被 InitGPIO 设成了普通 GPIO（FUNC = 1，默认是输入），MCU 不驱动它们。注意 IOCON 的 MODE 复位值是“内部上拉开”，它和外面的 R65 / R66 1 MΩ 下拉对抗，栅极到底多高要实测（见下方注意点）。两个通道的状态是 <code>UNINIT</code>。',S=>{}],
+  ['W',[137],['Ele_Init','MyWaveform_Init'],'<code>ret = 0</code>：先假设没出错。',S=>{S.ret=0}],
+  ['W',[139],['Ele_Init','MyWaveform_Init'],'调用 <code>MyPWM_Freq200kHzInit()</code>，进去看。',S=>{}],
+  ['P1',[35],['…','MyWaveform_Init','MyPWM_Freq200kHzInit'],'它一上来就调 <code>MyPWM_CT32B1_Init(240)</code>，参数 240 = 一个 PWM 周期要数的数（periodCnt）。48 MHz ÷ 240 = 200 kHz。再进去。',S=>{}],
+  ['P2',[76,77],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'<b>IOCON：</b>把 PIO0_13（23 脚）的功能号低 3 位先清 0 再写 3。功能 3 = <b>CT32B1_MAT0</b>，从此这只脚不再是普通 GPIO，而是听 CT32B1 的“匹配输出 0”。<br>这时 MAT0 的输出值是 EMR 里的 EM0，复位值 0，所以脚被<b>主动拉低</b>，栅极仍然是低。',S=>{S.f13=3}],
+  ['P2',[79,80],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'同样把 PIO0_14（24 脚）改成功能 3 = <b>CT32B1_MAT1</b>，管右线圈。',S=>{S.f14=3}],
+  ['P2',[82],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'<b>SYSAHBCLKCTRL 第 10 位置 1</b>：给 CT32B1 开时钟。没开时钟前这块硬件不工作、写它的寄存器也没用，所以必须先开。左边的框从灰变亮。',S=>{S.clk10=1}],
+  ['P2',[83],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'<b>TCR = 0</b>：先让计数器停住，配置期间别乱数。',S=>{S.b1.TCR=0}],
+  ['P2',[85,86,87],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'<b>PC = 0、TC = 0、PR = 0</b>。TC 是正在数的数；PR 是“每多少个时钟 TC 加 1”减 1。PR = 0 → 每 1 个时钟就加 1，也就是每 1/48 µs ≈ 0.0208 µs 加 1（注释里写的就是这个）。',S=>{S.b1.PC=0;S.b1.TC=0;S.b1.PR=0}],
+  ['P2',[89],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'<b>MR3 = 240</b>：第 4 个比较寄存器当“周期”用。下一行会让 TC 数到 240 就归零，所以一圈 = 240 个时钟 = 5 µs。',S=>{S.b1.MR3=240}],
+  ['P2',[90,91],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'<b>MCR = 1 &lt;&lt; 10</b>：MCR 每 3 位管一个比较寄存器（中断 / 归零 / 停止）。MR3 那组是 bit9、10、11，这里只开 <b>bit10 = 碰到 MR3 就归零</b>，不开中断（bit9）、不停（bit11）。第 90 行先清这三位，可第 91 行是整个赋值，所以第 90 行其实白做。',S=>{S.b1.MCR=0x400}],
+  ['P2',[94],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'<b>PWMC 的 bit0、bit1 清 0</b>：PWMC 决定 MAT0 / MAT1 这两只脚是“PWM 模式”（硬件自动出方波）还是“听 EMR 的”。清 0 = 听 EMR 的，也就是先不出方波。以后要震时 <code>MyPWM_Start()</code> 把对应位置 1。',S=>{S.b1.PWMC=0}],
+  ['P2',[95,96],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'<b>EMR</b>：bit[5:4] 是 EMC0，bit[7:6] 是 EMC1，都写成 01 = “碰到 MR0 / MR1 时把 EM0 / EM1 清 0”。注释写明用意：<b>从 PWM 模式退出来时，脚保证是低</b>。EM0、EM1（bit0、bit1）没动，还是 0。',S=>{S.b1.EMC=1}],
+  ['P2',[101,102],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'<b>MR0 = MR1 = 241</b>（periodCnt + 1）。按 my_pwm.c:118 的注释：TC 在 0 ~ MRx 之间输出低，MRx ~ MR3 之间输出高。241 比 240 大，TC 还没数到就归零了，所以<b>永远是低 = 占空比 0%</b>。这也是 Freq200kHzDuty 表第 0 项是 241 的原因。',S=>{S.b1.MR0=241;S.b1.MR1=241}],
+  ['P2',[104],['…','MyPWM_Freq200kHzInit','MyPWM_CT32B1_Init'],'<code>return 0</code>：无条件返回成功。',S=>{}],
+  ['P1',[37,38],['…','MyWaveform_Init','MyPWM_Freq200kHzInit'],'回到上一层。<code>MyPWM_CT32B1_Stop(0)</code>、<code>Stop(1)</code>：再把 PWMC 的 bit0、bit1 清一次（上面第 94 行已经清过，这里是保险）。',S=>{S.b1.PWMC=0}],
+  ['P1',[39],['…','MyWaveform_Init','MyPWM_Freq200kHzInit'],'<code>MyPWM_CT32B1_GlobalStart()</code>：<b>TCR 的 bit0 置 1，CT32B1 开始数</b>：0、1、2 … 240、归零、0、1 …，每秒 20 万圈。<br>但两只脚还是低：PWMC = 0 → 听 EMR；EM0 = EM1 = 0；就算以后切到 PWM 模式，MR0 / MR1 = 241 也永远碰不到。下面的标尺是示意（真实速度每 5 µs 一圈）。',S=>{S.b1.TCR=1}],
+  ['P1',[40],['…','MyWaveform_Init','MyPWM_Freq200kHzInit'],'<code>return 0</code>。',S=>{}],
+  ['W',[139],['Ele_Init','MyWaveform_Init'],'回到 <code>MyWaveform_Init()</code>：<code>ret = 0</code>。',S=>{S.ret=0}],
+  ['W',[140],['Ele_Init','MyWaveform_Init'],'第 140 行调用 <code>MyWaveform_InitCT32B0()</code>，进去看。',S=>{}],
+  ['C0',[70],['…','MyWaveform_Init','MyWaveform_InitCT32B0'],'<b>NVIC_DisableIRQ(TIMER_32_0_IRQn)</b>：先在 NVIC（CPU 的中断总开关）里把 CT32B0 的中断关了，配置期间不被打断。',S=>{S.nvic=0}],
+  ['C0',[71],['…','MyWaveform_Init','MyWaveform_InitCT32B0'],'<b>TCR = 0</b>：停计数器。注意这时 CT32B0 的时钟<b>还没开</b>（下一行才开），这次写不生效；不过 TCR 复位值本来就是 0，所以没影响。',S=>{}],
+  ['C0',[73],['…','MyWaveform_Init','MyWaveform_InitCT32B0'],'<b>SYSAHBCLKCTRL 第 9 位置 1</b>：给 CT32B0 开时钟，右边的框亮起来。',S=>{S.clk9=1}],
+  ['C0',[74,75,76],['…','MyWaveform_Init','MyWaveform_InitCT32B0'],'<b>TC = 0、PC = 0、PR = 47</b>。PR = 47 → 每 47 + 1 = 48 个时钟 TC 加 1，48 MHz ÷ 48 = 1 MHz，<b>TC 每 1 µs 加 1</b>。它就是一块微秒秒表。',S=>{S.b0.TC=0;S.b0.PC=0;S.b0.PR=47}],
+  ['C0',[78],['…','MyWaveform_Init','MyWaveform_InitCT32B0'],'<b>MCR = 0</b>：MR0 ~ MR3 都不产生中断、不归零、不停止。也就是“闹钟全关”，TC 一直往上数，到 2³² − 1 再绕回 0。',S=>{S.b0.MCR=0}],
+  ['C0',[80],['…','MyWaveform_Init','MyWaveform_InitCT32B0'],'<b>TCR = 1</b>：秒表开始走。右边的 TC 现在按<b>真实速度</b>在涨（每秒涨 100 万）。',S=>{S.b0.TCR=1}],
+  ['C0',[81,82],['…','MyWaveform_Init','MyWaveform_InitCT32B0'],'清掉可能残留的“待处理”中断，然后在 NVIC 里<b>打开</b> TIMER_32_0 中断。<br>通道开了，但 MCR = 0，没有任何闹钟，所以 <code>TIMER32_0_IRQHandler</code> 现在一次都不会进。等 <code>MyWaveform_Start()</code> 写 MR0 = TC + 20、把 MCR bit0 置 1，才开始每 20 µs 进一次（第 3 节）。',S=>{S.nvic=1}],
+  ['C0',[84],['…','MyWaveform_Init','MyWaveform_InitCT32B0'],'<code>return 0</code>：同样无条件成功。',S=>{}],
+  ['W',[140],['Ele_Init','MyWaveform_Init'],'<code>ret = ret | 0</code> = 0 | 0 = <b>0</b>。',S=>{S.ret=0}],
+  ['W',[142,143,144,145,146],['Ele_Init','MyWaveform_Init'],'<code>!ret</code> 成立，两个通道的状态 <code>UNINIT → STOPPED</code>。从现在起 <code>MyWaveform_StartGenerate()</code> 才肯干活（它第 162 行检查的就是这个）。',S=>{S.s0='STOPPED';S.s1='STOPPED'}],
+  ['W',[148],['Ele_Init','MyWaveform_Init'],'<code>return 0</code>。',S=>{}],
+  ['E',[466],['Ele_Init'],'回到 <code>Ele_Init()</code>（:466），返回值被丢掉；接着 <code>Ele_EnableBoost()</code>。<br><b>结果</b>：CT32B1 在转但输出锁在低；CT32B0 秒表在走但没闹钟；两个通道 STOPPED。线圈要等按键按下才会震。',S=>{}]
+ ];
+ const states=[];{let S=S0();ST.forEach(st=>{S=JSON.parse(JSON.stringify(S));st[4](S);states.push(S)})}
+ let k=0,t0=0;
+ const flat=(S,pre='',o={})=>{for(const q in S){const v=S[q];if(v&&typeof v==='object')flat(v,pre+q+'.',o);else o[pre+q]=v}return o};
+ function draw(){const s=$('mwReg');s.innerHTML='';const S=states[k],P=k?flat(states[k-1]):flat(S0()),F=flat(S);
+  const chg=q=>P[q]!==F[q];
+  const T=(x,y,t,o)=>el(s,'text',Object.assign({x,y,'font-size':12,fill:'var(--fg)'},o||{}),t);
+  const cell=(x,y,w,lab,val,key,dis,hint)=>{const c=key&&chg(key);
+   el(s,'rect',{x,y,width:w,height:28,rx:4,style:`fill:${c?'color-mix(in srgb,var(--bad) 18%,var(--panel))':'var(--panel)'};stroke:var(--${c?'bad':'line'});stroke-width:${c?2.4:1}`,opacity:dis?.45:1});
+   T(x+8,y+18,lab,{'font-size':11.5,fill:'var(--muted)','font-family':'var(--font-m)',opacity:dis?.5:1});
+   T(x+w-8,y+18,val,{'font-size':12.5,'font-weight':700,'text-anchor':'end','font-family':'var(--font-m)',opacity:dis?.5:1});
+   if(hint)T(x+w+10,y+18,hint,{'font-size':11,fill:'var(--muted)',opacity:dis?.5:1});};
+  const frame=(x,y,w,h,t,c,on)=>{el(s,'rect',{x,y,width:w,height:h,rx:10,style:`fill:${on?`color-mix(in srgb,var(--${c}) 6%,var(--panel))`:'var(--soft)'};stroke:var(--${on?c:'line'});stroke-width:1.8;${on?'':'stroke-dasharray:6 4'}`});T(x+12,y+22,t,{'font-weight':700,'font-size':13.5});};
+  /* SYSCON & NVIC */
+  frame(20,10,560,74,'SYSCON → SYSAHBCLKCTRL（给各个外设开时钟的开关）','muted',1);
+  cell(36,44,240,'bit10  CT32B1 时钟',S.clk10?'1 开':'0 关','clk10');cell(300,44,240,'bit9   CT32B0 时钟',S.clk9?'1 开':'0 关','clk9');
+  frame(860,10,480,74,'NVIC（CPU 的中断总开关）','muted',1);
+  cell(876,44,300,'TIMER_32_0（CT32B0 中断）',S.nvic?'1 开':'0 关','nvic',0,S.nvic?'通道开了':'');
+  /* CT32B1 */
+  const on1=S.clk10;frame(20,100,560,430,'CT32B1：200 kHz PWM 发生器（my_pwm.c）','pc',on1);
+  if(!on1)T(568,122,'时钟没开：还没工作',{'font-size':11.5,fill:'var(--bad)','text-anchor':'end'});
+  const b=S.b1,r1=[['TCR',b.TCR?'1 在数':'0 停','b1.TCR','bit0 = 1 计数器走'],['PC',b.PC,'b1.PC','预分频的内部计数'],['PR',b.PR,'b1.PR','0 → 每 1 个时钟 TC + 1'],['TC',b.TCR?'0→240 循环':b.TC,'b1.TC','正在数的数'],['MR3',b.MR3,'b1.MR3','周期：数到它就归零'],['MCR',b.MCR?'0x400':'0','b1.MCR','bit10 = 碰到 MR3 归零'],['PWMC',b.PWMC?'…':'bit1..0 = 00','b1.PWMC','00 → 两只脚听 EMR 的'],['EMR',b.EMC?'EMC0/1=01 EM=0':'0','b1.EMC','01：碰到 MRx 就拉低'],['MR0',b.MR0,'b1.MR0','左：241 > 240 → 0%'],['MR1',b.MR1,'b1.MR1','右：同上']];
+  r1.forEach((q,i)=>cell(36,132+i*34,250,q[0],String(q[1]),q[2],!on1,q[3]));
+  /* ruler */
+  const rx=36,rw=500,ry=490;el(s,'line',{x1:rx,x2:rx+rw,y1:ry,y2:ry,stroke:'var(--fg)','stroke-width':2,opacity:on1?1:.3});
+  [[0,'0'],[240,'MR3 240'],[241,'']].forEach(([v,t])=>{const x=rx+v/245*rw;el(s,'line',{x1:x,x2:x,y1:ry-6,y2:ry+6,stroke:'var(--fg)','stroke-width':1.4,opacity:on1?1:.3});if(t)T(x,ry+20,t,{'font-size':10.5,'text-anchor':v?'end':'start',fill:'var(--muted)'})});
+  if(b.MR0){const x=rx+241/245*rw;T(x+4,ry-10,'MR0/MR1 = 241（永远碰不到）',{'font-size':10.5,fill:'var(--bad)','text-anchor':'end'})}
+  el(s,'circle',{id:'mwDot',cx:rx,cy:ry,r:6,fill:'var(--pc)',opacity:b.TCR?1:0});
+  /* pins */
+  frame(600,100,240,430,'引脚 → MOS 栅极','per',1);
+  [[13,23,'Q4 栅极（左）',S.f13,'f13'],[14,24,'Q5 栅极（右）',S.f14,'f14']].forEach(([n,pin,g,f,key],i)=>{const y=140+i*190;
+   cell(612,y,216,`PIO0_${n}（${pin} 脚）FUNC`,String(f),key);
+   T(616,y+50,f===1?'普通 GPIO（InitGPIO 设的）':`CT32B1_MAT${i}`,{'font-weight':700,'font-size':12});
+   T(616,y+70,f===1?'输入，MCU 不驱动':`由 EM${i} 驱动（= 0）`,{'font-size':11.5,fill:'var(--muted)'});
+   T(616,y+88,f===1?`内部上拉 vs ${i?'R66':'R65'} 1M 下拉`:'MCU 主动拉低',{'font-size':11.5,fill:'var(--muted)'});
+   el(s,'polyline',{points:`620,${y+130} 720,${y+130}`,'stroke-dasharray':f===1?'5 4':'',stroke:f===1?'var(--bad)':'var(--per)','stroke-width':2.4,fill:'none'});T(620,y+118,f===1?'电平：待测（推断偏高）':'电平：一直低',{'font-size':11,fill:f===1?'var(--bad)':'var(--per)'});
+   T(730,y+134,'→ '+g,{'font-size':11.5,'font-weight':700});});
+  /* CT32B0 */
+  const on0=S.clk9;frame(860,100,480,430,'CT32B0：1 µs 秒表 + 20 µs 闹钟（my_waveform.c）','gold',on0);
+  if(!on0)T(1328,146,'时钟没开：还没工作',{'font-size':11.5,fill:'var(--bad)','text-anchor':'end'});
+  const c=S.b0,r0=[['TCR',c.TCR?'1 在走':'0 停','b0.TCR','bit0 = 1 秒表走'],['PC',c.PC,'b0.PC','预分频的内部计数'],['PR',c.PR,'b0.PR',c.PR?'48 个时钟 +1 = 1 µs':''],['TC',c.TC,'b0.TC','单位 µs'],['MCR',c.MCR,'b0.MCR','0 → 闹钟全关'],['MR0','—','b0.MR0','左通道闹钟（启动时才写）'],['MR1','—','b0.MR1','右通道闹钟（启动时才写）']];
+  r0.forEach((q,i)=>cell(876,132+i*34,230,q[0],String(q[1]),q[2],!on0,q[3]));
+  const tcT=[...s.querySelectorAll('text')].find(t=>t.textContent===String(c.TC)&&+t.getAttribute('y')===132+3*34+18&&+t.getAttribute('x')>1000);if(tcT)tcT.id='mwTC';
+  if(c.TCR)T(876,400,'TC 正按真实速度涨：每秒 + 1 000 000',{'font-size':11.5,fill:'var(--gold)','font-weight':700});
+  T(876,430,'中断要两道门都开才会进：',{'font-size':11.5});T(876,450,`NVIC ${S.nvic?'✓ 开':'✗ 关'}　+　MCR 的 bit0 / bit3（闹钟）${c.MCR?'✓':'✗ 关'}`,{'font-size':11.5,fill:S.nvic&&c.MCR?'var(--good)':'var(--muted)'});
+  T(876,470,'→ 现在 TIMER32_0_IRQHandler 不会进',{'font-size':11.5,fill:'var(--muted)'});
+  /* variables */
+  frame(20,546,1320,96,'变量','muted',1);
+  cell(36,580,200,'ret',S.ret===null?'（还没有）':String(S.ret),'ret');
+  ['s0','s1'].forEach((q,i)=>{const x=290+i*520;T(x,598,`wfCh${i}.sta（${i?'右':'左'}）`,{'font-size':12,'font-weight':700});
+   ['UNINIT','STOPPED','RUNNING'].forEach((n,j)=>{const xx=x+120+j*128,cur=S[q]===n,c2=cur&&chg(q);el(s,'rect',{x:xx,y:580,width:112,height:28,rx:14,style:`fill:${cur?'color-mix(in srgb,var(--'+(c2?'bad':'per')+') 22%,var(--panel))':'var(--panel)'};stroke:var(--${cur?(c2?'bad':'per'):'line'});stroke-width:${cur?2.4:1}`});T(xx+56,598,n,{'text-anchor':'middle','font-size':11.5,'font-weight':cur?700:400,'font-family':'var(--font-m)'});if(j<2)T(xx+114,598,'→',{'font-size':12,fill:'var(--muted)'})});
+   T(x+120,630,'STOPPED → RUNNING 由按键按下时的 StartGenerate 做',{'font-size':10.5,fill:'var(--muted)'})});
+  /* code */
+  const st=ST[k],sn=SN[st[0]];$('mwFile').textContent=`${sn[0]} · ${sn[1]}`;
+  const prevDone=new Set();ST.slice(0,k).forEach(q=>{if(q[0]===st[0])q[1].forEach(l=>prevDone.add(l))});
+  $('mwCode').innerHTML=sn[2].map(([n,t])=>`<div class="${st[1].includes(n)?'cur':prevDone.has(n)?'done':''}"><span>${n}</span>${t.replace(/&/g,'&amp;').replace(/</g,'&lt;')||' '}</div>`).join('');
+  const cur=$('mwCode').querySelector('.cur');if(cur)cur.scrollIntoView({block:'nearest'});
+  $('mwStack').innerHTML='调用栈：'+st[2].map(f=>`<span>${f}</span>`).join(' → ');
+  $('mwNote').innerHTML=st[3];$('mwPos').textContent=`第 ${k+1} / ${ST.length} 步`;
+  $('mwPrev').disabled=k===0;$('mwNext').disabled=$('mwEnd').disabled=k===ST.length-1;
+  if(c.TCR&&!t0)t0=performance.now();if(!c.TCR)t0=0;
+ }
+ const go=n=>{k=Math.max(0,Math.min(ST.length-1,n));draw()};
+ $('mwPrev').onclick=()=>go(k-1);$('mwNext').onclick=()=>go(k+1);$('mwEnd').onclick=()=>go(ST.length-1);$('mwReset').onclick=()=>go(0);
+ let ph=0;setInterval(()=>{const S=states[k];const d=$('mwDot');if(d&&S.b1.TCR){ph=(ph+0.035)%1;d.setAttribute('cx',36+ph*240/245*500)}const tc=$('mwTC');if(tc&&t0)tc.textContent=Math.floor((performance.now()-t0)*1000).toLocaleString('en-US')},60);
+ draw();
+})();
+
 })();
 </script>
