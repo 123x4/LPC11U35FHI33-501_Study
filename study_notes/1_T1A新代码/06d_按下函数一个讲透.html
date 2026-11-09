@@ -1,0 +1,267 @@
+<title>按下函数一个讲透</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --hw:#7a5ea8; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.8}
+.wrap{max-width:880px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);line-height:1.3;text-wrap:balance}
+h1{font-size:1.9rem;margin:0}
+h2{font-size:1.3rem;margin:2.4rem 0 .4rem;padding-top:.6rem;border-top:1px solid var(--line)}
+h3{font-size:1.06rem;margin:1.3rem 0 .3rem}
+p{margin:.6rem 0}
+a{color:var(--per)}
+code{font-family:var(--font-m);font-size:.88em;background:var(--soft);padding:.05em .35em;border-radius:3px;overflow-wrap:anywhere}
+pre.code{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:10px 12px;overflow-x:auto;line-height:1.55;margin:.5rem 0}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.06em;color:var(--muted)}
+.lede{color:var(--muted)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:1rem 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-size:.88rem;margin:.4rem 0}
+td,th{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600}
+.note{font-size:.88rem;color:var(--muted)}
+.think{border-left:4px solid var(--per);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.8rem 0}
+.rule{border-left:4px solid var(--c,var(--per));background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.6rem 0}
+.log{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:6px 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.btns button,.tool button{font:inherit;font-size:.88rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer}
+.btns button:disabled{opacity:.4;cursor:default}
+.btns button[aria-pressed="true"]{border-color:var(--fg);font-weight:700}
+/* bit strip */
+.bstrip{display:inline-grid;gap:2px;font-family:var(--font-m);font-size:.74rem;text-align:center;margin:.2rem 0}
+.bstrip span{border:1px solid var(--line);border-radius:3px;padding:1px 3px;min-width:1.6em;background:var(--panel)}
+.bstrip span.ch{background:color-mix(in srgb,var(--bad) 28%,var(--panel));border-color:var(--bad);font-weight:700}
+.bstrip span.k{background:none;border:0;color:var(--muted);font-size:.6rem}
+.bstrip span.f{background:color-mix(in srgb,var(--c,var(--per)) 18%,var(--panel))}
+/* lamps */
+.lamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:.5rem 0}
+.lamps div{border:1.5px solid var(--line);border-radius:6px;padding:4px 8px;font-size:.82rem;background:var(--panel)}
+.lamps div::before{content:"○ ";color:var(--muted)}
+.lamps div.on{border-color:var(--good);background:color-mix(in srgb,var(--good) 15%,var(--panel))}
+.lamps div.on::before{content:"● ";color:var(--good)}
+.lamps div.new{outline:2px solid var(--bad)}
+.stp{border:2px solid var(--per);border-radius:8px;padding:10px 14px;background:var(--panel);margin:.6rem 0}
+.stp .cl{font-family:var(--font-m);font-size:.85rem;background:var(--soft);border-left:4px solid var(--per);padding:4px 8px;border-radius:0 6px 6px 0;overflow-wrap:anywhere}
+.stp .who{display:inline-block;font-size:.72rem;color:var(--bg);background:var(--c);border-radius:4px;padding:0 6px;margin-right:6px}
+.stp h3{margin:.5rem 0 .2rem}
+svg.fig{display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+/* tools */
+.tool{border:1.5px solid var(--hw);border-radius:8px;padding:8px 12px;background:color-mix(in srgb,var(--hw) 5%,var(--panel));margin:.6rem 0}
+.tool input,.tool select{font:inherit;font-size:.88rem;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.tool .row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:.3rem 0}
+/* quiz & practice */
+.qz,.px{border-radius:8px;padding:8px 12px;margin:.7rem 0}
+.qz{border:1.5px dashed var(--gold);background:color-mix(in srgb,var(--gold) 6%,var(--panel))}
+.px{border:1.5px solid var(--per);background:color-mix(in srgb,var(--per) 6%,var(--panel))}
+.qz .qt,.px .pxq{font-weight:600;margin:.2rem 0}
+.qrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.qz input,.px input{font:inherit;width:120px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.qz button,.px button{font:inherit;font-size:.9rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer;text-align:left}
+.qz button.on,.px button.on{border-color:var(--fg)}
+.px .pxh{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.px .pxh b{color:var(--per)}
+.px .pxs{font-size:.82rem;color:var(--muted)}
+.px .pxNext{border-color:var(--per);color:var(--per)}
+.fb{display:none;padding:6px 10px;border-radius:6px;background:var(--soft);margin-top:.3rem}
+.fb.ok{display:block;border-left:4px solid var(--good)}
+.fb.no{display:block;border-left:4px solid var(--bad)}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.wrap{max-width:1400px}
+.code{font-family:var(--font-m);font-size:.8rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px 0;overflow-x:auto}
+.code div{display:grid;grid-template-columns:3.4em minmax(0,1.25fr) minmax(0,1fr);white-space:pre;line-height:1.55;min-width:900px}
+.code div span.n{color:var(--muted);text-align:right;padding-right:.8em;user-select:none}
+.code div span:nth-child(2){white-space:pre-wrap;overflow-wrap:anywhere;padding-right:8px}
+.code div span.x{white-space:normal;font-family:var(--font-b);color:var(--fg);font-size:.82rem;border-left:1px solid var(--line);padding:0 10px;line-height:1.5}
+.code div.hasx{background:color-mix(in srgb,var(--sw) 7%,transparent)}
+.code div.hasx span.x{border-left:3px solid var(--per)}
+.code div.gap span:nth-child(2){color:var(--muted);font-style:italic;font-family:var(--font-b)}
+.code div.cur{background:color-mix(in srgb,var(--bad) 20%,transparent)!important;font-weight:700}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:10px;margin:.6rem 0}
+.card{border:1.5px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--panel);min-width:0}
+.card .cn{font-weight:700;margin-bottom:4px}
+.card table{font-size:.82rem;width:100%}
+.card th{text-align:left;color:var(--muted);font-weight:500;white-space:nowrap;padding-right:8px;vertical-align:top}
+.card td{padding:1px 0}
+.g-local{border-color:var(--gold)}.g-ele{border-color:var(--bad)}.g-cache{border-color:var(--pc)}.g-seg{border-color:var(--good)}.g-cfg{border-color:var(--hw)}.g-wf{border-color:var(--per)}.g-tick{border-color:var(--muted)}
+#svVars{font-family:var(--font-m);font-size:.8rem;width:100%}
+#svVars td{padding:2px 8px}
+#svVars td.ch{background:color-mix(in srgb,var(--gold) 40%,var(--panel));font-weight:700}
+#svNote{border-left:4px solid var(--bad);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;min-height:4em;margin:.4rem 0}
+.two{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:12px;align-items:start}
+</style>
+<div class="wrap">
+<div class="eyebrow">T1A 主线 · 第 6 课（精读附）· Ele_LeftKeyPressProcess() 一个函数讲透 · src/my_electromagnet.c:1005~1065 · 按杰哥 11 月最新代码</div>
+<h1>Ele_LeftKeyPressProcess()：一个函数，十几个变量</h1>
+<p class="lede">左键刚按下时，按键扫描（button.c:639）调这个函数让左线圈震一下。函数本身只有二十几行，但碰到的变量分属 6 个地方。这一页先给一句话和整体流程，再逐行读代码，然后把每个变量单独做一张卡片，最后用几个情景一步步看它们怎么变。</p>
+<p class="note">行号以仓库里的新代码为准。你编辑器里的行号比这里大 1（函数在 1006 行），应该是你在前面加了一行注释，对照时减 1 即可。</p>
+
+<h2>0. 一句话和流程</h2>
+<div class="box"><b>一句话</b>：如果按下震动没被关掉、右线圈也没在通电，就算好这次通电多久、把左线圈标成“按下震动中”、记下开始时刻、按驱动方式选一张力度表，交给波形发生器去震。</div>
+<div class="scroll"><svg id="flowF" class="fig" viewBox="0 0 1360 230" style="min-width:1150px" role="img" aria-label="函数流程"></svg></div>
+
+<h2>1. 逐行读</h2>
+<div class="code" id="fnCode"><div class="hasx" data-l="1005"><span class="n">1005</span><span>void Ele_LeftKeyPressProcess(void)</span><span class="x">没有参数，也没有返回值。要用的东西全是全局变量（见第 2 节）。</span></div><div data-l="1006"><span class="n">1006</span><span>{</span><span class="x"></span></div><div data-l="1007"><span class="n">1007</span><span> </span><span class="x"></span></div><div class="hasx" data-l="1008"><span class="n">1008</span><span>  uint32_t wfPeriodUs = 0;</span><span class="x"><b>局部变量</b> <code>wfPeriodUs</code>：这一次要通电多少 µs。函数结束就没了。</span></div><div data-l="1009"><span class="n">1009</span><span> </span><span class="x"></span></div><div class="hasx" data-l="1010"><span class="n">1010</span><span>  if(leftEle.pressVibrateDurationUs)</span><span class="x">读 <code>leftEle.pressVibrateDurationUs</code>（按下导通时间，默认 500）。是 0 = GUI 关掉了按下震动 → 整个 if 跳过，直接到 :1064。</span></div><div data-l="1011"><span class="n">1011</span><span>  {</span><span class="x"></span></div><div data-l="1012"><span class="n">1012</span><span> </span><span class="x"></span></div><div class="hasx" data-l="1013"><span class="n">1013</span><span>    if(ELE_PRESS_VIBRATING == rightEle.status || ELE_RELEASE_VIBRATING == rightEle.status)</span><span class="x">读 <code>rightEle.status</code>：右线圈此刻是不是在<b>通电</b>（按下震动中或松开震动中）。消抖中不算。</span></div><div data-l="1014"><span class="n">1014</span><span>    {</span><span class="x"></span></div><div class="hasx" data-l="1015"><span class="n">1015</span><span>      gxCacheVibrate.flag = 1;</span><span class="x">是：写 <code>gxCacheVibrate.flag = 1</code>：“有一次被推迟的震动”。</span></div><div class="hasx" data-l="1016"><span class="n">1016</span><span>      gxCacheVibrate.pos = ELE_POS_LEFT;</span><span class="x">写 <code>.pos = ELE_POS_LEFT</code>：被推迟的是左边。</span></div><div class="hasx" data-l="1017"><span class="n">1017</span><span>      gxCacheVibrate.tick = MyTick_GetTickMs();</span><span class="x">写 <code>.tick</code> = 现在的毫秒数：什么时候推迟的。5 ms 后 <code>Ele_OnlyOne()</code> 拿它判断该补了。</span></div><div class="hasx" data-l="1018"><span class="n">1018</span><span>      return;</span><span class="x">这次不震，直接离开函数。</span></div><div data-l="1019"><span class="n">1019</span><span>    }</span><span class="x"></span></div><div class="gap"><span class="n"></span><span>⋯ 被 #if 去掉、T1A 不编译</span><span class="x"></span></div><div class="hasx" data-l="1022"><span class="n">1022</span><span>    wfPeriodUs = Ele_CalculateDuration(ELE_POS_LEFT, nowHallSegment[0], leftEle.pressVibrateDurationUs);</span><span class="x">算真正的导通时间，结果放进 <code>wfPeriodUs</code>。三个参数：哪一边（左）、左键当前段号 <code>nowHallSegment[0]</code>、设定的导通时间。动态导通时间关着时，返回的就是设定值 500。</span></div><div class="hasx" data-l="1023"><span class="n">1023</span><span>    leftEle.status = ELE_PRESS_VIBRATING;</span><span class="x">写 <code>leftEle.status = ELE_PRESS_VIBRATING</code>（= 1）：左线圈进入“按下震动中”。</span></div><div class="hasx" data-l="1024"><span class="n">1024</span><span>    leftEle.vibrateBeginTick = MyTick_GetTickMs();</span><span class="x">写 <code>leftEle.vibrateBeginTick</code> = 现在的毫秒数：开始震动的时刻。状态机拿它算什么时候结束。</span></div><div class="hasx" data-l="1025"><span class="n">1025</span><span>    if(Config_GetCoilDriveMode())</span><span class="x">读驱动方式 <code>xgAllParam.xDriveMode.bDriveMode</code>：0 = level，非 0 = pwm。</span></div><div data-l="1026"><span class="n">1026</span><span>    {</span><span class="x"></span></div><div class="hasx" data-l="1027"><span class="n">1027</span><span>      wfCustom.pWfData = Config_GetPwmTable();</span><span class="x">pwm：写 <code>wfCustom.pWfData</code> = GUI 力度表 <code>gPwmWf</code> 的首地址 …</span></div><div class="hasx" data-l="1028"><span class="n">1028</span><span>      wfCustom.wfDataLen = 100;</span><span class="x">… 写 <code>wfCustom.wfDataLen = 100</code> …</span></div><div class="hasx" data-l="1029"><span class="n">1029</span><span>      pLeftWf = &amp;wfCustom;</span><span class="x">… 写 <code>pLeftWf = &amp;wfCustom</code>：左边这次用它。</span></div><div data-l="1030"><span class="n">1030</span><span>    }</span><span class="x"></span></div><div data-l="1031"><span class="n">1031</span><span>    else</span><span class="x"></span></div><div data-l="1032"><span class="n">1032</span><span>    {</span><span class="x"></span></div><div class="hasx" data-l="1033"><span class="n">1033</span><span>      pLeftWf = &amp;wfHigh;</span><span class="x">level（默认）：写 <code>pLeftWf = &amp;wfHigh</code>：左边用只有一格 100% 的表。</span></div><div data-l="1034"><span class="n">1034</span><span>    }</span><span class="x"></span></div><div class="hasx" data-l="1035"><span class="n">1035</span><span>    MyWaveform_StartGenerate(CHANNEL_0, pLeftWf, wfPeriodUs, 1);</span><span class="x"><b>把四样东西交给波形发生器</b>：通道 0（左）、力度表 <code>pLeftWf</code>、时长 <code>wfPeriodUs</code>、放 1 遍。之后的事都在 my_waveform.c 里（第 6 课精读第 3、4 节）。</span></div><div class="gap"><span class="n"></span><span>⋯ 被 #if 去掉、T1A 不编译</span><span class="x"></span></div><div class="hasx" data-l="1063"><span class="n">1063</span><span>  }</span><span class="x">右边那一大段 ⋯ 是别的板子、刹车功能的代码，T1A 不编译。</span></div><div class="hasx" data-l="1064"><span class="n">1064</span><span>  InfoLog(&quot;%u&quot;, MyTick_GetTickMs());</span><span class="x">打日志，调试关时是空语句。不管震没震都会走到这里。</span></div><div data-l="1065"><span class="n">1065</span><span>}</span><span class="x"></span></div></div>
+
+<h2>2. 每个变量一张卡片</h2>
+<p>边框颜色表示它属于哪一类：<span style="color:var(--gold)">■ 局部变量</span>　<span style="color:var(--bad)">■ 线圈句柄 leftEle / rightEle</span>　<span style="color:var(--pc)">■ 补震记录</span>　<span style="color:var(--good)">■ 动态导通时间用的</span>　<span style="color:var(--hw)">■ GUI 参数（EEPROM）</span>　<span style="color:var(--per)">■ 力度表</span>　<span style="color:var(--muted)">■ 毫秒计数</span></p>
+<div class="scroll"><svg id="mapF" class="fig" viewBox="0 0 1360 420" style="min-width:1150px" role="img" aria-label="变量都住在哪"></svg></div>
+<div class="cards"><div class="card g-local"><div class="cn"><code>wfPeriodUs</code></div>
+<table><tr><th>类型</th><td>uint32_t（局部变量）</td></tr><tr><th>定义在</th><td>本函数 :1008</td></tr><tr><th>初值</th><td>0</td></tr><tr><th>本函数里</th><td><b>写 :1022；读 :1035</b></td></tr><tr><th>别处</th><td>只在这个函数里</td></tr><tr><th>例子（默认配置）</th><td>500</td></tr></table></div><div class="card g-ele"><div class="cn"><code>leftEle.pressVibrateDurationUs</code></div>
+<table><tr><th>类型</th><td>uint32_t，<code>Ele_Handle_ts</code> 的字段</td></tr><tr><th>定义在</th><td>my_electromagnet.c:123（字段）、:148（leftEle）</td></tr><tr><th>初值</th><td>100（占位）</td></tr><tr><th>本函数里</th><td><b>读 :1010、:1022</b></td></tr><tr><th>别处</th><td>写：开机 / GUI 改参数时 <code>Ele_UpdateParam()</code> :635、:643、:651；读：状态机 :1377</td></tr><tr><th>例子（默认配置）</th><td>500（GUI 默认）</td></tr></table></div><div class="card g-ele"><div class="cn"><code>leftEle.status</code></div>
+<table><tr><th>类型</th><td><code>Ele_Status_te</code>（0~3）</td></tr><tr><th>定义在</th><td>:118、:153</td></tr><tr><th>初值</th><td>ELE_NO_VIBRATING</td></tr><tr><th>本函数里</th><td><b>写 :1023</b></td></tr><tr><th>别处</th><td>状态机 :1379、:1396 改它；<code>Ele_IsVibrating()</code> :923、右键函数 :1135 读它</td></tr><tr><th>例子（默认配置）</th><td>0 → 1</td></tr></table></div><div class="card g-ele"><div class="cn"><code>leftEle.vibrateBeginTick</code></div>
+<table><tr><th>类型</th><td>uint32_t（毫秒）</td></tr><tr><th>定义在</th><td>:120、:154</td></tr><tr><th>初值</th><td>0</td></tr><tr><th>本函数里</th><td><b>写 :1024</b></td></tr><tr><th>别处</th><td>状态机 :1377 读</td></tr><tr><th>例子（默认配置）</th><td>1000</td></tr></table></div><div class="card g-ele"><div class="cn"><code>rightEle.status</code></div>
+<table><tr><th>类型</th><td><code>Ele_Status_te</code></td></tr><tr><th>定义在</th><td>:118、:177</td></tr><tr><th>初值</th><td>ELE_NO_VIBRATING</td></tr><tr><th>本函数里</th><td><b>读 :1013</b></td></tr><tr><th>别处</th><td>右键的按下 / 松开函数、状态机改它</td></tr><tr><th>例子（默认配置）</th><td>0（右边空闲）</td></tr></table></div><div class="card g-cache"><div class="cn"><code>gxCacheVibrate.flag / .pos / .tick</code></div>
+<table><tr><th>类型</th><td><code>CacheVibrate_ts</code>：uint8_t / Ele_Position_te / uint32_t</td></tr><tr><th>定义在</th><td>:225~230</td></tr><tr><th>初值</th><td>全 0</td></tr><tr><th>本函数里</th><td><b>写 :1015、:1016、:1017（只在右边正在通电时）</b></td></tr><tr><th>别处</th><td><code>Ele_OnlyOne()</code> :1473~1484 读、清 flag、补震</td></tr><tr><th>例子（默认配置）</th><td>不变</td></tr></table></div><div class="card g-seg"><div class="cn"><code>nowHallSegment[0]</code></div>
+<table><tr><th>类型</th><td>uint8_t（0~100），数组 [0] 左 [1] 右</td></tr><tr><th>定义在</th><td>:207</td></tr><tr><th>初值</th><td>0</td></tr><tr><th>本函数里</th><td><b>读 :1022（当参数传进去）</b></td></tr><tr><th>别处</th><td>按键算法每 1 ms 经 <code>Ele_UpadteSegment()</code> :561 写</td></tr><tr><th>例子（默认配置）</th><td>刚按下时一般在 10 左右（刚过 AP）</td></tr></table></div><div class="card g-seg"><div class="cn"><code>xCoilDebugCfg[0].bDynOnTimeEn</code></div>
+<table><tr><th>类型</th><td>uint8_t，<code>CoilDebug_ts</code>（my_protocol_common.h:186）</td></tr><tr><th>定义在</th><td>my_electromagnet.c:194~205</td></tr><tr><th>初值</th><td>0（DYN_ON_TIME_EN_DEFAULT）</td></tr><tr><th>本函数里</th><td><b>间接读：<code>Ele_CalculateDuration()</code> :1348</b></td></tr><tr><th>别处</th><td>GUI 调试命令 0x06 / 0x01 → <code>Ele_UpdateDebugParam()</code> :614 写</td></tr><tr><th>例子（默认配置）</th><td>0（关）</td></tr></table></div><div class="card g-cfg"><div class="cn"><code>xgAllParam.xDriveMode.bDriveMode</code></div>
+<table><tr><th>类型</th><td>uint8_t</td></tr><tr><th>定义在</th><td>my_protocol_mouse.c:44</td></tr><tr><th>初值</th><td>EEPROM 里的值，默认 0</td></tr><tr><th>本函数里</th><td><b>间接读：<code>Config_GetCoilDriveMode()</code> :1025</b></td></tr><tr><th>别处</th><td>GUI 命令 0x03 / 0x06 → my_protocol_mouse.c:884 写</td></tr><tr><th>例子（默认配置）</th><td>0（level）</td></tr></table></div><div class="card g-cfg"><div class="cn"><code>xgAllParam.gPwmWf[100]</code></div>
+<table><tr><th>类型</th><td>uint8_t[100]（每格 0~100%）</td></tr><tr><th>定义在</th><td>my_protocol_mouse.c:45</td></tr><tr><th>初值</th><td>EEPROM 里的值，默认 51→100→51</td></tr><tr><th>本函数里</th><td><b>间接读地址：<code>Config_GetPwmTable()</code> :1027</b></td></tr><tr><th>别处</th><td>GUI 命令 0x03 / 0x07 → :923 写</td></tr><tr><th>例子（默认配置）</th><td>（level 时用不到）</td></tr></table></div><div class="card g-wf"><div class="cn"><code>wfHigh</code></div>
+<table><tr><th>类型</th><td><code>WaveformInfo_ts</code> = {表地址, 表长}</td></tr><tr><th>定义在</th><td>:344~347</td></tr><tr><th>初值</th><td>{wfHighTbl, 1}，wfHighTbl = {100}</td></tr><tr><th>本函数里</th><td><b>取地址 :1033</b></td></tr><tr><th>别处</th><td>不变（常量表）</td></tr><tr><th>例子（默认配置）</th><td>—</td></tr></table></div><div class="card g-wf"><div class="cn"><code>wfCustom</code></div>
+<table><tr><th>类型</th><td><code>WaveformInfo_ts</code></td></tr><tr><th>定义在</th><td>:348</td></tr><tr><th>初值</th><td>{0, 0}</td></tr><tr><th>本函数里</th><td><b>写 :1027、:1028（只在 pwm 时）</b></td></tr><tr><th>别处</th><td>右键函数 :1150~1151 也写它（两边共用）</td></tr><tr><th>例子（默认配置）</th><td>不变</td></tr></table></div><div class="card g-wf"><div class="cn"><code>pLeftWf</code></div>
+<table><tr><th>类型</th><td><code>WaveformInfo_ts *</code>（指针）</td></tr><tr><th>定义在</th><td>:350</td></tr><tr><th>初值</th><td>&amp;wfHigh</td></tr><tr><th>本函数里</th><td><b>写 :1029 或 :1033；读 :1035</b></td></tr><tr><th>别处</th><td>只有左键的按下 / 松开函数用</td></tr><tr><th>例子（默认配置）</th><td>&amp;wfHigh</td></tr></table></div><div class="card g-tick"><div class="cn"><code>mySysTickMs</code></div>
+<table><tr><th>类型</th><td>uint32_t（毫秒）</td></tr><tr><th>定义在</th><td>my_tick.c:14（static，只能通过 <code>MyTick_GetTickMs()</code> 读）</td></tr><tr><th>初值</th><td>0</td></tr><tr><th>本函数里</th><td><b>读 :1017、:1024</b></td></tr><tr><th>别处</th><td>CT16B0 每 1 ms 中断里 + 1（Timer.c:73）</td></tr><tr><th>例子（默认配置）</th><td>1000</td></tr></table></div></div>
+
+<h3>力度表的三个变量是怎么指来指去的</h3>
+<div class="btns">驱动方式 <select id="ptM"><option value="0">0 · level（默认）</option><option value="1">1 · pwm</option></select></div>
+<div class="scroll"><svg id="ptF" class="fig" viewBox="0 0 1360 260" style="min-width:1150px" role="img" aria-label="pLeftWf 指针"></svg></div>
+
+<h2>3. 情景单步：选一种情况，一行一行看变量怎么变</h2>
+<div class="tool">
+<div class="row">情景 <select id="svSc">
+<option value="def">① 默认：右边空闲、level、动态导通时间关</option>
+<option value="busy">② 右线圈正在通电（同一时间只震一个）</option>
+<option value="off">③ GUI 把按下震动关了（导通时间 = 0）</option>
+<option value="pwm">④ 驱动方式 = pwm</option>
+<option value="dyn">⑤ 动态导通时间开，按到段号 50</option>
+</select></div>
+<div class="row btns" style="margin:0"><button id="svPrev">← 上一步</button><button id="svNext">下一步 →</button><button id="svReset">回到开头</button><span class="note" id="svPos"></span></div></div>
+<div class="two"><div class="code" id="svCode"></div><div><div id="svNote"></div><table id="svVars"></table></div></div>
+
+<h2>4. 汇总：本函数里每个变量是读还是写</h2>
+<div class="scroll"><table>
+<thead><tr><th>变量</th><th>读</th><th>写</th><th>写进去的值</th></tr></thead>
+<tbody>
+<tr><td><code>leftEle.pressVibrateDurationUs</code></td><td>:1010、:1022</td><td>—</td><td></td></tr>
+<tr><td><code>rightEle.status</code></td><td>:1013</td><td>—</td><td></td></tr>
+<tr><td><code>gxCacheVibrate.flag / pos / tick</code></td><td>—</td><td>:1015~1017（右边通电时）</td><td>1 / ELE_POS_LEFT / 现在毫秒</td></tr>
+<tr><td><code>nowHallSegment[0]</code></td><td>:1022</td><td>—</td><td></td></tr>
+<tr><td><code>xCoilDebugCfg[0].bDynOnTimeEn</code></td><td>:1022 里间接（:1348）</td><td>—</td><td></td></tr>
+<tr><td><code>wfPeriodUs</code></td><td>:1035</td><td>:1022</td><td>导通时间（默认 500）</td></tr>
+<tr><td><code>leftEle.status</code></td><td>—</td><td>:1023</td><td>ELE_PRESS_VIBRATING</td></tr>
+<tr><td><code>leftEle.vibrateBeginTick</code></td><td>—</td><td>:1024</td><td>现在毫秒</td></tr>
+<tr><td><code>xgAllParam.xDriveMode.bDriveMode</code></td><td>:1025 里间接</td><td>—</td><td></td></tr>
+<tr><td><code>wfCustom.pWfData / wfDataLen</code></td><td>—</td><td>:1027、:1028（pwm 时）</td><td>gPwmWf / 100</td></tr>
+<tr><td><code>pLeftWf</code></td><td>:1035</td><td>:1029 或 :1033</td><td>&amp;wfCustom 或 &amp;wfHigh</td></tr>
+<tr><td><code>mySysTickMs</code></td><td>:1017、:1024（经 MyTick_GetTickMs）</td><td>—</td><td></td></tr>
+</tbody></table></div>
+</div>
+<script>
+(function(){
+const $=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
+const el=(p,t,a,x)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e};
+const T=(s,x,y,t,o)=>el(s,'text',Object.assign({x,y,'font-size':12,fill:'var(--fg)'},o||{}),t);
+const box=(s,x,y,w,h,t1,t2,c)=>{el(s,'rect',{x,y,width:w,height:h,rx:8,style:`fill:color-mix(in srgb,var(--${c}) 14%,var(--panel));stroke:var(--${c});stroke-width:1.8`});T(s,x+w/2,y+(t2?h/2-3:h/2+5),t1,{'text-anchor':'middle','font-weight':700,'font-size':12.5});if(t2)T(s,x+w/2,y+h/2+15,t2,{'text-anchor':'middle','font-size':10.5,fill:'var(--muted)','font-family':'var(--font-m)'})};
+const arrow=(s,x1,y1,x2,y2,lab,c,lx,ly)=>{el(s,'line',{x1,y1,x2,y2,stroke:`var(--${c||'fg'})`,'stroke-width':1.6});const a=Math.atan2(y2-y1,x2-x1);el(s,'path',{d:`M${x2},${y2} l${-8*Math.cos(a)+4*Math.sin(a)},${-8*Math.sin(a)-4*Math.cos(a)} l${-8*Math.sin(a)},${8*Math.cos(a)}z`,fill:`var(--${c||'fg'})`});if(lab)T(s,lx!=null?lx:(x1+x2)/2,ly!=null?ly:(y1+y2)/2-6,lab,{'text-anchor':'middle','font-size':11,fill:`var(--${c||'muted'})`,'font-weight':600})};
+const DS=[1024, 1003, 984, 966, 948, 930, 914, 898, 882, 867, 853, 839, 825, 812, 800, 787, 775, 764, 752, 742, 731, 721, 711, 701, 691, 682, 673, 664, 656, 648, 640, 632, 624, 616, 609, 602, 595, 588, 581, 575, 568, 562, 556, 550, 544, 538, 533, 527, 522, 517, 512, 506, 501, 497, 492, 487, 483, 478, 474, 469, 465, 461, 457, 453, 449, 445, 441, 437, 433, 430, 426, 423, 419, 416, 412, 409, 406, 403, 400, 396, 393, 390, 387, 384, 382, 379, 376, 373, 371, 368, 365, 363, 360, 358, 355, 353, 350, 348, 345, 343, 341];const DEF=[];for(let i=0;i<50;i++){DEF[i]=i+51;DEF[99-i]=i+51}
+/* flow */
+(function(){const s=$('flowF');
+ box(s,10,85,150,54,'左键刚按下','button.c:639','muted');
+ box(s,200,85,190,54,'① 按下震动开着吗？','pressVibrateDurationUs ≠ 0','gold');
+ box(s,430,85,200,54,'② 右线圈空着吗？','rightEle.status','pc');
+ box(s,670,85,210,54,'③ 定时长、记状态','wfPeriodUs、status、beginTick','bad');
+ box(s,920,85,180,54,'④ 选力度表','pLeftWf','per');
+ box(s,1140,85,200,54,'⑤ 交给波形发生器','MyWaveform_StartGenerate','good');
+ arrow(s,160,112,200,112);arrow(s,390,112,430,112,'是','good',410,104);arrow(s,630,112,670,112,'是','good',650,104);arrow(s,880,112,920,112);arrow(s,1100,112,1140,112);
+ box(s,200,180,190,40,'不震（:1010 不成立）','','muted');arrow(s,295,139,295,180,'否','bad',305,165);
+ box(s,430,180,200,40,'记下来 5 ms 后补，return','gxCacheVibrate','pc');arrow(s,530,139,530,180,'否','bad',540,165);
+ [[295,':1010'],[530,':1013~1019'],[775,':1022~1024'],[1010,':1025~1034'],[1240,':1035']].forEach(([x,t])=>T(s,x,74,t,{'text-anchor':'middle','font-family':'var(--font-m)','font-size':11,fill:'var(--muted)'}));
+})();
+/* variable home map */
+(function(){const s=$('mapF');
+ const grp=(x,y,w,h,title,file,c,items)=>{el(s,'rect',{x,y,width:w,height:h,rx:10,style:`fill:color-mix(in srgb,var(--${c}) 7%,var(--panel));stroke:var(--${c});stroke-width:1.8`});T(s,x+10,y+20,title,{'font-weight':700,'font-size':12.5});T(s,x+w-10,y+20,file,{'text-anchor':'end','font-size':10.5,fill:'var(--muted)','font-family':'var(--font-m)'});
+  items.forEach((it,i)=>{const yy=y+34+i*24,u=it[1];el(s,'rect',{x:x+10,y:yy,width:w-20,height:20,rx:4,style:`fill:${u?`color-mix(in srgb,var(--${u==='w'?'bad':u==='r'?'per':'gold'}) 20%,var(--panel))`:'var(--panel)'};stroke:var(--line)`});
+   T(s,x+16,yy+14,it[0],{'font-family':'var(--font-m)','font-size':11,fill:u?'var(--fg)':'var(--muted)'});if(u)T(s,x+w-16,yy+14,u==='w'?'写':u==='r'?'读':'读+写',{'text-anchor':'end','font-size':11,'font-weight':700,fill:`var(--${u==='w'?'bad':u==='r'?'per':'gold'})`})})};
+ grp(10,10,330,215,'leftEle（左线圈句柄）','my_electromagnet.c:148','bad',[['pos = ELE_POS_LEFT',''],['status','w'],['vibrateBeginTick','w'],['debounceBeginTick',''],['pressVibrateDurationUs','r'],['releaseVibrateDurationUs',''],['pressDriveMode（没人用）','']]);
+ grp(10,240,330,90,'rightEle（右线圈句柄）','my_electromagnet.c:172','bad',[['status','r'],['其余字段','']]);
+ grp(360,10,300,110,'gxCacheVibrate（补震记录）',':230','pc',[['flag','w'],['pos','w'],['tick','w']]);
+ grp(360,135,300,90,'nowHallSegment[2]（段号）',':207','good',[['[0] 左','r'],['[1] 右','']]);
+ grp(360,240,300,110,'xCoilDebugCfg[2]（调试配置）',':194','good',[['[0].bDynOnTimeEn','r'],['[0].bAutoVibrationEn',''],['[0].wAutoVibTrigPeriodMs','']]);
+ grp(680,10,330,110,'xgAllParam（GUI 参数）','my_protocol_mouse.c:47','hw',[['xDriveMode.bDriveMode','r'],['gPwmWf[100]（取地址）','r'],['xConfig[]、xInfo[] …','']]);
+ grp(680,135,330,135,'力度表',':343~351','per',[['wfHigh = {wfHighTbl, 1}','r'],['wfCustom.pWfData','w'],['wfCustom.wfDataLen','w'],['pLeftWf（指针）','rw']]);
+ grp(680,285,330,65,'mySysTickMs（毫秒计数）','my_tick.c:14','muted',[['经 MyTick_GetTickMs() 读','r']]);
+ grp(1030,10,320,65,'局部变量（函数里）',':1008','gold',[['wfPeriodUs','rw']]);
+ T(s,1030,110,'颜色：',{'font-weight':700});T(s,1030,132,'红底 = 本函数写它',{fill:'var(--bad)'});T(s,1030,154,'蓝底 = 本函数只读它',{fill:'var(--per)'});T(s,1030,176,'黄底 = 又读又写',{fill:'var(--gold)'});T(s,1030,198,'白底 = 本函数不碰',{fill:'var(--muted)'});
+ T(s,1030,240,'跨文件：',{'font-weight':700});T(s,1030,262,'xgAllParam 在 my_protocol_mouse.c，',{'font-size':11.5});T(s,1030,282,'本文件用 Config_Get…() 两个函数去读。',{'font-size':11.5});T(s,1030,304,'mySysTickMs 是 static，',{'font-size':11.5});T(s,1030,324,'只能经 MyTick_GetTickMs() 读。',{'font-size':11.5});
+ T(s,10,360,'两个结构体变量 leftEle / rightEle 是同一种类型 Ele_Handle_ts（:115），各一份。本函数只动 leftEle 的 3 个字段，只看 rightEle 的 1 个字段。',{'font-size':11.5,fill:'var(--muted)'});
+})();
+/* pointer diagram */
+(function(){const s=$('ptF');
+ function draw(){s.innerHTML='';const m=+$('ptM').value;
+  box(s,20,95,170,56,'pLeftWf','指针，:350','per');
+  const hx=330,cx=330;
+  el(s,'rect',{x:hx,y:20,width:260,height:80,rx:8,style:`fill:color-mix(in srgb,var(--per) ${m?6:20}%,var(--panel));stroke:var(--${m?'line':'per'});stroke-width:${m?1.2:2.4}`});T(s,hx+10,40,'wfHigh（:344）',{'font-weight':700});T(s,hx+10,62,'.pWfData = wfHighTbl',{'font-family':'var(--font-m)','font-size':11.5});T(s,hx+10,82,'.wfDataLen = 1',{'font-family':'var(--font-m)','font-size':11.5});
+  el(s,'rect',{x:cx,y:140,width:260,height:80,rx:8,style:`fill:color-mix(in srgb,var(--per) ${m?20:6}%,var(--panel));stroke:var(--${m?'per':'line'});stroke-width:${m?2.4:1.2}`});T(s,cx+10,160,'wfCustom（:348）',{'font-weight':700});T(s,cx+10,182,m?'.pWfData = gPwmWf（:1027 写）':'.pWfData = 0（没写）',{'font-family':'var(--font-m)','font-size':11.5});T(s,cx+10,202,m?'.wfDataLen = 100（:1028 写）':'.wfDataLen = 0',{'font-family':'var(--font-m)','font-size':11.5});
+  arrow(s,190,123,m?330:330,m?180:60,m?':1029  pLeftWf = &wfCustom':':1033  pLeftWf = &wfHigh','bad',250,m?190:100);
+  el(s,'rect',{x:720,y:35,width:110,height:50,rx:4,style:'fill:color-mix(in srgb,var(--good) 20%,var(--panel));stroke:var(--good)'});T(s,775,66,'100',{'text-anchor':'middle','font-weight':700,'font-size':15});T(s,720,28,'wfHighTbl[1]（:343，常量）',{'font-size':11,fill:'var(--muted)'});
+  arrow(s,590,62,720,60,'',m?'line':'per');
+  const x0=720,w=6;T(s,x0,128,'xgAllParam.gPwmWf[100]（GUI 发的，存 EEPROM；默认 51→100→51）',{'font-size':11,fill:'var(--muted)'});
+  DEF.forEach((v,i)=>el(s,'rect',{x:x0+i*w,y:220-v*0.75,width:w-1,height:v*0.75,fill:m?'var(--per)':'color-mix(in srgb,var(--muted) 35%,var(--panel))'}));
+  if(m)arrow(s,590,182,720,182,'','per');
+  T(s,20,250,m?'pwm：pLeftWf → wfCustom → gPwmWf，100 格。':'level：pLeftWf → wfHigh → wfHighTbl，只有 1 格 100%。wfCustom 这次没被写，还是空的。',{'font-size':12,'font-weight':600});
+  T(s,720,250,':1035 把 pLeftWf 交给 MyWaveform_StartGenerate，它把 .pWfData 和 .wfDataLen 抄进 wfCh0.info（my_waveform.c:189~190）。',{'font-size':11.2,fill:'var(--muted)'});}
+ $('ptM').onchange=draw;draw();
+})();
+/* scenario stepper */
+(function(){
+ const SC={def:{press:500,right:0,mode:0,dyn:0,seg:10},busy:{press:500,right:1,mode:0,dyn:0,seg:10},off:{press:0,right:0,mode:0,dyn:0,seg:10},pwm:{press:500,right:0,mode:1,dyn:0,seg:10},dyn:{press:500,right:0,mode:0,dyn:1,seg:50}};
+ const SN=['ELE_NO_VIBRATING','ELE_PRESS_VIBRATING','ELE_RELEASE_VIBRATING','ELE_RELEASE_DEBOUNCE'];
+ let ST=[],k=0;
+ function build(p){const S={press:p.press,rstat:SN[p.right],seg:p.seg,dyn:p.dyn,tick:1000,wf:'（未定义，局部）',lstat:SN[0],begin:0,flag:0,pos:0,ctick:0,mode:'（未读）',cust:'{0, 0}',pl:'&wfHigh（初值）'};
+  const L=[];const add=(lines,note,fn)=>L.push([lines,note,fn||(()=>{})]);
+  add([1005,1006],'进入函数。此刻 mySysTickMs = 1000。');
+  add([1008],'局部变量 wfPeriodUs 先清成 0。',S=>{S.wf=0});
+  if(!p.press){add([1010],`读 leftEle.pressVibrateDurationUs = <b>0</b> → if 不成立，整段跳过。`);add([1064,1065],'打日志（空语句），函数结束。<b>这次不震</b>，leftEle.status 还是空闲。');return L}
+  add([1010],`读 leftEle.pressVibrateDurationUs = <b>${p.press}</b> ≠ 0 → 进入。`);
+  if(p.right){add([1013],`读 rightEle.status = <b>${SN[p.right]}</b>：右线圈正在通电 → 条件成立。`);
+   add([1015],'gxCacheVibrate.flag = 1：记下“有一次被推迟的震动”。',S=>{S.flag=1});add([1016],'gxCacheVibrate.pos = ELE_POS_LEFT。',S=>{S.pos='ELE_POS_LEFT'});add([1017],'gxCacheVibrate.tick = 1000。',S=>{S.ctick=1000});
+   add([1018],'return：这次不震。主循环里的 Ele_OnlyOne() 在 mySysTickMs &gt; 1005 时会补一次（调的是松开函数，待确认问题 14）。');return L}
+  add([1013],'读 rightEle.status = ELE_NO_VIBRATING：右边空着 → 不用排队。');
+  const d=p.dyn?Math.floor(p.press*DS[p.seg]/1024):p.press;
+  add([1022],p.dyn?`Ele_CalculateDuration(左, nowHallSegment[0] = ${p.seg}, ${p.press})：动态导通时间开着 → ${p.press} × durationScale[${p.seg}] (${DS[p.seg]}) ÷ 1024 = <b>${d}</b> µs。按得越深震得越短。`:`Ele_CalculateDuration(左, nowHallSegment[0] = ${p.seg}, ${p.press})：动态导通时间关着 → 原样返回 <b>${d}</b>。`,S=>{S.wf=d});
+  add([1023],'leftEle.status = ELE_PRESS_VIBRATING。从这一刻起，按键算法不看左键的霍尔。',S=>{S.lstat=SN[1]});
+  add([1024],'leftEle.vibrateBeginTick = 1000。',S=>{S.begin=1000});
+  add([1025],`Config_GetCoilDriveMode() 读 xgAllParam.xDriveMode.bDriveMode = <b>${p.mode}</b> → ${p.mode?'pwm':'level'}。`,S=>{S.mode=p.mode});
+  if(p.mode){add([1027],'wfCustom.pWfData = gPwmWf 的地址。',S=>{S.cust='{gPwmWf, 0}'});add([1028],'wfCustom.wfDataLen = 100。',S=>{S.cust='{gPwmWf, 100}'});add([1029],'pLeftWf = &wfCustom。',S=>{S.pl='&wfCustom'})}
+  else add([1033],'pLeftWf = &wfHigh（{100}，1 格）。',S=>{S.pl='&wfHigh'});
+  add([1035],`MyWaveform_StartGenerate(CHANNEL_0, ${p.mode?'&wfCustom':'&wfHigh'}, ${d}, 1)：线圈开始通电，${d} µs 后由 20 µs 中断关掉。`);
+  add([1064,1065],'打日志（空语句），函数结束。');
+  return L}
+ const rows=[['leftEle.pressVibrateDurationUs','press'],['rightEle.status','rstat'],['nowHallSegment[0]','seg'],['xCoilDebugCfg[0].bDynOnTimeEn','dyn'],['mySysTickMs','tick'],['wfPeriodUs（局部）','wf'],['leftEle.status','lstat'],['leftEle.vibrateBeginTick','begin'],['gxCacheVibrate.flag','flag'],['gxCacheVibrate.pos','pos'],['gxCacheVibrate.tick','ctick'],['bDriveMode','mode'],['wfCustom {pWfData, wfDataLen}','cust'],['pLeftWf','pl']];
+ let states=[];
+ function rebuild(){const p=SC[$('svSc').value];ST=build(p);states=[];let S={press:p.press,rstat:SN[p.right],seg:p.seg,dyn:p.dyn,tick:1000,wf:'（未定义，局部）',lstat:SN[0],begin:0,flag:0,pos:0,ctick:0,mode:'（未读）',cust:'{0, 0}',pl:'&wfHigh（初值）'};const S0=Object.assign({},S);ST.forEach(st=>{S=Object.assign({},S);st[2](S);states.push(S)});states.S0=S0;k=0;draw()}
+ const src=[...document.querySelectorAll('#fnCode > div')].map(d=>d.cloneNode(true));
+ $('svCode').innerHTML='';src.forEach(d=>{const x=d.querySelector('.x');if(x)x.remove();d.style.gridTemplateColumns='3.4em 1fr';d.style.minWidth='0';$('svCode').appendChild(d)});
+ function draw(){const st=ST[k],S=states[k],P=k?states[k-1]:states.S0;
+  $('svCode').querySelectorAll('div[data-l]').forEach(d=>d.classList.toggle('cur',st[0].includes(+d.dataset.l)));
+  $('svNote').innerHTML=st[1];$('svPos').textContent=`第 ${k+1} / ${ST.length} 步`;
+  $('svVars').innerHTML=rows.map(([n,key])=>`<tr><td>${n}</td><td class="${P[key]!==S[key]?'ch':''}">${S[key]}</td></tr>`).join('');
+  $('svPrev').disabled=k===0;$('svNext').disabled=k===ST.length-1;}
+ $('svPrev').onclick=()=>{if(k>0){k--;draw()}};$('svNext').onclick=()=>{if(k<ST.length-1){k++;draw()}};$('svReset').onclick=()=>{k=0;draw()};$('svSc').onchange=rebuild;rebuild();
+})();
+})();
+</script>
