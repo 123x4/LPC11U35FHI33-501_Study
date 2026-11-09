@@ -1,0 +1,243 @@
+<title>查询目录</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --hw:#7a5ea8; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.8}
+.wrap{max-width:880px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);line-height:1.3;text-wrap:balance}
+h1{font-size:1.9rem;margin:0}
+h2{font-size:1.3rem;margin:2.4rem 0 .4rem;padding-top:.6rem;border-top:1px solid var(--line)}
+h3{font-size:1.06rem;margin:1.3rem 0 .3rem}
+p{margin:.6rem 0}
+a{color:var(--per)}
+code{font-family:var(--font-m);font-size:.88em;background:var(--soft);padding:.05em .35em;border-radius:3px;overflow-wrap:anywhere}
+pre.code{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:10px 12px;overflow-x:auto;line-height:1.55;margin:.5rem 0}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.06em;color:var(--muted)}
+.lede{color:var(--muted)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:1rem 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-size:.88rem;margin:.4rem 0}
+td,th{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600}
+.note{font-size:.88rem;color:var(--muted)}
+.think{border-left:4px solid var(--per);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.8rem 0}
+.rule{border-left:4px solid var(--c,var(--per));background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.6rem 0}
+.log{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:6px 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.btns button,.tool button{font:inherit;font-size:.88rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer}
+.btns button:disabled{opacity:.4;cursor:default}
+.btns button[aria-pressed="true"]{border-color:var(--fg);font-weight:700}
+/* bit strip */
+.bstrip{display:inline-grid;gap:2px;font-family:var(--font-m);font-size:.74rem;text-align:center;margin:.2rem 0}
+.bstrip span{border:1px solid var(--line);border-radius:3px;padding:1px 3px;min-width:1.6em;background:var(--panel)}
+.bstrip span.ch{background:color-mix(in srgb,var(--bad) 28%,var(--panel));border-color:var(--bad);font-weight:700}
+.bstrip span.k{background:none;border:0;color:var(--muted);font-size:.6rem}
+.bstrip span.f{background:color-mix(in srgb,var(--c,var(--per)) 18%,var(--panel))}
+/* lamps */
+.lamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:.5rem 0}
+.lamps div{border:1.5px solid var(--line);border-radius:6px;padding:4px 8px;font-size:.82rem;background:var(--panel)}
+.lamps div::before{content:"○ ";color:var(--muted)}
+.lamps div.on{border-color:var(--good);background:color-mix(in srgb,var(--good) 15%,var(--panel))}
+.lamps div.on::before{content:"● ";color:var(--good)}
+.lamps div.new{outline:2px solid var(--bad)}
+.stp{border:2px solid var(--per);border-radius:8px;padding:10px 14px;background:var(--panel);margin:.6rem 0}
+.stp .cl{font-family:var(--font-m);font-size:.85rem;background:var(--soft);border-left:4px solid var(--per);padding:4px 8px;border-radius:0 6px 6px 0;overflow-wrap:anywhere}
+.stp .who{display:inline-block;font-size:.72rem;color:var(--bg);background:var(--c);border-radius:4px;padding:0 6px;margin-right:6px}
+.stp h3{margin:.5rem 0 .2rem}
+svg.fig{display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+/* tools */
+.tool{border:1.5px solid var(--hw);border-radius:8px;padding:8px 12px;background:color-mix(in srgb,var(--hw) 5%,var(--panel));margin:.6rem 0}
+.tool input,.tool select{font:inherit;font-size:.88rem;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.tool .row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:.3rem 0}
+/* quiz & practice */
+.qz,.px{border-radius:8px;padding:8px 12px;margin:.7rem 0}
+.qz{border:1.5px dashed var(--gold);background:color-mix(in srgb,var(--gold) 6%,var(--panel))}
+.px{border:1.5px solid var(--per);background:color-mix(in srgb,var(--per) 6%,var(--panel))}
+.qz .qt,.px .pxq{font-weight:600;margin:.2rem 0}
+.qrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.qz input,.px input{font:inherit;width:120px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.qz button,.px button{font:inherit;font-size:.9rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer;text-align:left}
+.qz button.on,.px button.on{border-color:var(--fg)}
+.px .pxh{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.px .pxh b{color:var(--per)}
+.px .pxs{font-size:.82rem;color:var(--muted)}
+.px .pxNext{border-color:var(--per);color:var(--per)}
+.fb{display:none;padding:6px 10px;border-radius:6px;background:var(--soft);margin-top:.3rem}
+.fb.ok{display:block;border-left:4px solid var(--good)}
+.fb.no{display:block;border-left:4px solid var(--bad)}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.wrap{max-width:1400px}
+.toc{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin:.6rem 0 1.4rem}
+.toc a{display:block;border:1.5px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--panel);text-decoration:none;color:var(--fg)}
+.toc a:hover{border-color:var(--per)}
+.toc a b{color:var(--per);font-family:var(--font-m);margin-right:6px}
+.toc a span{display:block;font-size:.82rem;color:var(--muted)}
+.srch{display:flex;gap:10px;align-items:center;margin:.4rem 0}
+.srch input{font:inherit;padding:4px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);width:340px;max-width:100%}
+.entry{border-top:3px solid var(--per);margin-top:2rem;padding-top:.4rem}
+.entry h2{border-top:0;margin-top:.2rem}
+.one{font-size:1.02rem;border:2px solid var(--per);border-radius:8px;padding:10px 16px;background:var(--panel);margin:.8rem 0}
+#detail{border-left:4px solid var(--bad);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;min-height:3.2em;margin:.4rem 0;font-size:.92rem}
+.bits{display:grid;grid-template-columns:repeat(32,minmax(0,1fr));font-family:var(--font-m);font-size:.66rem;text-align:center;margin:.4rem 0;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.bits div{padding:3px 0;border-right:1px solid var(--line);background:var(--panel)}
+.bits div.h{background:var(--soft);color:var(--muted)}
+.bits div.one1{background:color-mix(in srgb,var(--bad) 30%,var(--panel));font-weight:700}
+.fields{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1fr 1fr 4fr 6fr;font-size:.78rem;text-align:center;margin-top:2px}
+.fields div{border:1px solid var(--line);padding:3px 2px;background:var(--panel)}
+td.m,code.m{font-family:var(--font-m);font-size:.82rem}
+.k-gui{color:var(--bad);font-weight:700}
+</style>
+<div class="wrap">
+<div class="eyebrow">T1A · 查询目录 · 以后要查的东西都放在这里，一条一个编号</div>
+<h1>查询目录</h1>
+<p class="lede">每一条是一张可以反复查的图或表，内容都按 T1A 的代码和芯片手册核对过。点下面的卡片跳到那一条；也可以在搜索框里输关键词筛选。</p>
+<div class="srch"><input type="search" id="q" placeholder="搜索，例如 USB、端点、0x20004000" aria-label="搜索"><span class="note" id="cnt"></span></div>
+<div class="toc" id="toc"></div>
+
+<section class="entry" id="q1" data-key="USB RAM 端点 命令/状态表 EP list 缓冲区 0x20004000 0x20004500 0x20004480 receive_buff EP4 EP3 ReadEP WriteEP">
+<h2>Q1　USB RAM：端点命令 / 状态表和数据缓冲区</h2>
+<div class="one">USB 控制器只认 <b>USB RAM</b>（<code>0x20004000 ~ 0x200047FF</code>，2 KB）。最前面是一张 <b>20 格的“端点命令 / 状态表”</b>，每格 4 字节，告诉硬件“这个端点的数据放在哪、能收几个字节、现在能不能用”；从 <code>0x20004100</code> 起是 <b>每格 64 字节的数据缓冲区</b>。GUI 通信用的是表里的 <span class="k-gui">EP4 OUT</span>（收）和 <span class="k-gui">EP3 IN</span>（发），软件要把数据和普通 SRAM 里的 <code>receive_buff</code> / 发送数组<b>来回拷贝</b>。</div>
+
+<h3>1. 整块 USB RAM 长什么样（点任意一格看说明）</h3>
+<div class="scroll"><svg id="mapF" class="fig" viewBox="0 0 1360 760" style="min-width:1150px" role="img" aria-label="USB RAM 布局"></svg></div>
+<div id="detail">点左边表格或右边缓冲区的任意一格。</div>
+<p class="note">颜色：<span class="k-gui">红 = GUI 通信</span>　蓝 = 鼠标 / 键盘报告　紫 = 端点 0 控制传输（插上电脑时枚举用）　灰 = 分配了但没用。</p>
+
+<h3>2. 表里每一格（32 位）怎么拆</h3>
+<div class="btns" id="stBtns"></div>
+<div class="bits" id="bitsH"></div>
+<div class="bits" id="bitsV"></div>
+<div class="fields"><div>A<br>bit31</div><div>D<br>bit30</div><div>S<br>bit29</div><div>TR<br>bit28</div><div>RF/TV<br>bit27</div><div>T<br>bit26</div><div>NBytes<br>bit25~16</div><div>Address Offset<br>bit15~0</div></div>
+<div id="stNote" class="box"></div>
+<table>
+<tr><th>位</th><th>名字</th><th>意思（手册 Table 227）</th></tr>
+<tr><td class="m">31</td><td>A Active</td><td>1 = 这块缓冲区交给硬件了：OUT 端点可以接收，IN 端点等着被电脑取走。<b>硬件收完 / 发完会自动清 0</b>。软件只能写 1</td></tr>
+<tr><td class="m">30</td><td>D Disabled</td><td>1 = 端点关闭，电脑来访问时硬件不理。初始化时非 0 端点都置 1（usbhw.c:258），配置完成后 <code>nsAPI_USB_EnableEP</code> 清 0（:900）</td></tr>
+<tr><td class="m">29</td><td>S Stall</td><td>1 = 回电脑“出错 / 不支持”</td></tr>
+<tr><td class="m">28</td><td>TR Toggle Reset</td><td>写 1 时把数据翻转位设成 TV 的值（USB 的 DATA0 / DATA1 交替）</td></tr>
+<tr><td class="m">27</td><td>RF / TV</td><td>翻转值 / 速率反馈模式</td></tr>
+<tr><td class="m">26</td><td>T Type</td><td>0 = 批量或中断端点（本项目全是 0）；1 = 同步端点</td></tr>
+<tr><td class="m">25~16</td><td>NBytes</td><td>OUT：这块缓冲区最多能收几字节（填 64）；IN：要发几字节。硬件每传一个包就减掉包长。<b>收到的字节数 = 原来填的 − 剩下的</b>（ReadEP 就是这么算的，usbhw.c:1183）</td></tr>
+<tr><td class="m">15~0</td><td>Address Offset</td><td>缓冲区地址的 bit21~6（地址 ÷ 64）。高位（bit31~22）在 DATABUFSTART 寄存器里，所以缓冲区必须 64 字节对齐</td></tr>
+</table>
+
+<h3>3. 一个包怎么进来、怎么出去</h3>
+<div class="scroll"><svg id="flowF" class="fig" viewBox="0 0 1360 300" style="min-width:1150px" role="img" aria-label="收发路径"></svg></div>
+
+<h3>4. 依据</h3>
+<table>
+<tr><th>内容</th><th>出处</th></tr>
+<tr><td>表从 0x20004000 起，数据从 0x20004100 起，USB RAM 2 KB</td><td><code>inc/usbhw.h:64-67</code></td></tr>
+<tr><td>20 格的顺序、每格的位定义</td><td>UM10462 第 11.7.1 节 Fig 22（p.234）、Table 227（p.235-236）；仓库 <code>materials/mcu_reference/LPC11U3x2x1x User Manual.pdf</code></td></tr>
+<tr><td>每格怎么初始化、缓冲区怎么分（每块 64 字节，按表的顺序依次往后排）</td><td><code>src/usbhw.c:208-275</code> NDrv_USB_EPInit；<code>inc/usbcfg.h:50-53</code></td></tr>
+<tr><td>不开双缓冲，buf1 都不用</td><td><code>inc/usbcfg.h:76</code> USE_DOUBLE_BUFFER 0；<code>usbhw.c:319-321</code></td></tr>
+<tr><td>端点地址 → 表里第几格：(端点号 × 2 + 方向) × 2 格</td><td><code>usbhw.c:103</code> EPAdr、<code>:190</code> USB_GetEPCmdStatusPtr</td></tr>
+<tr><td>判断有没有新包 / 能不能发：看 A 位</td><td><code>usbhw.c:1429</code> nsAPI_USB_EP_Status</td></tr>
+<tr><td>收：USB RAM → 你的数组，再把这一格重新挂上</td><td><code>usbhw.c:1159</code> nsAPI_USB_ReadEP</td></tr>
+<tr><td>发：你的数组 → USB RAM，填 NBytes，置 A</td><td><code>usbhw.c:1241</code> nsAPI_USB_WriteEP</td></tr>
+</table>
+<p class="note">相关讲义：专题“从内存看一次 IO”、速查“USB 接口与端点总表”“芯片存储地址分布”（学习目录里都有）。</p>
+</section>
+</div>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const NS='http://www.w3.org/2000/svg';
+function el(p,t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e}
+function T(p,x,y,s,a){const e=el(p,'text',Object.assign({x,y,'font-size':12,fill:'var(--fg)','font-family':'var(--font-b)'},a||{}));e.textContent=s;return e}
+const hx=(v,n)=>'0x'+v.toString(16).toUpperCase().padStart(n||8,'0');
+
+/* ---------- TOC ---------- */
+const ENTRIES=[...document.querySelectorAll('section.entry')];
+function toc(){const q=$('q').value.trim().toLowerCase();let n=0;
+ $('toc').innerHTML=ENTRIES.map(s=>{const t=s.querySelector('h2').textContent,k=(s.dataset.key||'')+' '+t;const show=!q||k.toLowerCase().includes(q);s.style.display=show?'':'none';if(show)n++;
+  const [no,...rest]=t.split('　');return show?`<a href="#${s.id}"><b>${no}</b>${rest.join(' ')}<span>${(s.dataset.key||'').split(' ').slice(0,6).join(' · ')}</span></a>`:''}).join('');
+ $('cnt').textContent=`共 ${ENTRIES.length} 条，显示 ${n} 条`}
+$('q').oninput=toc;toc();
+
+/* ---------- Q1 map ---------- */
+const R=[{"i": 0, "name": "EP0 OUT", "ep": 0, "dir": "OUT", "b": 0, "w": 536887296, "buf": 536887552, "kind": "ctl", "who": "\u7aef\u70b9 0\uff1a\u7535\u8111\u53d1\u6765\u7684\u63a7\u5236\u6570\u636e\uff08\u679a\u4e3e\u65f6\uff09", "init": 4194564}, {"i": 1, "name": "SETUP", "ep": 0, "dir": "SETUP", "b": 0, "w": 536887300, "buf": 536887616, "kind": "ctl", "who": "\u7aef\u70b9 0\uff1aSETUP \u5305\uff088 \u5b57\u8282\uff0c\u679a\u4e3e\u65f6\u201c\u8bf7\u628a\u63cf\u8ff0\u7b26\u7ed9\u6211\u201d\uff09", "init": 261}, {"i": 2, "name": "EP0 IN", "ep": 0, "dir": "IN", "b": 0, "w": 536887304, "buf": 536887680, "kind": "ctl", "who": "\u7aef\u70b9 0\uff1a\u56de\u7ed9\u7535\u8111\u7684\u63a7\u5236\u6570\u636e\uff08\u63cf\u8ff0\u7b26\u7b49\uff09", "init": 4194566}, {"i": 3, "name": "\uff08\u4fdd\u7559\uff09", "ep": 0, "dir": "RSV", "b": 1, "w": 536887308, "buf": 536887744, "kind": "none", "who": "\u624b\u518c\u89c4\u5b9a\u4fdd\u7559\uff1b\u4ee3\u7801\u4e0d\u5199\u8fd9\u4e00\u683c\uff0c\u4f46\u4ecd\u7ed9\u5b83\u7559\u4e86 64 \u5b57\u8282", "init": null}, {"i": 4, "name": "EP1 OUT buf0", "ep": 1, "dir": "OUT", "b": 0, "w": 536887312, "buf": 536887808, "kind": "none", "who": "\u6ca1\u7528\u5230\uff08\u63cf\u8ff0\u7b26\u91cc\u6ca1\u6709\u8fd9\u4e2a\u7aef\u70b9\uff09", "init": 1077936392}, {"i": 5, "name": "EP1 OUT buf1", "ep": 1, "dir": "OUT", "b": 1, "w": 536887316, "buf": 536887872, "kind": "none", "who": "\u53cc\u7f13\u51b2\u7684\u7b2c 2 \u5757\u3002\u672c\u9879\u76ee USE_DOUBLE_BUFFER = 0\uff08usbcfg.h:76\uff09\uff0c\u4e0d\u7528", "init": 1077936393}, {"i": 6, "name": "EP1 IN buf0", "ep": 1, "dir": "IN", "b": 0, "w": 536887320, "buf": 536887936, "kind": "mouse", "who": "\u63a5\u53e3 0 \u9f20\u6807\uff1a\u4f4d\u79fb\u3001\u6309\u952e\u62a5\u544a \u2192 \u7535\u8111\uff080x81\uff09", "init": 1077936394}, {"i": 7, "name": "EP1 IN buf1", "ep": 1, "dir": "IN", "b": 1, "w": 536887324, "buf": 536888000, "kind": "none", "who": "\u53cc\u7f13\u51b2\u7684\u7b2c 2 \u5757\u3002\u672c\u9879\u76ee USE_DOUBLE_BUFFER = 0\uff08usbcfg.h:76\uff09\uff0c\u4e0d\u7528", "init": 1077936395}, {"i": 8, "name": "EP2 OUT buf0", "ep": 2, "dir": "OUT", "b": 0, "w": 536887328, "buf": 536888064, "kind": "none", "who": "\u6ca1\u7528\u5230\uff08\u63cf\u8ff0\u7b26\u91cc\u6ca1\u6709\u8fd9\u4e2a\u7aef\u70b9\uff09", "init": 1077936396}, {"i": 9, "name": "EP2 OUT buf1", "ep": 2, "dir": "OUT", "b": 1, "w": 536887332, "buf": 536888128, "kind": "none", "who": "\u53cc\u7f13\u51b2\u7684\u7b2c 2 \u5757\u3002\u672c\u9879\u76ee USE_DOUBLE_BUFFER = 0\uff08usbcfg.h:76\uff09\uff0c\u4e0d\u7528", "init": 1077936397}, {"i": 10, "name": "EP2 IN buf0", "ep": 2, "dir": "IN", "b": 0, "w": 536887336, "buf": 536888192, "kind": "kb", "who": "\u63a5\u53e3 1 \u952e\u76d8\u62a5\u544a \u2192 \u7535\u8111\uff080x82\uff09", "init": 1077936398}, {"i": 11, "name": "EP2 IN buf1", "ep": 2, "dir": "IN", "b": 1, "w": 536887340, "buf": 536888256, "kind": "none", "who": "\u53cc\u7f13\u51b2\u7684\u7b2c 2 \u5757\u3002\u672c\u9879\u76ee USE_DOUBLE_BUFFER = 0\uff08usbcfg.h:76\uff09\uff0c\u4e0d\u7528", "init": 1077936399}, {"i": 12, "name": "EP3 OUT buf0", "ep": 3, "dir": "OUT", "b": 0, "w": 536887344, "buf": 536888320, "kind": "none", "who": "\u6ca1\u7528\u5230\uff08\u63cf\u8ff0\u7b26\u91cc\u6ca1\u6709\u8fd9\u4e2a\u7aef\u70b9\uff09", "init": 1077936400}, {"i": 13, "name": "EP3 OUT buf1", "ep": 3, "dir": "OUT", "b": 1, "w": 536887348, "buf": 536888384, "kind": "none", "who": "\u53cc\u7f13\u51b2\u7684\u7b2c 2 \u5757\u3002\u672c\u9879\u76ee USE_DOUBLE_BUFFER = 0\uff08usbcfg.h:76\uff09\uff0c\u4e0d\u7528", "init": 1077936401}, {"i": 14, "name": "EP3 IN buf0", "ep": 3, "dir": "IN", "b": 0, "w": 536887352, "buf": 536888448, "kind": "gui", "who": "\u63a5\u53e3 2\uff1a\u9f20\u6807 \u2192 GUI\uff080x83\uff09\u3002Protocol_Send \u5199\u5230\u8fd9\u91cc", "init": 1077936402}, {"i": 15, "name": "EP3 IN buf1", "ep": 3, "dir": "IN", "b": 1, "w": 536887356, "buf": 536888512, "kind": "none", "who": "\u53cc\u7f13\u51b2\u7684\u7b2c 2 \u5757\u3002\u672c\u9879\u76ee USE_DOUBLE_BUFFER = 0\uff08usbcfg.h:76\uff09\uff0c\u4e0d\u7528", "init": 1077936403}, {"i": 16, "name": "EP4 OUT buf0", "ep": 4, "dir": "OUT", "b": 0, "w": 536887360, "buf": 536888576, "kind": "gui", "who": "\u63a5\u53e3 2\uff1aGUI \u2192 \u9f20\u6807\uff080x04\uff09\u3002PC_Communicate \u4ece\u8fd9\u91cc\u8bfb\u5230 receive_buff", "init": 1077936404}, {"i": 17, "name": "EP4 OUT buf1", "ep": 4, "dir": "OUT", "b": 1, "w": 536887364, "buf": 536888640, "kind": "none", "who": "\u53cc\u7f13\u51b2\u7684\u7b2c 2 \u5757\u3002\u672c\u9879\u76ee USE_DOUBLE_BUFFER = 0\uff08usbcfg.h:76\uff09\uff0c\u4e0d\u7528", "init": 1077936405}, {"i": 18, "name": "EP4 IN buf0", "ep": 4, "dir": "IN", "b": 0, "w": 536887368, "buf": 536888704, "kind": "none", "who": "\u6ca1\u7528\u5230\uff08\u63cf\u8ff0\u7b26\u91cc\u6ca1\u6709\u8fd9\u4e2a\u7aef\u70b9\uff09", "init": 1077936406}, {"i": 19, "name": "EP4 IN buf1", "ep": 4, "dir": "IN", "b": 1, "w": 536887372, "buf": 536888768, "kind": "none", "who": "\u53cc\u7f13\u51b2\u7684\u7b2c 2 \u5757\u3002\u672c\u9879\u76ee USE_DOUBLE_BUFFER = 0\uff08usbcfg.h:76\uff09\uff0c\u4e0d\u7528", "init": 1077936407}];
+const COL={gui:'var(--bad)',mouse:'var(--per)',kb:'var(--per)',ctl:'var(--hw)',none:'var(--muted)'};
+const FILL={gui:'color-mix(in srgb,var(--bad) 22%,var(--panel))',mouse:'color-mix(in srgb,var(--per) 18%,var(--panel))',kb:'color-mix(in srgb,var(--per) 18%,var(--panel))',ctl:'color-mix(in srgb,var(--hw) 18%,var(--panel))',none:'color-mix(in srgb,var(--muted) 10%,var(--panel))'};
+let sel=19-2; // EP4 OUT buf0 index 16
+sel=R.findIndex(r=>r.name==='EP4 OUT buf0');
+function drawMap(){const s=$('mapF');s.innerHTML='';
+ const LX=60,LW=420,RH=27,LY=60, BX=840,BW=440,BY=60,BH=27;
+ T(s,LX,28,'① 端点命令 / 状态表（每格 4 字节，共 20 格 = 80 字节）',{'font-weight':700});
+ T(s,BX,28,'② 数据缓冲区（每块 64 字节，共 20 块 = 1280 字节）',{'font-weight':700});
+ R.forEach((r,i)=>{const y=LY+i*RH;const on=i===sel;
+  const g=el(s,'g',{style:'cursor:pointer'});g.onclick=()=>{sel=i;drawMap()};
+  el(g,'rect',{x:LX,y,width:LW,height:RH-2,rx:3,fill:FILL[r.kind],stroke:on?'var(--fg)':COL[r.kind],'stroke-width':on?2.5:1});
+  T(g,LX-6,y+17,hx(r.w).slice(6),{'font-size':10.5,'text-anchor':'end',fill:'var(--muted)','font-family':'var(--font-m)'});
+  T(g,LX+8,y+17,r.name,{'font-size':12,'font-weight':r.kind==='none'?400:700,fill:r.kind==='none'?'var(--muted)':'var(--fg)'});
+  T(g,LX+130,y+17,r.init===null?'—（不写）':hx(r.init),{'font-size':11,'font-family':'var(--font-m)',fill:'var(--muted)'});
+  T(g,LX+235,y+17,r.who.length>15?r.who.slice(0,15)+'…':r.who,{'font-size':10.5,fill:r.kind==='gui'?'var(--bad)':'var(--muted)'});
+  const by=BY+i*BH;
+  const g2=el(s,'g',{style:'cursor:pointer'});g2.onclick=()=>{sel=i;drawMap()};
+  el(g2,'rect',{x:BX,y:by,width:BW,height:BH-2,rx:3,fill:FILL[r.kind],stroke:on?'var(--fg)':COL[r.kind],'stroke-width':on?2.5:1});
+  T(g2,BX+BW+8,by+17,hx(r.buf).slice(6),{'font-size':10.5,'text-anchor':'start',fill:'var(--muted)','font-family':'var(--font-m)'});
+  T(g2,BX+8,by+17,r.name+' 的 64 字节',{'font-size':12,fill:r.kind==='none'?'var(--muted)':'var(--fg)'});
+  if(r.kind!=='none'&&r.init!==null){el(s,'path',{d:`M${LX+LW} ${y+12} C ${LX+LW+120} ${y+12}, ${BX-120} ${by+12}, ${BX} ${by+12}`,fill:'none',stroke:COL[r.kind],'stroke-width':on?2.5:1.3,opacity:on?1:.55})}
+ });
+ T(s,LX-6,LY-8,'地址',{'font-size':10.5,'text-anchor':'end',fill:'var(--muted)'});T(s,BX+BW+8,BY-8,'地址',{'font-size':10.5,fill:'var(--muted)'});T(s,LX,LY+20*RH+64,'地址只写了低 4 位，前面都是 0x2000，比如 4040 = 0x20004040。',{'font-size':11,fill:'var(--muted)'});
+ T(s,LX,LY+20*RH+16,'0x20004050 ~ 0x200040FF：空着（数据区从 0x20004100 开始，要 64 字节对齐）',{'font-size':11,fill:'var(--muted)'});
+ T(s,BX,BY+20*BH+16,'0x20004600 ~ 0x200047FF：剩下 512 字节没分配',{'font-size':11,fill:'var(--muted)'});
+ T(s,LX,LY+20*RH+40,'表里每格的值 = 初始化后的值（D 位 = 1，NBytes = 64，Address Offset = 缓冲区地址 ÷ 64 的低 16 位）',{'font-size':11,fill:'var(--muted)'});
+ T(s,LX+130,LY-8,'初始化后的值',{'font-size':10.5,fill:'var(--muted)'});T(s,LX+235,LY-8,'用途',{'font-size':10.5,fill:'var(--muted)'});
+ const r=R[sel];
+ $('detail').innerHTML=`<b>${r.name}</b>　表格地址 <code>${hx(r.w)}</code>（第 ${r.i} 格，偏移 ${hx(r.i*4,2)}）　→　缓冲区 <code>${hx(r.buf)} ~ ${hx(r.buf+63)}</code><br>${r.who}`+
+  (r.init!==null?`<br>初始化后的值 <code>${hx(r.init)}</code>：Address Offset = ${hx(r.buf)} ÷ 64 = ${hx(r.buf>>6,6)}，取低 16 位 = <code>${hx((r.buf>>6)&0xFFFF,4)}</code>`:'');
+}
+drawMap();
+
+/* ---------- Q1 bits ---------- */
+const ST=[
+ ['初始化后','0x40400114','NDrv_USB_EPInit（usbhw.c:258）：D = 1 关着；NBytes = 64；Address Offset = 0x114（0x20004500 ÷ 64）。'],
+ ['使能，等着收','0x80400114','配置完成后 nsAPI_USB_EnableEP（:900、:919）：清 D，置 A。硬件现在可以往 0x20004500 收一个最多 64 字节的包。'],
+ ['收到 64 字节后','0x00000115','<b>硬件自己改的</b>：A 清 0（收完了）；NBytes 64 → 0（减掉了包长 64）；Address Offset 加 1（64 字节 ÷ 64）。PC_Communicate 里 nsAPI_USB_EP_Status 看到 A = 0 → “有新包”。'],
+ ['ReadEP 之后','0x80400114','nsAPI_USB_ReadEP（:1159）：收到字节数 = 64 − 0 = 64；把 0x20004500 起的 64 字节拷进 receive_buff；再把这一格恢复成 NBytes = 64、地址 0x114、A = 1（:1195、:1223），等下一个包。'],
+];
+let si=0;
+$('stBtns').innerHTML=ST.map((s,i)=>`<button data-i="${i}" aria-pressed="${i===0}">EP4 OUT · ${s[0]}</button>`).join('');
+document.querySelectorAll('#stBtns button').forEach(b=>b.onclick=()=>{si=+b.dataset.i;document.querySelectorAll('#stBtns button').forEach(x=>x.setAttribute('aria-pressed',x===b));drawBits()});
+function drawBits(){const v=parseInt(ST[si][1],16)>>>0;
+ $('bitsH').innerHTML=[...Array(32)].map((_,i)=>`<div class="h">${31-i}</div>`).join('');
+ $('bitsV').innerHTML=[...Array(32)].map((_,i)=>{const b=(v>>>(31-i))&1;return `<div class="${b?'one1':''}">${b}</div>`}).join('');
+ const nb=(v>>>16)&0x3FF,ao=v&0xFFFF;
+ $('stNote').innerHTML=`<b>EP4 OUT buf0 这一格（地址 0x20004040）= <code>${ST[si][1]}</code></b>　A=${v>>>31&1}　D=${v>>>30&1}　NBytes=${nb}　Address Offset=${hx(ao,4)} → 缓冲区 ${hx(0x20000000|(ao<<6))}<br>${ST[si][2]}`}
+drawBits();
+
+/* ---------- Q1 flow ---------- */
+(function(){const s=$('flowF');
+ function box(x,y,w,h,col,a,b,c){el(s,'rect',{x,y,width:w,height:h,rx:8,fill:'var(--panel)',stroke:'var(--'+col+')','stroke-width':2});T(s,x+10,y+22,a,{'font-weight':700});if(b)T(s,x+10,y+42,b,{'font-size':11,fill:'var(--muted)'});if(c)T(s,x+10,y+60,c,{'font-size':11,fill:'var(--muted)'})}
+ function arr(x1,y1,x2,y2,lab,col){el(s,'line',{x1,y1,x2,y2,stroke:'var(--'+(col||'fg')+')','stroke-width':1.6});el(s,'path',{d:`M${x2} ${y2} l-9 -5 v10z`,fill:'var(--'+(col||'fg')+')',transform:`rotate(${Math.atan2(y2-y1,x2-x1)*180/Math.PI} ${x2} ${y2})`});if(lab)T(s,(x1+x2)/2,(y1+y2)/2-7,lab,{'font-size':11,'text-anchor':'middle',fill:'var(--'+(col||'fg')+')'})}
+ T(s,20,22,'收（GUI → 鼠标）',{'font-weight':700,fill:'var(--bad)'});
+ box(20,35,220,70,'hw','电脑 / GUI','发 64 字节到 0x04','');
+ box(350,35,260,70,'bad','USB RAM 0x20004500','EP4 OUT buf0','硬件写入，A 清 0');
+ box(720,35,260,70,'gold','receive_buff（SRAM）','pc_communicate.c:19','64 字节全局数组');
+ box(1100,35,240,70,'pc','Protocol_ProcessReceiveData','解析','');
+ arr(240,70,348,70,'USB 控制器');arr(610,70,718,70,'ReadEP 拷贝');T(s,664,94,'并重新挂上',{'font-size':11,'text-anchor':'middle'});arr(980,70,1098,70,'');
+ T(s,20,172,'发（鼠标 → GUI）',{'font-weight':700,fill:'var(--bad)'});
+ box(1100,185,240,70,'pc','tmpBuff（栈上局部数组）','组好的回复包','');
+ box(720,185,260,70,'gold','Protocol_Send','my_protocol_mouse.c:368','先等 EP_Status 空闲');
+ box(350,185,260,70,'bad','USB RAM 0x20004480','EP3 IN buf0','软件填 NBytes、置 A');
+ box(20,185,220,70,'hw','电脑 / GUI','从 0x83 取走 64 字节','');
+ arr(1098,220,982,220,'');arr(718,220,612,220,'WriteEP 拷贝');arr(348,220,242,220,'硬件发出');T(s,295,244,'A 清 0',{'font-size':11,'text-anchor':'middle'});
+ T(s,20,290,'两边都是“软件拷贝一次 + 硬件自己搬一次”。CPU 只碰 SRAM 里的数组和 USB RAM；USB 线上的事全由 USB 控制器完成。',{'font-size':11.5,fill:'var(--muted)'});})();
+})();
+</script>
