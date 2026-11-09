@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<title>线圈振动·一杯咖啡读完</title>
+<style>
+@page{size:A5;margin:13mm 12mm 14mm 12mm;}
+*{box-sizing:border-box}
+body{font-family:"WenQuanYi Zen Hei",sans-serif;font-size:9.8pt;line-height:1.62;color:#1d2420;margin:0}
+h1{font-size:19pt;margin:0 0 4mm;line-height:1.3}
+h2{font-size:14pt;margin:0 0 3mm;padding:2mm 0 1.5mm;border-bottom:2px solid #1d6f8a;color:#123f50;break-after:avoid}
+h3{font-size:11.2pt;margin:4.5mm 0 1.5mm;color:#1d6f8a;break-after:avoid}
+p{margin:1.6mm 0}
+.ch{margin-top:7mm}
+.cover+.ch{break-before:page;margin-top:0}
+code,.m{font-family:"WenQuanYi Zen Hei Mono",monospace;font-size:.9em;background:#eef1f2;padding:0 .25em;border-radius:2px}
+pre{font-family:"WenQuanYi Zen Hei Mono",monospace;font-size:8.3pt;line-height:1.5;background:#f2f4f5;border-left:3px solid #1d6f8a;padding:2mm 3mm;margin:2mm 0;white-space:pre-wrap;break-inside:avoid}
+pre .c{color:#2f7d32}
+pre .h{background:#ffe9a8}
+table{border-collapse:collapse;width:100%;font-size:8.8pt;margin:2mm 0;break-inside:avoid}
+td,th{border:1px solid #c8cfc9;padding:1.1mm 1.8mm;vertical-align:top;text-align:left}
+th{background:#e8eef0}
+.key{border:2px solid #c0392b;border-radius:3mm;padding:2.5mm 3.5mm;margin:3mm 0;background:#fff7f5;break-inside:avoid}
+.key b{color:#c0392b}
+.eg{border:1.5px dashed #b9850f;border-radius:3mm;padding:2mm 3.5mm;margin:3mm 0;background:#fffaf0;break-inside:avoid}
+.eg::before{content:"举个例子";display:block;font-weight:bold;color:#b9850f;font-size:9pt}
+.qa{border-left:3px solid #7a5ea8;padding:1mm 3mm;margin:2.5mm 0;background:#f6f3fb;break-inside:avoid}
+.qa .q{font-weight:bold;color:#5a3f8a}
+.note{font-size:8.6pt;color:#5d6762}
+svg{display:block;width:100%;height:auto;margin:2mm 0;break-inside:avoid}
+svg text{font-family:"WenQuanYi Zen Hei",sans-serif}
+.cover{height:180mm;display:flex;flex-direction:column;justify-content:center}
+.cover .sub{color:#5d6762;font-size:11pt}
+.toc{font-size:10pt;line-height:2}
+.toc span{color:#1d6f8a;font-weight:bold;display:inline-block;width:9mm}
+.step{display:grid;grid-template-columns:8mm 1fr;gap:2mm;margin:2mm 0;break-inside:avoid}
+.step .n{background:#1d6f8a;color:#fff;border-radius:50%;width:6.5mm;height:6.5mm;text-align:center;line-height:6.5mm;font-weight:bold;font-size:9pt;margin-top:.6mm}
+.step .t{min-width:0}
+.where{font-size:8.4pt;color:#5d6762}
+.tag{display:inline-block;font-size:8pt;padding:0 1.5mm;border-radius:1.5mm;color:#fff;margin-right:1mm}
+</style></head><body>
+
+<!-- ============ 封面 ============ -->
+<div class="cover">
+<div class="note">T1A 鼠标（GT_LINA_T1A_H5_PWM） · 按杰哥 2026 年 11 月最新代码</div>
+<h1>线圈振动<br>一杯咖啡读完</h1>
+<p class="sub">先看全局，再一层层拆开。每一层都配一个例子和对应的代码位置。</p>
+<div class="toc" style="margin-top:8mm">
+<div><span>1</span>一句话和一张总图</div>
+<div><span>2</span>硬件：线圈、引脚、两套一模一样的东西</div>
+<div><span>3</span>四个定时器，各干各的</div>
+<div><span>4</span>跟着一次左键按下走一遍（主线）</div>
+<div><span>5</span>通电多久：时长从哪来</div>
+<div><span>6</span>怎么通电：正常模式和静音模式</div>
+<div><span>7</span>PWM 怎么做出“百分之几”</div>
+<div><span>8</span>力度表怎么一格一格走完</div>
+<div><span>9</span>振完以后：引脚回低、状态机、霍尔冻结</div>
+<div><span>10</span>两个线圈不同时震</div>
+<div><span>11</span>松开时的振动</div>
+<div><span>12</span>容易混的 10 个问题</div>
+<div><span>13</span>读代码路线和数字速查</div>
+</div>
+<p class="note" style="margin-top:6mm">行号以仓库代码为准；你编辑器里的行号一般比这里大 1。em.c = src/my_electromagnet.c。</p>
+</div>
+
+<!-- ============ 1 ============ -->
+<div class="ch">
+<h2>1　一句话和一张总图</h2>
+<div class="key"><b>一句话：</b>按键扫描一确认“左键按下了”，就调 <code>Ele_LeftKeyPressProcess()</code>；它算好<b>通电多久</b>、选好<b>力度表</b>，交给<b>波形发生器</b>；波形发生器每 20 µs 改一次 <b>PWM</b> 占空比，PWM 引脚控制线圈通电；时间一到就关掉。线圈通电的那几百微秒里，手指感到“咔”一下。</div>
+
+<svg viewBox="0 0 500 520" style="max-height:118mm">
+<defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#1d2420"/></marker></defs>
+<g font-size="12">
+<!-- boxes -->
+<rect x="20" y="10" width="460" height="54" rx="8" fill="#eef6f8" stroke="#1d6f8a" stroke-width="1.5"/>
+<text x="34" y="32" font-weight="bold">① 霍尔芯片 + 按键算法</text>
+<text x="34" y="52" font-size="10.5" fill="#5d6762">每 1 ms 读一次按键按了多深，判断“按下了 / 松开了”（第 3、4 课）</text>
+<rect x="20" y="84" width="460" height="54" rx="8" fill="#eef6f8" stroke="#1d6f8a" stroke-width="1.5"/>
+<text x="34" y="106" font-weight="bold">② 按键扫描 button.c:639</text>
+<text x="34" y="126" font-size="10.5" fill="#5d6762">左键从 0 变 1 → 调 Ele_LeftKeyPressProcess()（同时报给电脑）</text>
+<rect x="20" y="158" width="460" height="74" rx="8" fill="#fff7f0" stroke="#b0522c" stroke-width="1.5"/>
+<text x="34" y="180" font-weight="bold">③ 线圈管理层 em.c:1005</text>
+<text x="34" y="200" font-size="10.5" fill="#5d6762">决定三件事：通电多久（500 µs）、用哪张力度表、左线圈状态改成“震动中”</text>
+<text x="34" y="220" font-size="10.5" fill="#5d6762">→ 调 MyWaveform_StartGenerate(左, 力度表, 500, 1)</text>
+<rect x="20" y="252" width="460" height="74" rx="8" fill="#f6f3fb" stroke="#7a5ea8" stroke-width="1.5"/>
+<text x="34" y="274" font-weight="bold">④ 波形发生器 my_waveform.c（定时器 CT32B0）</text>
+<text x="34" y="294" font-size="10.5" fill="#5d6762">t = 0 设第一格占空比、打开 PWM；之后每 20 µs 闹钟响一次，</text>
+<text x="34" y="314" font-size="10.5" fill="#5d6762">从力度表取下一格、改占空比；走完表就关 PWM</text>
+<rect x="20" y="346" width="460" height="54" rx="8" fill="#f2f8f2" stroke="#2f7d32" stroke-width="1.5"/>
+<text x="34" y="368" font-weight="bold">⑤ PWM my_pwm.c（定时器 CT32B1）</text>
+<text x="34" y="388" font-size="10.5" fill="#5d6762">让引脚 PIO0_13 以约 200 kHz 开关，高电平占比 = 占空比</text>
+<rect x="20" y="420" width="460" height="54" rx="8" fill="#fff" stroke="#1d2420" stroke-width="1.5"/>
+<text x="34" y="442" font-weight="bold">⑥ 驱动电路 → 线圈</text>
+<text x="34" y="462" font-size="10.5" fill="#5d6762">引脚高 → 线圈通电 → 产生磁力 → 手指感到振动</text>
+<line x1="250" y1="64" x2="250" y2="82" stroke="#1d2420" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="250" y1="138" x2="250" y2="156" stroke="#1d2420" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="250" y1="232" x2="250" y2="250" stroke="#1d2420" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="250" y1="326" x2="250" y2="344" stroke="#1d2420" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="250" y1="400" x2="250" y2="418" stroke="#1d2420" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="20" y="500" font-size="11" fill="#c0392b" font-weight="bold">另外还有一条“旁路”：em.c 的状态机每圈主循环检查一次，</text>
+<text x="20" y="516" font-size="11" fill="#c0392b" font-weight="bold">振动期间及之后 9 ms 冻结左键的霍尔读数（第 9 章）。</text>
+</g></svg>
+<p>后面每一章都只是把这张图的某一格放大来看。看糊涂了就翻回这张图，找到自己在哪一格。</p>
+</div>
+
+<!-- ============ 2 ============ -->
+<div class="ch">
+<h2>2　硬件：线圈、引脚、两套一模一样的东西</h2>
+<h3>线圈是什么</h3>
+<p>线圈就是一个小电磁铁。通电时产生磁力，把里面的东西拉一下或撞一下；断电后磁力消失。整个过程只有几百微秒到几毫秒，手指感到的是一下短促的“咔”。</p>
+<p>单片机引脚的电流很小，推不动线圈，所以中间有驱动电路：<b>引脚高 → 驱动管导通 → 线圈通电；引脚低 → 线圈断电</b>。线圈的电源来自升压芯片 ETA1628，开机时由 <code>HP_EN</code> 引脚打开（em.c:464-466）。</p>
+<div class="key"><b>记住：</b>软件能控制的只有一件事——<b>这根引脚什么时候高、什么时候低</b>。振动的“长短”和“轻重”，全都是靠控制高低电平做出来的。</div>
+
+<h3>左右两套，一一对应</h3>
+<table>
+<tr><th></th><th>左键线圈</th><th>右键线圈</th></tr>
+<tr><td>引脚</td><td>PIO0_13</td><td>PIO0_14</td></tr>
+<tr><td>引脚功能（my_pwm.c:76-81）</td><td>CT32B1_MAT0</td><td>CT32B1_MAT1</td></tr>
+<tr><td>PWM 比较寄存器</td><td>CT32B1 的 MR0</td><td>CT32B1 的 MR1</td></tr>
+<tr><td>波形发生器通道</td><td>CHANNEL_0 → <code>wfCh0</code></td><td>CHANNEL_1 → <code>wfCh1</code></td></tr>
+<tr><td>20 µs 闹钟</td><td>CT32B0 的 MR0</td><td>CT32B0 的 MR1</td></tr>
+<tr><td>线圈句柄（状态、时长）</td><td><code>leftEle</code></td><td><code>rightEle</code></td></tr>
+<tr><td>按下 / 松开函数</td><td>Ele_LeftKeyPress/ReleaseProcess</td><td>Ele_RightKeyPress/ReleaseProcess</td></tr>
+</table>
+<p>两边代码几乎逐行相同，只是换了名字。<b>下面全部只讲左键</b>，右键照着换名字就行。</p>
+<div class="eg">看到 <code>MR0</code> 要先问“哪个定时器的 MR0”：CT32B1 的 MR0 管左线圈的<b>占空比</b>；CT32B0 的 MR0 是左线圈的 <b>20 µs 闹钟</b>。两个完全不是一回事。</div>
+</div>
+
+<!-- ============ 3 ============ -->
+<div class="ch">
+<h2>3　四个定时器，各干各的</h2>
+<p>线圈振动最容易乱的地方，是好几个定时器搅在一起。先把它们分开：</p>
+<table>
+<tr><th>定时器</th><th>比喻</th><th>多快</th><th>什么时候在跑</th><th>在线圈里干什么</th></tr>
+<tr><td><b>CT16B0</b><br>Timer.c:65-73</td><td>墙上的挂钟</td><td>1 ms 一次中断</td><td>开机后一直跑</td><td>给 <code>mySysTickMs</code> 加 1。状态机用它算“震了几毫秒、消抖几毫秒”</td></tr>
+<tr><td><b>CT32B0</b><br>my_waveform.c:68</td><td>振动时才上的闹钟</td><td>TC 每 1 µs 加 1；闹钟每 20 µs 响一次</td><td>TC 一直数；<b>闹钟只在振动时打开</b></td><td>每 20 µs 从力度表取下一格、改占空比</td></tr>
+<tr><td><b>CT32B1</b><br>my_pwm.c:72</td><td>飞快的开关</td><td>48 MHz 计数，241 下一个周期 ≈ 5 µs（≈ 199 kHz）</td><td>一直数；引脚输出只在振动时打开（PWMC）</td><td>按 MR0 让引脚高低交替，做出占空比</td></tr>
+<tr><td>CT16B1</td><td>秒表</td><td>µs 级延时</td><td>需要时</td><td>线圈不用它</td></tr>
+</table>
+
+<svg viewBox="0 0 500 200">
+<g font-size="11">
+<text x="10" y="18" font-weight="bold">三个时间尺度套在一起（一次 500 µs 的振动）</text>
+<text x="10" y="50">CT16B0</text>
+<line x1="70" y1="45" x2="490" y2="45" stroke="#ccc"/>
+<line x1="70" y1="35" x2="70" y2="55" stroke="#1d6f8a" stroke-width="2"/><text x="66" y="68" font-size="9" fill="#5d6762">1000 ms</text>
+<line x1="490" y1="35" x2="490" y2="55" stroke="#1d6f8a" stroke-width="2"/><text x="470" y="68" font-size="9" fill="#5d6762">1001 ms</text>
+<text x="200" y="40" font-size="9.5" fill="#1d6f8a">1 ms 只响一次，一次振动它可能都看不见</text>
+<text x="10" y="110">CT32B0</text>
+<line x1="70" y1="105" x2="490" y2="105" stroke="#ccc"/>
+<g stroke="#7a5ea8" stroke-width="1.5">
+<line x1="70" y1="95" x2="70" y2="115"/><line x1="78.4" y1="98" x2="78.4" y2="112"/><line x1="86.8" y1="98" x2="86.8" y2="112"/><line x1="95.2" y1="98" x2="95.2" y2="112"/><line x1="103.6" y1="98" x2="103.6" y2="112"/><line x1="112" y1="98" x2="112" y2="112"/><line x1="120.4" y1="98" x2="120.4" y2="112"/><line x1="128.8" y1="98" x2="128.8" y2="112"/><line x1="137.2" y1="98" x2="137.2" y2="112"/><line x1="145.6" y1="98" x2="145.6" y2="112"/><line x1="154" y1="98" x2="154" y2="112"/><line x1="162.4" y1="98" x2="162.4" y2="112"/><line x1="170.8" y1="98" x2="170.8" y2="112"/><line x1="179.2" y1="98" x2="179.2" y2="112"/><line x1="187.6" y1="98" x2="187.6" y2="112"/><line x1="196" y1="98" x2="196" y2="112"/><line x1="204.4" y1="98" x2="204.4" y2="112"/><line x1="212.8" y1="98" x2="212.8" y2="112"/><line x1="221.2" y1="98" x2="221.2" y2="112"/><line x1="229.6" y1="98" x2="229.6" y2="112"/><line x1="238" y1="98" x2="238" y2="112"/><line x1="246.4" y1="98" x2="246.4" y2="112"/><line x1="254.8" y1="98" x2="254.8" y2="112"/><line x1="263.2" y1="98" x2="263.2" y2="112"/><line x1="271.6" y1="98" x2="271.6" y2="112"/><line x1="280" y1="95" x2="280" y2="115" stroke="#c0392b" stroke-width="2"/>
+</g>
+<text x="70" y="128" font-size="9.5" fill="#7a5ea8">t=0 起，每 20 µs 一根，共 25 次闹钟；第 25 次（500 µs）关掉</text>
+<text x="284" y="100" font-size="9.5" fill="#c0392b">停</text>
+<text x="10" y="170">CT32B1</text>
+<rect x="70" y="150" width="10" height="28" fill="none" stroke="#2f7d32"/>
+<path d="M90 178 h4 v-28 h4 v28 h4 v-28 h4 v28 h4 v-28 h4 v28 h4 v-28 h4 v28 h4 v-28 h4 v28 h4 v-28 h4 v28" fill="none" stroke="#2f7d32" stroke-width="1.3"/>
+<line x1="80" y1="164" x2="90" y2="164" stroke="#2f7d32"/>
+<text x="150" y="168" font-size="9.5" fill="#2f7d32">每个 20 µs 闹钟间隔里，PWM 已经开关了约 4 次（每次约 5 µs）</text>
+<text x="10" y="196" font-size="9.5" fill="#5d6762">（三行不是同一比例；只是表示：1 ms ≫ 20 µs ≫ 5 µs）</text>
+</g></svg>
+
+<div class="eg">CT32B0 的 TC 从开机起一直往上数，从不清零。“每 20 µs 响一次”不是定时器自己周期复位，而是每次中断里手动把 MR0 往后挪 20（my_waveform.c:242 加 20，:98 写回 MR0）。所以闹钟只在振动时响；振完把 MR0 中断关掉（:311），它就不响了。<br>CT16B0 不一样：它开了“匹配后复位”，1 ms 一次，永远在响。</div>
+</div>
+
+<!-- ============ 4 ============ -->
+<div class="ch">
+<h2>4　跟着一次左键按下走一遍（主线）</h2>
+<p>设定：GUI 全默认（正常模式、导通 500 µs、动态导通关）。时刻 <code>mySysTickMs = 1000</code> 时，按键扫描确认左键按下。</p>
+
+<div class="step"><div class="n">1</div><div class="t"><b>按键扫描确认按下，调线圈函数</b><br>
+<pre>if(0 == i)  Ele_LeftKeyPressProcess();      <span class="c">// button.c:639</span></pre>
+<span class="where">同一时刻 button_changed = TRUE，USB 报告照常发给电脑。振动和报告互不等待。</span></div></div>
+
+<div class="step"><div class="n">2</div><div class="t"><b>检查两件事：要不要震，能不能震</b>
+<pre>if(leftEle.pressVibrateDurationUs)                 <span class="c">// em.c:1010  500≠0 → 要震</span>
+  if(ELE_PRESS_VIBRATING == rightEle.status || ...) <span class="c">// :1013 右线圈在震吗？</span>
+      { 记下来，稍后补；return; }                     <span class="c">// :1015-1018（第 10 章）</span></pre>
+<span class="where">例子里右边空闲，继续往下走。</span></div></div>
+
+<div class="step"><div class="n">3</div><div class="t"><b>算通电多久</b>
+<pre>wfPeriodUs = Ele_CalculateDuration(左, nowHallSegment[0], 500); <span class="c">// :1022 → 500</span></pre>
+<span class="where">动态导通关着，原样返回 500（第 5 章）。</span></div></div>
+
+<div class="step"><div class="n">4</div><div class="t"><b>改状态、记时刻</b>
+<pre>leftEle.status = ELE_PRESS_VIBRATING;     <span class="c">// :1023 左线圈“按下震动中”</span>
+leftEle.vibrateBeginTick = 1000;          <span class="c">// :1024 开始于 1000 ms</span></pre>
+<span class="where">从这一刻起，左键的霍尔读数被冻结（第 9 章）。</span></div></div>
+
+<div class="step"><div class="n">5</div><div class="t"><b>选力度表</b>
+<pre>if(Config_GetCoilDriveMode())   pLeftWf = &amp;wfCustom (→ gPwmWf, 100 格); <span class="c">// :1025-1029 静音</span>
+else                            pLeftWf = &amp;wfHigh   (→ {100}, 1 格);    <span class="c">// :1033 正常（本例）</span></pre></div></div>
+
+<div class="step"><div class="n">6</div><div class="t"><b>交给波形发生器</b>
+<pre>MyWaveform_StartGenerate(CHANNEL_0, pLeftWf, 500, 1);  <span class="c">// :1035</span></pre>
+<span class="where">它算好：更新 500÷20 = 25 次（my_waveform.c:179）；然后 Start：t=0 设占空比 100%、打开 PWM、定闹钟 t=20 µs（:283-289）。<b>线圈从这一刻开始通电。</b></span></div></div>
+
+<div class="step"><div class="n">7</div><div class="t"><b>每 20 µs 闹钟响一次</b>（中断 my_waveform.c:87 → :233）<br>
+<span class="where">t = 20, 40 … 480 µs：每次取表里的下一格。正常模式表只有 1 格，取的一直是 100%。<br>t = 500 µs：第 25 次，走出表 → <code>MyWaveform_Stop</code>（:249）关 PWM，<b>线圈断电</b>，引脚回低。</span></div></div>
+
+<div class="step"><div class="n">8</div><div class="t"><b>主循环里的状态机收尾</b>（em.c:1367）<br>
+<span class="where">1002 ms：震动状态结束 → 改成“消抖”；1011 ms：消抖结束 → 改回“空闲”。左键霍尔读数恢复（第 9 章）。</span></div></div>
+
+<div class="key">注意第 6~7 步和第 8 步<b>是两套独立的计时</b>：真正断电是波形发生器在 500 µs 时做的（硬件中断，精确到 µs）；状态机用毫秒挂钟，只是“记账”，晚一点才把状态改掉，它不负责断电。</div>
+</div>
+
+<!-- ============ 5 ============ -->
+<div class="ch">
+<h2>5　通电多久：时长从哪来</h2>
+<h3>从 GUI 到 leftEle</h3>
+<svg viewBox="0 0 500 150"><g font-size="10.5">
+<defs><marker id="b" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#1d2420"/></marker></defs>
+<rect x="5" y="20" width="110" height="60" rx="6" fill="#eef6f8" stroke="#1d6f8a"/><text x="14" y="42" font-weight="bold">GUI</text><text x="14" y="60">强度滑条 0~1200</text><text x="14" y="74">（单位就是 µs）</text>
+<rect x="135" y="20" width="110" height="60" rx="6" fill="#f6f3fb" stroke="#7a5ea8"/><text x="144" y="42" font-weight="bold">xgAllParam</text><text x="144" y="60">wCoilOnTimeUs</text><text x="144" y="74">存进 EEPROM</text>
+<rect x="265" y="20" width="110" height="60" rx="6" fill="#fff7f0" stroke="#b0522c"/><text x="274" y="42" font-weight="bold">leftEle</text><text x="274" y="60">pressVibrate…Us</text><text x="274" y="74">（em.c:643）</text>
+<rect x="395" y="20" width="100" height="60" rx="6" fill="#fff" stroke="#1d2420"/><text x="404" y="42" font-weight="bold">wfPeriodUs</text><text x="404" y="60">真正通电时长</text><text x="404" y="74">（em.c:1022）</text>
+<line x1="115" y1="50" x2="133" y2="50" stroke="#1d2420" marker-end="url(#b)"/><line x1="245" y1="50" x2="263" y2="50" stroke="#1d2420" marker-end="url(#b)"/><line x1="375" y1="50" x2="393" y2="50" stroke="#1d2420" marker-end="url(#b)"/>
+<text x="5" y="105">USB 命令</text><text x="135" y="105">Ele_UpdateParam()</text><text x="265" y="105">Ele_CalculateDuration()</text>
+<text x="5" y="130" fill="#5d6762" font-size="9.5">默认 500（DEFAULT_CFG_ONTIME_US）；上限 5000（MAX_VIBRATE_DURATION_US）；GUI 关掉该项 → 0 → 不震</text>
+</g></svg>
+<p>按下和松开各有一个时长：<code>pressVibrateDurationUs</code>、<code>releaseVibrateDurationUs</code>。左右键各一套，所以一共 4 个数。</p>
+
+<h3>Ele_CalculateDuration：要不要按深度缩短</h3>
+<pre>if(xCoilDebugCfg[index].bDynOnTimeEn)                         <span class="c">// em.c:1348 动态导通开关</span>
+    duty = (settingDuration * durationScale[segment]) >> 10;  <span class="c">// :1352 设定 × 系数</span>
+else
+    duty = settingDuration;                                   <span class="c">// :1361 原样</span></pre>
+<p><code>durationScale[s] = 102400 ÷ (2s + 100)</code> 是提前算好的表（:210-221），<code>&gt;&gt; 10</code> 是 ÷1024。合起来就是：<b>时长 = 设定 × 100 ÷ (2 × 段号 + 100)</b>。段号是按下那一刻按键被按到第几段（0~100）。</p>
+<div class="eg">设定 500 µs，动态导通打开：<br>段号 0 → 500 × 1024 ÷ 1024 = <b>500</b>；段号 50 → 500 × 512 ÷ 1024 = <b>250</b>；段号 100 → 500 × 341 ÷ 1024 = <b>166</b>。<br>按得越深，震得越短。<b>但默认是关的</b>，而且新版 GUI 隐藏了这个开关，所以平时时长 = GUI 设的值。</div>
+
+<h3>静音挡位</h3>
+<p>新版 GUI 选“静音模式”后，挡位 0~3 直接把左右键按下 / 松开 4 个时长一起设成 <b>0 / 1500 / 2000 / 2500 µs</b>，同时驱动方式设成 pwm。挡位 0 = 时长 0 = 不震。</p>
+</div>
+
+<!-- ============ 6 ============ -->
+<div class="ch">
+<h2>6　怎么通电：正常模式和静音模式</h2>
+<p>时长决定“震多久”，驱动方式决定“这段时间里力度怎么变”。驱动方式是<b>全局一个</b>：<code>xgAllParam.xDriveMode.bDriveMode</code>，左右键、按下松开都用它。</p>
+<table>
+<tr><th></th><th>正常模式（level）</th><th>静音模式（pwm）</th></tr>
+<tr><td>bDriveMode</td><td>0（默认）</td><td>非 0</td></tr>
+<tr><td>力度表</td><td><code>wfHigh</code> → <code>wfHighTbl[] = {100}</code>，1 格</td><td><code>wfCustom</code> → <code>gPwmWf[100]</code>，100 格</td></tr>
+<tr><td>表的内容</td><td>从头到尾 100%</td><td>51% → 100% → 51%</td></tr>
+<tr><td>电流</td><td>一下冲上去，一下断掉</td><td>慢慢升，慢慢降</td></tr>
+<tr><td>手感 / 声音</td><td>脆、响</td><td>软、轻</td></tr>
+</table>
+
+<svg viewBox="0 0 500 200"><g font-size="10.5">
+<text x="10" y="16" font-weight="bold">占空比随时间（同为 500 µs）</text>
+<text x="10" y="50">正常</text>
+<line x1="60" y1="80" x2="490" y2="80" stroke="#ccc"/>
+<rect x="60" y="30" width="400" height="50" fill="#9cc5d3" stroke="#1d6f8a"/>
+<text x="230" y="60" fill="#123f50">一直 100%</text>
+<text x="10" y="135">静音</text>
+<line x1="60" y1="180" x2="490" y2="180" stroke="#ccc"/>
+<path d="M60 180 V154.5 L260 130 L460 154.5 V180 Z" fill="#9cc5d3" stroke="#1d6f8a"/>
+<text x="62" y="150" font-size="9.5">51%</text><text x="248" y="124" font-size="9.5">100%</text><text x="430" y="150" font-size="9.5">51%</text>
+<text x="60" y="195" font-size="9" fill="#5d6762">0</text><text x="450" y="195" font-size="9" fill="#5d6762">500 µs</text>
+</g></svg>
+
+<div class="key"><b>关键：</b>两种模式<b>走的是同一条路</b>——都通过 PWM、都通过波形发生器。正常模式不是“不用 PWM”，而是用一张只有一格 100% 的表，PWM 占空比 100% 就等于引脚一直高。</div>
+
+<h3>那张 100 格的表</h3>
+<pre>for(i = 0; i &lt; 50; i++){                        <span class="c">// my_protocol_mouse.c:181-185</span>
+  gPwmWf[i]      = i + 51;     <span class="c">// [0]=51 … [49]=100</span>
+  gPwmWf[99 - i] = i + 51;     <span class="c">// [99]=51 … [50]=100</span>
+}</pre>
+<p>它在全局参数 <code>xgAllParam</code> 里，存 EEPROM。GUI 原本可以通过“PWM配置”面板改它，新版 GUI 隐藏了这个面板，所以一直是默认值。<code>Config_GetPwmTable()</code> 返回的就是它的首地址，<code>wfCustom.pWfData</code> 指向它。</p>
+</div>
+
+<!-- ============ 7 ============ -->
+<div class="ch">
+<h2>7　PWM 怎么做出“百分之几”</h2>
+<p>引脚只有高和低两种状态。所谓“51% 的力”，是让引脚在每个约 5 µs 的小周期里，有 51% 的时间是高的。线圈电流跟不上这么快的开关，只能体现出平均值，所以等效成一半左右的力。</p>
+
+<h3>CT32B1 一个周期里发生什么</h3>
+<svg viewBox="0 0 500 190"><g font-size="10.5">
+<text x="10" y="16" font-weight="bold">TC 从 0 数到 240（共 241 下 ≈ 5 µs），到 MR3 = 240 清零</text>
+<line x1="40" y1="120" x2="40" y2="30" stroke="#999"/><line x1="40" y1="120" x2="480" y2="120" stroke="#999"/>
+<path d="M40 120 L240 40 L240 120 L440 40 L440 120" fill="none" stroke="#7a5ea8" stroke-width="1.6"/>
+<line x1="40" y1="79" x2="480" y2="79" stroke="#c0392b" stroke-dasharray="4 3"/>
+<text x="450" y="74" fill="#c0392b" font-size="9.5">MR0</text>
+<text x="4" y="44" font-size="9">240</text><text x="18" y="124" font-size="9">0</text>
+<path d="M40 160 H138 V138 H240 V160 H338 V138 H440 V160" fill="none" stroke="#2f7d32" stroke-width="2"/>
+<text x="44" y="152" font-size="9.5" fill="#2f7d32">低</text><text x="170" y="134" font-size="9.5" fill="#2f7d32">高</text>
+<text x="40" y="184" font-size="9.5" fill="#5d6762">规则：周期开始时引脚低，TC 数到 MR0 变高，一直高到周期末</text>
+</g></svg>
+<p>所以 <b>MR0 越小，高电平越长</b>。高电平占比 = (241 − MR0) ÷ 241。代码用一张查表 <code>Freq200kHzDuty[101]</code>（my_pwm.c:19）把“百分比 p”换成 MR0：</p>
+<table>
+<tr><th>占空比 p</th><th>MR0 = Freq200kHzDuty[p]</th><th>结果</th></tr>
+<tr><td>0%</td><td>241（比 240 还大，永远数不到）</td><td>一直低，不通电</td></tr>
+<tr><td>51%</td><td>118</td><td>低 118 下、高 123 下 → 123/241 ≈ 51%</td></tr>
+<tr><td>53%</td><td>113</td><td>高 128 下 ≈ 53%</td></tr>
+<tr><td>100%</td><td>0</td><td>一直高（正常模式就是这个）</td></tr>
+</table>
+<pre>static inline void MyPWM_SetDuty(uint8_t channel, uint8_t percent)  <span class="c">// my_pwm.h:39</span>
+{ percent = percent > 100 ? 100 : percent;
+  MyPWM_CT32B1_SetCompare(channel, Freq200kHzDuty[percent]); }    <span class="c">// 写 MR0 或 MR1</span></pre>
+
+<h3>PWM 的开和关</h3>
+<table>
+<tr><th>动作</th><th>代码</th><th>效果</th></tr>
+<tr><td>开机</td><td>MR3=240，PWMC=0，EMC0=01，TC 开始数（my_pwm.c:72-96、:35-37）</td><td>计数器一直在转，但引脚<b>不受 PWM 控制</b>，保持低</td></tr>
+<tr><td>开始震</td><td><code>PWMC |= 1</code>（MyPWM_CT32B1_Start）</td><td>引脚交给 PWM，按 MR0 开关</td></tr>
+<tr><td>停止震</td><td><code>PWMC &amp;= ~1</code>（MyPWM_CT32B1_Stop）</td><td>引脚交回 EMR 控制；EMC0=01 表示“匹配时清 0”，下一次匹配就把引脚拉低并保持</td></tr>
+</table>
+<div class="eg">“开关 PWM”不是开关计数器——CT32B1 的计数器开机后一直在数。开关的只是 PWMC 里的一位：<b>这根引脚听不听 PWM 的</b>。</div>
+</div>
+
+<!-- ============ 8 ============ -->
+<div class="ch">
+<h2>8　力度表怎么一格一格走完</h2>
+<p>表有 100 格（正常模式 1 格），时长可能是 500，也可能是 2500。波形发生器要把表<b>铺满</b>整段时长。办法是三句话：</p>
+<pre>updateTimes = periodUs / 20;                    <span class="c">// my_waveform.c:179 闹钟响几次</span>
+inc = (wfDataLen &lt;&lt; 15) / updateTimes;          <span class="c">// :195 每次走几格（×32768）</span>
+acc = inc &gt;&gt; 1;                                 <span class="c">// :196 起点：半步</span></pre>
+<p>每次闹钟响（:237-241）：<code>acc += inc</code>；<code>idx = acc &gt;&gt; 15</code>（÷32768 去掉小数）；用第 idx 格设占空比。idx 到 100 就停。</p>
+
+<div class="eg">
+<b>500 µs</b>：闹钟 25 次，每次走 100÷25 = 4 格，起点 2 格。<br>
+t = 0, 20, 40 … 480 µs 用的格：2, 6, 10 … 98；t = 500 走到 102，出界，停。<br><br>
+<b>1500 µs</b>：闹钟 75 次，每次走 1.333 格，起点 0.667 格。<br>
+用的格：0, 1, 3, 4, 5, 7, 8 … 99（第 2 格这种偶尔被跳过）；t = 1500 出界，停。<br><br>
+<b>25 和 75 是两个不同时长的例子</b>，不是同一次振动。时长越长，闹钟响得越多，每次走得越少，走过的都是同一条 51→100→51 的曲线。
+</div>
+
+<h3>为什么要乘 32768</h3>
+<p>1.333 格存不进整数。把<b>一格当成 32768 份</b>：每次走 43690 份，acc 记“走到第几份”，<code>&gt;&gt; 15</code> 就是“在第几格”。这是单片机常用的“定点小数”，避免用浮点和除法（M0 内核没有硬件除法）。</p>
+
+<h3>正常模式（1 格）也走这套</h3>
+<p>格数 = 1，inc = 32768 ÷ 25 = 1310 份。acc 要走 25 步才超过 32768，所以前 25 次一直是第 0 格（100%），第 25 次（t = 500）出界、停。<b>同一套代码，表只有 1 格就等于“通电 500 µs”</b>。</p>
+
+<h3>实际通电时间</h3>
+<p>正好是 <b>updateTimes × 20 µs</b>。时长不是 20 的倍数时，余数被 :179 的整数除法丢掉：设 1010 → 实际 1000。</p>
+</div>
+
+<!-- ============ 9 ============ -->
+<div class="ch">
+<h2>9　振完以后：引脚回低、状态机、霍尔冻结</h2>
+<h3>引脚回低</h3>
+<p>走出表时 <code>MyWaveform_Stop</code>（my_waveform.c:305）：关 PWM（PWMC 清 0）、关 CT32B0 的 MR0 中断。引脚交回 EMR，在下一次匹配时被拉低并保持。线圈断电。</p>
+
+<h3>状态机：线圈的四个状态</h3>
+<table>
+<tr><th>值</th><th>名字</th><th>意思</th></tr>
+<tr><td>0</td><td>ELE_NO_VIBRATING</td><td>空闲</td></tr>
+<tr><td>1</td><td>ELE_PRESS_VIBRATING</td><td>按下震动中</td></tr>
+<tr><td>2</td><td>ELE_RELEASE_VIBRATING</td><td>松开震动中</td></tr>
+<tr><td>3</td><td>ELE_RELEASE_DEBOUNCE</td><td>刚震完，等余振平息（消抖）</td></tr>
+</table>
+<pre>case ELE_PRESS_VIBRATING:                                          <span class="c">// em.c:1375</span>
+  if((now - vibrateBeginTick) * 1000 > pressVibrateDurationUs + 999) <span class="c">// :1377</span>
+      { status = ELE_RELEASE_DEBOUNCE; debounceBeginTick = now; }
+case ELE_RELEASE_DEBOUNCE:
+  if((now - debounceBeginTick) > 8)  status = ELE_NO_VIBRATING;     <span class="c">// :1394 VIBRATE_DEBOUNCE_TIME_MS</span></pre>
+<p>谁调：主循环（device.c:525）每圈 → <code>Ele_PollingTask</code>（em.c:983）→ <code>Ele_StatusTask</code>，左右各一次。</p>
+
+<div class="eg">时长 500，按下于 1000 ms：<br>
+震动状态：要 (now − 1000) × 1000 &gt; 1499 → now − 1000 ≥ 2 → <b>1002 ms</b> 进消抖。<br>
+消抖：要 now − 1002 &gt; 8 → ≥ 9 → <b>1011 ms</b> 回空闲。<br>
+时长 1500：(n × 1000 &gt; 2499 → n ≥ 3) → 1003 ms 进消抖，1012 ms 回空闲。</div>
+
+<svg viewBox="0 0 500 120"><g font-size="10">
+<line x1="30" y1="60" x2="480" y2="60" stroke="#999"/>
+<rect x="30" y="40" width="2.2" height="20" fill="#c0392b"/>
+<rect x="30" y="40" width="70" height="20" fill="#fbd3cd" stroke="#c0392b"/>
+<rect x="100" y="40" width="315" height="20" fill="#e8e0f5" stroke="#7a5ea8"/>
+<text x="34" y="34" font-size="9" fill="#c0392b">震动中</text><text x="230" y="34" font-size="9" fill="#7a5ea8">消抖</text>
+<text x="26" y="76" font-size="9">1000</text><text x="92" y="76" font-size="9">1002</text><text x="404" y="76" font-size="9">1011 ms</text>
+<text x="30" y="98" font-size="9.5" fill="#c0392b">真正通电只有开头 0.5 ms（太窄画不出）</text>
+<rect x="30" y="104" width="385" height="8" fill="#ffe9a8"/><text x="420" y="112" font-size="9">霍尔冻结</text>
+</g></svg>
+
+<h3>为什么要冻结霍尔</h3>
+<pre>if(Ele_IsVibrating(ELE_POS_LEFT))       <span class="c">// my_misc.c:490 状态不是“空闲”</span>
+  if(k == 1) { gbKeyState[k] = previousKeySta[k]; continue; }   <span class="c">// 左键保持上一次的结果</span></pre>
+<p>线圈通电会产生磁场，霍尔芯片测的正是磁场，读数会被干扰；震完还有余振。如果这时照常判断，可能误判成“松开了”又“按下了”，导致连震。所以从开始震到消抖结束（例子里 1000~1011 ms），左键的按键状态保持不变。</p>
+<div class="key"><b>两个查询函数别混：</b><code>Ele_IsVibrating</code>（em.c:917）= 不是空闲（含消抖），用于冻结霍尔；<code>Ele_IsTureVibrating</code>（:949）= 正在通电（按下或松开震动中，不含消抖）。</div>
+</div>
+
+<!-- ============ 10 ============ -->
+<div class="ch">
+<h2>10　两个线圈不同时震</h2>
+<p>T1A 编译了 <code>SINGLE_COIL_AT_A_TIME = 1</code>：同一时刻只让一个线圈通电（两个一起通电电流太大）。</p>
+<pre>if(ELE_PRESS_VIBRATING == rightEle.status || ELE_RELEASE_VIBRATING == rightEle.status)
+{ gxCacheVibrate.flag = 1;  .pos = ELE_POS_LEFT;  .tick = now;  return; }   <span class="c">// em.c:1013-1018</span></pre>
+<p>左键要震时，如果右线圈<b>正在通电</b>（消抖不算），就先不震，把“左边欠一次”记在 <code>gxCacheVibrate</code> 里。</p>
+<pre>if(gxCacheVibrate.flag && (now - gxCacheVibrate.tick) > 5)    <span class="c">// em.c:1473-1475 (5000/1000)</span>
+{ flag = 0;  if(pos == LEFT) Ele_LeftKeyReleaseProcess(); ... }  <span class="c">// :1480</span></pre>
+<p>主循环里的 <code>Ele_OnlyOne</code>（em.c:1471）过了 5 ms 以上（即 ≥ 6 ms）补震。</p>
+<div class="eg">右键 1000 ms 按下开始震；1000 ms 同时左键也按下 → 左边被记下 tick = 1000。1006 ms 补一次左边。<br>注意：补的时候调的是<b>松开函数</b>，用的是松开的时长和状态，即使欠的是“按下”。这一点已列在待确认问题第 14 条。</div>
+</div>
+
+<!-- ============ 11 ============ -->
+<div class="ch">
+<h2>11　松开时的振动</h2>
+<p>松开和按下几乎一模一样，只有三处不同：</p>
+<table>
+<tr><th></th><th>按下 em.c:1005</th><th>松开 em.c:1066</th></tr>
+<tr><td>谁调</td><td>button.c:639（0 → 1）</td><td>button.c:655（1 → 0）</td></tr>
+<tr><td>用哪个时长</td><td>pressVibrateDurationUs</td><td>releaseVibrateDurationUs</td></tr>
+<tr><td>状态改成</td><td>ELE_PRESS_VIBRATING</td><td>ELE_RELEASE_VIBRATING</td></tr>
+<tr><td>力度表、波形发生器、PWM、状态机、霍尔冻结</td><td colspan="2">完全相同</td></tr>
+</table>
+<div class="eg">一次完整的点击 = 两次振动：按下“咔”一下，松开再“咔”一下。GUI 里“按下振感配置”“释放振感配置”就是分别设这两个时长。</div>
+<p>按住不放时不会连震：按下震一次后，按键状态一直是 1，button.c 只在 0→1、1→0 的那一下调线圈函数。</p>
+</div>
+
+<!-- ============ 12 ============ -->
+<div class="ch">
+<h2>12　容易混的 10 个问题</h2>
+<div class="qa"><div class="q">Q1 “25 次”和“75 次”到底是哪个？</div>都对，是两个不同时长：500 µs → 25 次；1500 µs → 75 次。次数 = 时长 ÷ 20。</div>
+<div class="qa"><div class="q">Q2 线圈是靠什么断电的？状态机吗？</div>不是。断电是波形发生器走出表时 <code>MyWaveform_Stop</code> 做的，µs 级精确。状态机只按毫秒“记账”，用来冻结霍尔和防止马上又震。</div>
+<div class="qa"><div class="q">Q3 正常模式用不用 PWM？</div>用。只是表是 {100}，占空比 100% → MR0 = 0 → 引脚一直高。</div>
+<div class="qa"><div class="q">Q4 力度表管长短吗？</div>不管。表只管形状；长短只看 wfPeriodUs。同一张表被拉长或压短。</div>
+<div class="qa"><div class="q">Q5 MR0 是谁的？</div>CT32B1 的 MR0 = 左线圈占空比；CT32B0 的 MR0 = 左线圈 20 µs 闹钟。右线圈对应两个 MR1。</div>
+<div class="qa"><div class="q">Q6 PWM 为什么是 241 下？</div>MR3 = 240，TC 数 0~240 共 241 下，48 MHz 下约 5.02 µs，≈ 199 kHz。</div>
+<div class="qa"><div class="q">Q7 动态导通开着时，时长是软件自己定的吗？</div>不是。仍然以 GUI 设的值为基础，只是乘一个 ≤ 1 的系数（按得越深越小）。默认关，新 GUI 也打不开。</div>
+<div class="qa"><div class="q">Q8 振完引脚为什么能保证是低？</div>停 PWM 只清 PWMC，引脚交回 EMR；开机时把 EMC0 设成 01（匹配时清 0），所以下一次匹配就被拉低并保持。</div>
+<div class="qa"><div class="q">Q9 振动会耽误按键报给电脑吗？</div>不会。button.c 在同一处既设 button_changed（报告）又调线圈函数，线圈函数只是设好寄存器就返回，后面全靠中断。</div>
+<div class="qa"><div class="q">Q10 CT16B0、CT32B0、CT32B1 一句话怎么分？</div>CT16B0 = 1 ms 挂钟（状态机记账）；CT32B0 = 振动时的 20 µs 闹钟（换格）；CT32B1 = 5 µs 一周期的开关（做占空比）。</div>
+</div>
+
+<!-- ============ 13 ============ -->
+<div class="ch">
+<h2>13　读代码路线和数字速查</h2>
+<h3>按执行顺序读，一共 9 站</h3>
+<table>
+<tr><th>#</th><th>位置</th><th>看什么</th></tr>
+<tr><td>1</td><td>em.c:439 Ele_Init → my_waveform.c:135 → my_pwm.c:33、:72；my_waveform.c:68</td><td>开机：CT32B1 配成 PWM 但不输出；CT32B0 开始 1 µs 计数</td></tr>
+<tr><td>2</td><td>button.c:630-660</td><td>按下 / 松开时调哪个函数</td></tr>
+<tr><td>3</td><td>em.c:1005-1065</td><td>按下函数：要不要震、时长、状态、选表、启动</td></tr>
+<tr><td>4</td><td>em.c:1327-1365</td><td>Ele_CalculateDuration</td></tr>
+<tr><td>5</td><td>my_waveform.c:155-202</td><td>StartGenerate：次数、inc、acc</td></tr>
+<tr><td>6</td><td>my_waveform.c:278-291</td><td>Start：t=0 设占空比、开 PWM、定闹钟</td></tr>
+<tr><td>7</td><td>my_waveform.c:87-99、:233-259</td><td>中断：每 20 µs 走一步；走出就 Stop</td></tr>
+<tr><td>8</td><td>em.c:983、:1367-1403、:1471</td><td>主循环：状态机、补震</td></tr>
+<tr><td>9</td><td>my_misc.c:488-510</td><td>霍尔冻结</td></tr>
+</table>
+
+<h3>数字速查</h3>
+<table>
+<tr><th>数</th><th>含义</th><th>出处</th></tr>
+<tr><td>500 µs</td><td>默认导通时间</td><td>my_electromagnet.h:26</td></tr>
+<tr><td>5000 µs</td><td>导通时间上限；补震等待 5 ms</td><td>em.c:27；my_waveform.c:22</td></tr>
+<tr><td>20 µs</td><td>波形更新间隔（闹钟）</td><td>my_waveform.c:21</td></tr>
+<tr><td>32768（&lt;&lt;15）</td><td>1 格 = 32768 份</td><td>my_waveform.c:25</td></tr>
+<tr><td>100</td><td>静音力度表格数</td><td>em.c:1028</td></tr>
+<tr><td>51→100→51</td><td>默认力度表</td><td>my_protocol_mouse.c:181</td></tr>
+<tr><td>240 / 241</td><td>PWM 周期 MR3 / 计数个数</td><td>my_pwm.c:35</td></tr>
+<tr><td>8 ms（实际 9）</td><td>震后消抖</td><td>em.c:29</td></tr>
+<tr><td>0 / 1500 / 2000 / 2500</td><td>静音挡位 0~3 的时长</td><td>新版 GUI</td></tr>
+<tr><td>0~1200</td><td>GUI 强度滑条（µs）</td><td>新版 GUI</td></tr>
+</table>
+<div class="key" style="margin-top:5mm"><b>喝完咖啡再回想一遍：</b>按键确认 → 线圈函数定<b>时长</b>和<b>表</b> → 波形发生器每 <b>20 µs</b> 换一格 → PWM 把百分比变成<b>引脚高低</b> → 走出表就<b>断电</b> → 状态机记账、冻结霍尔约 <b>11 ms</b>。</div>
+</div>
+
+</body></html>
