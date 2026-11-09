@@ -231,6 +231,92 @@ details.rw .rb{padding:6px 12px 10px 26px;font-size:.88rem;line-height:1.7}
 <p class="note">相关讲义：专题“从内存看一次 IO”、速查“USB 接口与端点总表”“芯片存储地址分布”（学习目录里都有）。</p>
 </details>
 </section>
+<section class="entry" id="q2" data-key="端点号 端点地址 0x04 0x83 0x81 HID_EP4_OUT EP_4_CUSTION_IN EPAdr 物理端点 USB_GetEPCmdStatusPtr nsAPI_USB_EP_Status bEndpointAddress">
+<h2>Q2　端点号 0x04：一个数字的前世今生</h2>
+
+<div class="chips">
+<div><small>0x04 拆开</small><b>bit7=0 · 低 4 位=4</b><span>OUT（电脑→鼠标）· 端点 4</span></div>
+<div><small>逻辑端点号</small><b>4</b><span>USB 线上令牌包里的 ENDP 字段</span></div>
+<div><small>物理端点号 EPAdr</small><b>4×2+0 = 8</b><span>中断位、双缓冲位都用它</span></div>
+<div><small>表格第几格</small><b>8×2 = 16 → 0x2000_4040</b><span>16 × 4 字节 = 偏移 0x40</span></div>
+<div><small>最后找到</small><b>0x2000_4500</b><span>那一格里 Offset 0x114 × 64</span></div>
+</div>
+
+<h3>算一算：选一个端点地址</h3>
+<div class="tool"><div class="btns" id="epBtns"></div><div id="epOut"></div></div>
+
+<h3>同一个 0x04，一路变成什么</h3>
+<table class="qt">
+<tr><th>#</th><th>在哪</th><th>样子</th><th>意思</th></tr>
+<tr><td>1</td><td><code>inc/hiduser.h:46</code></td><td class="m">HID_EP4_OUT = 0x04</td><td><b>出生</b>：按 USB 规范写端点地址，bit7 = 方向（0 OUT / 1 IN），低 4 位 = 端点号</td></tr>
+<tr><td>2</td><td><code>inc/usb.h:272、283</code></td><td class="m">EP_4_DRIVE_OUT → EP_4_CUSTION_IN</td><td><b>改名两次</b>，值还是 0x04。名字里的 IN 是站在固件“收”的角度起的，别被骗</td></tr>
+<tr><td>3</td><td><code>src/usbdesc.c:349</code></td><td class="m">bEndpointAddress = 0x04</td><td><b>报给电脑</b>：插上时电脑读配置描述符，知道“接口 2 有个端点 4，方向 OUT”</td></tr>
+<tr><td>4</td><td>USB 线上</td><td class="m">OUT 令牌 · ENDP = 4</td><td><b>电脑发数据</b>：令牌包里只有 4 位端点号；方向由“这是 OUT 令牌”表示，0x80 那一位不上线</td></tr>
+<tr class="gui"><td>5</td><td><code>usbhw.c:103</code> EPAdr</td><td class="m">4 × 2 + 0 = 8</td><td><b>变成物理端点号</b>：芯片把每个端点的 OUT、IN 分开编号（EP0 OUT = 0、EP0 IN = 1 … EP4 OUT = 8、EP4 IN = 9）。INTSTAT、EPBUFCFG、EPINUSE 寄存器的第 8 位都是它</td></tr>
+<tr class="gui"><td>6</td><td><code>usbhw.c:195</code></td><td class="m">8 × 2 = 16 格 → × 4 = 0x40</td><td><b>变成表格地址</b>：每个物理端点占 2 格（buf0、buf1），每格 4 字节 → 0x2000_4000 + 0x40 = <b>0x2000_4040</b></td></tr>
+<tr class="gui"><td>7</td><td><code>usbhw.c:1429</code> EP_Status</td><td class="m">读 0x2000_4040 的 bit31</td><td><b>拿来判断</b>：A = 0 → 有新包（截图里 usb.c:77 就是这一步）</td></tr>
+<tr class="gui"><td>8</td><td><code>usbhw.c:1159</code> ReadEP</td><td class="m">EPList[16] → 0x2000_4500</td><td><b>拿来取数据</b>：用 16 去软件的缓冲区登记表里查出 0x2000_4500，拷 64 字节到 receive_buff</td></tr>
+</table>
+
+<h3>常问</h3>
+<div class="faq">
+<div><b class="q">为什么写 0x04，不直接写 4？</b>因为同一个“4”有两个方向：0x04 是端点 4 的 OUT，0x84 是端点 4 的 IN（本项目没用）。最高位把方向带上，一个字节就能唯一指定。</div>
+<div><b class="q">这个格式是谁定的？</b>USB 2.0 规范 9.6.6 节 Table 9-13（bEndpointAddress）。所有 USB 设备都这么写。</div>
+<div><b class="q">EP_4_CUSTION_IN 明明是 OUT？</b>名字是从固件角度起的：“自定义数据从这里进来”。按 USB 的规矩方向看电脑：电脑往外发，所以是 OUT。值 0x04 说了算。</div>
+<div><b class="q">函数为什么不直接收“第几格”？</b>上层只认 USB 的端点地址（和描述符、和电脑说的一致），换算成物理号、格号是底层驱动 usbhw.c 的事。</div>
+<div><b class="q">谁让端点 4 能收数据的？</b><code>nsAPI_USB_EnableEP(0x04)</code>：清 D 位、置 A 位。调用点：开机 usb.c:26、重新配置后 usb.c:162、usb.c:332，以及每次读之前 usb.c:79。</div>
+<div><b class="q">0x83 呢？</b>bit7 = 1 → IN；端点 3 → 物理号 3×2+1 = 7 → 第 14 格 → 0x2000_4038 → 缓冲区 0x2000_4480。点上面的“算一算”选 0x83 看全过程。</div>
+</div>
+
+<h3>详细内容（点开）</h3>
+<details class="dt"><summary>① 换算的两段代码，逐行</summary>
+<pre class="code">static RetU32 EPAdr(U32 EPNum)              <span style="color:var(--good)">// usbhw.c:103   EPNum = 0x04</span>
+{
+    U32 val;
+    val = (EPNum &amp; 0x0F) &lt;&lt; 1;              <span style="color:var(--good)">// :107  取低 4 位 = 4，乘 2 → 8</span>
+    if(EPNum &amp; 0x80)                       <span style="color:var(--good)">// :109  bit7 是 1 吗？0x04 不是</span>
+    {   val += 1;  }                       <span style="color:var(--good)">// :111  IN 才 +1</span>
+    return (val);                          <span style="color:var(--good)">// 返回 8</span>
+}
+
+RetU32 USB_GetEPCmdStatusPtr(U32 EPNum)    <span style="color:var(--good)">// usbhw.c:190</span>
+{
+    U32 addr;
+    addr = (U32)USB_EPLIST_ADDR;           <span style="color:var(--good)">// :194  0x2000_4000</span>
+    addr += ((EPAdr(EPNum)*2) &lt;&lt; 2);       <span style="color:var(--good)">// :195  (8 × 2) × 4 = 64 = 0x40</span>
+    return (addr);                         <span style="color:var(--good)">// 0x2000_4040</span>
+}</pre>
+<p>EPAdr 上面的注释（usbhw.c:103 之前那段）写得很清楚：返回值是“EP address in interrupt status”，也就是 INTSTAT 寄存器里的位号。手册 Table 222：INTSTAT 第 8 位 = EP4OUT。</p>
+</details>
+
+<details class="dt"><summary>② 截图里 Usb_Read_Bytes 拿着 0x04 做的三件事</summary>
+<table>
+<tr><th>usb.c</th><th>调用</th><th>0x04 在里面变成</th><th>做了什么</th></tr>
+<tr><td class="m">77</td><td><code>nsAPI_USB_EP_Status(0x04)</code></td><td>0x2000_4040</td><td>看 bit31：A = 0 → 返回 TRUE，“有新包”；A = 1 → FALSE，还在等</td></tr>
+<tr><td class="m">79</td><td><code>nsAPI_USB_EnableEP(0x04)</code></td><td>0x2000_4040</td><td>清 D、置 A（usbhw.c:900、:919）</td></tr>
+<tr><td class="m">80</td><td><code>nsAPI_USB_ReadEP(0x04, buf)</code></td><td>格 0x2000_4040、物理号 8、登记表 EPList[16]</td><td>算字节数、从 0x2000_4500 拷 64 字节到 buf、把这一格恢复成“空、A = 1”</td></tr>
+</table>
+<p class="note">usbcore.c:145 还有一个 <code>nsAPI_USB_EP4DataOutStage</code> 也读 0x04（2016 年固件升级用的），它在 <code>#if 0</code> 里（usbcore.c:133~149），不编译。</p>
+</details>
+
+<details class="dt"><summary>③ 全部端点地址对照表</summary>
+<table>
+<tr><th>端点地址</th><th>方向</th><th>物理号 = INTSTAT 位</th><th>表格格号</th><th>表格地址</th><th>本项目</th></tr>
+<tr><td class="m">0x00</td><td>OUT</td><td class="m">0</td><td class="m">0</td><td class="m">0x2000_4000</td><td>端点 0 控制（枚举）</td></tr><tr><td class="m">0x80</td><td>IN</td><td class="m">1</td><td class="m">2</td><td class="m">0x2000_4008</td><td>端点 0 控制（枚举）</td></tr><tr><td class="m">0x01</td><td>OUT</td><td class="m">2</td><td class="m">4、5</td><td class="m">0x2000_4010</td><td>没用</td></tr><tr><td class="m">0x81</td><td>IN</td><td class="m">3</td><td class="m">6、7</td><td class="m">0x2000_4018</td><td>鼠标报告</td></tr><tr><td class="m">0x02</td><td>OUT</td><td class="m">4</td><td class="m">8、9</td><td class="m">0x2000_4020</td><td>没用</td></tr><tr><td class="m">0x82</td><td>IN</td><td class="m">5</td><td class="m">10、11</td><td class="m">0x2000_4028</td><td>键盘报告</td></tr><tr><td class="m">0x03</td><td>OUT</td><td class="m">6</td><td class="m">12、13</td><td class="m">0x2000_4030</td><td>没用</td></tr><tr class="gui"><td class="m">0x83</td><td>IN</td><td class="m">7</td><td class="m">14、15</td><td class="m">0x2000_4038</td><td><b>回 GUI</b></td></tr><tr class="gui"><td class="m">0x04</td><td>OUT</td><td class="m">8</td><td class="m">16、17</td><td class="m">0x2000_4040</td><td><b>GUI 发来</b></td></tr><tr><td class="m">0x84</td><td>IN</td><td class="m">9</td><td class="m">18、19</td><td class="m">0x2000_4048</td><td>没用</td></tr>
+</table>
+</details>
+
+<details class="dt"><summary>④ 依据</summary>
+<table>
+<tr><th>内容</th><th>出处</th></tr>
+<tr><td>bEndpointAddress 格式（bit7 方向，bit3~0 端点号）</td><td>USB 2.0 规范 9.6.6 节 Table 9-13；代码 <code>inc/usb.h:132-135</code></td></tr>
+<tr><td>令牌包里的 ENDP 字段是 4 位，方向由令牌类型（IN / OUT）决定</td><td>USB 2.0 规范 8.4.1 节（Token Packets）</td></tr>
+<tr><td>物理端点编号（EP0 OUT = 0 … EP4 IN = 9），寄存器每位对应一个物理端点</td><td>UM10462 Table 220、221（p.230）、Table 222 INTSTAT（p.231-232）</td></tr>
+<tr><td>表格每个物理端点占 2 格</td><td>UM10462 Fig 22（p.234）；<code>usbhw.c:195</code> 注释</td></tr>
+<tr><td>HID_EP4_OUT 定义、两次改名、写进描述符</td><td><code>hiduser.h:46</code>、<code>usb.h:272、283</code>、<code>usbdesc.c:349</code></td></tr>
+</table>
+</details>
+</section>
 </div>
 <script>
 (function(){
@@ -265,6 +351,23 @@ function drawBits(){const v=parseInt(ST[si][1],16)>>>0;
  $('stNote').innerHTML=`<b>EP4 OUT buf0 这一格（地址 0x20004040）= <code>${ST[si][1]}</code></b>　A=${v>>>31&1}　D=${v>>>30&1}　NBytes=${nb}　Address Offset=${hx(ao,4)} → 缓冲区 ${hx(0x20000000|(ao<<6))}<br>${ST[si][2]}`}
 drawBits();
 
+
+/* ---------- Q2 calculator ---------- */
+(function(){const EPS=[0x00,0x80,0x81,0x82,0x83,0x04,0x01,0x84];
+ const USE={0x00:'端点 0 控制',0x80:'端点 0 控制',0x81:'鼠标报告',0x82:'键盘报告',0x83:'回 GUI',0x04:'GUI 发来'};
+ let cur=0x04;
+ $('epBtns').innerHTML=EPS.map(e=>`<button data-e="${e}" aria-pressed="${e===cur}">0x${e.toString(16).toUpperCase().padStart(2,'0')}</button>`).join('');
+ document.querySelectorAll('#epBtns button').forEach(b=>b.onclick=()=>{cur=+b.dataset.e;document.querySelectorAll('#epBtns button').forEach(x=>x.setAttribute('aria-pressed',x===b));draw()});
+ function draw(){const n=cur&0x0F,dir=cur>>7,phys=n*2+dir,slot=phys*2,w=0x20004000+slot*4,buf=0x20004100+slot*64;
+  const b=cur.toString(2).padStart(8,'0');
+  $('epOut').innerHTML=`<table class="qt"><tr><th>步骤</th><th>算式</th><th>结果</th></tr>
+  <tr><td>二进制</td><td class="m"><b style="color:var(--bad)">${b[0]}</b>${b.slice(1,4)}<b style="color:var(--per)">${b.slice(4)}</b></td><td>bit7 = ${dir} → <b>${dir?'IN（鼠标→电脑）':'OUT（电脑→鼠标）'}</b>；低 4 位 = <b>${n}</b> → 端点 ${n}</td></tr>
+  <tr><td>物理号 EPAdr</td><td class="m">${n} × 2 + ${dir}</td><td><b>${phys}</b>（INTSTAT / EPBUFCFG 第 ${phys} 位）</td></tr>
+  <tr><td>表格格号</td><td class="m">${phys} × 2</td><td><b>第 ${slot} 格</b>${n?'（buf0；buf1 是第 '+(slot+1)+' 格）':''}</td></tr>
+  <tr><td>表格地址</td><td class="m">0x2000_4000 + ${slot} × 4</td><td><b>0x2000_${(w&0xFFFF).toString(16).toUpperCase()}</b></td></tr>
+  <tr><td>缓冲区</td><td class="m">那一格的 Offset × 64</td><td><b>0x2000_${(buf&0xFFFF).toString(16).toUpperCase()}</b>${n===0&&dir===0?'（另外 SETUP 包在 0x2000_4140）':''}</td></tr>
+  <tr><td>本项目</td><td></td><td>${USE[cur]||'没用（描述符里没有）'}</td></tr></table>`}
+ draw();})();
 /* ---------- Q1 flow ---------- */
 (function(){const s=$('flowF');
  function box(x,y,w,h,col,a,b,c){el(s,'rect',{x,y,width:w,height:h,rx:8,fill:'var(--panel)',stroke:'var(--'+col+')','stroke-width':2});T(s,x+10,y+22,a,{'font-weight':700});if(b)T(s,x+10,y+42,b,{'font-size':11,fill:'var(--muted)'});if(c)T(s,x+10,y+60,c,{'font-size':11,fill:'var(--muted)'})}
