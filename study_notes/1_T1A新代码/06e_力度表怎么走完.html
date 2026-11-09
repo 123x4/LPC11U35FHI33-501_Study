@@ -1,0 +1,267 @@
+<title>力度表怎么走完</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --hw:#7a5ea8; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.8}
+.wrap{max-width:880px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);line-height:1.3;text-wrap:balance}
+h1{font-size:1.9rem;margin:0}
+h2{font-size:1.3rem;margin:2.4rem 0 .4rem;padding-top:.6rem;border-top:1px solid var(--line)}
+h3{font-size:1.06rem;margin:1.3rem 0 .3rem}
+p{margin:.6rem 0}
+a{color:var(--per)}
+code{font-family:var(--font-m);font-size:.88em;background:var(--soft);padding:.05em .35em;border-radius:3px;overflow-wrap:anywhere}
+pre.code{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:10px 12px;overflow-x:auto;line-height:1.55;margin:.5rem 0}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.06em;color:var(--muted)}
+.lede{color:var(--muted)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:1rem 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-size:.88rem;margin:.4rem 0}
+td,th{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600}
+.note{font-size:.88rem;color:var(--muted)}
+.think{border-left:4px solid var(--per);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.8rem 0}
+.rule{border-left:4px solid var(--c,var(--per));background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.6rem 0}
+.log{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:6px 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.btns button,.tool button{font:inherit;font-size:.88rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer}
+.btns button:disabled{opacity:.4;cursor:default}
+.btns button[aria-pressed="true"]{border-color:var(--fg);font-weight:700}
+/* bit strip */
+.bstrip{display:inline-grid;gap:2px;font-family:var(--font-m);font-size:.74rem;text-align:center;margin:.2rem 0}
+.bstrip span{border:1px solid var(--line);border-radius:3px;padding:1px 3px;min-width:1.6em;background:var(--panel)}
+.bstrip span.ch{background:color-mix(in srgb,var(--bad) 28%,var(--panel));border-color:var(--bad);font-weight:700}
+.bstrip span.k{background:none;border:0;color:var(--muted);font-size:.6rem}
+.bstrip span.f{background:color-mix(in srgb,var(--c,var(--per)) 18%,var(--panel))}
+/* lamps */
+.lamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:.5rem 0}
+.lamps div{border:1.5px solid var(--line);border-radius:6px;padding:4px 8px;font-size:.82rem;background:var(--panel)}
+.lamps div::before{content:"○ ";color:var(--muted)}
+.lamps div.on{border-color:var(--good);background:color-mix(in srgb,var(--good) 15%,var(--panel))}
+.lamps div.on::before{content:"● ";color:var(--good)}
+.lamps div.new{outline:2px solid var(--bad)}
+.stp{border:2px solid var(--per);border-radius:8px;padding:10px 14px;background:var(--panel);margin:.6rem 0}
+.stp .cl{font-family:var(--font-m);font-size:.85rem;background:var(--soft);border-left:4px solid var(--per);padding:4px 8px;border-radius:0 6px 6px 0;overflow-wrap:anywhere}
+.stp .who{display:inline-block;font-size:.72rem;color:var(--bg);background:var(--c);border-radius:4px;padding:0 6px;margin-right:6px}
+.stp h3{margin:.5rem 0 .2rem}
+svg.fig{display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+/* tools */
+.tool{border:1.5px solid var(--hw);border-radius:8px;padding:8px 12px;background:color-mix(in srgb,var(--hw) 5%,var(--panel));margin:.6rem 0}
+.tool input,.tool select{font:inherit;font-size:.88rem;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.tool .row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:.3rem 0}
+/* quiz & practice */
+.qz,.px{border-radius:8px;padding:8px 12px;margin:.7rem 0}
+.qz{border:1.5px dashed var(--gold);background:color-mix(in srgb,var(--gold) 6%,var(--panel))}
+.px{border:1.5px solid var(--per);background:color-mix(in srgb,var(--per) 6%,var(--panel))}
+.qz .qt,.px .pxq{font-weight:600;margin:.2rem 0}
+.qrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.qz input,.px input{font:inherit;width:120px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.qz button,.px button{font:inherit;font-size:.9rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer;text-align:left}
+.qz button.on,.px button.on{border-color:var(--fg)}
+.px .pxh{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.px .pxh b{color:var(--per)}
+.px .pxs{font-size:.82rem;color:var(--muted)}
+.px .pxNext{border-color:var(--per);color:var(--per)}
+.fb{display:none;padding:6px 10px;border-radius:6px;background:var(--soft);margin-top:.3rem}
+.fb.ok{display:block;border-left:4px solid var(--good)}
+.fb.no{display:block;border-left:4px solid var(--bad)}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.wrap{max-width:1400px}
+.code{font-family:var(--font-m);font-size:.8rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px 0;overflow-x:auto;margin:.5rem 0}
+.code div{display:grid;grid-template-columns:3.4em minmax(0,1.1fr) minmax(0,1fr);white-space:pre;line-height:1.55;min-width:900px}
+.code div span.n{color:var(--muted);text-align:right;padding-right:.8em;user-select:none}
+.code div span:nth-child(2){white-space:pre-wrap;overflow-wrap:anywhere;padding-right:8px}
+.code div span.x{white-space:normal;font-family:var(--font-b);color:var(--fg);font-size:.82rem;border-left:1px solid var(--line);padding:0 10px;line-height:1.5}
+.code div.hasx{background:color-mix(in srgb,var(--sw) 7%,transparent)}
+.code div.hasx span.x{border-left:3px solid var(--per)}
+.code div.gap span:nth-child(2){color:var(--muted);font-style:italic;font-family:var(--font-b)}
+.code div.cur{background:color-mix(in srgb,var(--bad) 22%,transparent)!important;font-weight:700}
+#simCode div{grid-template-columns:3.4em 1fr;min-width:0}
+#simCode div span.x{display:none}
+.big{font-size:1.05rem;border:2px solid var(--bad);border-radius:8px;padding:10px 16px;background:var(--panel);margin:1rem 0}
+.big b{color:var(--bad)}
+.sim{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:12px;align-items:start}
+#simVars{font-family:var(--font-m);font-size:.82rem;width:100%}
+#simVars td{padding:2px 8px}
+#simVars td.ch{background:color-mix(in srgb,var(--gold) 40%,var(--panel));font-weight:700}
+#simNote{border-left:4px solid var(--bad);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;min-height:3.2em;margin:.4rem 0}
+.trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:.6rem 0}
+.trio div{border:2px solid var(--c);border-radius:8px;padding:8px 12px;background:var(--panel)}
+.trio b{color:var(--c)}
+td.num{text-align:right;font-family:var(--font-m)}
+</style>
+<div class="wrap">
+<div class="eyebrow">T1A 主线 · 第 6 课（精读附）· 力度表是怎么一格一格走完的 · src/my_waveform.c · 按杰哥 11 月最新代码</div>
+<h1>力度表怎么走完：20 µs 一次，走几格</h1>
+<p class="lede">上次说「500 µs 是 25 次更新」，又说「1500 µs 是 75 次更新」，这是<b>两个不同的通电时长</b>，不是同一次振动。这一页把波形发生器的四段代码按执行顺序读一遍，再用单步模拟器看 100 格的表怎么被铺到不同的通电时长上。</p>
+<p class="note">行号以仓库里的新代码为准，你编辑器里的行号比这里大 1，对照时减 1 即可。</p>
+
+<h2>0. 先解开 25 和 75</h2>
+<div class="big">固件里有一个<b>固定不变</b>的闹钟：<b>每 20 µs</b> 响一次（<code>UPDATE_PERIOD_US = 20</code>，my_waveform.c:21）。每响一次就从表里取一格、改一次占空比。<br>
+所以<b>通电越久，闹钟响的次数越多</b>：　500 µs ÷ 20 = <b>25 次</b>　　1500 µs ÷ 20 = <b>75 次</b>　　2500 µs ÷ 20 = <b>125 次</b>。<br>
+而表永远是 100 格。为了让 100 格正好铺满整段时间，每次往后跳的格数就不一样：　100 ÷ 25 = <b>跳 4 格</b>　　100 ÷ 75 = <b>跳 1.33 格</b>　　100 ÷ 125 = <b>跳 0.8 格</b>。</div>
+<p>下图横轴是<b>真实时间</b>（同一把尺子）。每根竖条是一次闹钟，条的高度是那一刻的占空比。三行用的是同一张表，只是时长不同：</p>
+<div class="scroll"><svg id="cmpF" class="fig" viewBox="0 0 1360 560" style="min-width:1150px" role="img" aria-label="同一张表铺到三种时长"></svg></div>
+<p>三行的形状都是 51% → 100% → 51%，只是被拉长了。<b>时长</b>决定闹钟响几次；<b>表</b>决定每次响时用多大的占空比。</p>
+
+<h2>1. 三样东西，各管一件事</h2>
+<div class="trio">
+<div style="--c:var(--per)"><b>表 <code>pWfData</code>（100 格）</b><br>管<b>形状</b>：每格一个占空比百分数。默认 51→100→51。由 my_electromagnet.c:1027 交进来。</div>
+<div style="--c:var(--gold)"><b>时长 <code>wfPeriodUs</code></b><br>管<b>多长</b>：由 GUI 设的导通时间（经 <code>Ele_CalculateDuration</code>）给出。决定闹钟响几次。</div>
+<div style="--c:var(--bad)"><b>闹钟 CT32B0 · MR0</b><br>管<b>什么时候换格</b>：每 20 µs 一次，固定不变。CT32B0 的 TC 每 1 µs 加 1（:76 PR = 47）。</div>
+</div>
+<p>代码按这个顺序执行：</p>
+<div class="scroll"><svg id="flowF" class="fig" viewBox="0 0 1360 170" style="min-width:1150px" role="img" aria-label="四段代码的执行顺序"></svg></div>
+
+<h2>2. 第 1 段：MyWaveform_StartGenerate（:155~202）—— 算好三个数</h2>
+<p>按键函数调它一次。它不改占空比，只把<b>更新几次</b>、<b>每次走几格</b>、<b>从哪起步</b>算好，存进 <code>wfCh0</code>。</p>
+<div class="code"><div class="hasx" data-l="155"><span class="n">155</span><span>int32_t MyWaveform_StartGenerate(WaveformChannel_te ch, WaveformInfo_ts *pInfo, uint32_t wfPeriodUs, uint8_t cycles)</span><span class="x"><b>谁调</b>：<code>Ele_LeftKeyPressProcess</code> my_electromagnet.c:1035，以及松开 :1097、右键 :1158 / :1218，共 4 处。<br>参数：<code>ch</code> 哪个线圈（CHANNEL_0 = 左）；<code>pInfo</code> 力度表 {地址, 格数}；<code>wfPeriodUs</code> 通电多少 µs；<code>cycles</code> 放几遍，4 处都传 1。</span></div><div data-l="156"><span class="n">156</span><span>{</span><span class="x"></span></div><div class="hasx" data-l="157"><span class="n">157</span><span>  WaveformGen_ts *pGen = 0;</span><span class="x">局部变量，函数结束就没了。</span></div><div data-l="158"><span class="n">158</span><span>  uint32_t periodUs = 0;</span><span class="x"></span></div><div data-l="159"><span class="n">159</span><span>  uint32_t updateTimes = 0;</span><span class="x"></span></div><div data-l="160"><span class="n">160</span><span> </span><span class="x"></span></div><div class="hasx" data-l="161"><span class="n">161</span><span>  pGen = MyWaveform_GetHandle(ch);</span><span class="x">按通道找到发生器：CHANNEL_0 → <code>wfCh0</code>，CHANNEL_1 → <code>wfCh1</code>（:263）。下面的 <code>pGen-&gt;</code> 都是在写它。</span></div><div class="hasx" data-l="162"><span class="n">162</span><span>  if(!pInfo || !cycles || !pGen || (pGen-&gt;sta == WF_STATE_UNINIT))</span><span class="x">没给表、遍数是 0、通道不对，或者开机没初始化过 → 返回 -1，不震。</span></div><div data-l="163"><span class="n">163</span><span>  {</span><span class="x"></span></div><div data-l="164"><span class="n">164</span><span>    return -1;</span><span class="x"></span></div><div data-l="165"><span class="n">165</span><span>  }</span><span class="x"></span></div><div class="hasx" data-l="166"><span class="n">166</span><span>  if(!wfPeriodUs) // zero</span><span class="x">时长是 0 → 返回 -2，不震。</span></div><div data-l="167"><span class="n">167</span><span>  {</span><span class="x"></span></div><div data-l="168"><span class="n">168</span><span>    return -2;</span><span class="x"></span></div><div data-l="169"><span class="n">169</span><span>  }</span><span class="x"></span></div><div class="hasx" data-l="170"><span class="n">170</span><span>  periodUs = wfPeriodUs;</span><span class="x">把时长抄一份，下面要修正它。</span></div><div class="hasx" data-l="171"><span class="n">171</span><span>  if(periodUs &gt; MAX_WAVEFORM_PERIOD_US) //200Hz, period 5ms</span><span class="x">超过 5000 µs 就按 5000 算。</span></div><div data-l="172"><span class="n">172</span><span>  {</span><span class="x"></span></div><div data-l="173"><span class="n">173</span><span>    periodUs = MAX_WAVEFORM_PERIOD_US;</span><span class="x"></span></div><div data-l="174"><span class="n">174</span><span>  }</span><span class="x"></span></div><div class="hasx" data-l="175"><span class="n">175</span><span>  else if(periodUs &lt; MIN_WAVEFORM_PERIOD_US)</span><span class="x">小于 20 µs 就按 20 算，至少要更新 1 次。</span></div><div data-l="176"><span class="n">176</span><span>  {</span><span class="x"></span></div><div data-l="177"><span class="n">177</span><span>    periodUs = MIN_WAVEFORM_PERIOD_US;</span><span class="x"></span></div><div data-l="178"><span class="n">178</span><span>  }</span><span class="x"></span></div><div class="hasx" data-l="179"><span class="n">179</span><span>  updateTimes = periodUs / UPDATE_PERIOD_US;</span><span class="x"><b>关键第 1 句：更新几次 = 通电时长 ÷ 20。</b>整数除法，余数丢掉。<br>500 → <b>25</b> 次；1500 → <b>75</b> 次；1010 → 50 次（多出的 10 µs 不要了）。</span></div><div data-l="180"><span class="n">180</span><span>//  if(updateTimes == 0)</span><span class="x"></span></div><div data-l="181"><span class="n">181</span><span>//  {</span><span class="x"></span></div><div data-l="182"><span class="n">182</span><span>//    return -3;</span><span class="x"></span></div><div data-l="183"><span class="n">183</span><span>//  }</span><span class="x"></span></div><div data-l="184"><span class="n">184</span><span> </span><span class="x"></span></div><div class="hasx" data-l="185"><span class="n">185</span><span>  MyWaveform_Stop(pGen);</span><span class="x">这一路如果上一次还没放完，先停掉。</span></div><div class="hasx" data-l="186"><span class="n">186</span><span>  pGen-&gt;sta = WF_STATE_STOPPED;</span><span class="x">状态先标“停止”。</span></div><div data-l="187"><span class="n">187</span><span> </span><span class="x"></span></div><div data-l="188"><span class="n">188</span><span>  //update waveform information</span><span class="x"></span></div><div class="hasx" data-l="189"><span class="n">189</span><span>  pGen-&gt;info.pWfData = pInfo-&gt;pWfData;</span><span class="x">抄表地址：pwm 时是 <code>gPwmWf</code>，level 时是 <code>wfHighTbl</code>。</span></div><div class="hasx" data-l="190"><span class="n">190</span><span>  pGen-&gt;info.wfDataLen = pInfo-&gt;wfDataLen;</span><span class="x">抄格数：pwm 时 100，level 时 1。</span></div><div class="hasx" data-l="191"><span class="n">191</span><span>  pGen-&gt;periodUs = periodUs;</span><span class="x">记下修正后的时长。</span></div><div data-l="192"><span class="n">192</span><span> </span><span class="x"></span></div><div class="hasx" data-l="193"><span class="n">193</span><span>  pGen-&gt;cycles = cycles &gt; MAX_WAVEFORM_CYCLES_CNT ? MAX_WAVEFORM_CYCLES_CNT : cycles;</span><span class="x">放几遍，最多 10。本项目传 1。</span></div><div class="hasx" data-l="194"><span class="n">194</span><span>  pGen-&gt;curCnt = 0;</span><span class="x">已经放完几遍，清 0。</span></div><div class="hasx" data-l="195"><span class="n">195</span><span>  pGen-&gt;inc = ((uint32_t)(pGen-&gt;info.wfDataLen) &lt;&lt; PHASE_SCALE) / updateTimes;</span><span class="x"><b>关键第 2 句：每次更新往后走几格。</b>格数 ÷ 更新次数，只是先乘了 32768（<code>&lt;&lt; 15</code>），好把小数留住。<br>500：100 ÷ 25 = 4 格 → 存成 4 × 32768 = <b>131072</b>。<br>1500：100 ÷ 75 = 1.333 格 → 存成 <b>43690</b>。</span></div><div class="hasx" data-l="196"><span class="n">196</span><span>  pGen-&gt;acc = pGen-&gt;inc &gt;&gt; 1; //init_val</span><span class="x"><b>关键第 3 句：从第几格起步。</b>半步。<br>500：起点 2 格（65536）；1500：起点 0.667 格（21845）。从半步起，每次取的都是那一段的中间格。</span></div><div class="hasx" data-l="197"><span class="n">197</span><span>  pGen-&gt;updateInterval = UPDATE_PERIOD_US;</span><span class="x">每 20 µs 更新一次，给下面算闹钟用。</span></div><div data-l="198"><span class="n">198</span><span> </span><span class="x"></span></div><div class="hasx" data-l="199"><span class="n">199</span><span>  pGen-&gt;sta = WF_STATE_RUNNING;</span><span class="x">状态标“运行中”。</span></div><div class="hasx" data-l="200"><span class="n">200</span><span>  MyWaveform_Start(pGen);</span><span class="x">真正开始 → 下面第 2 段。</span></div><div class="hasx" data-l="201"><span class="n">201</span><span>  return 0;</span><span class="x">返回 0：成功。</span></div><div data-l="202"><span class="n">202</span><span>}</span><span class="x"></span></div></div>
+<h3>那个 32768 是干什么的</h3>
+<p>1500 µs 时每次要走 1.333 格，但整数存不下 0.333。办法是把<b>一格当成 32768 份</b>来记：</p>
+<div class="scroll"><svg id="fixF" class="fig" viewBox="0 0 1360 170" style="min-width:1150px" role="img" aria-label="一格等于 32768 份"></svg></div>
+<p>注意第 1 次闹钟：acc = 65535，比 2 格（65536）<b>差 1 份</b>，所以用的是第 1 格，第 2 格被跳过。差的这 1 份来自 :195 的整数除法：43690.67 的小数被扔掉了。跳过个别格子不影响整体形状。</p>
+<p><code>acc</code> 记的是“走到第几份”，<code>acc &gt;&gt; 15</code>（÷ 32768，扔掉小数）就是“在第几格”。<code>inc</code> 是每次走多少份。</p>
+
+<h2>3. 第 2 段：MyWaveform_Start（:278~291）—— t = 0，第一次设占空比，定第一个闹钟</h2>
+<div class="code"><div class="hasx" data-l="278"><span class="n">278</span><span>static void MyWaveform_Start(WaveformGen_ts *p)</span><span class="x"><b>谁调</b>：上面 :200。只看 case 0（左线圈），case 1 一模一样，只是换成 MR1。</span></div><div data-l="279"><span class="n">279</span><span>{</span><span class="x"></span></div><div data-l="280"><span class="n">280</span><span>  switch(p-&gt;id)</span><span class="x"></span></div><div data-l="281"><span class="n">281</span><span>  {</span><span class="x"></span></div><div data-l="282"><span class="n">282</span><span>    case 0:</span><span class="x"></span></div><div class="hasx" data-l="283"><span class="n">283</span><span>      MyPWM_SetDuty(p-&gt;id, p-&gt;info.pWfData[p-&gt;acc &gt;&gt; PHASE_SCALE]);</span><span class="x"><b>第一次设占空比</b>：<code>acc &gt;&gt; 15</code> = 起点格号。500 时是第 2 格 → 53%。这一刻就是 t = 0。</span></div><div class="hasx" data-l="284"><span class="n">284</span><span>      MyPWM_Start(p-&gt;id);</span><span class="x">打开 PWM 输出，引脚开始以约 200 kHz 开关（第 8 课）。从这一刻起线圈通电。</span></div><div data-l="285"><span class="n">285</span><span> </span><span class="x"></span></div><div class="hasx" data-l="286"><span class="n">286</span><span>      __disable_irq();</span><span class="x">关中断，下面三句写完之前不许被打断。</span></div><div class="hasx" data-l="287"><span class="n">287</span><span>      p-&gt;nextUpdateTick = LPC_CT32B0-&gt;TC + p-&gt;updateInterval;</span><span class="x">算闹钟：CT32B0 的 TC 每 1 µs 加 1，一直往上数。下次更新的时刻 = 现在 + 20。</span></div><div class="hasx" data-l="288"><span class="n">288</span><span>      LPC_CT32B0-&gt;MR0 = p-&gt;nextUpdateTick;</span><span class="x">把闹钟写进 MR0。TC 数到这个值就触发中断。</span></div><div class="hasx" data-l="289"><span class="n">289</span><span>      LPC_CT32B0-&gt;MCR |= (0x01 &lt;&lt; 0);   //Enable MR0 Interrupt</span><span class="x">打开 MR0 中断（MCR bit0）。</span></div><div class="hasx" data-l="290"><span class="n">290</span><span>      __enable_irq ();</span><span class="x">开中断。</span></div><div data-l="291"><span class="n">291</span><span>      break;</span><span class="x"></span></div></div>
+
+<h2>4. 第 3 段：TIMER32_0_IRQHandler（:87~108）—— 闹钟响了</h2>
+<div class="code"><div class="hasx" data-l="87"><span class="n">87</span><span>void TIMER32_0_IRQHandler(void)</span><span class="x"><b>谁调</b>：硬件。CT32B0 的 TC 数到 MR0（或 MR1）时自动进来。</span></div><div data-l="88"><span class="n">88</span><span>{</span><span class="x"></span></div><div data-l="89"><span class="n">89</span><span> </span><span class="x"></span></div><div class="hasx" data-l="92"><span class="n">92</span><span>  if(LPC_CT32B0-&gt;IR &amp; (0x01 &lt;&lt; 0))   //MR0INT</span><span class="x">是不是 MR0 到点了（左线圈的闹钟）。</span></div><div data-l="93"><span class="n">93</span><span>  {</span><span class="x"></span></div><div data-l="94"><span class="n">94</span><span>    // Writing a logic one to the corresponding IR bit will reset the interrupt. Writing a zero has no effect.</span><span class="x"></span></div><div class="hasx" data-l="95"><span class="n">95</span><span>    LPC_CT32B0-&gt;IR = (0x01 &lt;&lt; 0);    //clear MR0 interrupt</span><span class="x">写 1 清掉这个中断标志。</span></div><div class="hasx" data-l="96"><span class="n">96</span><span>    MyWaveform_UpdateFromIsr(&amp;wfCh0);</span><span class="x"><b>更新一次</b> → 下面第 4 段。</span></div><div data-l="97"><span class="n">97</span><span>    // The next matching value</span><span class="x"></span></div><div class="hasx" data-l="98"><span class="n">98</span><span>    LPC_CT32B0-&gt;MR0 = wfCh0.nextUpdateTick;</span><span class="x">把新的闹钟（更新函数里 +20 后的值）写回 MR0。20 µs 后再进来。</span></div><div data-l="99"><span class="n">99</span><span>  }</span><span class="x"></span></div><div data-l="100"><span class="n">100</span><span> </span><span class="x"></span></div><div class="hasx" data-l="101"><span class="n">101</span><span>  if(LPC_CT32B0-&gt;IR &amp; (0x01 &lt;&lt; 1))   //MR1INT</span><span class="x">右线圈的闹钟，同样的写法。</span></div><div data-l="102"><span class="n">102</span><span>  {</span><span class="x"></span></div><div data-l="103"><span class="n">103</span><span>    // Writing a logic one to the corresponding IR bit will reset the interrupt. Writing a zero has no effect.</span><span class="x"></span></div><div data-l="104"><span class="n">104</span><span>    LPC_CT32B0-&gt;IR = (0x01 &lt;&lt; 1);   //clear MR1 interrupt</span><span class="x"></span></div><div data-l="105"><span class="n">105</span><span>    MyWaveform_UpdateFromIsr(&amp;wfCh1);</span><span class="x"></span></div><div data-l="106"><span class="n">106</span><span>    // The next matching value</span><span class="x"></span></div><div data-l="107"><span class="n">107</span><span>    LPC_CT32B0-&gt;MR1 = wfCh1.nextUpdateTick;;</span><span class="x"></span></div><div data-l="108"><span class="n">108</span><span>  }</span><span class="x"></span></div></div>
+
+<h2>5. 第 4 段：MyWaveform_UpdateFromIsr（:233~259）—— 走一步，取一格</h2>
+<div class="code"><div class="hasx" data-l="233"><span class="n">233</span><span>static void MyWaveform_UpdateFromIsr(WaveformGen_ts *pGen)</span><span class="x"><b>谁调</b>：上面中断 :96 / :105。每 20 µs 一次。</span></div><div data-l="234"><span class="n">234</span><span>{</span><span class="x"></span></div><div data-l="235"><span class="n">235</span><span>  uint32_t idx = 0;</span><span class="x"></span></div><div data-l="236"><span class="n">236</span><span> </span><span class="x"></span></div><div class="hasx" data-l="237"><span class="n">237</span><span>  pGen-&gt;acc += pGen-&gt;inc;</span><span class="x"><b>往后走一步</b>：acc 加上 inc。</span></div><div class="hasx" data-l="238"><span class="n">238</span><span>  idx = (pGen-&gt;acc &gt;&gt; PHASE_SCALE);</span><span class="x"><b>算出现在该用第几格</b>：右移 15 = 除以 32768，再把小数扔掉。</span></div><div class="hasx" data-l="239"><span class="n">239</span><span>  if(idx &lt; pGen-&gt;info.wfDataLen)</span><span class="x">还在表里（格号 &lt; 格数）吗？</span></div><div data-l="240"><span class="n">240</span><span>  {</span><span class="x"></span></div><div class="hasx" data-l="241"><span class="n">241</span><span>    MyPWM_SetDuty(pGen-&gt;id, pGen-&gt;info.pWfData[idx]);</span><span class="x">在 → 用这一格的值改占空比。</span></div><div class="hasx" data-l="242"><span class="n">242</span><span>    pGen-&gt;nextUpdateTick += pGen-&gt;updateInterval;</span><span class="x">闹钟往后挪 20 µs。</span></div><div data-l="243"><span class="n">243</span><span>  }</span><span class="x"></span></div><div class="hasx" data-l="244"><span class="n">244</span><span>  else</span><span class="x">走出表了 = 这一遍放完了。</span></div><div data-l="245"><span class="n">245</span><span>  {</span><span class="x"></span></div><div class="hasx" data-l="246"><span class="n">246</span><span>    pGen-&gt;curCnt++;</span><span class="x">放完的遍数 + 1。</span></div><div class="hasx" data-l="247"><span class="n">247</span><span>    if(pGen-&gt;curCnt &gt;= pGen-&gt;cycles)</span><span class="x">够遍数了吗？本项目只放 1 遍，所以这里一定成立。</span></div><div data-l="248"><span class="n">248</span><span>    {</span><span class="x"></span></div><div class="hasx" data-l="249"><span class="n">249</span><span>      MyWaveform_Stop(pGen);</span><span class="x"><b>停</b>：关 PWM（引脚回低，线圈断电），关 MR0 中断。闹钟不再响。</span></div><div class="hasx" data-l="250"><span class="n">250</span><span>      pGen-&gt;sta = WF_STATE_STOPPED;</span><span class="x">状态标“停止”。</span></div><div data-l="251"><span class="n">251</span><span>    }</span><span class="x"></span></div><div data-l="252"><span class="n">252</span><span>    else</span><span class="x"></span></div><div data-l="253"><span class="n">253</span><span>    {</span><span class="x"></span></div><div class="hasx" data-l="254"><span class="n">254</span><span>      pGen-&gt;acc = pGen-&gt;inc &gt;&gt; 1; //init_val</span><span class="x">还要再放一遍 → acc 回到半步，重新开始。本项目走不到这里。</span></div><div data-l="255"><span class="n">255</span><span>      //pGen-&gt;sta = WF_STATE_RUNNING; //It is already in the &quot;running&quot; state.</span><span class="x"></span></div><div data-l="256"><span class="n">256</span><span>      MyWaveform_Start(pGen);</span><span class="x"></span></div><div data-l="257"><span class="n">257</span><span>    }</span><span class="x"></span></div><div data-l="258"><span class="n">258</span><span>  }</span><span class="x"></span></div><div data-l="259"><span class="n">259</span><span>}</span><span class="x"></span></div></div>
+
+<h2>6. 单步模拟器：亲眼看表怎么走完</h2>
+<div class="tool">
+<div class="row">通电时长 <select id="simDur"><option value="500" selected>500 µs（GUI 默认）</option><option value="1000">1000 µs</option><option value="1500">1500 µs（静音挡 1）</option><option value="2500">2500 µs（静音挡 3）</option><option value="1010">1010 µs（不是 20 的倍数）</option></select>
+用哪张表 <select id="simTbl"><option value="pwm" selected>gPwmWf（静音模式，100 格）</option><option value="lvl">wfHighTbl（正常模式，1 格 {100}）</option></select></div>
+<div class="btns"><button id="simPrev">◀ 上一步</button><button id="simNext">下一步 ▶</button><button id="simEnd">走到底</button><button id="simReset">回到开头</button><span id="simPos" class="note"></span></div>
+</div>
+<div id="simNote"></div>
+<div class="scroll"><svg id="simF" class="fig" viewBox="0 0 1360 470" style="min-width:1150px" role="img" aria-label="表和时间轴"></svg></div>
+<div class="sim">
+<div><table id="simVars"></table></div>
+<div><div class="code" id="simCode"><div data-l="233"><span class="n">233</span><span>static void MyWaveform_UpdateFromIsr(WaveformGen_ts *pGen)</span><span class="x"></span></div><div data-l="234"><span class="n">234</span><span>{</span><span class="x"></span></div><div data-l="235"><span class="n">235</span><span>  uint32_t idx = 0;</span><span class="x"></span></div><div data-l="236"><span class="n">236</span><span> </span><span class="x"></span></div><div data-l="237"><span class="n">237</span><span>  pGen-&gt;acc += pGen-&gt;inc;</span><span class="x"></span></div><div data-l="238"><span class="n">238</span><span>  idx = (pGen-&gt;acc &gt;&gt; PHASE_SCALE);</span><span class="x"></span></div><div data-l="239"><span class="n">239</span><span>  if(idx &lt; pGen-&gt;info.wfDataLen)</span><span class="x"></span></div><div data-l="240"><span class="n">240</span><span>  {</span><span class="x"></span></div><div data-l="241"><span class="n">241</span><span>    MyPWM_SetDuty(pGen-&gt;id, pGen-&gt;info.pWfData[idx]);</span><span class="x"></span></div><div data-l="242"><span class="n">242</span><span>    pGen-&gt;nextUpdateTick += pGen-&gt;updateInterval;</span><span class="x"></span></div><div data-l="243"><span class="n">243</span><span>  }</span><span class="x"></span></div><div data-l="244"><span class="n">244</span><span>  else</span><span class="x"></span></div><div data-l="245"><span class="n">245</span><span>  {</span><span class="x"></span></div><div data-l="246"><span class="n">246</span><span>    pGen-&gt;curCnt++;</span><span class="x"></span></div><div data-l="247"><span class="n">247</span><span>    if(pGen-&gt;curCnt &gt;= pGen-&gt;cycles)</span><span class="x"></span></div><div data-l="248"><span class="n">248</span><span>    {</span><span class="x"></span></div><div data-l="249"><span class="n">249</span><span>      MyWaveform_Stop(pGen);</span><span class="x"></span></div><div data-l="250"><span class="n">250</span><span>      pGen-&gt;sta = WF_STATE_STOPPED;</span><span class="x"></span></div><div data-l="251"><span class="n">251</span><span>    }</span><span class="x"></span></div><div data-l="252"><span class="n">252</span><span>    else</span><span class="x"></span></div><div data-l="253"><span class="n">253</span><span>    {</span><span class="x"></span></div><div data-l="254"><span class="n">254</span><span>      pGen-&gt;acc = pGen-&gt;inc &gt;&gt; 1; //init_val</span><span class="x"></span></div><div data-l="255"><span class="n">255</span><span>      //pGen-&gt;sta = WF_STATE_RUNNING; //It is already in the &quot;running&quot; state.</span><span class="x"></span></div><div data-l="256"><span class="n">256</span><span>      MyWaveform_Start(pGen);</span><span class="x"></span></div><div data-l="257"><span class="n">257</span><span>    }</span><span class="x"></span></div><div data-l="258"><span class="n">258</span><span>  }</span><span class="x"></span></div><div data-l="259"><span class="n">259</span><span>}</span><span class="x"></span></div></div></div>
+</div>
+
+<div class="px"><div class="pxq">自己算：通电 1000 µs，闹钟响几次？inc 是多少？第一次（t = 0）用第几格？</div>
+<div class="qrow">次数 <input id="q1"> inc <input id="q2"> 第几格 <input id="q3"> <button id="qGo">对答案</button></div>
+<div class="fb" id="qFb"></div></div>
+
+<h2>7. 汇总：这几段读写了什么</h2>
+<table>
+<tr><th>变量（都在 <code>wfCh0</code> 里）</th><th>写</th><th>读</th><th>500 µs 时</th><th>1500 µs 时</th></tr>
+<tr><td><code>updateTimes</code>（局部）</td><td>:179</td><td>:195</td><td class="num">25</td><td class="num">75</td></tr>
+<tr><td><code>info.pWfData / wfDataLen</code></td><td>:189、:190</td><td>:239、:241、:283</td><td>gPwmWf / 100</td><td>gPwmWf / 100</td></tr>
+<tr><td><code>inc</code></td><td>:195</td><td>:237</td><td class="num">131072（4 格）</td><td class="num">43690（1.333 格）</td></tr>
+<tr><td><code>acc</code></td><td>:196、:237、:254</td><td>:238、:283</td><td class="num">起点 65536（2 格）</td><td class="num">起点 21845（0.667 格）</td></tr>
+<tr><td><code>nextUpdateTick</code></td><td>:242、:287</td><td>:98、:288</td><td colspan="2">每次 +20</td></tr>
+<tr><td><code>curCnt / cycles</code></td><td>:194、:246 / :193</td><td>:247</td><td colspan="2">放 1 遍就停</td></tr>
+<tr><td>CT32B0 → MR0、MCR</td><td>:288、:289、:98、:311</td><td>硬件</td><td colspan="2">TC 每 1 µs 加 1，到 MR0 就进中断</td></tr>
+<tr><td>CT32B1 → MR0（占空比）</td><td><code>MyPWM_SetDuty</code> :241、:283</td><td>硬件</td><td>25 次</td><td>75 次</td></tr>
+</table>
+<div class="think"><b>记住三句</b>：① 闹钟固定 20 µs 一次，<b>次数 = 时长 ÷ 20</b>（:179）。② 每次走 <b>100 ÷ 次数</b> 格，乘 32768 存小数（:195）。③ 走出第 99 格就停，正好停在 <b>次数 × 20 µs</b>（:239、:249）。</div>
+</div>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const NS='http://www.w3.org/2000/svg';
+function el(p,t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e}
+function T(p,x,y,s,a){const e=el(p,'text',Object.assign({x,y,'font-size':12,fill:'var(--fg)','font-family':'var(--font-b)'},a||{}));e.textContent=s;return e}
+const fr=x=>(Math.floor(x*1000+1e-9)/1000).toFixed(3);
+const DUTY=[241, 239, 236, 234, 231, 229, 227, 224, 222, 219, 217, 214, 212, 210, 207, 205, 202, 200, 198, 195, 193, 190, 188, 186, 183, 181, 178, 176, 174, 171, 169, 166, 164, 161, 159, 157, 154, 152, 149, 147, 145, 142, 140, 137, 135, 133, 130, 128, 125, 123, 121, 118, 116, 113, 111, 108, 106, 104, 101, 99, 96, 94, 92, 89, 87, 84, 82, 80, 77, 75, 72, 70, 67, 65, 63, 60, 58, 55, 53, 51, 48, 46, 43, 41, 39, 36, 34, 31, 29, 27, 24, 22, 19, 17, 14, 12, 10, 7, 5, 2, 0];
+const PWM=[];for(let i=0;i<50;i++){PWM[i]=i+51;PWM[99-i]=i+51}
+const LVL=[100];
+function plan(dur,tbl){let p=dur>5000?5000:(dur<20?20:dur);const n=Math.floor(p/20);const len=tbl.length;const inc=Math.floor((len<<15)/n);let acc=inc>>1;const steps=[];
+ steps.push({t:0,k:0,acc,idx:acc>>15,kind:'start'});
+ let k=0;while(true){k++;acc+=inc;const idx=Math.floor(acc/32768);if(idx<len){steps.push({t:k*20,k,acc,idx,kind:'upd'})}else{steps.push({t:k*20,k,acc,idx,kind:'stop'});break}}
+ return {p,n,len,inc,acc0:inc>>1,steps}}
+
+/* fig 0: compare */
+(function(){const s=$('cmpF');const X0=110,W=1200,US=W/2500;
+ T(s,20,26,'横轴：真实时间（同一把尺子，0 ~ 2500 µs）　每根竖条 = 一次闹钟（20 µs）　条高 = 那一刻的占空比',{'font-weight':600});
+ [[500,'500 µs','GUI 默认'],[1500,'1500 µs','静音挡 1'],[2500,'2500 µs','静音挡 3']].forEach(([d,lab,sub],r)=>{
+  const y0=60+r*165,H=110,base=y0+H;const P=plan(d,PWM);
+  T(s,20,y0+40,lab,{'font-weight':700,'font-size':15});T(s,20,y0+60,sub,{fill:'var(--muted)'});
+  T(s,20,y0+86,P.n+' 次',{'font-weight':700,fill:'var(--bad)','font-size':15});T(s,20,y0+104,'每次跳 '+(100/P.n).toFixed(P.n===25?0:2)+' 格',{'font-size':11.5,fill:'var(--muted)'});
+  el(s,'line',{x1:X0,y1:base,x2:X0+W,y2:base,stroke:'var(--line)'});
+  const bw=20*US;
+  P.steps.forEach(st=>{if(st.kind==='stop')return;const v=PWM[st.idx];const h=v/100*H;el(s,'rect',{x:X0+st.t*US+0.6,y:base-h,width:Math.max(bw-1.2,1),height:h,fill:'color-mix(in srgb,var(--per) 70%,var(--panel))'})});
+  const xe=X0+P.n*20*US;el(s,'line',{x1:xe,y1:y0-4,x2:xe,y2:base+6,stroke:'var(--bad)','stroke-width':2,'stroke-dasharray':'4 3'});
+  const far=xe>X0+W-200;T(s,far?xe-6:xe+6,y0+10,'停（'+P.n+' × 20 = '+P.n*20+' µs）',{fill:'var(--bad)','font-size':11.5,'text-anchor':far?'end':'start'});
+  for(let t=0;t<=2500;t+=500){el(s,'line',{x1:X0+t*US,y1:base,x2:X0+t*US,y2:base+5,stroke:'var(--muted)'});T(s,X0+t*US,base+18,t+' µs',{'font-size':10.5,fill:'var(--muted)','text-anchor':'middle'})}
+  if(r===0){T(s,X0+4,y0+10,'每根条宽 20 µs',{'font-size':11,fill:'var(--muted)'})}
+ })})();
+
+/* flow */
+(function(){const s=$('flowF');const B=[[20,'① StartGenerate :155','按键函数调 1 次','算 次数 / inc / acc','gold'],[360,'② Start :278','t = 0','设第 1 格 · 开 PWM · 定闹钟 +20','per'],[700,'③ 中断 :87','CT32B0 到点（硬件）','调 ④ · 闹钟写回 MR0','bad'],[1040,'④ UpdateFromIsr :233','走一步 · 取一格','还在表里 → 改占空比 +20；走出 → 停','hw']];
+ B.forEach(([x,a,b,c,col])=>{el(s,'rect',{x,y:30,width:300,height:90,rx:8,fill:'var(--panel)',stroke:'var(--'+col+')','stroke-width':2});T(s,x+12,56,a,{'font-weight':700});T(s,x+12,80,b,{'font-size':12,fill:'var(--muted)'});T(s,x+12,104,c,{'font-size':12})});
+ [[320,360],[660,700],[1000,1040]].forEach(([a,b])=>{el(s,'line',{x1:a,y1:75,x2:b-4,y2:75,stroke:'var(--fg)','stroke-width':1.5});el(s,'path',{d:`M${b-4} 75 l-8 -5 v10z`,fill:'var(--fg)'})});
+ el(s,'path',{d:'M1190 120 v30 H850 v-26',fill:'none',stroke:'var(--bad)','stroke-width':1.5,'stroke-dasharray':'5 3'});el(s,'path',{d:'M850 122 l-5 8 h10z',fill:'var(--bad)'});
+ T(s,900,145,'每 20 µs 重复一次 ③ → ④，直到走出表',{fill:'var(--bad)','font-size':12});})();
+
+/* fixed point */
+(function(){const s=$('fixF');const X0=60,CW=300;
+ T(s,20,22,'把格子放大看：1 格 = 32768 份。下面是 1500 µs 时 acc 的前几步（inc = 43690 份 ≈ 1.333 格）',{'font-weight':600});
+ for(let i=0;i<4;i++){el(s,'rect',{x:X0+i*CW,y:50,width:CW,height:44,fill:i%2?'var(--soft)':'var(--panel)',stroke:'var(--line)'});T(s,X0+i*CW+CW/2,77,'第 '+i+' 格',{'text-anchor':'middle','font-weight':600});T(s,X0+i*CW,112,(i*32768)+'',{'font-size':11,fill:'var(--muted)','text-anchor':'middle'})}
+ T(s,X0+4*CW,112,'131072',{'font-size':11,fill:'var(--muted)','text-anchor':'middle'});
+ const P=plan(1500,PWM);P.steps.slice(0,3).forEach((st,i)=>{const x=X0+st.acc/32768*CW;el(s,'line',{x1:x,y1:42,x2:x,y2:100,stroke:'var(--bad)','stroke-width':2.5});el(s,'circle',{cx:x,cy:42,r:5,fill:'var(--bad)'});
+  T(s,x,138,(i?'第 '+i+' 次闹钟':'t = 0 起点')+'：acc = '+st.acc,{'font-size':11.5,'text-anchor':'middle',fill:'var(--bad)'});T(s,x,156,'= '+fr(st.acc/32768)+' 格 → 用第 '+st.idx+' 格',{'font-size':11.5,'text-anchor':'middle'})});})();
+
+/* simulator */
+const SC=$('simF');let P,k=0,TBL;
+const NOTE_START=(P)=>`<b>:179 / :195 / :196 先算好</b>：更新次数 = ${P.p} ÷ 20 = <b>${P.n}</b>；inc = ${P.len} × 32768 ÷ ${P.n} = <b>${P.inc}</b>（${fr(P.inc/32768)} 格）；acc 起点 = inc ÷ 2 = <b>${P.acc0}</b>（${fr(P.acc0/32768)} 格）。`;
+function stepNote(st){if(st.kind==='start')return NOTE_START(P)+`<br><b>:283 t = 0</b>：acc &gt;&gt; 15 = 第 <b>${st.idx}</b> 格 = ${TBL[st.idx]}%，设好占空比；:284 开 PWM，线圈开始通电；:287~289 闹钟定在 t = 20。`;
+ if(st.kind==='upd')return `<b>t = ${st.t} µs，第 ${st.k} 次闹钟</b>。:237 acc += ${P.inc} → ${st.acc}；:238 ÷ 32768 = ${fr(st.acc/32768)}，扔掉小数 → 第 <b>${st.idx}</b> 格；:239 ${st.idx} &lt; ${P.len}，还在表里；:241 占空比改成 <b>${TBL[st.idx]}%</b>；:242 闹钟 +20。`;
+ return `<b>t = ${st.t} µs，第 ${st.k} 次闹钟</b>。:237 acc → ${st.acc}；:238 → 第 <b>${st.idx}</b> 格；:239 ${st.idx} ≥ ${P.len}，<b>走出表了</b>；:246 curCnt = 1；:247 够 1 遍 → :249 <b>停 PWM，线圈断电</b>。实际通电 <b>${st.t} µs</b>${P.p!==st.t?'':''}${(+$('simDur').value)!==st.t?`（设的是 ${$('simDur').value}，余数 ${(+$('simDur').value)-st.t} µs 被 :179 丢掉）`:''}。`}
+function lines(st){if(st.kind==='start')return[];if(st.kind==='upd')return[237,238,239,241,242];return[237,238,239,244,246,247,249,250]}
+function draw(){const st=P.steps[k];SC.innerHTML='';
+ const X0=60,W=1240;const len=P.len;const cw=W/(len===1?1:100);
+ T(SC,20,22,'表（'+(len===1?'wfHighTbl，只有 1 格':'gPwmWf，100 格')+'）：红 = 这一步用的格；蓝 = 之前用过的格；灰 = 还没用到或被跳过的格；红竖线 = acc 的精确位置',{'font-weight':600});
+ const used=new Set(P.steps.slice(0,k+1).filter(s=>s.kind!=='stop').map(s=>s.idx));
+ const tb=170,TH=120;
+ for(let i=0;i<len;i++){const v=TBL[i],h=v/100*TH;const cur=st.kind!=='stop'&&i===st.idx;el(SC,'rect',{x:X0+i*cw+0.5,y:tb-h,width:cw-1,height:h,fill:cur?'var(--bad)':(used.has(i)?'color-mix(in srgb,var(--per) 75%,var(--panel))':'color-mix(in srgb,var(--muted) 25%,var(--panel))')});
+  if(len===1||i%10===0)T(SC,X0+i*cw+(len===1?cw/2:0),tb+15,len===1?'第 0 格 = 100%':''+i,{'font-size':10.5,fill:'var(--muted)','text-anchor':len===1?'middle':'start'})}
+ if(len>1)T(SC,X0+W,tb+15,'100',{'font-size':10.5,fill:'var(--muted)','text-anchor':'end'});
+ const ax=X0+Math.min(st.acc/32768,len)*cw;el(SC,'line',{x1:ax,y1:36,x2:ax,y2:tb+2,stroke:'var(--bad)','stroke-width':2});
+ T(SC,Math.min(ax+5,X0+W-260),46,'acc = '+st.acc+' = '+fr(st.acc/32768)+' 格'+(st.kind==='stop'?'（出界）':''),{'font-size':12,fill:'var(--bad)','font-weight':600});
+ const y1=230,H2=150,b2=y1+H2;
+ T(SC,20,y1-12,'时间轴（0 ~ '+P.n*20+' µs，每格 20 µs，共 '+P.n+' 格）：引脚此刻的占空比',{'font-weight':600});
+ el(SC,'line',{x1:X0,y1:b2,x2:X0+W,y2:b2,stroke:'var(--line)'});
+ const tw=W/P.n;
+ P.steps.slice(0,k+1).forEach(s=>{if(s.kind==='stop')return;const v=TBL[s.idx],h=v/100*H2;el(SC,'rect',{x:X0+s.t/20*tw+0.5,y:b2-h,width:Math.max(tw-1,0.8),height:h,fill:s===st?'var(--bad)':'color-mix(in srgb,var(--per) 75%,var(--panel))'})});
+ const tick=P.n<=30?1:(P.n<=80?5:25);for(let i=0;i<=P.n;i+=tick){el(SC,'line',{x1:X0+i*tw,y1:b2,x2:X0+i*tw,y2:b2+5,stroke:'var(--muted)'});T(SC,X0+i*tw,b2+18,(i*20)+'',{'font-size':10,fill:'var(--muted)','text-anchor':'middle'})}
+ if(st.kind==='stop'){el(SC,'line',{x1:X0+W,y1:y1,x2:X0+W,y2:b2+5,stroke:'var(--bad)','stroke-width':2.5});T(SC,X0+W-6,y1+14,'停：PWM 关，引脚回低',{'text-anchor':'end',fill:'var(--bad)','font-weight':700})}
+ else{const xn=X0+st.t/20*tw;el(SC,'path',{d:`M${xn} ${b2+26} l-6 10 h12z`,fill:'var(--bad)'});T(SC,xn,b2+50,'t = '+st.t+' µs',{'text-anchor':'middle',fill:'var(--bad)','font-size':12,'font-weight':600})}
+ $('simNote').innerHTML=stepNote(st);$('simPos').textContent=`第 ${k+1} / ${P.steps.length} 步`;
+ const prev=k?P.steps[k-1]:null;
+ const rows=[['t（µs）',st.t,prev&&prev.t],['第几次闹钟',st.kind==='start'?'—（起点）':st.k,prev&&prev.k],['inc（份）',P.inc+'  ('+fr(P.inc/32768)+' 格)',P.inc+'  ('+fr(P.inc/32768)+' 格)'],['acc（份）',st.acc,prev&&prev.acc],['acc ÷ 32768',fr(st.acc/32768),prev&&fr(prev.acc/32768)],['idx = acc >> 15',st.idx,prev&&prev.idx],['pWfData[idx]（%）',st.kind==='stop'?'—（出界不读）':TBL[st.idx],prev&&(prev.kind==='stop'?'—（出界不读）':TBL[prev.idx])],['Freq200kHzDuty → CT32B1 MR0',st.kind==='stop'?'停':DUTY[TBL[st.idx]],prev&&(prev.kind==='stop'?'停':DUTY[TBL[prev.idx]])],['下一次闹钟（µs）',st.kind==='stop'?'关掉了':st.t+20,prev&&(prev.kind==='stop'?'关掉了':prev.t+20)]];
+ $('simVars').innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td class="${prev&&String(r[1])!==String(r[2])?'ch':''}">${r[1]}</td></tr>`).join('');
+ const L=lines(st);$('simCode').querySelectorAll('div[data-l]').forEach(d=>d.classList.toggle('cur',L.includes(+d.dataset.l)));
+ $('simPrev').disabled=k===0;$('simNext').disabled=$('simEnd').disabled=k===P.steps.length-1;}
+function rebuild(){TBL=$('simTbl').value==='pwm'?PWM:LVL;P=plan(+$('simDur').value,TBL);k=0;draw()}
+$('simDur').onchange=rebuild;$('simTbl').onchange=rebuild;
+$('simPrev').onclick=()=>{if(k>0){k--;draw()}};$('simNext').onclick=()=>{if(k<P.steps.length-1){k++;draw()}};
+$('simEnd').onclick=()=>{k=P.steps.length-1;draw()};$('simReset').onclick=()=>{k=0;draw()};
+rebuild();
+
+$('qGo').onclick=()=>{const a=+$('q1').value,b=+$('q2').value,c=+$('q3').value;const ok=a===50&&b===65536&&c===1;const f=$('qFb');
+ f.className='fb '+(ok?'ok':'no');
+ f.innerHTML=(ok?'对。':'再对一下：')+'1000 ÷ 20 = <b>50</b> 次；inc = 100 × 32768 ÷ 50 = <b>65536</b>（正好 2 格）；acc 起点 = 32768（1 格）→ t = 0 用<b>第 1 格</b>（52%），之后是第 3、5、7 … 99 格，第 50 次闹钟（t = 1000）走到 101 格出界，停。可以在上面模拟器选 1000 µs 验证。'};
+})();
+</script>
