@@ -100,6 +100,31 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 .fields{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1fr 1fr 4fr 6fr;font-size:.78rem;text-align:center;margin-top:2px}
 .fields div{border:1px solid var(--line);padding:3px 2px;background:var(--panel)}
 td.m,code.m{font-family:var(--font-m);font-size:.82rem}
+.chips{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:.6rem 0}
+.chips div{border:1.5px solid var(--per);border-radius:8px;padding:6px 10px;background:var(--panel)}
+.chips small{display:block;color:var(--muted);font-size:.74rem}
+.chips b{display:block;font-family:var(--font-m);font-size:.9rem}
+.chips span{display:block;font-size:.76rem;color:var(--muted)}
+table.qt{width:100%}
+table.qt tr.gui td{background:color-mix(in srgb,var(--bad) 10%,var(--panel))}
+table.qt tr.gui td:first-child{border-left:4px solid var(--bad)}
+.faq{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:.5rem 0}
+.faq div{border-left:4px solid var(--per);background:var(--soft);padding:6px 12px;border-radius:0 6px 6px 0;font-size:.9rem}
+.faq b.q{display:block;color:var(--per)}
+details.dt{border:1.5px solid var(--line);border-radius:8px;margin:.6rem 0;background:var(--panel)}
+details.dt>summary{cursor:pointer;padding:8px 12px;font-weight:600}
+details.dt[open]>summary{border-bottom:1px solid var(--line)}
+details.dt>*:not(summary){margin-left:12px;margin-right:12px}
+.rhead,.rw>summary{display:grid;grid-template-columns:8em 10em 9em 8em minmax(0,1fr);gap:8px;align-items:center;font-size:.84rem}
+.rhead{font-size:.76rem;color:var(--muted);padding:6px 10px 2px 26px}
+details.rw{border-bottom:1px solid var(--line)}
+details.rw>summary{padding:4px 10px;cursor:pointer;font-family:var(--font-m)}
+details.rw>summary span:last-child{font-family:var(--font-b)}
+details.rw.rk-none>summary{color:var(--muted)}
+details.rw.rk-gui>summary{background:color-mix(in srgb,var(--bad) 12%,var(--panel))}
+details.rw.rk-mouse>summary,details.rw.rk-kb>summary{background:color-mix(in srgb,var(--per) 10%,var(--panel))}
+details.rw.rk-ctl>summary{background:color-mix(in srgb,var(--hw) 10%,var(--panel))}
+details.rw .rb{padding:6px 12px 10px 26px;font-size:.88rem;line-height:1.7}
 .k-gui{color:var(--bad);font-weight:700}
 </style>
 <div class="wrap">
@@ -109,16 +134,65 @@ td.m,code.m{font-family:var(--font-m);font-size:.82rem}
 <div class="srch"><input type="search" id="q" placeholder="搜索，例如 USB、端点、0x20004000" aria-label="搜索"><span class="note" id="cnt"></span></div>
 <div class="toc" id="toc"></div>
 
-<section class="entry" id="q1" data-key="USB RAM 端点 命令/状态表 EP list 缓冲区 0x20004000 0x20004500 0x20004480 receive_buff EP4 EP3 ReadEP WriteEP">
+<section class="entry" id="q1" data-key="USB RAM 端点 命令/状态表 EP list 缓冲区 0x20004000 0x20004500 0x20004480 receive_buff EP4 EP3 ReadEP WriteEP Active NBytes">
 <h2>Q1　USB RAM：端点命令 / 状态表和数据缓冲区</h2>
-<div class="one">USB 控制器只认 <b>USB RAM</b>（<code>0x20004000 ~ 0x200047FF</code>，2 KB）。最前面是一张 <b>20 格的“端点命令 / 状态表”</b>，每格 4 字节，告诉硬件“这个端点的数据放在哪、能收几个字节、现在能不能用”；从 <code>0x20004100</code> 起是 <b>每格 64 字节的数据缓冲区</b>。GUI 通信用的是表里的 <span class="k-gui">EP4 OUT</span>（收）和 <span class="k-gui">EP3 IN</span>（发），软件要把数据和普通 SRAM 里的 <code>receive_buff</code> / 发送数组<b>来回拷贝</b>。</div>
 
-<h3>1. 整块 USB RAM 长什么样（点任意一格看说明）</h3>
-<div class="scroll"><svg id="mapF" class="fig" viewBox="0 0 1360 760" style="min-width:1150px" role="img" aria-label="USB RAM 布局"></svg></div>
-<div id="detail">点左边表格或右边缓冲区的任意一格。</div>
-<p class="note">颜色：<span class="k-gui">红 = GUI 通信</span>　蓝 = 鼠标 / 键盘报告　紫 = 端点 0 控制传输（插上电脑时枚举用）　灰 = 分配了但没用。</p>
+<div class="chips">
+<div><small>USB RAM</small><b>0x2000_4000 ~ 47FF</b><span>2 KB，USB 控制器只认这里</span></div>
+<div><small>端点表</small><b>0x2000_4000 ~ 404F</b><span>20 格 × 4 字节</span></div>
+<div><small>数据缓冲区</small><b>0x2000_4100 ~ 45FF</b><span>20 块 × 64 字节</span></div>
+<div><small>双缓冲</small><b>关</b><span>只用 buf0（usbcfg.h:76）</span></div>
+<div><small>每格 32 位</small><b>A · NBytes · Offset</b><span>bit31 A：1 交给硬件，0 做完了；bit25~16 字节数；bit15~0 地址÷64</span></div>
+</div>
 
-<h3>2. 表里每一格（32 位）怎么拆</h3>
+<h3>常用的 5 个端点</h3>
+<table class="qt">
+<tr><th>端点</th><th>方向</th><th>干什么</th><th>表格地址</th><th>缓冲区</th><th>固件里谁碰它</th></tr>
+<tr class="gui"><td class="m">0x04</td><td>电脑 → 鼠标</td><td><b>GUI 发来的命令</b>（接口 2）</td><td class="m">0x2000_4040</td><td class="m">0x2000_4500</td><td>PC_Communicate → <code>Usb_Read_Bytes</code> → <code>nsAPI_USB_ReadEP</code> 拷到 receive_buff</td></tr>
+<tr class="gui"><td class="m">0x83</td><td>鼠标 → 电脑</td><td><b>回给 GUI</b>（接口 2；调试日志也走这里）</td><td class="m">0x2000_4038</td><td class="m">0x2000_4480</td><td><code>Protocol_Send</code> → <code>nsAPI_USB_WriteEP</code></td></tr>
+<tr><td class="m">0x81</td><td>鼠标 → 电脑</td><td>鼠标报告：按键、位移（接口 0）</td><td class="m">0x2000_4018</td><td class="m">0x2000_4280</td><td>device.c:1216 <code>nsAPI_USB_WriteEP(HID_EP1_IN…)</code></td></tr>
+<tr><td class="m">0x82</td><td>鼠标 → 电脑</td><td>键盘报告（接口 1）</td><td class="m">0x2000_4028</td><td class="m">0x2000_4380</td><td>device.c:1237、:1248</td></tr>
+<tr><td class="m">0x00 / 0x80</td><td>双向</td><td>端点 0：插上电脑时枚举、读描述符</td><td class="m">4000 / 4004 / 4008</td><td class="m">4100 / 4140 / 4180</td><td>usbcore.c（USB 中断里处理）</td></tr>
+</table>
+
+<h3>常问的 6 个问题</h3>
+<div class="faq">
+<div><b class="q">GUI 发来的包落在哪？</b>0x2000_4500 起 64 字节（EP4 OUT buf0）。表格那一格在 0x2000_4040。</div>
+<div><b class="q">鼠标回 GUI 的包写在哪？</b>0x2000_4480 起（EP3 IN buf0），表格那一格在 0x2000_4038。</div>
+<div><b class="q">怎么知道收到了 / 能发了？</b>看表格那一格的 bit31（A）：<b>A = 0</b> 就是“收到了”或“上一包已发走”。函数 <code>nsAPI_USB_EP_Status</code>（usbhw.c:1429）。</div>
+<div><b class="q">收到了几个字节？</b>64 − 表格里剩下的 NBytes（bit25~16）。usbhw.c:1183。</div>
+<div><b class="q">端点地址 → 表格第几格？</b>(端点号 × 2 + 方向) × 2，方向 OUT=0、IN=1；每格 4 字节。例：0x04 → (4×2+0)×2 = 16 → 0x2000_4000 + 16×4 = <b>0x2000_4040</b>。</div>
+<div><b class="q">表格里的 Offset 怎么变回地址？</b>缓冲区地址 = 0x2000_0000 + Offset × 64。例：0x0114 × 64 = 0x4500 → <b>0x2000_4500</b>。</div>
+</div>
+
+<h3>详细内容（点开）</h3>
+<details class="dt"><summary>① 全部 20 格：每格的地址、初始化值、缓冲区、用途（每行可以再点开）</summary>
+<div class="rhead"><span>表格地址</span><span>格子</span><span>初始化后的值</span><span>缓冲区</span><span>用途</span></div>
+<details class="rw rk-ctl"><summary><span>0x2000_4000</span><span>EP0 OUT</span><span>0x00400104</span><span>0x2000_4100</span><span>端点 0：电脑发来的控制数据（枚举时）</span></summary><div class="rb">第 0 格（偏移 0x00）→ 缓冲区 0x2000_4100 ~ 0x2000_413F。<br>初始化后的值 <code>0x00400104</code>。拆开：A = 0，D = 0，NBytes = 64，Address Offset = 0x0104 → 缓冲区 0x2000_0000 + 0x0104 × 64 = 0x2000_4100。<br><b>谁碰它</b>：USB 中断里由 usbcore.c 处理（读：usbcore.c:138）。</div></details>
+<details class="rw rk-ctl"><summary><span>0x2000_4004</span><span>SETUP</span><span>0x00000105</span><span>0x2000_4140</span><span>端点 0：SETUP 包（8 字节，枚举时“请把描述符给我”）</span></summary><div class="rb">第 1 格（偏移 0x04）→ 缓冲区 0x2000_4140 ~ 0x2000_417F。<br>初始化后的值 <code>0x00000105</code>。拆开：A = 0，D = 0，NBytes = 0，Address Offset = 0x0105 → 缓冲区 0x2000_0000 + 0x0105 × 64 = 0x2000_4140。<br><b>谁碰它</b>：USB 中断里由 usbcore.c 处理（usbcore.c:170）。硬件只往这里写前 8 字节。</div></details>
+<details class="rw rk-ctl"><summary><span>0x2000_4008</span><span>EP0 IN</span><span>0x00400106</span><span>0x2000_4180</span><span>端点 0：回给电脑的控制数据（描述符等）</span></summary><div class="rb">第 2 格（偏移 0x08）→ 缓冲区 0x2000_4180 ~ 0x2000_41BF。<br>初始化后的值 <code>0x00400106</code>。拆开：A = 0，D = 0，NBytes = 64，Address Offset = 0x0106 → 缓冲区 0x2000_0000 + 0x0106 × 64 = 0x2000_4180。<br><b>谁碰它</b>：usbcore.c:121 发描述符等数据。</div></details>
+<details class="rw rk-none"><summary><span>0x2000_400C</span><span>（保留）</span><span>—</span><span>0x2000_41C0</span><span>手册规定保留；代码不写这一格，但仍给它留了 64 字节</span></summary><div class="rb">第 3 格（偏移 0x0C）→ 缓冲区 0x2000_41C0 ~ 0x2000_41FF。<br>初始化后的值 <code>—</code>。代码不写这一格（usbhw.c:242 只是 addr++ 跳过）。</div></details>
+<details class="rw rk-none"><summary><span>0x2000_4010</span><span>EP1 OUT buf0</span><span>0x40400108</span><span>0x2000_4200</span><span>没用到（描述符里没有这个端点）</span></summary><div class="rb">第 4 格（偏移 0x10）→ 缓冲区 0x2000_4200 ~ 0x2000_423F。<br>端点地址 <code>0x01</code>：(端点号 1 × 2 + OUT 0) × 2 = 第 4 格 → 0x2000_4000 + 4 × 4 = 0x2000_4010。<br>初始化后的值 <code>0x40400108</code>。拆开：A = 0，D = 1，NBytes = 64，Address Offset = 0x0108 → 缓冲区 0x2000_0000 + 0x0108 × 64 = 0x2000_4200。</div></details>
+<details class="rw rk-none"><summary><span>0x2000_4014</span><span>EP1 OUT buf1</span><span>0x40400109</span><span>0x2000_4240</span><span>双缓冲的第 2 块。本项目 USE_DOUBLE_BUFFER = 0（usbcfg.h:76），不用</span></summary><div class="rb">第 5 格（偏移 0x14）→ 缓冲区 0x2000_4240 ~ 0x2000_427F。<br>端点地址 <code>0x01</code>：(端点号 1 × 2 + OUT 0) × 2 + 1（buf1） = 第 5 格 → 0x2000_4000 + 5 × 4 = 0x2000_4014。<br>初始化后的值 <code>0x40400109</code>。拆开：A = 0，D = 1，NBytes = 64，Address Offset = 0x0109 → 缓冲区 0x2000_0000 + 0x0109 × 64 = 0x2000_4240。</div></details>
+<details class="rw rk-mouse"><summary><span>0x2000_4018</span><span>EP1 IN buf0</span><span>0x4040010A</span><span>0x2000_4280</span><span>接口 0 鼠标：位移、按键报告 → 电脑（0x81）</span></summary><div class="rb">第 6 格（偏移 0x18）→ 缓冲区 0x2000_4280 ~ 0x2000_42BF。<br>端点地址 <code>0x81</code>：(端点号 1 × 2 + IN 1) × 2 = 第 6 格 → 0x2000_4000 + 6 × 4 = 0x2000_4018。<br>初始化后的值 <code>0x4040010A</code>。拆开：A = 0，D = 1，NBytes = 64，Address Offset = 0x010A → 缓冲区 0x2000_0000 + 0x010A × 64 = 0x2000_4280。<br><b>谁碰它</b>：发：device.c:1216 先看 <code>nsAPI_USB_EP_Status(HID_EP1_IN)</code>，空闲就 <code>nsAPI_USB_WriteEP</code> 把 MouseInReport 拷进来。</div></details>
+<details class="rw rk-none"><summary><span>0x2000_401C</span><span>EP1 IN buf1</span><span>0x4040010B</span><span>0x2000_42C0</span><span>双缓冲的第 2 块。本项目 USE_DOUBLE_BUFFER = 0（usbcfg.h:76），不用</span></summary><div class="rb">第 7 格（偏移 0x1C）→ 缓冲区 0x2000_42C0 ~ 0x2000_42FF。<br>端点地址 <code>0x81</code>：(端点号 1 × 2 + IN 1) × 2 + 1（buf1） = 第 7 格 → 0x2000_4000 + 7 × 4 = 0x2000_401C。<br>初始化后的值 <code>0x4040010B</code>。拆开：A = 0，D = 1，NBytes = 64，Address Offset = 0x010B → 缓冲区 0x2000_0000 + 0x010B × 64 = 0x2000_42C0。</div></details>
+<details class="rw rk-none"><summary><span>0x2000_4020</span><span>EP2 OUT buf0</span><span>0x4040010C</span><span>0x2000_4300</span><span>没用到（描述符里没有这个端点）</span></summary><div class="rb">第 8 格（偏移 0x20）→ 缓冲区 0x2000_4300 ~ 0x2000_433F。<br>端点地址 <code>0x02</code>：(端点号 2 × 2 + OUT 0) × 2 = 第 8 格 → 0x2000_4000 + 8 × 4 = 0x2000_4020。<br>初始化后的值 <code>0x4040010C</code>。拆开：A = 0，D = 1，NBytes = 64，Address Offset = 0x010C → 缓冲区 0x2000_0000 + 0x010C × 64 = 0x2000_4300。</div></details>
+<details class="rw rk-none"><summary><span>0x2000_4024</span><span>EP2 OUT buf1</span><span>0x4040010D</span><span>0x2000_4340</span><span>双缓冲的第 2 块。本项目 USE_DOUBLE_BUFFER = 0（usbcfg.h:76），不用</span></summary><div class="rb">第 9 格（偏移 0x24）→ 缓冲区 0x2000_4340 ~ 0x2000_437F。<br>端点地址 <code>0x02</code>：(端点号 2 × 2 + OUT 0) × 2 + 1（buf1） = 第 9 格 → 0x2000_4000 + 9 × 4 = 0x2000_4024。<br>初始化后的值 <code>0x4040010D</code>。拆开：A = 0，D = 1，NBytes = 64，Address Offset = 0x010D → 缓冲区 0x2000_0000 + 0x010D × 64 = 0x2000_4340。</div></details>
+<details class="rw rk-kb"><summary><span>0x2000_4028</span><span>EP2 IN buf0</span><span>0x4040010E</span><span>0x2000_4380</span><span>接口 1 键盘报告 → 电脑（0x82）</span></summary><div class="rb">第 10 格（偏移 0x28）→ 缓冲区 0x2000_4380 ~ 0x2000_43BF。<br>端点地址 <code>0x82</code>：(端点号 2 × 2 + IN 1) × 2 = 第 10 格 → 0x2000_4000 + 10 × 4 = 0x2000_4028。<br>初始化后的值 <code>0x4040010E</code>。拆开：A = 0，D = 1，NBytes = 64，Address Offset = 0x010E → 缓冲区 0x2000_0000 + 0x010E × 64 = 0x2000_4380。<br><b>谁碰它</b>：发：device.c:1237、:1248 <code>nsAPI_USB_WriteEP(HID_EP2_IN…)</code>。</div></details>
+<details class="rw rk-none"><summary><span>0x2000_402C</span><span>EP2 IN buf1</span><span>0x4040010F</span><span>0x2000_43C0</span><span>双缓冲的第 2 块。本项目 USE_DOUBLE_BUFFER = 0（usbcfg.h:76），不用</span></summary><div class="rb">第 11 格（偏移 0x2C）→ 缓冲区 0x2000_43C0 ~ 0x2000_43FF。<br>端点地址 <code>0x82</code>：(端点号 2 × 2 + IN 1) × 2 + 1（buf1） = 第 11 格 → 0x2000_4000 + 11 × 4 = 0x2000_402C。<br>初始化后的值 <code>0x4040010F</code>。拆开：A = 0，D = 1，NBytes = 64，Address Offset = 0x010F → 缓冲区 0x2000_0000 + 0x010F × 64 = 0x2000_43C0。</div></details>
+<details class="rw rk-none"><summary><span>0x2000_4030</span><span>EP3 OUT buf0</span><span>0x40400110</span><span>0x2000_4400</span><span>没用到（描述符里没有这个端点）</span></summary><div class="rb">第 12 格（偏移 0x30）→ 缓冲区 0x2000_4400 ~ 0x2000_443F。<br>端点地址 <code>0x03</code>：(端点号 3 × 2 + OUT 0) × 2 = 第 12 格 → 0x2000_4000 + 12 × 4 = 0x2000_4030。<br>初始化后的值 <code>0x40400110</code>。拆开：A = 0，D = 1，NBytes = 64，Address Offset = 0x0110 → 缓冲区 0x2000_0000 + 0x0110 × 64 = 0x2000_4400。</div></details>
+<details class="rw rk-none"><summary><span>0x2000_4034</span><span>EP3 OUT buf1</span><span>0x40400111</span><span>0x2000_4440</span><span>双缓冲的第 2 块。本项目 USE_DOUBLE_BUFFER = 0（usbcfg.h:76），不用</span></summary><div class="rb">第 13 格（偏移 0x34）→ 缓冲区 0x2000_4440 ~ 0x2000_447F。<br>端点地址 <code>0x03</code>：(端点号 3 × 2 + OUT 0) × 2 + 1（buf1） = 第 13 格 → 0x2000_4000 + 13 × 4 = 0x2000_4034。<br>初始化后的值 <code>0x40400111</code>。拆开：A = 0，D = 1，NBytes = 64，Address Offset = 0x0111 → 缓冲区 0x2000_0000 + 0x0111 × 64 = 0x2000_4440。</div></details>
+<details class="rw rk-gui"><summary><span>0x2000_4038</span><span>EP3 IN buf0</span><span>0x40400112</span><span>0x2000_4480</span><span>接口 2：鼠标 → GUI（0x83）。Protocol_Send 写到这里</span></summary><div class="rb">第 14 格（偏移 0x38）→ 缓冲区 0x2000_4480 ~ 0x2000_44BF。<br>端点地址 <code>0x83</code>：(端点号 3 × 2 + IN 1) × 2 = 第 14 格 → 0x2000_4000 + 14 × 4 = 0x2000_4038。<br>初始化后的值 <code>0x40400112</code>。拆开：A = 0，D = 1，NBytes = 64，Address Offset = 0x0112 → 缓冲区 0x2000_0000 + 0x0112 × 64 = 0x2000_4480。<br><b>谁碰它</b>：发：<code>Protocol_Send</code>（my_protocol_mouse.c:368）先等 A = 0（<code>MYPROTOCOL_USB_EDP_IS_IDLE</code>），再 <code>nsAPI_USB_WriteEP</code>（usbhw.c:1241）拷进来、填 NBytes = 64、置 A。调试日志 InfoLog 也用这个端点（my_debug.h:56）。</div></details>
+<details class="rw rk-none"><summary><span>0x2000_403C</span><span>EP3 IN buf1</span><span>0x40400113</span><span>0x2000_44C0</span><span>双缓冲的第 2 块。本项目 USE_DOUBLE_BUFFER = 0（usbcfg.h:76），不用</span></summary><div class="rb">第 15 格（偏移 0x3C）→ 缓冲区 0x2000_44C0 ~ 0x2000_44FF。<br>端点地址 <code>0x83</code>：(端点号 3 × 2 + IN 1) × 2 + 1（buf1） = 第 15 格 → 0x2000_4000 + 15 × 4 = 0x2000_403C。<br>初始化后的值 <code>0x40400113</code>。拆开：A = 0，D = 1，NBytes = 64，Address Offset = 0x0113 → 缓冲区 0x2000_0000 + 0x0113 × 64 = 0x2000_44C0。</div></details>
+<details class="rw rk-gui"><summary><span>0x2000_4040</span><span>EP4 OUT buf0</span><span>0x40400114</span><span>0x2000_4500</span><span>接口 2：GUI → 鼠标（0x04）。PC_Communicate 从这里读到 receive_buff</span></summary><div class="rb">第 16 格（偏移 0x40）→ 缓冲区 0x2000_4500 ~ 0x2000_453F。<br>端点地址 <code>0x04</code>：(端点号 4 × 2 + OUT 0) × 2 = 第 16 格 → 0x2000_4000 + 16 × 4 = 0x2000_4040。<br>初始化后的值 <code>0x40400114</code>。拆开：A = 0，D = 1，NBytes = 64，Address Offset = 0x0114 → 缓冲区 0x2000_0000 + 0x0114 × 64 = 0x2000_4500。<br><b>谁碰它</b>：收：pc_communicate.c:887 <code>Usb_Read_Bytes</code>（usb.c:50）→ <code>nsAPI_USB_EP_Status</code> 看 A（usbhw.c:1429）→ <code>nsAPI_USB_ReadEP</code>（:1159）拷到 <code>receive_buff</code>，再把这一格恢复成 0x80400114 等下一包。</div></details>
+<details class="rw rk-none"><summary><span>0x2000_4044</span><span>EP4 OUT buf1</span><span>0x40400115</span><span>0x2000_4540</span><span>双缓冲的第 2 块。本项目 USE_DOUBLE_BUFFER = 0（usbcfg.h:76），不用</span></summary><div class="rb">第 17 格（偏移 0x44）→ 缓冲区 0x2000_4540 ~ 0x2000_457F。<br>端点地址 <code>0x04</code>：(端点号 4 × 2 + OUT 0) × 2 + 1（buf1） = 第 17 格 → 0x2000_4000 + 17 × 4 = 0x2000_4044。<br>初始化后的值 <code>0x40400115</code>。拆开：A = 0，D = 1，NBytes = 64，Address Offset = 0x0115 → 缓冲区 0x2000_0000 + 0x0115 × 64 = 0x2000_4540。</div></details>
+<details class="rw rk-none"><summary><span>0x2000_4048</span><span>EP4 IN buf0</span><span>0x40400116</span><span>0x2000_4580</span><span>没用到（描述符里没有这个端点）</span></summary><div class="rb">第 18 格（偏移 0x48）→ 缓冲区 0x2000_4580 ~ 0x2000_45BF。<br>端点地址 <code>0x84</code>：(端点号 4 × 2 + IN 1) × 2 = 第 18 格 → 0x2000_4000 + 18 × 4 = 0x2000_4048。<br>初始化后的值 <code>0x40400116</code>。拆开：A = 0，D = 1，NBytes = 64，Address Offset = 0x0116 → 缓冲区 0x2000_0000 + 0x0116 × 64 = 0x2000_4580。</div></details>
+<details class="rw rk-none"><summary><span>0x2000_404C</span><span>EP4 IN buf1</span><span>0x40400117</span><span>0x2000_45C0</span><span>双缓冲的第 2 块。本项目 USE_DOUBLE_BUFFER = 0（usbcfg.h:76），不用</span></summary><div class="rb">第 19 格（偏移 0x4C）→ 缓冲区 0x2000_45C0 ~ 0x2000_45FF。<br>端点地址 <code>0x84</code>：(端点号 4 × 2 + IN 1) × 2 + 1（buf1） = 第 19 格 → 0x2000_4000 + 19 × 4 = 0x2000_404C。<br>初始化后的值 <code>0x40400117</code>。拆开：A = 0，D = 1，NBytes = 64，Address Offset = 0x0117 → 缓冲区 0x2000_0000 + 0x0117 × 64 = 0x2000_45C0。</div></details>
+
+<p class="note">0x2000_4050 ~ 40FF 空着（缓冲区要从 64 字节对齐的地址开始）；0x2000_4600 ~ 47FF 没分配。</p>
+</details>
+
+<details class="dt"><summary>② 一格 32 位怎么拆：用 EP4 OUT 看收一个包时各位怎么变</summary>
 <div class="btns" id="stBtns"></div>
 <div class="bits" id="bitsH"></div>
 <div class="bits" id="bitsV"></div>
@@ -126,32 +200,36 @@ td.m,code.m{font-family:var(--font-m);font-size:.82rem}
 <div id="stNote" class="box"></div>
 <table>
 <tr><th>位</th><th>名字</th><th>意思（手册 Table 227）</th></tr>
-<tr><td class="m">31</td><td>A Active</td><td>1 = 这块缓冲区交给硬件了：OUT 端点可以接收，IN 端点等着被电脑取走。<b>硬件收完 / 发完会自动清 0</b>。软件只能写 1</td></tr>
+<tr><td class="m">31</td><td>A Active</td><td>1 = 这块缓冲区交给硬件了：OUT 端点可以接收，IN 端点等着被电脑取走。<b>硬件收完 / 发完自动清 0</b>。软件只能写 1</td></tr>
 <tr><td class="m">30</td><td>D Disabled</td><td>1 = 端点关闭，电脑来访问时硬件不理。初始化时非 0 端点都置 1（usbhw.c:258），配置完成后 <code>nsAPI_USB_EnableEP</code> 清 0（:900）</td></tr>
 <tr><td class="m">29</td><td>S Stall</td><td>1 = 回电脑“出错 / 不支持”</td></tr>
 <tr><td class="m">28</td><td>TR Toggle Reset</td><td>写 1 时把数据翻转位设成 TV 的值（USB 的 DATA0 / DATA1 交替）</td></tr>
 <tr><td class="m">27</td><td>RF / TV</td><td>翻转值 / 速率反馈模式</td></tr>
 <tr><td class="m">26</td><td>T Type</td><td>0 = 批量或中断端点（本项目全是 0）；1 = 同步端点</td></tr>
-<tr><td class="m">25~16</td><td>NBytes</td><td>OUT：这块缓冲区最多能收几字节（填 64）；IN：要发几字节。硬件每传一个包就减掉包长。<b>收到的字节数 = 原来填的 − 剩下的</b>（ReadEP 就是这么算的，usbhw.c:1183）</td></tr>
-<tr><td class="m">15~0</td><td>Address Offset</td><td>缓冲区地址的 bit21~6（地址 ÷ 64）。高位（bit31~22）在 DATABUFSTART 寄存器里，所以缓冲区必须 64 字节对齐</td></tr>
+<tr><td class="m">25~16</td><td>NBytes</td><td>OUT：最多能收几字节（填 64）；IN：要发几字节。硬件每传一个包就减掉包长</td></tr>
+<tr><td class="m">15~0</td><td>Address Offset</td><td>缓冲区地址的 bit21~6（地址 ÷ 64）。高位在 DATABUFSTART 寄存器里，所以缓冲区必须 64 字节对齐</td></tr>
 </table>
+</details>
 
-<h3>3. 一个包怎么进来、怎么出去</h3>
+<details class="dt"><summary>③ 一个包怎么进来、怎么出去（软件拷贝 + 硬件搬运）</summary>
 <div class="scroll"><svg id="flowF" class="fig" viewBox="0 0 1360 300" style="min-width:1150px" role="img" aria-label="收发路径"></svg></div>
+</details>
 
-<h3>4. 依据</h3>
+<details class="dt"><summary>④ 依据：手册页码和代码行号</summary>
 <table>
 <tr><th>内容</th><th>出处</th></tr>
 <tr><td>表从 0x20004000 起，数据从 0x20004100 起，USB RAM 2 KB</td><td><code>inc/usbhw.h:64-67</code></td></tr>
 <tr><td>20 格的顺序、每格的位定义</td><td>UM10462 第 11.7.1 节 Fig 22（p.234）、Table 227（p.235-236）；仓库 <code>materials/mcu_reference/LPC11U3x2x1x User Manual.pdf</code></td></tr>
 <tr><td>每格怎么初始化、缓冲区怎么分（每块 64 字节，按表的顺序依次往后排）</td><td><code>src/usbhw.c:208-275</code> NDrv_USB_EPInit；<code>inc/usbcfg.h:50-53</code></td></tr>
 <tr><td>不开双缓冲，buf1 都不用</td><td><code>inc/usbcfg.h:76</code> USE_DOUBLE_BUFFER 0；<code>usbhw.c:319-321</code></td></tr>
-<tr><td>端点地址 → 表里第几格：(端点号 × 2 + 方向) × 2 格</td><td><code>usbhw.c:103</code> EPAdr、<code>:190</code> USB_GetEPCmdStatusPtr</td></tr>
+<tr><td>端点地址 → 表里第几格</td><td><code>usbhw.c:103</code> EPAdr、<code>:190</code> USB_GetEPCmdStatusPtr</td></tr>
 <tr><td>判断有没有新包 / 能不能发：看 A 位</td><td><code>usbhw.c:1429</code> nsAPI_USB_EP_Status</td></tr>
 <tr><td>收：USB RAM → 你的数组，再把这一格重新挂上</td><td><code>usbhw.c:1159</code> nsAPI_USB_ReadEP</td></tr>
 <tr><td>发：你的数组 → USB RAM，填 NBytes，置 A</td><td><code>usbhw.c:1241</code> nsAPI_USB_WriteEP</td></tr>
+<tr><td>端点地址 0x83 / 0x04 的含义</td><td>USB 2.0 规范 9.6.6 节 Table 9-13（bEndpointAddress）；<code>inc/hiduser.h:43、46</code></td></tr>
 </table>
 <p class="note">相关讲义：专题“从内存看一次 IO”、速查“USB 接口与端点总表”“芯片存储地址分布”（学习目录里都有）。</p>
+</details>
 </section>
 </div>
 <script>
@@ -169,41 +247,6 @@ function toc(){const q=$('q').value.trim().toLowerCase();let n=0;
   const [no,...rest]=t.split('　');return show?`<a href="#${s.id}"><b>${no}</b>${rest.join(' ')}<span>${(s.dataset.key||'').split(' ').slice(0,6).join(' · ')}</span></a>`:''}).join('');
  $('cnt').textContent=`共 ${ENTRIES.length} 条，显示 ${n} 条`}
 $('q').oninput=toc;toc();
-
-/* ---------- Q1 map ---------- */
-const R=[{"i": 0, "name": "EP0 OUT", "ep": 0, "dir": "OUT", "b": 0, "w": 536887296, "buf": 536887552, "kind": "ctl", "who": "\u7aef\u70b9 0\uff1a\u7535\u8111\u53d1\u6765\u7684\u63a7\u5236\u6570\u636e\uff08\u679a\u4e3e\u65f6\uff09", "init": 4194564}, {"i": 1, "name": "SETUP", "ep": 0, "dir": "SETUP", "b": 0, "w": 536887300, "buf": 536887616, "kind": "ctl", "who": "\u7aef\u70b9 0\uff1aSETUP \u5305\uff088 \u5b57\u8282\uff0c\u679a\u4e3e\u65f6\u201c\u8bf7\u628a\u63cf\u8ff0\u7b26\u7ed9\u6211\u201d\uff09", "init": 261}, {"i": 2, "name": "EP0 IN", "ep": 0, "dir": "IN", "b": 0, "w": 536887304, "buf": 536887680, "kind": "ctl", "who": "\u7aef\u70b9 0\uff1a\u56de\u7ed9\u7535\u8111\u7684\u63a7\u5236\u6570\u636e\uff08\u63cf\u8ff0\u7b26\u7b49\uff09", "init": 4194566}, {"i": 3, "name": "\uff08\u4fdd\u7559\uff09", "ep": 0, "dir": "RSV", "b": 1, "w": 536887308, "buf": 536887744, "kind": "none", "who": "\u624b\u518c\u89c4\u5b9a\u4fdd\u7559\uff1b\u4ee3\u7801\u4e0d\u5199\u8fd9\u4e00\u683c\uff0c\u4f46\u4ecd\u7ed9\u5b83\u7559\u4e86 64 \u5b57\u8282", "init": null}, {"i": 4, "name": "EP1 OUT buf0", "ep": 1, "dir": "OUT", "b": 0, "w": 536887312, "buf": 536887808, "kind": "none", "who": "\u6ca1\u7528\u5230\uff08\u63cf\u8ff0\u7b26\u91cc\u6ca1\u6709\u8fd9\u4e2a\u7aef\u70b9\uff09", "init": 1077936392}, {"i": 5, "name": "EP1 OUT buf1", "ep": 1, "dir": "OUT", "b": 1, "w": 536887316, "buf": 536887872, "kind": "none", "who": "\u53cc\u7f13\u51b2\u7684\u7b2c 2 \u5757\u3002\u672c\u9879\u76ee USE_DOUBLE_BUFFER = 0\uff08usbcfg.h:76\uff09\uff0c\u4e0d\u7528", "init": 1077936393}, {"i": 6, "name": "EP1 IN buf0", "ep": 1, "dir": "IN", "b": 0, "w": 536887320, "buf": 536887936, "kind": "mouse", "who": "\u63a5\u53e3 0 \u9f20\u6807\uff1a\u4f4d\u79fb\u3001\u6309\u952e\u62a5\u544a \u2192 \u7535\u8111\uff080x81\uff09", "init": 1077936394}, {"i": 7, "name": "EP1 IN buf1", "ep": 1, "dir": "IN", "b": 1, "w": 536887324, "buf": 536888000, "kind": "none", "who": "\u53cc\u7f13\u51b2\u7684\u7b2c 2 \u5757\u3002\u672c\u9879\u76ee USE_DOUBLE_BUFFER = 0\uff08usbcfg.h:76\uff09\uff0c\u4e0d\u7528", "init": 1077936395}, {"i": 8, "name": "EP2 OUT buf0", "ep": 2, "dir": "OUT", "b": 0, "w": 536887328, "buf": 536888064, "kind": "none", "who": "\u6ca1\u7528\u5230\uff08\u63cf\u8ff0\u7b26\u91cc\u6ca1\u6709\u8fd9\u4e2a\u7aef\u70b9\uff09", "init": 1077936396}, {"i": 9, "name": "EP2 OUT buf1", "ep": 2, "dir": "OUT", "b": 1, "w": 536887332, "buf": 536888128, "kind": "none", "who": "\u53cc\u7f13\u51b2\u7684\u7b2c 2 \u5757\u3002\u672c\u9879\u76ee USE_DOUBLE_BUFFER = 0\uff08usbcfg.h:76\uff09\uff0c\u4e0d\u7528", "init": 1077936397}, {"i": 10, "name": "EP2 IN buf0", "ep": 2, "dir": "IN", "b": 0, "w": 536887336, "buf": 536888192, "kind": "kb", "who": "\u63a5\u53e3 1 \u952e\u76d8\u62a5\u544a \u2192 \u7535\u8111\uff080x82\uff09", "init": 1077936398}, {"i": 11, "name": "EP2 IN buf1", "ep": 2, "dir": "IN", "b": 1, "w": 536887340, "buf": 536888256, "kind": "none", "who": "\u53cc\u7f13\u51b2\u7684\u7b2c 2 \u5757\u3002\u672c\u9879\u76ee USE_DOUBLE_BUFFER = 0\uff08usbcfg.h:76\uff09\uff0c\u4e0d\u7528", "init": 1077936399}, {"i": 12, "name": "EP3 OUT buf0", "ep": 3, "dir": "OUT", "b": 0, "w": 536887344, "buf": 536888320, "kind": "none", "who": "\u6ca1\u7528\u5230\uff08\u63cf\u8ff0\u7b26\u91cc\u6ca1\u6709\u8fd9\u4e2a\u7aef\u70b9\uff09", "init": 1077936400}, {"i": 13, "name": "EP3 OUT buf1", "ep": 3, "dir": "OUT", "b": 1, "w": 536887348, "buf": 536888384, "kind": "none", "who": "\u53cc\u7f13\u51b2\u7684\u7b2c 2 \u5757\u3002\u672c\u9879\u76ee USE_DOUBLE_BUFFER = 0\uff08usbcfg.h:76\uff09\uff0c\u4e0d\u7528", "init": 1077936401}, {"i": 14, "name": "EP3 IN buf0", "ep": 3, "dir": "IN", "b": 0, "w": 536887352, "buf": 536888448, "kind": "gui", "who": "\u63a5\u53e3 2\uff1a\u9f20\u6807 \u2192 GUI\uff080x83\uff09\u3002Protocol_Send \u5199\u5230\u8fd9\u91cc", "init": 1077936402}, {"i": 15, "name": "EP3 IN buf1", "ep": 3, "dir": "IN", "b": 1, "w": 536887356, "buf": 536888512, "kind": "none", "who": "\u53cc\u7f13\u51b2\u7684\u7b2c 2 \u5757\u3002\u672c\u9879\u76ee USE_DOUBLE_BUFFER = 0\uff08usbcfg.h:76\uff09\uff0c\u4e0d\u7528", "init": 1077936403}, {"i": 16, "name": "EP4 OUT buf0", "ep": 4, "dir": "OUT", "b": 0, "w": 536887360, "buf": 536888576, "kind": "gui", "who": "\u63a5\u53e3 2\uff1aGUI \u2192 \u9f20\u6807\uff080x04\uff09\u3002PC_Communicate \u4ece\u8fd9\u91cc\u8bfb\u5230 receive_buff", "init": 1077936404}, {"i": 17, "name": "EP4 OUT buf1", "ep": 4, "dir": "OUT", "b": 1, "w": 536887364, "buf": 536888640, "kind": "none", "who": "\u53cc\u7f13\u51b2\u7684\u7b2c 2 \u5757\u3002\u672c\u9879\u76ee USE_DOUBLE_BUFFER = 0\uff08usbcfg.h:76\uff09\uff0c\u4e0d\u7528", "init": 1077936405}, {"i": 18, "name": "EP4 IN buf0", "ep": 4, "dir": "IN", "b": 0, "w": 536887368, "buf": 536888704, "kind": "none", "who": "\u6ca1\u7528\u5230\uff08\u63cf\u8ff0\u7b26\u91cc\u6ca1\u6709\u8fd9\u4e2a\u7aef\u70b9\uff09", "init": 1077936406}, {"i": 19, "name": "EP4 IN buf1", "ep": 4, "dir": "IN", "b": 1, "w": 536887372, "buf": 536888768, "kind": "none", "who": "\u53cc\u7f13\u51b2\u7684\u7b2c 2 \u5757\u3002\u672c\u9879\u76ee USE_DOUBLE_BUFFER = 0\uff08usbcfg.h:76\uff09\uff0c\u4e0d\u7528", "init": 1077936407}];
-const COL={gui:'var(--bad)',mouse:'var(--per)',kb:'var(--per)',ctl:'var(--hw)',none:'var(--muted)'};
-const FILL={gui:'color-mix(in srgb,var(--bad) 22%,var(--panel))',mouse:'color-mix(in srgb,var(--per) 18%,var(--panel))',kb:'color-mix(in srgb,var(--per) 18%,var(--panel))',ctl:'color-mix(in srgb,var(--hw) 18%,var(--panel))',none:'color-mix(in srgb,var(--muted) 10%,var(--panel))'};
-let sel=19-2; // EP4 OUT buf0 index 16
-sel=R.findIndex(r=>r.name==='EP4 OUT buf0');
-function drawMap(){const s=$('mapF');s.innerHTML='';
- const LX=60,LW=420,RH=27,LY=60, BX=840,BW=440,BY=60,BH=27;
- T(s,LX,28,'① 端点命令 / 状态表（每格 4 字节，共 20 格 = 80 字节）',{'font-weight':700});
- T(s,BX,28,'② 数据缓冲区（每块 64 字节，共 20 块 = 1280 字节）',{'font-weight':700});
- R.forEach((r,i)=>{const y=LY+i*RH;const on=i===sel;
-  const g=el(s,'g',{style:'cursor:pointer'});g.onclick=()=>{sel=i;drawMap()};
-  el(g,'rect',{x:LX,y,width:LW,height:RH-2,rx:3,fill:FILL[r.kind],stroke:on?'var(--fg)':COL[r.kind],'stroke-width':on?2.5:1});
-  T(g,LX-6,y+17,hx(r.w).slice(6),{'font-size':10.5,'text-anchor':'end',fill:'var(--muted)','font-family':'var(--font-m)'});
-  T(g,LX+8,y+17,r.name,{'font-size':12,'font-weight':r.kind==='none'?400:700,fill:r.kind==='none'?'var(--muted)':'var(--fg)'});
-  T(g,LX+130,y+17,r.init===null?'—（不写）':hx(r.init),{'font-size':11,'font-family':'var(--font-m)',fill:'var(--muted)'});
-  T(g,LX+235,y+17,r.who.length>15?r.who.slice(0,15)+'…':r.who,{'font-size':10.5,fill:r.kind==='gui'?'var(--bad)':'var(--muted)'});
-  const by=BY+i*BH;
-  const g2=el(s,'g',{style:'cursor:pointer'});g2.onclick=()=>{sel=i;drawMap()};
-  el(g2,'rect',{x:BX,y:by,width:BW,height:BH-2,rx:3,fill:FILL[r.kind],stroke:on?'var(--fg)':COL[r.kind],'stroke-width':on?2.5:1});
-  T(g2,BX+BW+8,by+17,hx(r.buf).slice(6),{'font-size':10.5,'text-anchor':'start',fill:'var(--muted)','font-family':'var(--font-m)'});
-  T(g2,BX+8,by+17,r.name+' 的 64 字节',{'font-size':12,fill:r.kind==='none'?'var(--muted)':'var(--fg)'});
-  if(r.kind!=='none'&&r.init!==null){el(s,'path',{d:`M${LX+LW} ${y+12} C ${LX+LW+120} ${y+12}, ${BX-120} ${by+12}, ${BX} ${by+12}`,fill:'none',stroke:COL[r.kind],'stroke-width':on?2.5:1.3,opacity:on?1:.55})}
- });
- T(s,LX-6,LY-8,'地址',{'font-size':10.5,'text-anchor':'end',fill:'var(--muted)'});T(s,BX+BW+8,BY-8,'地址',{'font-size':10.5,fill:'var(--muted)'});T(s,LX,LY+20*RH+64,'地址只写了低 4 位，前面都是 0x2000，比如 4040 = 0x20004040。',{'font-size':11,fill:'var(--muted)'});
- T(s,LX,LY+20*RH+16,'0x20004050 ~ 0x200040FF：空着（数据区从 0x20004100 开始，要 64 字节对齐）',{'font-size':11,fill:'var(--muted)'});
- T(s,BX,BY+20*BH+16,'0x20004600 ~ 0x200047FF：剩下 512 字节没分配',{'font-size':11,fill:'var(--muted)'});
- T(s,LX,LY+20*RH+40,'表里每格的值 = 初始化后的值（D 位 = 1，NBytes = 64，Address Offset = 缓冲区地址 ÷ 64 的低 16 位）',{'font-size':11,fill:'var(--muted)'});
- T(s,LX+130,LY-8,'初始化后的值',{'font-size':10.5,fill:'var(--muted)'});T(s,LX+235,LY-8,'用途',{'font-size':10.5,fill:'var(--muted)'});
- const r=R[sel];
- $('detail').innerHTML=`<b>${r.name}</b>　表格地址 <code>${hx(r.w)}</code>（第 ${r.i} 格，偏移 ${hx(r.i*4,2)}）　→　缓冲区 <code>${hx(r.buf)} ~ ${hx(r.buf+63)}</code><br>${r.who}`+
-  (r.init!==null?`<br>初始化后的值 <code>${hx(r.init)}</code>：Address Offset = ${hx(r.buf)} ÷ 64 = ${hx(r.buf>>6,6)}，取低 16 位 = <code>${hx((r.buf>>6)&0xFFFF,4)}</code>`:'');
-}
-drawMap();
 
 /* ---------- Q1 bits ---------- */
 const ST=[
