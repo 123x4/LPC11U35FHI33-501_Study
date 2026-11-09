@@ -1,0 +1,310 @@
+<title>按键编号地图</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --hw:#7a5ea8; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.8}
+.wrap{max-width:880px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);line-height:1.3;text-wrap:balance}
+h1{font-size:1.9rem;margin:0}
+h2{font-size:1.3rem;margin:2.4rem 0 .4rem;padding-top:.6rem;border-top:1px solid var(--line)}
+h3{font-size:1.06rem;margin:1.3rem 0 .3rem}
+p{margin:.6rem 0}
+a{color:var(--per)}
+code{font-family:var(--font-m);font-size:.88em;background:var(--soft);padding:.05em .35em;border-radius:3px;overflow-wrap:anywhere}
+pre.code{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:10px 12px;overflow-x:auto;line-height:1.55;margin:.5rem 0}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.06em;color:var(--muted)}
+.lede{color:var(--muted)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:1rem 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-size:.88rem;margin:.4rem 0}
+td,th{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600}
+.note{font-size:.88rem;color:var(--muted)}
+.think{border-left:4px solid var(--per);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.8rem 0}
+.rule{border-left:4px solid var(--c,var(--per));background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.6rem 0}
+.log{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:6px 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.btns button,.tool button{font:inherit;font-size:.88rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer}
+.btns button:disabled{opacity:.4;cursor:default}
+.btns button[aria-pressed="true"]{border-color:var(--fg);font-weight:700}
+/* bit strip */
+.bstrip{display:inline-grid;gap:2px;font-family:var(--font-m);font-size:.74rem;text-align:center;margin:.2rem 0}
+.bstrip span{border:1px solid var(--line);border-radius:3px;padding:1px 3px;min-width:1.6em;background:var(--panel)}
+.bstrip span.ch{background:color-mix(in srgb,var(--bad) 28%,var(--panel));border-color:var(--bad);font-weight:700}
+.bstrip span.k{background:none;border:0;color:var(--muted);font-size:.6rem}
+.bstrip span.f{background:color-mix(in srgb,var(--c,var(--per)) 18%,var(--panel))}
+/* lamps */
+.lamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:.5rem 0}
+.lamps div{border:1.5px solid var(--line);border-radius:6px;padding:4px 8px;font-size:.82rem;background:var(--panel)}
+.lamps div::before{content:"○ ";color:var(--muted)}
+.lamps div.on{border-color:var(--good);background:color-mix(in srgb,var(--good) 15%,var(--panel))}
+.lamps div.on::before{content:"● ";color:var(--good)}
+.lamps div.new{outline:2px solid var(--bad)}
+.stp{border:2px solid var(--per);border-radius:8px;padding:10px 14px;background:var(--panel);margin:.6rem 0}
+.stp .cl{font-family:var(--font-m);font-size:.85rem;background:var(--soft);border-left:4px solid var(--per);padding:4px 8px;border-radius:0 6px 6px 0;overflow-wrap:anywhere}
+.stp .who{display:inline-block;font-size:.72rem;color:var(--bg);background:var(--c);border-radius:4px;padding:0 6px;margin-right:6px}
+.stp h3{margin:.5rem 0 .2rem}
+svg.fig{display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+/* tools */
+.tool{border:1.5px solid var(--hw);border-radius:8px;padding:8px 12px;background:color-mix(in srgb,var(--hw) 5%,var(--panel));margin:.6rem 0}
+.tool input,.tool select{font:inherit;font-size:.88rem;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.tool .row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:.3rem 0}
+/* quiz & practice */
+.qz,.px{border-radius:8px;padding:8px 12px;margin:.7rem 0}
+.qz{border:1.5px dashed var(--gold);background:color-mix(in srgb,var(--gold) 6%,var(--panel))}
+.px{border:1.5px solid var(--per);background:color-mix(in srgb,var(--per) 6%,var(--panel))}
+.qz .qt,.px .pxq{font-weight:600;margin:.2rem 0}
+.qrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.qz input,.px input{font:inherit;width:120px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.qz button,.px button{font:inherit;font-size:.9rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer;text-align:left}
+.qz button.on,.px button.on{border-color:var(--fg)}
+.px .pxh{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.px .pxh b{color:var(--per)}
+.px .pxs{font-size:.82rem;color:var(--muted)}
+.px .pxNext{border-color:var(--per);color:var(--per)}
+.fb{display:none;padding:6px 10px;border-radius:6px;background:var(--soft);margin-top:.3rem}
+.fb.ok{display:block;border-left:4px solid var(--good)}
+.fb.no{display:block;border-left:4px solid var(--bad)}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.wrap{max-width:1400px}
+.src{font-family:var(--font-m);font-size:.78rem;color:var(--muted);margin:.2rem 0 .3rem}
+pre.code{font-family:var(--font-m);font-size:.78rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 12px;overflow-x:auto;line-height:1.55;margin:.3rem 0}
+.txt{margin:.3rem 0 1.4rem;max-width:72em}
+table.map td,table.map th{vertical-align:top}
+table.map td:first-child{white-space:nowrap}
+.toc{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.9rem;margin:.4rem 0 1rem}
+</style><div class="wrap">
+<div class="eyebrow">T1A 主线 · 第 5 课（附）· 按键编号地图 · inc/button.h、inc/my_board.h、app/button.c、src/my_misc.c、src/device.c、app/custom.c、src/my_protocol_mouse.c、src/my_electromagnet.c</div>
+<h1>按键编号地图：代码里每一种“这是哪个键”的写法</h1>
+<p class="lede">同一个键，在引脚寄存器里、霍尔缓冲里、按键算法里、按键变量里、消抖数组里、按键映射表里、USB 报告里、线圈和 GUI 参数里，各有各的编号。这一页把每一种都单独画成一张图，图上方是定义它的代码。读代码时看到一个下标或位号拿不准是哪个键，就来这里查。</p>
+<div class="toc"><a href="#s0">0 总览</a><a href="#f1">1 GPIO 引脚位</a><a href="#f2">2 霍尔缓冲</a><a href="#f3">3 算法下标 k</a><a href="#f4">4 内部按键编号</a><a href="#f5">5 引脚位 → 编号</a><a href="#f6">6 wheel_button_status</a><a href="#f7">7 debounce[6]</a><a href="#f8">8 key_function[10]</a><a href="#f9">9 USB 鼠标报告</a><a href="#f10">10 线圈 / GUI 下标</a><a href="#s11">11 总对照表</a></div>
+<h2 id="s0">0. 总览：一个键从“被按下”到“电脑收到”，换了几次编号</h2>
+<p>代码里描述“哪个键”的方式不止一种。下图是按键信息流动的路线，每个框是一种编号方式，框里写了左键在这里是几号。点框跳到对应那一节的图。</p>
+<div class="scroll"><svg id="ovF" class="fig" viewBox="0 0 1360 330" style="min-width:1150px" role="img" aria-label="按键编号总览"></svg></div><h2 id="f1">1. GPIO 端口 0 的引脚寄存器：中键、DPI、K4、K5 在第几位</h2>
+<div class="src">inc/my_board.h:335~346（T1A 引脚号）、inc/button.h:70~90（POSITION、MASK）、:149（BUTTON_PORT0）</div>
+<pre class="code">#define MIDDLE_BUTTON_PIN   7      // my_board.h:342  中键 = PIO0_7（16 脚）
+#define DPI_BUTTON_PIN      23     // :345            DPI  = PIO0_23（27 脚）
+#define FRONT_BUTTON_PIN    11     // :336            K4   = PIO0_11（21 脚，原理图 L_FORWARD）
+#define BACK_BUTTON_PIN     12     // :339            K5   = PIO0_12（22 脚，原理图 L_BACK）
+#define BUTTON_PORT0 (U32)((~LPC_GPIO-&gt;PIN[0]) &amp; (MIDDLE_BUTTON_MASK | DPI_CYCLE_BUTTON_MASK | K5_BUTTON_MASK | K4_BUTTON_MASK))  // button.h:149</pre>
+<div class="scroll"><svg id="f1F" class="fig" viewBox="0 0 1360 230" style="min-width:1150px" role="img" aria-label="GPIO 端口 0 的引脚寄存器：中键、DPI、K4、K5 在第几位"></svg></div>
+<div class="txt"><code>LPC_GPIO-&gt;PIN[0]</code> 是端口 0 的 32 只脚此刻的电平，第 n 位 = PIO0_n。按键按下时脚被拉到地，读到 0，所以先取反 <code>~</code>，再用 MASK 只留下这 4 位。<b>这里的位号就是引脚号</b>，和后面的按键编号不一样。左右键不在这里：它们没有开关，靠霍尔芯片。</div>
+<h2 id="f2">2. 霍尔 SPI 缓冲 hall_spi_rx[4]：前两个字节是右键，后两个是左键</h2>
+<div class="src">app/button.c:346、:363；第 3 课（两颗霍尔芯片串成一条链）</div>
+<pre class="code">hall_get_sample();                                               // button.c:346  SPI1 收 4 个字节进 hall_spi_rx[]
+result = ProcessRecvSampleRawData((uint8_t *)(&amp;hall_spi_rx), 4); // :363          交给按键算法</pre>
+<div class="scroll"><svg id="f2F" class="fig" viewBox="0 0 1360 200" style="min-width:1150px" role="img" aria-label="霍尔 SPI 缓冲 hall_spi_rx[4]：前两个字节是右键，后两个是左键"></svg></div>
+<div class="txt">两颗霍尔芯片串成一条链：MCU 先收到的是<b>右键</b>那颗（链的末端）的两个字节，再收到左键的。每颗 14 位读数 + 2 位校验，占 2 个字节。</div>
+<h2 id="f3">3. 按键算法的下标 k：k = 0 是右键，k = 1 是左键</h2>
+<div class="src">src/my_misc.c:444~458（取读数）、:657~665（返回值）；inc/my_hallkey_func.h:17（ANA_TOTAL_COUNT = 2）</div>
+<pre class="code">temp[k] = ana_phy_bit_error_checker2(ana_rd_buff[2*k], ana_rd_buff[2*k + 1]);  // my_misc.c:458  k=0 取 [0][1]，k=1 取 [2][3]
+...
+if(gbKeyState[0]) { ret |= (0x01 &lt;&lt; 1); }   // :657~660  k=0（右）→ 返回值 bit1
+if(gbKeyState[1]) { ret |= (0x01 &lt;&lt; 0); }   // :662~665  k=1（左）→ 返回值 bit0
+return ret;</pre>
+<div class="scroll"><svg id="f3F" class="fig" viewBox="0 0 1360 250" style="min-width:1150px" role="img" aria-label="按键算法的下标 k：k = 0 是右键，k = 1 是左键"></svg></div>
+<div class="txt">按键算法里所有两格的数组（<code>temp[]</code>、<code>gbKeyState[]</code>、<code>gwTopBaseline[]</code>、<code>gwBottomBaseline[]</code>、<code>previousKeySta[]</code> …）都按 k 排：<b>[0] 右、[1] 左</b>，跟着霍尔缓冲的顺序来。最后返回时<b>交叉一下</b>，变成 bit0 左、bit1 右，和后面的按键编号对上。</div>
+<h2 id="f4">4. 内部按键编号：button / scan_result_cur / scan_result_pre 的 32 位</h2>
+<div class="src">inc/button.h:100~107（REPORT_BIT）、app/button.c:564~602（Button_GetState 拼出来）</div>
+<pre class="code">#define LBFT_BUTTON_REPORT_BIT        0u   // 左
+#define RIGHT_BUTTON_REPORT_BIT       1u   // 右
+#define MIDDLE_BUTTON_REPORT_BIT      2u   // 中
+#define K4_BUTTON_REPORT_BIT          5u
+#define K5_BUTTON_REPORT_BIT          6u
+#define VOLUME_UP_BUTTON_REPORT_BIT   7u   // T1A 没有这两个键
+#define VOLUME_DOWN_BUTTON_REPORT_BIT 8u
+#define DPI_CYCLE_BUTTON_REPORT_BIT   9u</pre>
+<div class="scroll"><svg id="f4F" class="fig" viewBox="0 0 1360 220" style="min-width:1150px" role="img" aria-label="内部按键编号：button / scan_result_cur / scan_result_pre 的 32 位"></svg></div>
+<div class="txt">固件内部统一用这套编号描述“哪个物理键按着”，1 = 按下。<code>button</code>（这一刻）、<code>scan_result_cur</code>（最近看到的）、<code>scan_result_pre</code>（确认过的）三个变量都是这个格式。bit3、bit4 留给滚轮（第 6 节）。名字里有 REPORT，但<b>不是 USB 报告里的位</b>。</div>
+<h2 id="f5">5. Button_Location_Data()：把引脚位挪到按键编号位</h2>
+<div class="src">app/button.c:290~309（函数）、:571~574（四次调用）</div>
+<pre class="code">reportMask = port &amp; mask;              // :295  只留这一位
+if (reportPosition &gt; position) reportMask &lt;&lt;= (reportPosition - position);  // :297~301 往高位挪
+else                           reportMask &gt;&gt;= (position - reportPosition);  // :302~306 往低位挪
+return reportMask;</pre>
+<div class="scroll"><svg id="f5F" class="fig" viewBox="0 0 1360 260" style="min-width:1150px" role="img" aria-label="Button_Location_Data()：把引脚位挪到按键编号位"></svg></div>
+<div class="txt">从第 1 节的“引脚号”挪到第 4 节的“按键编号”。四个键都是往低位挪。左右键不走这个函数，直接来自第 3 节的返回值（button.c:598 <code>|= LR_GetState()</code>）。</div>
+<h2 id="f6">6. wheel_button_status：要交给按键映射的状态（按键 + 滚轮）</h2>
+<div class="src">src/device.c:51（定义）、:963~964（按键写入）、:996~997（滚轮写入）；inc/scroll.h:8~9</div>
+<pre class="code">wheel_button_status &amp;= ~ALL_BUTTON_REPORT_BIT;           // device.c:963  清掉所有按键位（bit0,1,2,5,6,7,8,9）
+wheel_button_status |= buttonScan_stru.scan_result_pre;  // :964          放进确认过的按键状态
+#define WHEEL_UP_REPORT_BIT    (1&lt;&lt;3)                       // scroll.h:8    滚轮上 = bit3
+#define WHEEL_DOWN_REPORT_BIT  (1&lt;&lt;4)                       // scroll.h:9    滚轮下 = bit4</pre>
+<div class="scroll"><svg id="f6F" class="fig" viewBox="0 0 1360 200" style="min-width:1150px" role="img" aria-label="wheel_button_status：要交给按键映射的状态（按键 + 滚轮）"></svg></div>
+<div class="txt">和第 4 节同一套编号，只是把空着的 bit3、bit4 填上了滚轮（T1A 上滚轮扫描关着，<code>ENABLE_WHEEL_SCAN = 0</code>，所以这两位一直是 0）。一共 10 位（bit0~9），正好对应第 8 节的 10 个映射格子。</div>
+<h2 id="f7">7. debounce[6]：6 个消抖计数器各给谁</h2>
+<div class="src">inc/button.h:166；app/button.c:673（[i]）、:714（[i − 2]）、:764（[i − 4]）</div>
+<pre class="code">buttonScan_stru.debounce[i]     = 5;   // button.c:673  中键 i=2 → [2]
+buttonScan_stru.debounce[i - 2] = 5;   // :714          K4 i=5 → [3]，K5 i=6 → [4]（T1A 关了）
+buttonScan_stru.debounce[i - 4] = 5;   // :764          DPI i=9 → [5]</pre>
+<div class="scroll"><svg id="f7F" class="fig" viewBox="0 0 1360 230" style="min-width:1150px" role="img" aria-label="debounce[6]：6 个消抖计数器各给谁"></svg></div>
+<div class="txt">数组只有 6 格，按键编号最大到 9，所以用“减一个偏移”把用到的键挤进 0~5。左右键不消抖，[0][1] 空着。</div>
+<h2 id="f8">8. key_function[10]：每个按键编号被映射成什么功能</h2>
+<div class="src">app/custom.c:102~119（默认映射）、:1093~1124（Custom_HandleKey 逐位查表）、:528（ClassKeyfunction 按 id 分类）</div>
+<pre class="code">for (ii = 0, mask = 0x01; ii &lt; CUSTOM_BUTTON_NUMBER; ii++, mask &lt;&lt;= 1)   // custom.c:1093  ii = 0~9，就是按键编号
+{   ...
+    key_fun = &amp;gloabSetting.settingMode.key_function[ii];                 // :1096  第 ii 个键设成了什么
+    id = ClassKeyfunction((*key_fun).usb_registration.id);                // :1097  0xB0~0xBF = 鼠标键，0xC1 = 特殊功能 …
+key_function[0].usb_registration.id = 0xb0;  // 左      custom.c:106（默认值）
+key_function[9].usb_registration.id = 0xC1;  // DPI_CYCLE  :118</pre>
+<div class="scroll"><svg id="f8F" class="fig" viewBox="0 0 1360 250" style="min-width:1150px" role="img" aria-label="key_function[10]：每个按键编号被映射成什么功能"></svg></div>
+<div class="txt"><b>按键编号 ii 是这张表的下标</b>。表里存的是“这个键要当成什么用”的 id，GUI 可以改（pc_communicate.c:255）。默认值见图。id = 0 / 1 表示“不对应任何功能”（ClassKeyfunction 里的 NO_RELATIONSHIP）。</div>
+<h2 id="f9">9. USB 鼠标报告：最后发给电脑的 8 个字节</h2>
+<div class="src">app/custom.c:722~770（Custom_Deal_MouseKey：id → 报告的位）；第 5 课</div>
+<pre class="code">case 0xB0: mouse_temp[1] |= 0x01; break;   // 左  → 第 1 字节 bit0
+case 0xB1: mouse_temp[1] |= 0x02; break;   // 右  → bit1
+case 0xB2: mouse_temp[1] |= 0x04; break;   // 中  → bit2
+case 0xB3: mouse_temp[1] |= 0x10; break;   // K4 → bit4（前进）
+case 0xB4: mouse_temp[1] |= 0x08; break;   // K5 → bit3（后退）
+case 0xB5: mouse_temp[6] = 0x01;  break;   // 滚轮上 → 第 6 字节 = +1
+case 0xB6: mouse_temp[6] = 0xff;  break;   // 滚轮下 → 第 6 字节 = −1</pre>
+<div class="scroll"><svg id="f9F" class="fig" viewBox="0 0 1360 250" style="min-width:1150px" role="img" aria-label="USB 鼠标报告：最后发给电脑的 8 个字节"></svg></div>
+<div class="txt">这才是 USB 报告里的位置。注意 K4 / K5 在<b>内部编号</b>里是 bit5 / bit6，到了 <b>USB 报告</b>里变成 bit4（前进）/ bit3（后退），顺序还反过来了。DPI 键（0xC1）不进鼠标报告，由固件自己处理（切换 DPI）。</div>
+<h2 id="f10">10. 线圈和 GUI 那一侧的编号：左右各用什么下标</h2>
+<div class="src">inc/my_protocol_common.h:18~19（VK）、src/my_protocol_mouse.c:83~97（Hall_SyncParam）、:325~341（ConvertVKeyToArrayIndex）、src/my_electromagnet.c:541~562（Ele_UpadteSegment）、my_electromagnet.h:20~24（ELE_POS）</div>
+<pre class="code">#define VK_LBUTTON 0x01      // 协议里的“哪个键”：左 = 0x01，右 = 0x02，全局 = 0xFF
+#define VK_RBUTTON 0x02
+ConvertVKeyToArrayIndex(VK_LBUTTON) = 0;  ConvertVKeyToArrayIndex(VK_RBUTTON) = 1;  // xgAllParam.xConfig[] / xInfo[]：[0] 左、[1] 右
+Hall_SyncParam(k, …)：k = 1（左）→ xInfo[0]；k = 0（右）→ xInfo[1]                   // my_protocol_mouse.c:87~94 交叉
+Ele_UpadteSegment(VK_RBUTTON, node[0]); Ele_UpadteSegment(VK_LBUTTON, node[1]);    // my_misc.c:554、558 交叉
+ELE_POS_LEFT = 0, ELE_POS_RIGHT = 1;  CHANNEL_0 = 左, CHANNEL_1 = 右</pre>
+<div class="scroll"><svg id="f10F" class="fig" viewBox="0 0 1360 330" style="min-width:1150px" role="img" aria-label="线圈和 GUI 那一侧的编号：左右各用什么下标"></svg></div>
+<div class="txt">除了按键算法（第 3 节）是“[0] 右”，其余所有和 GUI、线圈有关的数组都是 <b>“[0] 左、[1] 右”</b>。两边交接的地方都要交叉一次：<code>Hall_SyncParam</code> 里的 if/else、my_misc.c:554/558 传的 VK 码、按键算法返回值 :657~665。</div><h2 id="s11">11. 总对照表：同一个键在各处叫什么</h2>
+<div class="scroll"><table class="map">
+<thead><tr><th>地方</th><th>左键</th><th>右键</th><th>中键</th><th>K4</th><th>K5</th><th>DPI</th></tr></thead>
+<tbody>
+<tr><td>来源</td><td colspan="2">霍尔芯片</td><td colspan="4">GPIO 开关</td></tr>
+<tr><td>① GPIO 引脚位（PIN[0]）</td><td>—</td><td>—</td><td>bit7</td><td>bit11</td><td>bit12</td><td>bit23</td></tr>
+<tr><td>② hall_spi_rx[]</td><td>[2][3]</td><td>[0][1]</td><td colspan="4">—</td></tr>
+<tr><td>③ 按键算法下标 k</td><td>1</td><td>0</td><td colspan="4">—</td></tr>
+<tr><td>③ 算法返回值的位</td><td>bit0</td><td>bit1</td><td colspan="4">—</td></tr>
+<tr><td>④ 内部按键编号（button / cur / pre）</td><td>bit0</td><td>bit1</td><td>bit2</td><td>bit5</td><td>bit6</td><td>bit9</td></tr>
+<tr><td>⑦ debounce[]</td><td>（不用）</td><td>（不用）</td><td>[2]</td><td>[3]</td><td>[4]</td><td>[5]</td></tr>
+<tr><td>⑧ key_function[] 下标 / 默认 id</td><td>[0] / 0xB0</td><td>[1] / 0xB1</td><td>[2] / 0xB2</td><td>[5] / 0xB3</td><td>[6] / 0xB4</td><td>[9] / 0xC1</td></tr>
+<tr><td>⑨ USB 鼠标报告第 1 字节</td><td>bit0</td><td>bit1</td><td>bit2</td><td>bit4（前进）</td><td>bit3（后退）</td><td>不进报告</td></tr>
+<tr><td>⑩ 协议 VK 码</td><td>0x01</td><td>0x02</td><td colspan="4">—</td></tr>
+<tr><td>⑩ xgAllParam.xConfig[] / xInfo[]</td><td>[0]</td><td>[1]</td><td colspan="4">—</td></tr>
+<tr><td>⑩ 线圈：ELE_POS / nowHallSegment[] / CHANNEL</td><td>0 / [0] / CHANNEL_0</td><td>1 / [1] / CHANNEL_1</td><td colspan="4">—</td></tr>
+<tr><td>⑩ 线圈硬件</td><td>CT32B1 MR0、PIO0_13</td><td>CT32B1 MR1、PIO0_14</td><td colspan="4">—</td></tr>
+</tbody></table></div>
+<p class="note">T1A 上 K4 / K5 的扫描被 <code>DISABLE_K4_K5_KEY</code> 关掉了（button.c:705~756），上表的 K4 / K5 只是编号本身。</p>
+</div>
+<script>
+(function(){
+const $=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
+const el=(p,t,a,x)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(x!=null)e.textContent=x;p.appendChild(e);return e};
+const T=(s,x,y,t,o)=>el(s,'text',Object.assign({x,y,'font-size':12,fill:'var(--fg)'},o||{}),t);
+const C={L:'bad',R:'per',M:'good',K4:'gold',K5:'gold',DPI:'pc',W:'muted'};
+/* a row of bits, MSB on the left */
+function bits(s,x,y,n,w,hl,o){o=o||{};const h=o.h||44;
+ for(let i=0;i<n;i++){const b=n-1-i,X=x+i*w,c=hl[b];
+  el(s,'rect',{x:X,y,width:w-2,height:h,rx:3,style:`fill:${c?`color-mix(in srgb,var(--${C[c[1]]||c[1]}) 26%,var(--panel))`:'var(--panel)'};stroke:var(--${c?(C[c[1]]||c[1]):'line'});stroke-width:${c?2:1}`});
+  T(s,X+(w-2)/2,y+h+14,String(b),{'text-anchor':'middle','font-size':10,fill:'var(--muted)','font-family':'var(--font-m)'});
+  if(c)T(s,X+(w-2)/2,y+h/2+5,c[0],{'text-anchor':'middle','font-size':o.fs||11.5,'font-weight':700})}}
+function cells(s,x,y,arr,w,o){o=o||{};const h=o.h||52;arr.forEach((c,i)=>{const X=x+i*w,col=c[2];
+  el(s,'rect',{x:X,y,width:w-6,height:h,rx:6,style:`fill:${col?`color-mix(in srgb,var(--${C[col]||col}) 22%,var(--panel))`:'var(--soft)'};stroke:var(--${col?(C[col]||col):'line'});stroke-width:${col?2:1}`});
+  T(s,X+(w-6)/2,y+h/2-3,c[0],{'text-anchor':'middle','font-weight':700,'font-size':o.fs||13});if(c[1])T(s,X+(w-6)/2,y+h/2+15,c[1],{'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'});
+  if(o.idx)T(s,X+(w-6)/2,y-6,o.idx(i),{'text-anchor':'middle','font-size':11,fill:'var(--muted)','font-family':'var(--font-m)'})})}
+const arrow=(s,x1,y1,x2,y2,c)=>{el(s,'line',{x1,y1,x2,y2,stroke:`var(--${c||'fg'})`,'stroke-width':1.6});const a=Math.atan2(y2-y1,x2-x1);el(s,'path',{d:`M${x2},${y2} l${-8*Math.cos(a)+4*Math.sin(a)},${-8*Math.sin(a)-4*Math.cos(a)} l${-8*Math.sin(a)},${8*Math.cos(a)}z`,fill:`var(--${c||'fg'})`})};
+/* 0 overview */
+(function(){const s=$('ovF');
+ const B=[['f1',20,40,'① GPIO 引脚位','中 bit7 · DPI bit23'],['f2',20,190,'② 霍尔缓冲','左 [2][3] · 右 [0][1]'],['f3',260,190,'③ 算法下标 k','左 k=1 · 右 k=0'],['f5',260,40,'⑤ 挪位','bit7 → bit2 …'],
+  ['f4',500,115,'④ 内部按键编号','左 bit0 · 中 bit2 · DPI bit9'],['f7',760,15,'⑦ debounce[6]','中 [2] · DPI [5]'],['f6',760,115,'⑥ wheel_button_status','同④ + 滚轮 bit3/4'],['f8',1000,115,'⑧ key_function[10]','下标 = 编号，左 [0]'],['f9',1000,250,'⑨ USB 鼠标报告','左 = 第 1 字节 bit0'],['f10',760,250,'⑩ 线圈 / GUI 下标','左 [0] · 右 [1]']];
+ const P={};B.forEach(([id,x,y,t,sub])=>{P[id]=[x,y];const g=el(s,'g',{style:'cursor:pointer'});g.addEventListener('click',()=>location.hash=id);
+  el(g,'rect',{x,y,width:220,height:58,rx:8,style:'fill:color-mix(in srgb,var(--per) 10%,var(--panel));stroke:var(--per);stroke-width:1.6'});
+  el(g,'text',{x:x+110,y:y+24,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--fg)'},t);el(g,'text',{x:x+110,y:y+44,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},sub)});
+ const L=(a,b,lab,dy)=>{const[x1,y1]=P[a],[x2,y2]=P[b];let sx=x1+220,sy=y1+29,ex=x2,ey=y2+29;if(a==='f4'&&b==='f7'){sx=x1+220;sy=y1+12;ex=x2;ey=y2+44}if(a==='f8'&&b==='f9'){sx=x1+110;sy=y1+58;ex=x2+110;ey=y2}if(a==='f3'&&b==='f10'){sx=x1+220;sy=y1+50;ex=x2;ey=y2+40}arrow(s,sx,sy,ex,ey);if(lab)T(s,(sx+ex)/2,(sy+ey)/2+(dy||-6),lab,{'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'})};
+ L('f1','f5','取反 + 掩码');L('f2','f3','每 2 字节一个 k');L('f5','f4','');L('f3','f4','返回值交叉',14);L('f4','f7');L('f4','f6','device.c:964');L('f6','f8','逐位查表');L('f8','f9','id → 位');
+ arrow(s,480,240,760,279,'bad');T(s,620,285,'my_misc.c:554/558 交叉',{'text-anchor':'middle','font-size':10.5,fill:'var(--bad)'});
+ T(s,20,320,'左右键：霍尔 → ② → ③ → ④；中键 / DPI：GPIO → ① → ⑤ → ④。从 ④ 开始大家走同一条路。线圈和 GUI 参数用自己的 [0] 左 [1] 右（⑩）。',{'font-size':12,fill:'var(--muted)'});
+})();
+/* 1 GPIO */
+(function(){const s=$('f1F');T(s,20,24,'LPC_GPIO->PIN[0]：第 n 位 = PIO0_n 这只脚的电平（按下 = 0，取反后 = 1）',{'font-weight':700,'font-size':13});
+ bits(s,20,44,32,41.5,{7:['中','M'],11:['K4','K4'],12:['K5','K5'],23:['DPI','DPI']});
+ T(s,20,130,'BUTTON_PORT0 = ~PIN[0] & 掩码 → 只剩上面这 4 位，其他位全是 0',{'font-size':12});
+ [['中键','PIO0_7','16 脚'],['K4','PIO0_11','21 脚 L_FORWARD'],['K5','PIO0_12','22 脚 L_BACK'],['DPI','PIO0_23','27 脚']].forEach((r,i)=>T(s,20+i*330,165,`${r[0]} = ${r[1]}（${r[2]}）`,{'font-size':12.5,'font-weight':600}));
+ T(s,20,200,'左右键不在这个寄存器里（没有开关，靠霍尔芯片）。PIO0_13 / 14 是线圈 PWM，PIO0_16 是霍尔电源开关，也不是按键。',{'font-size':11.5,fill:'var(--muted)'});
+})();
+/* 2 hall buffer */
+(function(){const s=$('f2F');T(s,20,24,'hall_spi_rx[4]：SPI1 一次收 4 个字节（第 3 课）',{'font-weight':700,'font-size':13});
+ cells(s,40,60,[['右键高字节','校验 2 位 + 读数高 6 位','R'],['右键低字节','读数低 8 位','R'],['左键高字节','校验 2 位 + 读数高 6 位','L'],['左键低字节','读数低 8 位','L']],300,{idx:i=>`hall_spi_rx[${i}]`,h:60});
+ T(s,40,150,'为什么右键在前：两颗芯片串成一条链，MCU → 左芯片 → 右芯片 → MCU。数据从链的末端（右芯片）先回来。',{'font-size':12});
+ T(s,40,175,'下一步按键算法每次取 2 个字节：ana_rd_buff[2*k]、[2*k + 1]，k = 0 取 [0][1]（右），k = 1 取 [2][3]（左）。',{'font-size':12,fill:'var(--muted)'});
+})();
+/* 3 k index */
+(function(){const s=$('f3F');T(s,20,24,'按键算法里所有两格数组：[0] = 右，[1] = 左',{'font-weight':700,'font-size':13});
+ cells(s,40,52,[['k = 0','右键','R'],['k = 1','左键','L']],260,{h:56});
+ T(s,600,70,'temp[k]、gbKeyState[k]、gwTopBaseline[k]、gwBottomBaseline[k]、',{'font-size':12});T(s,600,90,'raw_data_filter[k]、previousKeySta[k]、node[k] …',{'font-size':12});
+ T(s,20,150,'返回值 ret（交给 button 的 bit0、bit1）：',{'font-weight':700,'font-size':12.5});
+ bits(s,40,165,8,60,{0:['左','L'],1:['右','R']},{h:40});
+ arrow(s,167,108,429,165,'per');arrow(s,427,108,489,165,'bad');
+ T(s,560,200,'gbKeyState[1]（左）→ ret bit0　　gbKeyState[0]（右）→ ret bit1：在这里交叉（my_misc.c:657~665）',{'font-size':12,fill:'var(--bad)'});
+})();
+/* 4 internal */
+(function(){const s=$('f4F');T(s,20,24,'button / scan_result_cur / scan_result_pre（低 10 位有用，高 22 位一直是 0）',{'font-weight':700,'font-size':13});
+ bits(s,20,44,16,82,{0:['左','L'],1:['右','R'],2:['中','M'],3:['(滚轮上)','W'],4:['(滚轮下)','W'],5:['K4','K4'],6:['K5','K5'],7:['音量+','W'],8:['音量−','W'],9:['DPI','DPI']},{h:52,fs:12});
+ T(s,20,135,'灰色的位：bit3/4 在这几个变量里一直是 0，只在 wheel_button_status 里给滚轮用（第 6 节）；bit7/8 是别的板子的音量键，T1A 没有。',{'font-size':11.5,fill:'var(--muted)'});
+ T(s,20,165,'判断某个键：button & (0x01 << i)，i 就是这里的位号。Button_Scan 里 i = 0、1 一段，i = 2 一段，i = 9 一段。',{'font-size':12});
+ T(s,20,195,'⚠ 名字叫 *_REPORT_BIT，但它不是 USB 报告里的位（第 9 节才是）。',{'font-size':12,fill:'var(--bad)','font-weight':600});
+})();
+/* 5 location */
+(function(){const s=$('f5F');T(s,20,24,'Button_Location_Data(port, mask, position, reportPosition)：只留 position 那一位，挪到 reportPosition',{'font-weight':700,'font-size':13});
+ const w=41.5,x0=20;bits(s,x0,44,32,w,{7:['中','M'],11:['K4','K4'],12:['K5','K5'],23:['DPI','DPI']},{h:36});T(s,x0,40,'BUTTON_PORT0（引脚位）',{'font-size':11,fill:'var(--muted)'});
+ bits(s,x0,180,32,w,{2:['中','M'],5:['K4','K4'],6:['K5','K5'],9:['DPI','DPI']},{h:36});T(s,x0,176,'挪完以后（按键编号位）',{'font-size':11,fill:'var(--muted)'});
+ const X=b=>x0+(31-b)*w+(w-2)/2;[[7,2,'M','>> 5'],[11,5,'K4','>> 6'],[12,6,'K5','>> 6'],[23,9,'DPI','>> 14']].forEach(([a,b,c,l])=>{arrow(s,X(a),82,X(b),178,C[c]);T(s,(X(a)+X(b))/2+6,135,l,{'font-size':11.5,'font-weight':700,fill:`var(--${C[c]})`})});
+ T(s,20,250,'button.c:571~574 每个键调一次，结果用 |= 合进 button_port_state；最后 :598 再 |= LR_GetState()（左右键的 bit0、bit1）。',{'font-size':11.5,fill:'var(--muted)'});
+})();
+/* 6 wheel_button_status */
+(function(){const s=$('f6F');T(s,20,24,'wheel_button_status：低 10 位 = 按键编号 + 滚轮，正好对应 key_function[0~9]',{'font-weight':700,'font-size':13});
+ bits(s,20,44,16,82,{0:['左','L'],1:['右','R'],2:['中','M'],3:['滚轮上','W'],4:['滚轮下','W'],5:['K4','K4'],6:['K5','K5'],7:['音量+','W'],8:['音量−','W'],9:['DPI','DPI']},{h:52,fs:12});
+ T(s,20,140,'device.c:963 先清 ALL_BUTTON_REPORT_BIT（bit0,1,2,5,6,7,8,9），:964 放进确认过的按键；滚轮扫描（:996~997）写 bit3、bit4。',{'font-size':12});
+ T(s,20,165,'T1A 上 ENABLE_WHEEL_SCAN = 0，所以 bit3、bit4 一直是 0。',{'font-size':11.5,fill:'var(--muted)'});
+})();
+/* 7 debounce */
+(function(){const s=$('f7F');T(s,20,24,'debounce[6]：下标 = 按键编号 − 偏移',{'font-weight':700,'font-size':13});
+ cells(s,40,60,[['左','不消抖，空着',''],['右','不消抖，空着',''],['中键','i = 2 → [i]','M'],['K4','i = 5 → [i − 2]','K4'],['K5','i = 6 → [i − 2]','K5'],['DPI','i = 9 → [i − 4]','DPI']],210,{idx:i=>`debounce[${i}]`,h:60});
+ T(s,40,160,'值：0 = 稳定、不在数；5 = 刚变成按下，还要稳 5 次；8 = 刚变成松开，还要稳 8 次。',{'font-size':12});
+ T(s,40,185,'K4 / K5 那两格在 T1A 上不用（扫描被 DISABLE_K4_K5_KEY 关了）。不能直接写 debounce[9]：数组只有 6 格，会越界写坏后面的 button_changed。',{'font-size':11.5,fill:'var(--muted)'});
+})();
+/* 8 key_function */
+(function(){const s=$('f8F');T(s,20,24,'gloabSetting.settingMode.key_function[10]：下标 ii = 按键编号；存的 id = 这个键当什么用（默认值）',{'font-weight':700,'font-size':13});
+ cells(s,20,60,[['0xB0','鼠标左','L'],['0xB1','鼠标右','R'],['0xB2','鼠标中','M'],['0xB5','滚轮上','W'],['0xB6','滚轮下','W'],['0xB3','鼠标 K4','K4'],['0xB4','鼠标 K5','K5'],['0','（无）',''],['1','（无）',''],['0xC1','切 DPI','DPI']],132,{idx:i=>`[${i}]`,h:60});
+ T(s,20,160,'Custom_HandleKey 从 ii = 0 到 9，看 wheel_button_status 的第 ii 位按没按，再查 key_function[ii] 的 id 决定怎么处理：',{'font-size':12});
+ T(s,20,182,'0xB0~0xBF 鼠标键 → 写鼠标报告；0xFE / 0xFD 键盘键 → 写键盘报告；0x90~0x9F 多媒体；0xC0~0xCF 特殊功能（DPI 等）；0 / 1 什么也不做。',{'font-size':11.5,fill:'var(--muted)'});
+ T(s,20,210,'GUI 改按键功能，改的就是这张表的某一格（pc_communicate.c:241~255）。比如把 [9] 改成键盘 A，按 DPI 键就发键盘 A。',{'font-size':11.5,fill:'var(--muted)'});
+})();
+/* 9 USB report */
+(function(){const s=$('f9F');T(s,20,24,'mouseReport：8 个字节（第 5 课）',{'font-weight':700,'font-size':13});
+ cells(s,20,48,[['ID = 1','报告 ID',''],['按键','见下面','L'],['X 低','',''],['X 高','',''],['Y 低','',''],['Y 高','',''],['滚轮','+1 / −1','W'],['横滚','','']],165,{idx:i=>`第 ${i} 字节`,h:46,fs:12.5});
+ T(s,20,130,'第 1 字节（按键）每一位：',{'font-weight':700,'font-size':12.5});
+ bits(s,20,142,8,80,{0:['左','L'],1:['右','R'],2:['中','M'],3:['后退 K5','K5'],4:['前进 K4','K4']},{h:46,fs:12});
+ T(s,700,170,'左右中：和内部编号一样是 bit0、1、2（巧合）。',{'font-size':12});T(s,700,192,'K4 内部 bit5 → 报告 bit4（0x10）；K5 内部 bit6 → 报告 bit3（0x08）。',{'font-size':12,fill:'var(--bad)'});T(s,700,214,'DPI 内部 bit9 → 不进报告。',{'font-size':12});
+})();
+/* 10 coil / GUI */
+(function(){const s=$('f10F');T(s,20,24,'线圈和 GUI 参数：都是 [0] 左、[1] 右（和按键算法的 k 相反）',{'font-weight':700,'font-size':13});
+ const rows=[['协议 VK 码','0x01','0x02'],['xgAllParam.xConfig[] / xInfo[]','[0]','[1]'],['线圈 ELE_POS / leftEle、rightEle','ELE_POS_LEFT = 0','ELE_POS_RIGHT = 1'],['nowHallSegment[]','[0]','[1]'],['波形通道 / wfCh','CHANNEL_0 / wfCh0','CHANNEL_1 / wfCh1'],['CT32B1 / 引脚','MR0 / PIO0_13','MR1 / PIO0_14']];
+ rows.forEach((r,i)=>{const y=44+i*34;T(s,20,y+20,r[0],{'font-size':12,'font-weight':600});[1,2].forEach(j=>{el(s,'rect',{x:300+(j-1)*230,y,width:220,height:28,rx:5,style:`fill:color-mix(in srgb,var(--${j===1?'bad':'per'}) 18%,var(--panel));stroke:var(--${j===1?'bad':'per'})`});T(s,410+(j-1)*230,y+19,r[j],{'text-anchor':'middle','font-size':12,'font-family':'var(--font-m)'})})});
+ T(s,300,38,'左',{'font-weight':700,fill:'var(--bad)'});T(s,530,38,'右',{'font-weight':700,fill:'var(--per)'});
+ el(s,'rect',{x:830,y:44,width:220,height:62,rx:8,style:'fill:color-mix(in srgb,var(--per) 18%,var(--panel));stroke:var(--per)'});T(s,940,70,'按键算法 k = 0（右）',{'text-anchor':'middle','font-size':12.5,'font-weight':700});
+ el(s,'rect',{x:1080,y:44,width:220,height:62,rx:8,style:'fill:color-mix(in srgb,var(--bad) 18%,var(--panel));stroke:var(--bad)'});T(s,1190,70,'按键算法 k = 1（左）',{'text-anchor':'middle','font-size':12.5,'font-weight':700});
+ T(s,830,135,'交接处的交叉：',{'font-weight':700,'font-size':12.5});
+ ['Hall_SyncParam(k)：k = 1 → xInfo[0]，k = 0 → xInfo[1]（my_protocol_mouse.c:87~94）','Ele_UpadteSegment(VK_RBUTTON, node[0])、(VK_LBUTTON, node[1])（my_misc.c:554、558）','返回值：gbKeyState[1] → bit0，gbKeyState[0] → bit1（my_misc.c:657~665）','Ele_IsVibrating(ELE_POS_LEFT) 时跳过 k == 1（my_misc.c:490~492）'].forEach((t,i)=>T(s,830,160+i*24,'· '+t,{'font-size':11.2}));
+ T(s,20,300,'记法：只有按键算法（my_misc.c）和霍尔缓冲是“右在前”，因为数据从芯片链上先回来的是右边；其余地方都是“左在前”。',{'font-size':12,fill:'var(--muted)'});
+})();
+})();
+</script>
