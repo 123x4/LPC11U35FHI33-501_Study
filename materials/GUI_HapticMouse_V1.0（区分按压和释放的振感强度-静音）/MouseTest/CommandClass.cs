@@ -765,23 +765,22 @@ namespace MouseTest
         }
 
         /// <summary>
-        /// 设置线圈驱动方式：bAction 0=按下 1=释放，bOutputMode 0=Level 1=Waveform
+        /// 设置全局驱动方式：bDriveMode 0=默认正常模式 1=静音模式（按下/释放共用）
         /// </summary>
-        internal void SetDriveMode(byte key, byte bAction, byte bOutputMode)
+        internal void SetDriveMode(byte bDriveMode)
         {
             byte[] hidOutputReport = new byte[65];
             hidOutputReport[0] = 0;
             hidOutputReport[1] = 0x55;
             hidOutputReport[2] = 0x02;
             hidOutputReport[3] = 0x01;
-            hidOutputReport[5] = 0x06;
+            hidOutputReport[5] = 0x05;
             hidOutputReport[6] = 0x00;
             hidOutputReport[7] = 0x02;
             hidOutputReport[8] = 0x03;
             hidOutputReport[9] = 0x06;
-            hidOutputReport[10] = key;
-            hidOutputReport[11] = bAction;
-            hidOutputReport[12] = bOutputMode;
+            hidOutputReport[10] = 0xFF;
+            hidOutputReport[11] = bDriveMode;
 
             hidOutputReport[4] = CalculateChecksum(hidOutputReport);
             Thread.Sleep(50);
@@ -790,9 +789,33 @@ namespace MouseTest
         }
 
         /// <summary>
-        /// 读取线圈驱动方式配置（鼠标按 bAction 分别回复 按下/释放 两包）
+        /// 读取释放线圈配置（与 set 同命令码 0x03，get 标志 byte[8]=0x02）：
+        /// 回复 byte[12]=使能标志，byte[13..14]=释放强度
         /// </summary>
-        internal void GetDriveMode(byte key)
+        internal void GetReleaseCoil(byte key)
+        {
+            byte[] hidOutputReport = new byte[65];
+            hidOutputReport[0] = 0;
+            hidOutputReport[1] = 0x55;
+            hidOutputReport[2] = 0x02;
+            hidOutputReport[3] = 0x01;
+            hidOutputReport[5] = 0x04;
+            hidOutputReport[6] = 0x00;
+            hidOutputReport[7] = 0x02;
+            hidOutputReport[8] = 0x02;
+            hidOutputReport[9] = 0x03;
+            hidOutputReport[10] = key;
+
+            hidOutputReport[4] = CalculateChecksum(hidOutputReport);//checkSum
+            Thread.Sleep(50);
+
+            MyHID.SendDevice64(hidOutputReport, 1);
+        }
+
+        /// <summary>
+        /// 读取全局驱动方式（一包回复：bDriveMode 0=默认正常模式 1=静音模式）
+        /// </summary>
+        internal void GetDriveMode()
         {
             byte[] hidOutputReport = new byte[65];
             hidOutputReport[0] = 0;
@@ -804,7 +827,56 @@ namespace MouseTest
             hidOutputReport[7] = 0x02;
             hidOutputReport[8] = 0x02;
             hidOutputReport[9] = 0x06;
-            hidOutputReport[10] = key;
+            hidOutputReport[10] = 0xFF;
+
+            hidOutputReport[4] = CalculateChecksum(hidOutputReport);//checkSum
+            Thread.Sleep(50);
+
+            MyHID.SendDevice64(hidOutputReport, 1);
+        }
+
+        /// <summary>
+        /// 设置全局线圈 PWM 表：startIndex 0x00/0x32（0/50），data 固定 50 字节
+        /// </summary>
+        internal void SetPwm(byte startIndex, byte[] data)
+        {
+            byte[] hidOutputReport = new byte[65];
+            hidOutputReport[0] = 0;
+            hidOutputReport[1] = 0x55;
+            hidOutputReport[2] = 0x02;
+            hidOutputReport[3] = 0x01;
+            hidOutputReport[5] = 0x37;
+            hidOutputReport[6] = 0x00;
+            hidOutputReport[7] = 0x02;
+            hidOutputReport[8] = 0x03;
+            hidOutputReport[9] = 0x07;
+            hidOutputReport[10] = 0xFF;
+            hidOutputReport[11] = startIndex;
+            Array.Copy(data, 0, hidOutputReport, 12, 50);
+
+            hidOutputReport[4] = CalculateChecksum(hidOutputReport);
+            Thread.Sleep(50);
+
+            MyHID.SendDevice64(hidOutputReport, 1);
+        }
+
+        /// <summary>
+        /// 读取全局线圈 PWM 表：startIndex 0x00/0x32，回复 50 字节数据
+        /// </summary>
+        internal void GetPwm(byte startIndex)
+        {
+            byte[] hidOutputReport = new byte[65];
+            hidOutputReport[0] = 0;
+            hidOutputReport[1] = 0x55;
+            hidOutputReport[2] = 0x02;
+            hidOutputReport[3] = 0x01;
+            hidOutputReport[5] = 0x05;
+            hidOutputReport[6] = 0x00;
+            hidOutputReport[7] = 0x02;
+            hidOutputReport[8] = 0x02;
+            hidOutputReport[9] = 0x07;
+            hidOutputReport[10] = 0xFF;
+            hidOutputReport[11] = startIndex;
 
             hidOutputReport[4] = CalculateChecksum(hidOutputReport);//checkSum
             Thread.Sleep(50);

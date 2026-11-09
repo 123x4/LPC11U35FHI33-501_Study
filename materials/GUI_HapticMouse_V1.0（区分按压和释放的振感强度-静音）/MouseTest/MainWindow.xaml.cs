@@ -244,14 +244,14 @@ namespace MouseTest
         {
             if (int.TryParse(txtManualConductTime.Text, out int value))
             {
-                if (value >= 0 && value <= 5000)
+                if (value >= 0 && value <= 1200)
                 {
                     sliderConductTime.Value = value;
                     SaveVoltageSettings();
                 }
                 else
                 {
-                    txtVoltageStatus.Text = "请输入0~5000";
+                    txtVoltageStatus.Text = "请输入0~1200";
                     txtVoltageStatus.Foreground = brushRed;
                 }
             }
@@ -306,14 +306,14 @@ namespace MouseTest
         {
             if (int.TryParse(txtManualReleaseConductTime.Text, out int value))
             {
-                if (value >= 0 && value <= 5000)
+                if (value >= 0 && value <= 1200)
                 {
                     sliderReleaseConductTime.Value = value;
                     SaveReleaseVoltageSettings();
                 }
                 else
                 {
-                    txtReleaseVoltageStatus.Text = "请输入0~5000";
+                    txtReleaseVoltageStatus.Text = "请输入0~1200";
                     txtReleaseVoltageStatus.Foreground = brushRed;
                 }
             }
@@ -435,14 +435,16 @@ namespace MouseTest
             hallRaw,
             hallSegment,
             coil,
+            getReleaseCoil,
             getDriveMode,
             rt,
             hall,
             setRT,
             setVoltage,
             setReleaseVoltage,
-            setPressDriveMode,
-            setReleaseDriveMode,
+            setDriveMode,
+            setPwm,
+            getPwm,
             coilDebug,
             setCoilDebug,
             Others
@@ -475,10 +477,6 @@ namespace MouseTest
             public bool ReleaseVoltageEnabled;
             public byte ReleaseVoltageValue;
             public ushort ReleaseConductTime;
-
-            // 驱动方式（0: Level, 1: Waveform）
-            public byte PressDriveMode;
-            public byte ReleaseDriveMode;
 
             // 线圈调试
             public bool DynOnTimeEnabled;
@@ -600,8 +598,10 @@ namespace MouseTest
 
                             txtInfoVoltageConductL.Text = leftKeyInfo.ConductTime.ToString();
 
-                            checkType = CheckType.getDriveMode;
-                            StartDriveModeRead(0x01);
+                            checkType = CheckType.getReleaseCoil;
+                            _chainKey = 0x01;
+                            commandClass.GetReleaseCoil(0x01);
+                            ArmChainTimeout(500);
                         }
                         else if (inputBuffer[1] == 0x55 && inputBuffer[10] == 0x02)
                         {
@@ -611,30 +611,37 @@ namespace MouseTest
 
                             txtInfoVoltageConductR.Text = rightKeyInfo.ConductTime.ToString();
 
-                            checkType = CheckType.getDriveMode;
-                            StartDriveModeRead(0x02);
+                            checkType = CheckType.getReleaseCoil;
+                            _chainKey = 0x02;
+                            commandClass.GetReleaseCoil(0x02);
+                            ArmChainTimeout(500);
                         }
                         break;
-                    case CheckType.getDriveMode://驱动方式配置（同一命令按 bAction 区分按下/释放）
-                        if (inputBuffer[1] == 0x55 && inputBuffer[9] == 0x06 && (inputBuffer[10] == 0x01 || inputBuffer[10] == 0x02))
+                    case CheckType.getReleaseCoil://释放线圈配置读（0x03，byte[8]=0x02 为读回复，与 set 的 ack 区分）
+                        if (inputBuffer[1] == 0x55 && inputBuffer[8] == 0x02 && inputBuffer[9] == 0x03 && (inputBuffer[10] == 0x01 || inputBuffer[10] == 0x02))
                         {
                             MouseKeyInfo info = GetKeyInfo(inputBuffer[10]);
-                            if (inputBuffer[11] == 0x00)
+                            info.ReleaseVoltageEnabled = (inputBuffer[12] & 0x80) != 0;
+                            info.ReleaseConductTime = GetInfoValue(inputBuffer[13], inputBuffer[14]);
+                            if (inputBuffer[10] == 0x01)
                             {
-                                info.PressDriveMode = inputBuffer[12];
-                                _driveModeGotPress = true;
+                                txtInfoVoltageValueL.Text = info.ReleaseConductTime.ToString();
                             }
                             else
                             {
-                                info.ReleaseDriveMode = inputBuffer[12];
-                                _driveModeGotRelease = true;
+                                txtInfoVoltageValueR.Text = info.ReleaseConductTime.ToString();
                             }
 
-                            // 按下/释放两包都收到才继续；超时由定时器兜底
-                            if (_driveModeGotPress && _driveModeGotRelease)
-                            {
-                                AdvanceAfterDriveMode(inputBuffer[10]);
-                            }
+                            _chainTimer.Stop();
+                            StartDriveModeRead(inputBuffer[10]);
+                        }
+                        break;
+                    case CheckType.getDriveMode://全局线圈驱动方式（一包）
+                        if (inputBuffer[1] == 0x55 && inputBuffer[9] == 0x06 && inputBuffer[10] == 0xFF)
+                        {
+                            _coilDriveMode = inputBuffer[11];
+
+                            AdvanceAfterDriveMode();
                         }
                         break;
                     case CheckType.setRT:
@@ -647,8 +654,11 @@ namespace MouseTest
                         }
                         break;
                     case CheckType.setVoltage:
-                        if (inputBuffer[1] == 0x55 && inputBuffer[11] == 0x01)
+                        if (inputBuffer[1] == 0x55 && inputBuffer[9] == 0x02 && inputBuffer[11] == 0x01 &&
+                            (_applyingGear ? inputBuffer[10] == GearStepKey() : (inputBuffer[10] == 0x01 || inputBuffer[10] == 0x02)))
                         {
+                            if (_applyingGear) { GearStepAcked(); break; }
+
                             ShowSetStatus(txtVoltageStatus, brushGreen);
 
                             ReadMouseInfo();
@@ -656,27 +666,53 @@ namespace MouseTest
                         }
                         break;
                     case CheckType.setReleaseVoltage:
-                        if (inputBuffer[1] == 0x55 && inputBuffer[11] == 0x01)
+                        if (inputBuffer[1] == 0x55 && inputBuffer[9] == 0x03 && inputBuffer[11] == 0x01 &&
+                            (_applyingGear ? inputBuffer[10] == GearStepKey() : (inputBuffer[10] == 0x01 || inputBuffer[10] == 0x02)))
                         {
+                            if (_applyingGear) { GearStepAcked(); break; }
+
                             ShowSetStatus(txtReleaseVoltageStatus, brushGreen);
 
                             ReadMouseInfo();
                         }
                         break;
-                    case CheckType.setPressDriveMode:
-                        if (inputBuffer[1] == 0x55 && inputBuffer[9] == 0x06 && inputBuffer[11] == 0x01)
+                    case CheckType.setDriveMode:
+                        if (inputBuffer[1] == 0x55 && inputBuffer[9] == 0x06 && inputBuffer[10] == 0xFF && inputBuffer[11] == 0x01)
                         {
-                            ShowSetStatus(txtVoltageStatus, brushGreen);
+                            ShowSetStatus(txtDriveModeStatus, brushGreen);
 
                             ReadMouseInfo();
                         }
                         break;
-                    case CheckType.setReleaseDriveMode:
-                        if (inputBuffer[1] == 0x55 && inputBuffer[9] == 0x06 && inputBuffer[11] == 0x01)
+                    case CheckType.getPwm:
+                        if (inputBuffer[1] == 0x55 && inputBuffer[9] == 0x07 && inputBuffer[10] == 0xFF && inputBuffer[11] == _pwmSeqIndex)
                         {
-                            ShowSetStatus(txtReleaseVoltageStatus, brushGreen);
-
-                            ReadMouseInfo();
+                            Array.Copy(inputBuffer, 12, _pwmTable, _pwmSeqIndex, 50);
+                            if (_pwmSeqIndex == 0x00)
+                            {
+                                _pwmSeqIndex = 0x32;
+                                commandClass.GetPwm(0x32);
+                            }
+                            else
+                            {
+                                checkType = CheckType.Others;
+                                txtPwmResult.Text = FormatPwmTable(_pwmTable);
+                            }
+                        }
+                        break;
+                    case CheckType.setPwm:
+                        if (inputBuffer[1] == 0x55 && inputBuffer[9] == 0x07 && inputBuffer[10] == 0xFF && inputBuffer[11] == _pwmSeqIndex && inputBuffer[12] == 0x01)
+                        {
+                            if (_pwmSeqIndex == 0x00)
+                            {
+                                _pwmSeqIndex = 0x32;
+                                SendPwmPacket(0x32);
+                            }
+                            else
+                            {
+                                checkType = CheckType.Others;
+                                ShowSetStatus(txtPwmStatus, brushGreen);
+                            }
                         }
                         break;
                     case CheckType.setCoilDebug:
@@ -704,6 +740,7 @@ namespace MouseTest
                             {
                                 checkType = CheckType.Others;
                                 UpdateSettingsUi();
+                                _readingInfo = false; // 读回链路结束
                                 if (_wasReadingRaw)
                                 {
                                     _wasReadingRaw = false;
@@ -719,6 +756,7 @@ namespace MouseTest
 
                             checkType = CheckType.Others;
                             UpdateSettingsUi();
+                            _readingInfo = false; // 读回链路结束
                             if (_wasReadingRaw)
                             {
                                 _wasReadingRaw = false;
@@ -785,19 +823,22 @@ namespace MouseTest
                 sliderReleaseConductTime.Value = ClampSliderValue(sliderReleaseConductTime, info.ReleaseConductTime);
                 txtReleaseConductTimeDisplay.Text = $"{info.ReleaseConductTime} ";
 
-                // 设置按下振感驱动方式
-                chkPressLevel.IsChecked = info.PressDriveMode == 0;
-                chkPressWaveform.IsChecked = info.PressDriveMode == 1;
-
-                // 设置释放振感驱动方式
-                chkReleaseLevel.IsChecked = info.ReleaseDriveMode == 0;
-                chkReleaseWaveform.IsChecked = info.ReleaseDriveMode == 1;
+                // 设置驱动方式（0: 默认正常模式, 1: 静音模式）；非 0/1 视为驱动失效
+                chkDriveNormal.IsChecked = _coilDriveMode == 0;
+                chkDriveSilent.IsChecked = _coilDriveMode == 1;
+                UpdateDriveModeUiVisibility();
+                if (_coilDriveMode > 1)
+                {
+                    txtDriveModeStatus.Text = "驱动失效";
+                    txtDriveModeStatus.Foreground = brushRed;
+                }
 
                 // 设置线圈调试
                 chkDynOnTimeEn.IsChecked = info.DynOnTimeEnabled;
                 chkAutoVibrationEn.IsChecked = info.AutoVibrationEnabled;
                 sliderAutoVibrationPeriod.Value = ClampSliderValue(sliderAutoVibrationPeriod, info.AutoVibrationPeriod);
                 txtAutoVibrationPeriodDisplay.Text = $"{info.AutoVibrationPeriod} ms";
+                // 释放强度列由 getReleaseCoil 回读或设置时的本地刷新负责，这里不覆盖
             }
             finally
             {
@@ -1443,6 +1484,11 @@ namespace MouseTest
             ConnCheckBox.IsChecked = false;
             TrueVerTB.Text = "";
 
+            //PWM 配置
+            txtPwmTable.Text = "";
+            txtPwmResult.Text = "";
+            txtPwmStatus.Text = "";
+
 
 
 
@@ -1623,89 +1669,350 @@ namespace MouseTest
             commandClass.SetReleaseVoltage(key, bmEnableMask, CoilTurnOnTimeL, CoilTurnOnTimeH);
         }
 
-        // 驱动方式读取状态：get 命令不带动作位，鼠标按 bAction 分按下/释放两包回复
-        private bool _driveModeGotPress;
-        private bool _driveModeGotRelease;
-        private byte _driveModeKey;
-        private DispatcherTimer _driveModeTimer;
+        // 全局驱动方式缓存（0: 默认正常模式, 1: 静音模式），读取链路暂存的按键与超时定时器
+        private byte _coilDriveMode;
+        private byte _chainKey;
+        private DispatcherTimer _chainTimer;
 
         /// <summary>
-        /// 发送读取驱动方式命令，并启动超时兜底（只回一包时也能继续读后续配置）
+        /// 链路单步超时兜底：某条读命令鼠标不支持/未回复时跳过该步，避免读回链路卡死
+        /// </summary>
+        private void ArmChainTimeout(double milliseconds)
+        {
+            if (_chainTimer == null)
+            {
+                _chainTimer = new DispatcherTimer();
+                _chainTimer.Tick += ChainTimeout_Tick;
+            }
+            _chainTimer.Interval = TimeSpan.FromMilliseconds(milliseconds);
+            _chainTimer.Stop();
+            _chainTimer.Start();
+        }
+
+        private void ChainTimeout_Tick(object sender, EventArgs e)
+        {
+            _chainTimer.Stop();
+            switch (checkType)
+            {
+                case CheckType.getReleaseCoil:
+                    // 固件不回复 0x05 时，释放强度列回退本地缓存值，继续链路
+                    txtInfoVoltageValueL.Text = leftKeyInfo.ReleaseConductTime.ToString();
+                    txtInfoVoltageValueR.Text = rightKeyInfo.ReleaseConductTime.ToString();
+                    StartDriveModeRead(_chainKey);
+                    break;
+                case CheckType.getDriveMode:
+                    AdvanceAfterDriveMode();
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 发送读取全局驱动方式命令
         /// </summary>
         private void StartDriveModeRead(byte key)
         {
-            _driveModeGotPress = false;
-            _driveModeGotRelease = false;
-            _driveModeKey = key;
-
-            commandClass.GetDriveMode(key);
-
-            if (_driveModeTimer == null)
-            {
-                _driveModeTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
-                _driveModeTimer.Tick += DriveModeTimeout_Tick;
-            }
-            _driveModeTimer.Stop();
-            _driveModeTimer.Start();
+            _chainKey = key;
+            checkType = CheckType.getDriveMode;
+            commandClass.GetDriveMode();
+            ArmChainTimeout(500);
         }
 
-        private void DriveModeTimeout_Tick(object sender, EventArgs e)
+        private void AdvanceAfterDriveMode()
         {
-            _driveModeTimer.Stop();
-            if (checkType == CheckType.getDriveMode)
-            {
-                AdvanceAfterDriveMode(_driveModeKey);
-            }
-        }
-
-        private void AdvanceAfterDriveMode(byte key)
-        {
-            _driveModeTimer?.Stop();
+            _chainTimer?.Stop();
             checkType = CheckType.coilDebug;
-            commandClass.GetCoilDebug(key);
+            commandClass.GetCoilDebug(_chainKey);
         }
 
-        private void ChkPressDriveMode_Changed(object sender, RoutedEventArgs e)
+        private void ChkDriveMode_Changed(object sender, RoutedEventArgs e)
         {
             if (_isUpdatingUi) return;
 
-            // RadioButton 二选一：Level 未选中即 Waveform
-            byte mode = chkPressLevel.IsChecked == true ? (byte)0 : (byte)1;
-            SavePressDriveMode(mode);
+            UpdateDriveModeUiVisibility();
+
+            if (chkDriveSilent.IsChecked == true)
+            {
+                SaveDriveMode(1);
+            }
+            else if (commandClass != null)
+            {
+                // 从静音切回正常：先下发 0 挡位（按下/释放清零），完成后再切模式
+                _pendingDriveMode = 0;
+                ApplySilentGear(0);
+            }
         }
 
-        private void ChkReleaseDriveMode_Changed(object sender, RoutedEventArgs e)
+        // 挡位序列完成后待补发的模式切换命令
+        private byte? _pendingDriveMode;
+
+        /// <summary>
+        /// 按当前选择的驱动方式调整界面：静音模式隐藏按下/释放振感配置面板、显示挡位；
+        /// 正常模式显示强度面板、隐藏挡位
+        /// </summary>
+        private void UpdateDriveModeUiVisibility()
         {
-            if (_isUpdatingUi) return;
+            bool silent = chkDriveSilent.IsChecked == true;
 
-            byte mode = chkReleaseLevel.IsChecked == true ? (byte)0 : (byte)1;
-            SaveReleaseDriveMode(mode);
+            testVoltag.Visibility = silent ? Visibility.Collapsed : Visibility.Visible;
+            testReleaseVoltag.Visibility = silent ? Visibility.Collapsed : Visibility.Visible;
+
+            Visibility gearVisibility = silent ? Visibility.Visible : Visibility.Collapsed;
+            txtGearCaption.Visibility = gearVisibility;
+            btnGear0.Visibility = gearVisibility;
+            btnGear1.Visibility = gearVisibility;
+            btnGear2.Visibility = gearVisibility;
+            btnGear3.Visibility = gearVisibility;
+            btnGear0.IsEnabled = silent;
+            btnGear1.IsEnabled = silent;
+            btnGear2.IsEnabled = silent;
+            btnGear3.IsEnabled = silent;
         }
 
-        private void SavePressDriveMode(byte mode)
+        /// <summary>
+        /// 静音挡位值表：挡位 0~3 对应按下/释放强度
+        /// </summary>
+        private static readonly ushort[] SilentGearValues = { 0, 1500, 2000, 2500 };
+
+        // 当前生效挡位对应的按钮（绿色高亮）
+        private Button _activeGearBtn;
+
+        private void BtnSilentGear_Click(object sender, RoutedEventArgs e)
         {
             if (commandClass == null) return;
 
-            byte key = rbKeyR.IsChecked == true ? (byte)0x02 : (byte)0x01;
+            int gear = int.Parse((string)((Button)sender).Tag);
+            ApplySilentGear(SilentGearValues[gear]);
 
-            // 同步更新缓存，避免切换按键时显示旧值
-            GetKeyInfo(key).PressDriveMode = mode;
-
-            checkType = CheckType.setPressDriveMode;
-            commandClass.SetDriveMode(key, 0, mode);
+            // 标记当前生效挡位：按钮变绿，切到其他挡位时恢复原样
+            if (_activeGearBtn != null)
+            {
+                _activeGearBtn.ClearValue(Control.BackgroundProperty);
+            }
+            _activeGearBtn = (Button)sender;
+            _activeGearBtn.Background = Brushes.LightGreen;
         }
 
-        private void SaveReleaseDriveMode(byte mode)
+        /// <summary>
+        /// 静音挡位下发状态：0=左按下 1=左释放 2=右按下 3=右释放，逐条发送等回复确认，失败重发一次
+        /// </summary>
+        private bool _applyingGear;
+        private int _gearStep;
+        private int _gearRetry;
+        private ushort _gearValue;
+        private DispatcherTimer _gearTimer;
+
+        private byte GearStepKey()
+        {
+            return _gearStep < 2 ? (byte)0x01 : (byte)0x02;
+        }
+
+        /// <summary>
+        /// 应用静音挡位：把挡位值同时设置为左/右键的按下和释放振感强度。
+        /// 逐条发送并等待对应回复，300ms 无回应重发一次，仍失败则跳过该条，4 条完成后刷新显示并回读
+        /// </summary>
+        private void ApplySilentGear(ushort value)
+        {
+            // 打断进行中的读回链路（如有），其残留的回复按各自分支处理
+            _readingInfo = false;
+            ReadMouseInfoCancelled();
+
+            // 暂停 RawData 轮询，避免轮询命令与设置命令并发写设备
+            _pauseRaw = true;
+
+            _applyingGear = true;
+            _gearStep = 0;
+            _gearRetry = 0;
+            _gearValue = value;
+            SendGearStep();
+        }
+
+        private void ReadMouseInfoCancelled()
+        {
+            // 挡位下发的占位状态，回复统一走 Others 忽略
+            checkType = CheckType.Others;
+        }
+
+        private void SendGearStep()
+        {
+            byte key = GearStepKey();
+            bool press = _gearStep % 2 == 0;
+            byte timeL = (byte)(_gearValue & 0xFF);
+            byte timeH = (byte)((_gearValue >> 8) & 0xFF);
+
+            if (press)
+            {
+                // 只改强度，保持各键原有的生效/失效状态
+                byte pressMask = (byte)(GetKeyInfo(key).VoltageEnabled ? 0x80 : 0x00);
+                checkType = CheckType.setVoltage;
+                commandClass.SetVoltage(key, pressMask, timeL, timeH);
+            }
+            else
+            {
+                checkType = CheckType.setReleaseVoltage;
+                commandClass.SetReleaseVoltage(key, 0x80, timeL, timeH);
+            }
+
+            if (_gearTimer == null)
+            {
+                _gearTimer = new DispatcherTimer();
+                _gearTimer.Tick += GearTimeout_Tick;
+            }
+            _gearTimer.Interval = TimeSpan.FromMilliseconds(300);
+            _gearTimer.Stop();
+            _gearTimer.Start();
+        }
+
+        private void GearStepAcked()
+        {
+            _gearTimer.Stop();
+            _gearRetry = 0;
+            _gearStep++;
+            if (_gearStep < 4)
+            {
+                SendGearStep();
+            }
+            else
+            {
+                FinishGearApply();
+            }
+        }
+
+        private void GearTimeout_Tick(object sender, EventArgs e)
+        {
+            _gearTimer.Stop();
+            if (!_applyingGear) return;
+
+            _gearRetry++;
+            if (_gearRetry > 1)
+            {
+                // 重发一次仍无回应，跳过该条继续
+                _gearRetry = 0;
+                _gearStep++;
+                if (_gearStep >= 4)
+                {
+                    FinishGearApply();
+                    return;
+                }
+            }
+            SendGearStep();
+        }
+
+        private void FinishGearApply()
+        {
+            _applyingGear = false;
+            _pauseRaw = false;
+
+            foreach (byte key in new byte[] { 0x01, 0x02 })
+            {
+                MouseKeyInfo info = GetKeyInfo(key);
+                info.ConductTime = _gearValue;
+                info.ReleaseConductTime = _gearValue;
+            }
+
+            // 固件无释放振感读命令，MouseInfo 直接显示本地下发的值
+            txtInfoVoltageConductL.Text = _gearValue.ToString();
+            txtInfoVoltageConductR.Text = _gearValue.ToString();
+            txtInfoVoltageValueL.Text = _gearValue.ToString();
+            txtInfoVoltageValueR.Text = _gearValue.ToString();
+
+            UpdateSettingsUi();
+            ShowSetStatus(txtDriveModeStatus, brushGreen);
+
+            if (_pendingDriveMode.HasValue)
+            {
+                // 有挂起的模式切换（静音→正常），先发模式命令，其回复会触发回读
+                byte mode = _pendingDriveMode.Value;
+                _pendingDriveMode = null;
+                SaveDriveMode(mode);
+            }
+            else
+            {
+                // 重新发起一次回读确认
+                ReadMouseInfo();
+            }
+        }
+
+        private void SaveDriveMode(byte mode)
         {
             if (commandClass == null) return;
 
-            byte key = rbKeyR.IsChecked == true ? (byte)0x02 : (byte)0x01;
+            _coilDriveMode = mode;
 
-            // 同步更新缓存，避免切换按键时显示旧值
-            GetKeyInfo(key).ReleaseDriveMode = mode;
+            checkType = CheckType.setDriveMode;
+            commandClass.SetDriveMode(mode);
+        }
 
-            checkType = CheckType.setReleaseDriveMode;
-            commandClass.SetDriveMode(key, 1, mode);
+        // PWM 波形表缓存（100 点）与分包序号（0x00/0x32）
+        private readonly byte[] _pwmTable = new byte[100];
+        private byte _pwmSeqIndex;
+
+        private void BtnGetPwm_Click(object sender, RoutedEventArgs e)
+        {
+            if (commandClass == null) return;
+
+            _pwmSeqIndex = 0x00;
+            checkType = CheckType.getPwm;
+            commandClass.GetPwm(0x00);
+        }
+
+        private void BtnSetPwm_Click(object sender, RoutedEventArgs e)
+        {
+            if (commandClass == null) return;
+
+            if (!TryParsePwmTable(txtPwmTable.Text, _pwmTable))
+            {
+                txtPwmStatus.Text = "需要100个0~100的数值";
+                txtPwmStatus.Foreground = brushRed;
+                return;
+            }
+
+            _pwmSeqIndex = 0x00;
+            checkType = CheckType.setPwm;
+            SendPwmPacket(0x00);
+        }
+
+        private void SendPwmPacket(byte startIndex)
+        {
+            byte[] chunk = new byte[50];
+            Array.Copy(_pwmTable, startIndex, chunk, 0, 50);
+            commandClass.SetPwm(startIndex, chunk);
+        }
+
+        private void TxtPwm_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            e.Handled = !(int.TryParse(e.Text, out _) || e.Text == "," || e.Text == " " || e.Text == "\r" || e.Text == "\n");
+        }
+
+        /// <summary>
+        /// 解析文本框中的 PWM 表：需要恰好 100 个 0~100 的整数
+        /// </summary>
+        private static bool TryParsePwmTable(string text, byte[] table)
+        {
+            var values = new List<int>();
+            foreach (string part in text.Split(new[] { ',', ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (!int.TryParse(part.Trim(), out int v) || v < 0 || v > 100)
+                    return false;
+                values.Add(v);
+            }
+            if (values.Count != 100) return false;
+
+            for (int i = 0; i < 100; i++)
+            {
+                table[i] = (byte)values[i];
+            }
+            return true;
+        }
+
+        private static string FormatPwmTable(byte[] table)
+        {
+            var sb = new StringBuilder();
+            for (int i = 0; i < table.Length; i++)
+            {
+                sb.Append(table[i]);
+                sb.Append(i % 10 == 9 ? Environment.NewLine : ", ");
+            }
+            return sb.ToString();
         }
 
         private void SaveCoilDebugSettings()
@@ -1736,12 +2043,16 @@ namespace MouseTest
 
 
 
-        public bool readOnly = true;
+        public bool readOnly = false; // RawData 轮询默认停止，点“开始读RawData”后才启动
         private bool _wasReadingRaw = false;
         private bool _readingMouseInfoAll = false;
+        private bool _readingInfo = false;
 
         private async void ReadMouseInfo(bool readAll = false)
         {
+            if (_readingInfo) return; // 已有读回链路在跑，跳过避免并发
+
+            _readingInfo = true; // 立即占位（含下面的等待期）
             _wasReadingRaw = readOnly;
             _readingMouseInfoAll = readAll;
             readOnly = false;
@@ -1751,6 +2062,8 @@ namespace MouseTest
                 await Task.Delay(800); // 等待残留的 RawData 回复处理完毕
             }
 
+            if (!_readingInfo) return; // 等待期间被挡位下发等打断，本次作废
+
             // readAll=true：连接后按 左→右 顺序读取两个按键的 MouseInfo
             // readAll=false：只读取当前选中的左/右键 MouseInfo
             byte key = readAll ? (byte)0x01 : (rbKeyR.IsChecked == true ? (byte)0x02 : (byte)0x01);
@@ -1758,6 +2071,9 @@ namespace MouseTest
             checkType = CheckType.hall;
             commandClass.GetHall(key);
         }
+
+        // 挡位下发等场景暂停 RawData 轮询，避免轮询命令与设置命令并发写设备
+        private volatile bool _pauseRaw;
 
         private void StartRawDataReading()
         {
@@ -1767,15 +2083,19 @@ namespace MouseTest
             {
                 while (readOnly)
                 {
+                    if (_pauseRaw) { Thread.Sleep(50); continue; }
                     commandClass.GetHallRaw(0x01);
                     Thread.Sleep(100);
 
+                    if (_pauseRaw) { Thread.Sleep(50); continue; }
                     commandClass.GetHallRaw(0x02);
                     Thread.Sleep(100);
 
+                    if (_pauseRaw) { Thread.Sleep(50); continue; }
                     commandClass.GetHallSegment(0x01);
                     Thread.Sleep(100);
 
+                    if (_pauseRaw) { Thread.Sleep(50); continue; }
                     commandClass.GetHallSegment(0x02);
                     Thread.Sleep(100);
                 }
