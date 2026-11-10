@@ -38,7 +38,6 @@
 #include "my_board.h"
 #include "PAW3950.h"
 #include "my_adc.h"
-#include "my_charger.h"
 
 
 //static MS_Key_statet Chk_Button_state = No_Button;
@@ -433,7 +432,6 @@ void Device_Init(void)
 	
   Param_Init();
 	MyDebug_Init();
-	Charger_Init();        //charger IC BQ21128, read only
 	
   #if (defined(IRPT_V4))
   //null
@@ -527,8 +525,6 @@ void Device_Active(void)
 		Ele_PollingTask();
     
     Task_ParamGuard();
-
-    Charger_PollingTask(); //charger IC BQ21128, read status every 1 s
 
 		MyDebug_Task();
     
