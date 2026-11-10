@@ -317,6 +317,64 @@ RetU32 USB_GetEPCmdStatusPtr(U32 EPNum)    <span style="color:var(--good)">// us
 </table>
 </details>
 </section>
+<section class="entry" id="q3" data-key="OVP OCP 过压保护 过流保护 LP5308 U1 F1 保险丝 D1 TVS USB 入口 USB_5V_IN 5V 电源">
+<h2>Q3　OVP / OCP：USB 入口的过压、过流保护</h2>
+
+<div class="chips">
+<div><small>OVP</small><b>Over-Voltage Protection</b><span>过压保护：电压太高就断开</span></div>
+<div><small>OCP</small><b>Over-Current Protection</b><span>过流保护：电流太大就限住或断开</span></div>
+<div><small>谁来做</small><b>U1 LP5308</b><span>原理图第 1 页右上 “OVP/OCP” 框</span></div>
+<div><small>在哪条线上</small><b>USB_5V_IN → 5V</b><span>串在 USB 和后面所有电路之间</span></div>
+<div><small>固件</small><b>不用管</b><span>纯硬件，没有一根线接单片机</span></div>
+</div>
+
+<h3>看图：点按钮切换三种情况</h3>
+<div class="btns" id="ovBtns"><button data-k="ok" aria-pressed="true">正常</button><button data-k="ov">充电头电压过高</button><button data-k="oc">后面短路 / 电流过大</button></div>
+<div class="scroll"><svg id="ovF" class="fig" viewBox="0 0 1360 400" style="min-width:1150px" role="img" aria-label="USB 入口保护"></svg></div>
+<div id="ovNote" class="box"></div>
+
+<h3>入口上的 4 道防线</h3>
+<table class="qt">
+<tr><th>元件</th><th>原理图</th><th>是什么</th><th>防什么</th></tr>
+<tr><td><b>D1</b></td><td>USB_INPUT 框，VBUS 对地</td><td>TVS 管（BSD3C241V）：平时不导通，电压尖峰一来瞬间导通，把能量泄到地</td><td>静电、插拔瞬间的<b>短时尖峰</b>（微秒级）</td></tr>
+<tr><td><b>F1</b></td><td>VBUS → USB_5V_IN</td><td>保险丝（1206P110TF/16，型号看起来是自恢复保险丝）</td><td>长时间<b>大电流</b>：发热后电阻变大，把电流掐住，冷却后能恢复</td></tr>
+<tr class="gui"><td><b>U1 LP5308</b></td><td>OVP/OCP 框</td><td>带检测的电子开关：VIN（1 脚）进，VOUT（8 脚）出</td><td><b>OVP</b>：电压超过门限就关断；<b>OCP</b>：电流超过门限就限流 / 关断</td></tr>
+<tr><td><b>U2 BQ21128</b></td><td>Charger 框</td><td>充电芯片自己也有输入过压保护（手册：最高承受 26 V）</td><td>最后一道，只保护它自己</td></tr>
+</table>
+
+<h3>详细内容（点开）</h3>
+<details class="dt"><summary>① U1 的每个脚怎么接</summary>
+<table>
+<tr><th>脚</th><th>名字</th><th>接到</th><th>作用</th></tr>
+<tr><td class="m">1</td><td>VIN</td><td>USB_5V_IN，C2 1 µF / C3 0.1 µF 到地</td><td>输入</td></tr>
+<tr><td class="m">8</td><td>VOUT</td><td>5V，C4 10 µF / C5 0.1 µF 到地，测试点 TP3</td><td>输出，给 U2 的 VBUS 等</td></tr>
+<tr><td class="m">7</td><td>ISET</td><td>R10 10 kΩ 到地</td><td>一般用来设定过流门限（具体公式要看 LP5308 手册）</td></tr>
+<tr><td class="m">5</td><td>ENB</td><td>R9 510 kΩ 到地</td><td>名字带 B 一般表示低电平有效，被拉低 = 一直使能</td></tr>
+<tr><td class="m">2 / 9</td><td>GND / EP</td><td>地</td><td>—</td></tr>
+<tr><td class="m">3 / 4 / 6</td><td>NC0 / NC1 / NC2</td><td>不接（原理图打 ×）</td><td>—</td></tr>
+</table>
+</details>
+
+<details class="dt"><summary>② USB 口上顺便看到的另外几件东西（不是 OVP/OCP，但在同一张图上）</summary>
+<table>
+<tr><th>元件</th><th>作用</th></tr>
+<tr><td>R6、R11 5.1 kΩ（CC1、CC2 到地）</td><td>Type-C 口的身份电阻：告诉充电头“我是用电的设备”，充电头才给 VBUS 送 5 V</td></tr>
+<tr><td>L1 BCMF122P900U</td><td>共模电感：滤掉 USB D+ / D− 上的干扰</td></tr>
+<tr><td>D6、D7 BTRD04Y15</td><td>D+ / D− 的静电保护</td></tr>
+<tr><td>R7、R8 0 Ω</td><td>D+ / D− 串联的 0 Ω 电阻，调试时可以换成别的值</td></tr>
+</table>
+</details>
+
+<details class="dt"><summary>③ 依据和还没核对的地方</summary>
+<table>
+<tr><th>内容</th><th>出处</th></tr>
+<tr><td>U1、F1、D1 的连接和型号</td><td>原理图 GT_Lina T1A V0.1 第 1 页 USB_INPUT、OVP/OCP 两个框</td></tr>
+<tr><td>BQ21128 输入最高 26 V</td><td>BQ21128 手册第 1 页 Features（materials/121002462 承认书.pdf 第 2 页起）</td></tr>
+<tr><td><b>未核对</b>：LP5308 的过压门限是几伏、过流门限是多少 mA、ISET 和 ENB 的准确定义</td><td>仓库里没有 LP5308 手册，要找硬件同事要</td></tr>
+<tr><td><b>未核对</b>：F1 的额定电流、D1 的击穿电压</td><td>同上，型号推测，以规格书为准</td></tr>
+</table>
+</details>
+</section>
 </div>
 <script>
 (function(){
@@ -367,6 +425,35 @@ drawBits();
   <tr><td>表格地址</td><td class="m">0x2000_4000 + ${slot} × 4</td><td><b>0x2000_${(w&0xFFFF).toString(16).toUpperCase()}</b></td></tr>
   <tr><td>缓冲区</td><td class="m">那一格的 Offset × 64</td><td><b>0x2000_${(buf&0xFFFF).toString(16).toUpperCase()}</b>${n===0&&dir===0?'（另外 SETUP 包在 0x2000_4140）':''}</td></tr>
   <tr><td>本项目</td><td></td><td>${USE[cur]||'没用（描述符里没有）'}</td></tr></table>`}
+ draw();})();
+
+/* ---------- Q3 OVP/OCP ---------- */
+(function(){const S={
+ ok:{n:'<b>正常</b>：充电头给 5 V，D1 不导通，F1 是一段导线，U1 内部开关导通 → 5 V 一路送到 U2 和后面的电路。',bad:null},
+ ov:{n:'<b>OVP 过压保护</b>：充电头坏了输出偏高，或插拔瞬间有尖峰。很短的尖峰先被 <b>D1</b> 吸收；持续偏高超过门限，<b>U1 把开关断开</b>，5V 这条线上看不到高压，后面的电路都安全。电压恢复正常后 U1 自动重新导通。',bad:'ov'},
+ oc:{n:'<b>OCP 过流保护</b>：后面短路或者某个器件坏了，电流猛增。<b>U1 先把电流限住或断开</b>（门限由 ISET 脚的 R10 设定）；如果一直很大，<b>F1</b> 发热断开。这样不会烧坏线路，也不会把电脑的 USB 口拖垮。',bad:'oc'}};
+ let k='ok';
+ document.querySelectorAll('#ovBtns button').forEach(b=>b.onclick=()=>{k=b.dataset.k;document.querySelectorAll('#ovBtns button').forEach(x=>x.setAttribute('aria-pressed',x===b));draw()});
+ function draw(){const s=$('ovF');s.innerHTML='';const st=S[k];
+  function box(x,y,w,h,col,a,b,c,hl){el(s,'rect',{x,y,width:w,height:h,rx:8,fill:hl?'color-mix(in srgb,var(--bad) 18%,var(--panel))':'var(--panel)',stroke:hl?'var(--bad)':'var(--'+col+')','stroke-width':hl?3:1.6});T(s,x+10,y+22,a,{'font-weight':700});if(b)T(s,x+10,y+42,b,{'font-size':11,fill:'var(--muted)'});if(c)T(s,x+10,y+60,c,{'font-size':11,fill:'var(--muted)'})}
+  function wire(x1,x2,y,on,lab){el(s,'line',{x1,y1:y,x2,y2:y,stroke:on?'var(--good)':'var(--line)','stroke-width':on?4:2,'stroke-dasharray':on?'':'6 5'});if(lab)T(s,(x1+x2)/2,y-8,lab,{'font-size':11,'text-anchor':'middle',fill:on?'var(--good)':'var(--muted)'})}
+  const y=110,cut=!!st.bad;
+  box(20,70,150,80,'hw','充电头 / 电脑','Type-C VBUS',k==='ov'?'输出偏高！':'5 V',k==='ov');
+  box(250,70,150,80,'muted','F1 保险丝','大电流时断开','',k==='oc');
+  box(480,70,240,80,'per','U1 LP5308','OVP + OCP 电子开关',cut?'开关断开':'开关导通',cut);
+  box(800,70,170,80,'good','U2 充电芯片','VBUS 输入','');
+  box(1050,70,280,80,'good','SYS → 1.9V / 3.3V / 7V','整机',k==='oc'?'这里短路了！':'',k==='oc');
+  wire(170,248,y,true,'VBUS');wire(400,478,y,true,'USB_5V_IN');wire(720,798,y,!cut,'5V');wire(970,1048,y,!cut,'');
+  if(cut){el(s,'path',{d:'M745 95 l20 30 M765 95 l-20 30',stroke:'var(--bad)','stroke-width':4})}
+  el(s,'line',{x1:210,y1:y,x2:210,y2:230,stroke:'var(--muted)','stroke-width':1.6});
+  box(150,230,130,70,'muted','D1 TVS','尖峰泄到地',k==='ov'?'吸收短尖峰':'平时不导通',k==='ov');
+  el(s,'line',{x1:215,y1:300,x2:215,y2:330,stroke:'var(--muted)'});el(s,'path',{d:'M195 330 h40 M202 337 h26 M209 344 h12',stroke:'var(--muted)','stroke-width':1.6});
+  el(s,'line',{x1:600,y1:150,x2:600,y2:230,stroke:'var(--muted)','stroke-width':1.6});
+  box(520,230,170,70,'muted','R10 10 kΩ（ISET）','设定过流门限','',k==='oc');
+  box(720,230,170,70,'muted','R9 510 kΩ（ENB）','拉低 = 一直使能','');
+  el(s,'line',{x1:700,y1:150,x2:800,y2:230,stroke:'var(--muted)','stroke-width':1.2});
+  T(s,20,385,'绿 = 有电流通过；红 = 出问题的地方，以及这时起作用的元件。固件不参与，全部是硬件自己完成的。',{'font-size':11.5,fill:'var(--muted)'});
+  $('ovNote').innerHTML=st.n}
  draw();})();
 /* ---------- Q1 flow ---------- */
 (function(){const s=$('flowF');
