@@ -375,6 +375,65 @@ RetU32 USB_GetEPCmdStatusPtr(U32 EPNum)    <span style="color:var(--good)">// us
 </table>
 </details>
 </section>
+<section class="entry" id="q4" data-key="引脚连接图 电池 充电芯片 BQ21128 MCU USB Type-C VBUS CE QON SCL SDA PIO0_1 PIO0_4 PIO0_5 VBAT NTC SYS_PWR PWR_EN DPI">
+<h2>Q4　充电相关引脚连接图：USB 口 · 充电芯片 · 电池 · MCU</h2>
+
+<div class="chips">
+<div><small>USB → 充电芯片</small><b>VBUS → F1 → U1 → 5V → U2 脚 18</b><span>中间有保险丝和 OVP/OCP（Q3）</span></div>
+<div><small>充电芯片 ↔ 电池</small><b>U2 脚 8 BAT ↔ CON1 脚 1</b><span>脚 6 TS ↔ CON1 脚 2 NTC</span></div>
+<div><small>充电芯片 ↔ MCU</small><b>I2C + /CE</b><span>SCL=PIO0_4 · SDA=PIO0_5 · /CE=PIO0_1</span></div>
+<div><small>MCU ↔ USB</small><b>D+ 脚 14 · D− 脚 13</b><span>USB_Connect（PIO0_6）控制 D+ 上拉</span></div>
+<div><small>没接 MCU 的</small><b>STAT · /INT · PMID_GD</b><span>只到测试点，状态只能 I2C 读</span></div>
+</div>
+
+<h3>连接图（点上面的按钮只看某一类线）</h3>
+<div class="btns" id="pmBtns"><button data-g="all" aria-pressed="true">全部</button><button data-g="pwr">电源</button><button data-g="i2c">I2C</button><button data-g="ctl">控制（/CE、/QON、DPI）</button><button data-g="usb">USB 数据</button><button data-g="stat">状态脚</button><button data-g="ts">电池温度</button></div>
+<div class="scroll"><svg id="pmF" class="fig" viewBox="0 0 1360 940" style="min-width:1150px" role="img" aria-label="引脚连接图"></svg></div>
+<p class="note">方框里的数字是芯片脚号。红 = 电源，绿 = I2C，橙 = 控制，紫 = USB 数据，灰蓝 = 状态脚，棕 = 电池温度。线上标的是原理图里的网络名和串在中间的元件。</p>
+
+<h3>按网络查</h3>
+<table class="qt">
+<tr><th>网络</th><th>从</th><th>经过</th><th>到</th><th>作用</th></tr>
+<tr><td class="m">VBUS / USB_5V_IN / 5V</td><td>J1 VBUS（A4 A9 B4 B9）</td><td>D1 TVS、F1 保险丝、U1 LP5308</td><td>U2 脚 18 VBUS；R13 上端</td><td>USB 供电进充电芯片</td></tr>
+<tr><td class="m">Charger_OUT → SYS_PWR</td><td>U2 脚 16 SW → L2 1 µH；脚 9 SYS</td><td>SW1 拨动开关</td><td>U3 1.9V、U4 3.3V、U5 7V 的输入</td><td>整机供电</td></tr>
+<tr><td class="m">PWR_EN</td><td>SW1</td><td>—（R15、R1、R34 1 MΩ 下拉）</td><td>U3、U4 的 CE，U5 的 EN</td><td>拨到中间时这些电源都关，MCU 不上电</td></tr>
+<tr><td class="m">VCC3.3V → VDD_MCU</td><td>U4</td><td>R37 0 Ω</td><td>MCU 电源；I2C 上拉（R26 0 Ω → I2C1_PU）</td><td>MCU 和 I2C 的 3.3 V</td></tr>
+<tr><td class="m">VBAT</td><td>U2 脚 8 BAT</td><td>R27 0 Ω（TP18）</td><td>CON1 脚 1</td><td>充电 / 放电电流</td></tr>
+<tr><td class="m">NTC</td><td>U2 脚 6 TS（脚 5 TS_BIAS 供电，R18 / R22 分压）</td><td>TP17</td><td>CON1 脚 2</td><td>电池温度</td></tr>
+<tr class="gui"><td class="m">SCL1 / SDA1</td><td>MCU 脚 10 PIO0_4 / 脚 11 PIO0_5</td><td>R24 / R25 4.7 kΩ 上拉到 I2C1_PU</td><td>U2 脚 13 / 脚 12</td><td>读写寄存器，地址 0x6A</td></tr>
+<tr class="gui"><td class="m">/CE</td><td>MCU 脚 3 PIO0_1</td><td>R13 2.2 MΩ 接 5V、R14 1 MΩ 接地</td><td>U2 脚 14</td><td>低 = 允许充电。插 USB 时默认被分压成高</td></tr>
+<tr><td class="m">/QON</td><td>DPI 按键 SW3</td><td>R71 100 Ω</td><td>U2 脚 7</td><td>按 0.8 s 退出运输模式；用电池时按 12.5 s 整机重启</td></tr>
+<tr><td class="m">DPI</td><td>DPI 按键 SW3</td><td>D34 二极管、R70 100 Ω，R69 47 kΩ 上拉</td><td>MCU 脚 27 PIO0_23</td><td>DPI 键（同一个按键也拉 /QON）</td></tr>
+<tr><td class="m">USB_D+ / USB_D−</td><td>J1 DP / DN</td><td>L1 共模电感、R7 / R8 0 Ω</td><td>MCU 脚 14 / 脚 13</td><td>USB 通信</td></tr>
+<tr><td class="m">USB_Connect</td><td>MCU 脚 15 PIO0_6</td><td>R47、Q1 S8550</td><td>R38 1.5 kΩ 上拉 D+</td><td>软件“插上 / 拔下”USB（告诉电脑有设备）</td></tr>
+<tr><td class="m">PIO0_3 / USB_VBUS</td><td>MCU 脚 9</td><td>R41 10 kΩ</td><td>VDD_MCU</td><td><b>接的是 3.3 V，不是 USB 的 VBUS</b></td></tr>
+<tr><td class="m">BC_STAT / BC_INT / PMID_GD</td><td>U2 脚 10 / 11 / 3</td><td>R21 / R16 100 Ω</td><td>TP14 / TP12 / TP13</td><td><b>没接 MCU</b></td></tr>
+</table>
+
+<h3>详细内容（点开）</h3>
+<details class="dt"><summary>① 从图上看出的 4 件事（写充电代码要知道）</summary>
+<table>
+<tr><th>#</th><th>发现</th><th>影响</th></tr>
+<tr><td>1</td><td>MCU 的 PIO0_3（USB_VBUS 功能脚）接的是 VDD_MCU，不是 USB 的 VBUS</td><td>MCU <b>没有一根线能直接知道 USB 插没插</b>。要知道，只能 I2C 读 U2 的 0x1E VBUS_STAT</td></tr>
+<tr><td>2</td><td>STAT、/INT 没接 MCU</td><td>充电状态、故障只能<b>轮询</b> I2C 读寄存器，不能靠中断</td></tr>
+<tr><td>3</td><td>/CE：插 USB 时 R13/R14 分压 1.56 V（高，禁止充电）</td><td>MCU 上电后要把 PIO0_1 拉低才会充（改之前和杰哥确认，PIO0_1 是 ISP 脚）</td></tr>
+<tr><td>4</td><td>SW1 拨到中间：Charger_OUT 和 SYS_PWR 断开，PWR_EN 被 1 MΩ 拉低，所有 DC-DC 关，MCU 不上电</td><td>原理图批注说这时“只能充电”。MCU 没电时谁把 /CE 拉低？推测是 MCU 引脚的内部保护二极管把 /CE 钳到 0.78 V 以下，<b>待硬件同事确认</b></td></tr>
+</table>
+</details>
+
+<details class="dt"><summary>② 依据</summary>
+<table>
+<tr><th>内容</th><th>出处</th></tr>
+<tr><td>J1、F1、D1、L1、R6 / R11、R7 / R8</td><td>原理图第 1 页 USB_INPUT</td></tr>
+<tr><td>U1 及外围</td><td>第 1 页 OVP/OCP</td></tr>
+<tr><td>U2 全部引脚、R13 / R14、R16~R22、R24 / R25 / R26、CON1、R27</td><td>第 1 页 Charger、BAT Connector</td></tr>
+<tr><td>SW1、D2 / D4 / D5、PWR_EN</td><td>第 1 页 Power ON/OFF</td></tr>
+<tr><td>U3 / U4 / U5 的 CE / EN 和下拉电阻</td><td>第 1 页 DC-DC 1.9V / 3.3V、Haptic BOOST 7V</td></tr>
+<tr><td>MCU 脚 3 /CE、9 PIO0_3（R41）、10 SCL1、11 SDA1、13 / 14 USB、15 USB_Connect、27 DPI；R37、Q1、R38、R47</td><td>第 2 页 MCU</td></tr>
+<tr><td>SW3、D34、R69 / R70 / R71</td><td>第 2 页 DPI SWITCH</td></tr>
+</table>
+</details>
+</section>
 </div>
 <script>
 (function(){
@@ -454,6 +513,86 @@ drawBits();
   el(s,'line',{x1:700,y1:150,x2:800,y2:230,stroke:'var(--muted)','stroke-width':1.2});
   T(s,20,385,'绿 = 有电流通过；红 = 出问题的地方，以及这时起作用的元件。固件不参与，全部是硬件自己完成的。',{'font-size':11.5,fill:'var(--muted)'});
   $('ovNote').innerHTML=st.n}
+ draw();})();
+
+/* ---------- Q4 pin map ---------- */
+(function(){const s=$('pmF');let G='all';
+ const COL={pwr:'var(--bad)',i2c:'var(--good)',ctl:'var(--gold)',usb:'var(--hw)',stat:'var(--per)',ts:'var(--pc)',gnd:'var(--muted)'};
+ function draw(){s.innerHTML='';
+ const dim=g=>G!=='all'&&g!==G&&g!=='box';
+ function grp(g){return el(s,'g',{opacity:dim(g)?0.12:1})}
+ function box(x,y,w,h,title,sub,col){const g=grp('box');el(g,'rect',{x,y,width:w,height:h,rx:10,fill:'var(--panel)',stroke:'var(--'+(col||'fg')+')','stroke-width':2});T(g,x+12,y+24,title,{'font-weight':700,'font-size':14});if(sub)T(g,x+12,y+h-12,sub,{'font-size':11,fill:'var(--muted)'})}
+ function pin(x,y,side,txt){const g=grp('box');const a=side==='L'?'start':(side==='R'||side==='B'?'end':'middle');const dx=side==='L'?8:(side==='R'?-8:(side==='B'?-9:0));const dy=side==='T'?16:(side==='B'?-6:4);T(g,x+dx,y+dy,txt,{'font-size':11,'text-anchor':a,'font-family':'var(--font-m)'});el(g,'circle',{cx:x,cy:y,r:3,fill:'var(--fg)'})}
+ function W(gname,pts,lab,lx,ly,anchor){const g=grp(gname);el(g,'path',{d:'M'+pts.map(p=>p.join(' ')).join(' L '),fill:'none',stroke:COL[gname],'stroke-width':2.6});if(lab)T(g,lx,ly,lab,{'font-size':11,fill:COL[gname],'text-anchor':anchor||'start'});return g}
+ function part(gname,x,y,w,h,txt){const g=grp(gname);el(g,'rect',{x,y,width:w,height:h,rx:3,fill:'var(--panel)',stroke:COL[gname],'stroke-width':1.6});T(g,x+w/2,y+h/2+4,txt,{'font-size':10,'text-anchor':'middle'})}
+ function gnd(gname,x,y){const g=grp(gname);el(g,'path',{d:`M${x} ${y} v8 M${x-9} ${y+8} h18 M${x-6} ${y+12} h12 M${x-3} ${y+16} h6`,stroke:'var(--muted)','stroke-width':1.5,fill:'none'})}
+ function tp(gname,x,y,txt){const g=grp(gname);el(g,'path',{d:`M${x-6} ${y-6} l12 12 M${x+6} ${y-6} l-12 12`,stroke:'var(--bad)','stroke-width':2.4});T(g,x+12,y+4,txt,{'font-size':11,fill:'var(--bad)'})}
+ /* boxes */
+ box(20,60,170,370,'J1 USB-C','Type-C 插口','hw');
+ box(400,60,160,110,'U1 LP5308','OVP / OCP（Q3）','muted');
+ box(640,60,250,500,'U2 BQ21128','充电芯片 · I2C 0x6A','per');
+ box(1010,40,140,140,'SW1 拨动开关','中间 = 断开','gold');
+ box(1210,30,145,200,'DC-DC','','good');
+ box(1010,270,150,170,'电池 CON1 · 锂电池','','gold');
+ box(240,610,400,300,'MCU U6','LPC11U35','pc');
+ box(40,480,150,80,'SW3 DPI 键','按下 = 接地','gold');
+ /* J1 pins */
+ pin(190,100,'R','VBUS');pin(190,170,'R','CC1 A5');pin(190,210,'R','CC2 B5');pin(190,290,'R','D+ A6/B6');pin(190,330,'R','D− A7/B7');pin(190,400,'R','GND');
+ /* power */
+ W('pwr',[[190,100],[250,100]]);part('pwr',250,88,70,24,'F1');W('pwr',[[320,100],[400,100]],'USB_5V_IN',326,92);
+ W('pwr',[[225,100],[225,135]]);part('pwr',208,135,34,22,'D1');gnd('pwr',225,157);
+ pin(400,100,'L','1 VIN');pin(560,100,'R','VOUT 8');
+ W('pwr',[[560,100],[640,100]],'5V',588,92);
+ part('pwr',420,175,50,20,'R10');T(grp('pwr'),445,214,'ISET 7',{'font-size':10,'text-anchor':'middle',fill:'var(--muted)'});
+ part('pwr',490,175,50,20,'R9');T(grp('pwr'),515,214,'ENB 5',{'font-size':10,'text-anchor':'middle',fill:'var(--muted)'});
+ pin(640,100,'L','18 VBUS');
+ pin(890,100,'R','SW 16');pin(890,140,'R','SYS 9');
+ W('pwr',[[890,100],[915,100]]);part('pwr',915,90,46,20,'L2 1µH');W('pwr',[[961,100],[1010,100]],'Charger_OUT',940,84);
+ W('pwr',[[890,140],[985,140],[985,100]]);
+ W('pwr',[[1150,80],[1210,80]],'SYS_PWR',1180,72,'middle');W('pwr',[[1150,150],[1210,150]],'PWR_EN',1180,168,'middle');
+ T(grp('box'),1220,82,'U3 → 1.9V 传感器',{'font-size':10.5});T(grp('box'),1220,102,'U4 → 3.3V MCU',{'font-size':10.5});T(grp('box'),1220,122,'U5 → 7V 线圈',{'font-size':10.5});T(grp('box'),1220,158,'PWR_EN 开三个',{'font-size':10.5});
+ W('pwr',[[1300,230],[1300,880],[640,880]],'VDD_MCU（3.3V，经 R37 0Ω）',1290,600,'end');
+ pin(890,300,'R','BAT 8');W('pwr',[[890,300],[930,300]]);part('pwr',930,290,40,20,'R27 0Ω');W('pwr',[[970,300],[990,300],[990,320],[1010,320]],'VBAT',975,292);
+ pin(1010,320,'L','1 VBAT');pin(1010,420,'L','3~5 GND');gnd('pwr',1000,426);
+ /* ts */
+ pin(890,370,'R','TS 6');pin(890,405,'R','TS_BIAS 5');pin(1010,370,'L','2 NTC');
+ W('ts',[[890,370],[1010,370]],'NTC',960,362);
+ W('ts',[[890,405],[945,405],[945,392]]);part('ts',932,378,26,14,'');T(grp('ts'),930,425,'R18 / R22 分压',{'font-size':10,fill:COL.ts,'text-anchor':'end'});
+ /* ctl: /CE */
+ pin(640,250,'L','14 /CE');
+ W('ctl',[[600,100],[600,190]]);part('ctl',588,190,24,36,'');T(grp('ctl'),584,212,'R13 2.2M',{'font-size':10,'text-anchor':'end',fill:COL.ctl});
+ W('ctl',[[600,226],[600,250],[640,250]]);W('ctl',[[600,250],[600,268]]);part('ctl',588,268,24,30,'');T(grp('ctl'),584,288,'R14 1M',{'font-size':10,'text-anchor':'end',fill:COL.ctl});gnd('ctl',600,298);
+ W('ctl',[[620,250],[620,610]],'/CE ← PIO0_1',626,590);pin(620,610,'B','3');
+ /* ctl: /QON & DPI */
+ pin(640,300,'L','7 /QON');
+ W('ctl',[[640,300],[235,300],[235,520],[190,520]],'/QON（R71 100Ω）',420,292);
+ W('ctl',[[115,560],[115,860],[240,860]],'DPI（D34 + R70，R69 上拉）',122,598);pin(240,860,'L','27 PIO0_23');
+ /* i2c */
+ pin(640,350,'L','13 SCL');pin(640,390,'L','12 SDA');
+ W('i2c',[[640,350],[560,350],[560,610]],'SCL1',566,522);pin(560,610,'B','10');
+ W('i2c',[[640,390],[530,390],[530,610]],'SDA1',490,470);pin(530,610,'B','11');
+ T(grp('i2c'),524,440,'R24 / R25 4.7K',{'font-size':10,'text-anchor':'end',fill:COL.i2c});T(grp('i2c'),524,454,'上拉到 VDD_MCU',{'font-size':10,'text-anchor':'end',fill:COL.i2c});
+ /* ILIM */
+ pin(640,440,'L','4 ILIM');W('pwr',[[640,440],[610,440],[610,460]]);part('pwr',598,460,24,30,'');T(grp('pwr'),594,480,'R19 5.1K',{'font-size':10,'text-anchor':'end',fill:COL.pwr});gnd('pwr',610,490);
+ /* usb */
+ W('usb',[[190,290],[330,290],[330,610]],'D+（L1、R7）',200,282);pin(330,610,'B','14');
+ W('usb',[[190,330],[300,330],[300,610]],'D−（L1、R8）',200,348);pin(300,610,'B','13');
+ W('usb',[[400,610],[400,560],[330,560]],'USB_Connect → Q1 → R38 1.5K 上拉 D+',406,575);pin(400,610,'B','15');
+ /* CC */
+ W('usb',[[190,170],[230,170],[230,180]]);T(grp('usb'),250,184,'R11 5.1K → GND',{'font-size':10,fill:COL.usb});
+ W('usb',[[190,210],[230,210],[230,220]]);T(grp('usb'),250,224,'R6 5.1K → GND',{'font-size':10,fill:COL.usb});
+ /* stat */
+ pin(890,460,'R','STAT 10');pin(890,495,'R','/INT 11');pin(890,530,'R','PMID_GD 3');
+ W('stat',[[890,460],[980,460]],'R21',915,452);tp('stat',990,460,'TP14 BC_STAT（没接 MCU）');
+ W('stat',[[890,495],[980,495]],'R16',915,487);tp('stat',990,495,'TP12 BC_INT（没接 MCU）');
+ W('stat',[[890,530],[980,530]]);tp('stat',990,530,'TP13（没接 MCU）');
+ /* PIO0_3 */
+ pin(640,700,'R','9 PIO0_3');W('pwr',[[640,700],[700,700]]);T(grp('pwr'),706,704,'R41 10K → VDD_MCU（不是 USB VBUS！）',{'font-size':10.5,fill:COL.pwr});
+ pin(640,880,'R','VDD');
+ T(grp('box'),262,670,'MCU 只通过这几根线和充电有关：',{'font-size':11,fill:'var(--muted)'});
+ T(grp('box'),262,690,'脚 3 /CE · 脚 10/11 I2C · 脚 27 DPI（兼 /QON）',{'font-size':11,fill:'var(--muted)'});
+ }
+ document.querySelectorAll('#pmBtns button').forEach(b=>b.onclick=()=>{G=b.dataset.g;document.querySelectorAll('#pmBtns button').forEach(x=>x.setAttribute('aria-pressed',x===b));draw()});
  draw();})();
 /* ---------- Q1 flow ---------- */
 (function(){const s=$('flowF');
