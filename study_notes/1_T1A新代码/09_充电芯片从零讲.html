@@ -1,0 +1,340 @@
+<title>充电芯片从零讲</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f5f6f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6762; --grid:#dfe3dd; --line:#c8cfc9; --soft:#eceff0;
+  --per:#1d6f8a; --sw:#1d7f6e; --pc:#b0522c; --gold:#b9850f; --hw:#7a5ea8; --good:#2f7d32; --bad:#c0392b;
+  --font-d:"IBM Plex Sans Condensed","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-b:"IBM Plex Sans","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,"PingFang SC","Microsoft YaHei",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121715; --panel:#19201d; --fg:#e4ebe7; --muted:#9ba8a1; --grid:#28322d; --line:#36433d; --soft:#1f2824;
+  --per:#5db7d6; --sw:#45bba5; --pc:#e58f66; --gold:#e3b54a; --hw:#b49be0; --good:#6cc070; --bad:#ef7a6d; color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:16px;line-height:1.8}
+.wrap{max-width:880px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-d);line-height:1.3;text-wrap:balance}
+h1{font-size:1.9rem;margin:0}
+h2{font-size:1.3rem;margin:2.4rem 0 .4rem;padding-top:.6rem;border-top:1px solid var(--line)}
+h3{font-size:1.06rem;margin:1.3rem 0 .3rem}
+p{margin:.6rem 0}
+a{color:var(--per)}
+code{font-family:var(--font-m);font-size:.88em;background:var(--soft);padding:.05em .35em;border-radius:3px;overflow-wrap:anywhere}
+pre.code{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:10px 12px;overflow-x:auto;line-height:1.55;margin:.5rem 0}
+.eyebrow{font-family:var(--font-m);font-size:.75rem;letter-spacing:.06em;color:var(--muted)}
+.lede{color:var(--muted)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:1rem 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-size:.88rem;margin:.4rem 0}
+td,th{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600}
+.note{font-size:.88rem;color:var(--muted)}
+.think{border-left:4px solid var(--per);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.8rem 0}
+.rule{border-left:4px solid var(--c,var(--per));background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:.6rem 0}
+.log{font-family:var(--font-m);font-size:.8rem;background:var(--soft);border-radius:6px;padding:6px 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.btns button,.tool button{font:inherit;font-size:.88rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer}
+.btns button:disabled{opacity:.4;cursor:default}
+.btns button[aria-pressed="true"]{border-color:var(--fg);font-weight:700}
+/* bit strip */
+.bstrip{display:inline-grid;gap:2px;font-family:var(--font-m);font-size:.74rem;text-align:center;margin:.2rem 0}
+.bstrip span{border:1px solid var(--line);border-radius:3px;padding:1px 3px;min-width:1.6em;background:var(--panel)}
+.bstrip span.ch{background:color-mix(in srgb,var(--bad) 28%,var(--panel));border-color:var(--bad);font-weight:700}
+.bstrip span.k{background:none;border:0;color:var(--muted);font-size:.6rem}
+.bstrip span.f{background:color-mix(in srgb,var(--c,var(--per)) 18%,var(--panel))}
+/* lamps */
+.lamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:.5rem 0}
+.lamps div{border:1.5px solid var(--line);border-radius:6px;padding:4px 8px;font-size:.82rem;background:var(--panel)}
+.lamps div::before{content:"○ ";color:var(--muted)}
+.lamps div.on{border-color:var(--good);background:color-mix(in srgb,var(--good) 15%,var(--panel))}
+.lamps div.on::before{content:"● ";color:var(--good)}
+.lamps div.new{outline:2px solid var(--bad)}
+.stp{border:2px solid var(--per);border-radius:8px;padding:10px 14px;background:var(--panel);margin:.6rem 0}
+.stp .cl{font-family:var(--font-m);font-size:.85rem;background:var(--soft);border-left:4px solid var(--per);padding:4px 8px;border-radius:0 6px 6px 0;overflow-wrap:anywhere}
+.stp .who{display:inline-block;font-size:.72rem;color:var(--bg);background:var(--c);border-radius:4px;padding:0 6px;margin-right:6px}
+.stp h3{margin:.5rem 0 .2rem}
+svg.fig{display:block;width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+/* tools */
+.tool{border:1.5px solid var(--hw);border-radius:8px;padding:8px 12px;background:color-mix(in srgb,var(--hw) 5%,var(--panel));margin:.6rem 0}
+.tool input,.tool select{font:inherit;font-size:.88rem;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.tool .row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:.3rem 0}
+/* quiz & practice */
+.qz,.px{border-radius:8px;padding:8px 12px;margin:.7rem 0}
+.qz{border:1.5px dashed var(--gold);background:color-mix(in srgb,var(--gold) 6%,var(--panel))}
+.px{border:1.5px solid var(--per);background:color-mix(in srgb,var(--per) 6%,var(--panel))}
+.qz .qt,.px .pxq{font-weight:600;margin:.2rem 0}
+.qrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.4rem 0}
+.qz input,.px input{font:inherit;width:120px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.qz button,.px button{font:inherit;font-size:.9rem;padding:3px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);cursor:pointer;text-align:left}
+.qz button.on,.px button.on{border-color:var(--fg)}
+.px .pxh{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.px .pxh b{color:var(--per)}
+.px .pxs{font-size:.82rem;color:var(--muted)}
+.px .pxNext{border-color:var(--per);color:var(--per)}
+.fb{display:none;padding:6px 10px;border-radius:6px;background:var(--soft);margin-top:.3rem}
+.fb.ok{display:block;border-left:4px solid var(--good)}
+.fb.no{display:block;border-left:4px solid var(--bad)}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--per);outline-offset:2px}
+.wrap{max-width:1400px}
+.fh{font-size:.82rem;margin:.9rem 0 0}
+.tg{display:inline-block;font-size:.72rem;color:#fff;border-radius:4px;padding:0 7px;margin-right:6px}
+.tg.fw{background:var(--pc)}
+.code{font-family:var(--font-m);font-size:.79rem;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--pc);border-radius:8px;padding:4px 0;overflow-x:auto;margin:.3rem 0 .6rem}
+.code div{display:grid;grid-template-columns:3.4em minmax(0,1.05fr) minmax(0,1fr);white-space:pre;line-height:1.55;min-width:900px}
+.code div span.n{color:var(--muted);text-align:right;padding-right:.8em;user-select:none}
+.code div span:nth-child(2){white-space:pre-wrap;overflow-wrap:anywhere;padding-right:8px}
+.code div span.x{white-space:normal;font-family:var(--font-b);color:var(--fg);font-size:.82rem;border-left:1px solid var(--line);padding:0 10px;line-height:1.5}
+.code div.hasx{background:color-mix(in srgb,var(--sw) 7%,transparent)}
+.code div.hasx span.x{border-left:3px solid var(--per)}
+.big{font-size:1.02rem;border:2px solid var(--per);border-radius:8px;padding:10px 16px;background:var(--panel);margin:1rem 0}
+.warn{border:2px solid var(--bad);border-radius:8px;padding:10px 16px;background:color-mix(in srgb,var(--bad) 7%,var(--panel));margin:1rem 0}
+.warn b{color:var(--bad)}
+td.m,code.m{font-family:var(--font-m);font-size:.82rem}
+tr.hl td{background:color-mix(in srgb,var(--gold) 14%,var(--panel))}
+.frame{display:flex;flex-wrap:wrap;gap:4px;margin:.5rem 0;font-family:var(--font-m);font-size:.8rem}
+.frame span{border:1.5px solid var(--line);border-radius:5px;padding:4px 8px;background:var(--panel);text-align:center}
+.frame span small{display:block;font-family:var(--font-b);font-size:.68rem;color:var(--muted)}
+.frame .m{border-color:var(--per);background:color-mix(in srgb,var(--per) 14%,var(--panel))}
+.frame .s{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--panel))}
+.frame .c{border-color:var(--good);background:color-mix(in srgb,var(--good) 16%,var(--panel))}
+.dec{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:3px;margin:.4rem 0;font-size:.78rem;text-align:center}
+.dec div{border:1px solid var(--line);border-radius:5px;padding:4px 2px;background:var(--panel)}
+.dec div.on{background:color-mix(in srgb,var(--gold) 35%,var(--panel));font-weight:700}
+.dec small{display:block;color:var(--muted);font-size:.68rem}
+#decOut{border-left:4px solid var(--per);background:var(--soft);padding:6px 12px;border-radius:0 6px 6px 0;min-height:2.4em}
+.tool input,.tool select{font:inherit;font-size:.88rem;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+#ppNote{border-left:4px solid var(--bad);background:var(--soft);padding:8px 12px;border-radius:0 6px 6px 0;min-height:2.6em;margin:.4rem 0}
+</style>
+<div class="wrap">
+<div class="eyebrow">T1A · 新功能准备 · 充电芯片 U2（TI BQ21128）从零讲 · 依据：原理图 GT_Lina T1A V0.1 第 1 页 “Charger” 框、materials/121002462 承认书.pdf（第 2 页起是 TI 手册 SLUSFX4，NDA 资料，只在内部看）</div>
+<h1>充电芯片从零讲：BQ21128</h1>
+<p class="lede">杰哥建议的下一个任务是“增加充电功能”。这一页先把充电这件事本身讲清楚：电从哪来、往哪去，芯片自己会做什么，单片机要管什么，通过什么线、用什么方式说话。固件里目前还没有充电相关的代码，所以本页大部分内容来自原理图和芯片手册，最后一节读的是杰哥写好、但还没接进工程的 I2C 代码。</p>
+
+<h2>0. 一句话</h2>
+<div class="big">插上 USB 时，<b>U2 一边给整机供电，一边给锂电池充电</b>；拔掉 USB 后，U2 让<b>电池给整机供电</b>。充电的电流和电压<b>完全由 U2 自己控制</b>（插上就能自动走完一整轮），单片机只负责<b>管理</b>：用 <b>I2C</b> 改参数、读状态，再用一根 <b>/CE</b> 线决定“允不允许充”。</div>
+
+<h2>1. 电从哪来，到哪去</h2>
+<div class="btns" id="ppBtns"><button data-k="usb" aria-pressed="true">插 USB，/CE 高（现在的固件）</button><button data-k="chg">插 USB，/CE 拉低（允许充电）</button><button data-k="bat">拔掉 USB，只有电池</button></div>
+<div class="scroll"><svg id="ppF" class="fig" viewBox="0 0 1360 420" style="min-width:1150px" role="img" aria-label="电源路径"></svg></div>
+<div id="ppNote"></div>
+<table>
+<tr><th>器件</th><th>原理图位置</th><th>干什么</th></tr>
+<tr><td>U1 LP5308</td><td>第 1 页 OVP/OCP</td><td>USB 进来的 5V 先过它：过压、过流保护</td></tr>
+<tr class="hl"><td><b>U2 BQ21128</b></td><td>第 1 页 Charger</td><td><b>本页主角</b>：开关式（buck）充电器 + 电源路径管理，最大 1.5 A 充电，I2C 控制</td></tr>
+<tr><td>L2 1 µH</td><td>U2 的 SW 脚外面</td><td>开关电源的电感，U2 内部开关以 1.5 MHz 通断，靠它把 5V 降成需要的电压</td></tr>
+<tr><td>CON1</td><td>第 1 页 BAT Connector</td><td>电池插座：1 = VBAT，2 = NTC（电池里的测温电阻），3~5 = GND</td></tr>
+<tr><td>SW1 拨动开关</td><td>第 1 页 Power ON/OFF</td><td>Charger_OUT → SYS_PWR。原理图批注：<b>拨在中间时无功能，只能充电；上拨或下拨时功能可用</b></td></tr>
+<tr><td>U3 / U4 / U5</td><td>第 1 页 DC-DC</td><td>SYS_PWR 再变成 1.9V（传感器）、3.3V（单片机等）、7V（线圈升压）</td></tr>
+</table>
+
+<h2>2. U2 的 18 个脚，本板怎么接</h2>
+<table>
+<tr><th>脚</th><th>名字</th><th>干什么（手册第 4 章）</th><th>本板接到</th></tr>
+<tr><td class="m">18</td><td>VBUS</td><td>输入电源</td><td>5V（过了 U1 之后）</td></tr>
+<tr><td class="m">16 / 1</td><td>SW / BTST</td><td>开关节点 / 上管驱动自举电容</td><td>L2 电感 / C13</td></tr>
+<tr><td class="m">9</td><td>SYS</td><td>给整机的输出</td><td>Charger_OUT → SW1 → SYS_PWR</td></tr>
+<tr><td class="m">8</td><td>BAT</td><td>接电池正极</td><td>VBAT → CON1 脚 1</td></tr>
+<tr><td class="m">17 / 3</td><td>PMID / PMID_GD</td><td>输入侧中间节点 / 它好不好</td><td>电容 / 只到测试点 TP13</td></tr>
+<tr><td class="m">2</td><td>REGN</td><td>芯片内部 LDO 输出（给 NTC 偏置等）</td><td>C19</td></tr>
+<tr><td class="m">4</td><td>ILIM</td><td>用电阻设定默认<b>输入</b>电流上限</td><td>R19 5.1K → 约 490 mA（第 6 节）</td></tr>
+<tr><td class="m">5 / 6</td><td>TS_BIAS / TS</td><td>给电池测温电阻供电 / 读温度</td><td>R18、R22 分压 + NTC（电池里的）</td></tr>
+<tr class="hl"><td class="m">13 / 12</td><td><b>SCL / SDA</b></td><td><b>I2C</b></td><td><b>单片机 PIO0_4 / PIO0_5</b>（4.7K 上拉 R24、R25）</td></tr>
+<tr class="hl"><td class="m">14</td><td><b>/CE</b></td><td><b>低 = 允许充电</b></td><td><b>单片机 PIO0_1</b> + R13/R14 分压到 5V</td></tr>
+<tr class="hl"><td class="m">7</td><td><b>/QON</b></td><td>拉低：退出运输模式 / 长按复位</td><td>经 R71 接到 <b>DPI 按键</b></td></tr>
+<tr><td class="m">11</td><td>/INT</td><td>有事件时发一个低脉冲通知单片机</td><td><b>没接单片机</b>，只到 TP12</td></tr>
+<tr><td class="m">10</td><td>STAT</td><td>充电状态输出（可接灯）</td><td><b>没接单片机</b>，只到 TP14</td></tr>
+<tr><td class="m">15</td><td>GND</td><td>地</td><td>地</td></tr>
+</table>
+<div class="think"><b>结论</b>：单片机和 U2 之间只有 <b>I2C 两根线 + /CE 一根线</b>。/INT 和 STAT 没接，所以“现在在不在充、有没有故障”只能<b>主动通过 I2C 去读寄存器</b>（轮询）。</div>
+
+<h2>3. 芯片自己会做什么：一整轮充电</h2>
+<p>手册 6.3.5.1：只要 <b>EN_CHG 位 = 1、/CE 脚为低</b>、电池温度正常、没有定时器故障，U2 就会<b>不用单片机参与</b>，自己把一轮充电走完。默认参数（手册 Table 6-1）：</p>
+<table><tr><th>充满电压 VREG</th><th>再充门限</th><th>涓流</th><th>预充</th><th>快充 ICHG</th><th>截止 ITERM</th><th>补充定时</th></tr>
+<tr><td>4.2 V</td><td>VREG − 100 mV</td><td>10 mA</td><td>30 mA</td><td>320 mA</td><td>20 mA</td><td>关</td></tr></table>
+<div class="scroll"><svg id="cvF" class="fig" viewBox="0 0 1360 360" style="min-width:1150px" role="img" aria-label="充电曲线"></svg></div>
+<table>
+<tr><th>阶段</th><th>电池电压</th><th>电流</th><th>CHG_STAT（0x1E）</th></tr>
+<tr><td>涓流 Trickle</td><td>&lt; 2.25 V（VBAT_SHORTZ）</td><td>10 mA</td><td rowspan="3">01</td></tr>
+<tr><td>预充 Pre-charge</td><td>2.25 ~ 3.0 V（VBAT_LOWVZ）</td><td>30 mA</td></tr>
+<tr><td>恒流 CC</td><td>3.0 V ~ 4.2 V</td><td>ICHG = 320 mA</td></tr>
+<tr><td>恒压 CV</td><td>到 4.2 V 后保持</td><td>慢慢变小</td><td>10</td></tr>
+<tr><td>截止</td><td>电流 &lt; 20 mA 且电压够</td><td>0，停</td><td>00</td></tr>
+<tr><td>再充</td><td>放电到 &lt; 4.1 V</td><td>自动开始下一轮</td><td>01</td></tr>
+</table>
+
+<h2>4. 本板的关键：/CE 默认是“禁止充电”</h2>
+<p>/CE 接在 R13（2.2 MΩ，上端接 5V）和 R14（1 MΩ，下端接地）之间：</p>
+<pre class="code" style="border-left:4px solid var(--bad);padding:8px 12px">插上 USB：/CE = 5V × 1M / (2.2M + 1M) = <b>1.56 V</b>
+手册 VIH_CE = 0.78 V（高于它就算“高”）  →  1.56 V 是高  →  <b>禁止充电</b>
+没插 USB：只剩 R14 把它往下拉，但没有 5V 也就谈不上充电</pre>
+<div class="warn"><b>所以要充电，单片机必须把 PIO0_1 设成输出、拉低</b>（1 MΩ 级的分压电阻，单片机一拉就低）。固件里目前没有找到这样的代码，只有 OSC.c 里一个没被调用的 CLKOUT 函数会改 PIO0_1。<br>
+<b>但 PIO0_1 很特殊</b>：手册 UM10462 第 20.4 节，复位时 PIO0_1 是低电平就会进入芯片自带的烧录模式（ISP），不跑我们的程序。复位瞬间单片机的引脚都恢复成输入，靠内部上拉保持高，按理不会误进 ISP，但<b>改 PIO0_1 之前一定先和杰哥确认</b>（之前也约定过：PIO0_1 相关操作等杰哥确认）。</div>
+
+<h2>5. 电源路径：没电池也能用</h2>
+<p>U2 是 “NVDC” 电源路径：SYS 的电压<b>不会低于 VSYSMIN</b>（默认 3.52 V，寄存器 0x0E），电池再空、甚至没装电池，插上 USB 整机也能马上工作。负载大到输入不够时，U2 先减小充电电流；还不够，就让电池<b>一起放电补上</b>（补电模式）。拔掉 USB 后，U2 内部的 BATFET（15 mΩ）直接把电池接到 SYS。</p>
+
+<h2>6. 输入电流上限：ILIM 电阻和寄存器取小的</h2>
+<table>
+<tr><th>来源</th><th>算法</th><th>本板</th></tr>
+<tr><td>ILIM 脚电阻 R19</td><td>IIN = KILIM / RILIM，KILIM 典型 2500 AΩ（手册电气特性表）</td><td>2500 / 5100 ≈ <b>490 mA</b></td></tr>
+<tr><td>寄存器 IINDPM（0x06）</td><td>20 mA 一格</td><td>默认 3200 mA</td></tr>
+<tr class="hl"><td colspan="2">实际生效</td><td><b>两者取小 → 约 490 mA</b>，正好是普通 USB 口 500 mA 的规格</td></tr>
+</table>
+
+<h2>7. 单片机怎么和它说话：I2C</h2>
+<p>I2C 只有两根线：<b>SCL</b>（时钟，单片机给）和 <b>SDA</b>（数据，双向）。两根线都是“开漏”：谁都只能把线<b>拉低</b>，松手后由上拉电阻 R24、R25（4.7K）拉高。单片机是主机，U2 是从机，<b>7 位地址 0x6A</b>（手册 6.5.1）。</p>
+<h3>读一个寄存器：例子读 0x38（芯片型号）</h3>
+<div class="frame">
+<span class="s">S<small>起始</small></span><span class="m">0xD4<small>0x6A&lt;&lt;1 + 写</small></span><span class="c">ACK<small>芯片应答</small></span><span class="m">0x38<small>寄存器地址</small></span><span class="c">ACK</span><span class="s">Sr<small>重复起始</small></span><span class="m">0xD5<small>0x6A&lt;&lt;1 + 读</small></span><span class="c">ACK</span><span class="c">0x13<small>芯片送来的数据</small></span><span class="m">NACK<small>单片机：够了</small></span><span class="s">P<small>停止</small></span>
+</div>
+<p>蓝 = 单片机发，绿 = 芯片发，红 = 起止信号。读到 <b>0x13</b>：bit5~3 = 010 → PN = 2 = BQ21128，bit2~0 = 011 → 版本 3（手册 Table 6-42）。<b>这就是第一步验证通信的办法：读 0x38，读到 0x13 就说明线通了。</b></p>
+<h3>写一个寄存器</h3>
+<div class="frame">
+<span class="s">S</span><span class="m">0xD4</span><span class="c">ACK</span><span class="m">寄存器地址</span><span class="c">ACK</span><span class="m">数据<small>低字节</small></span><span class="c">ACK</span><span class="m">数据<small>高字节（16 位寄存器）</small></span><span class="c">ACK</span><span class="s">P</span>
+</div>
+<h3>16 位寄存器：小端，先低后高</h3>
+<p>0x02、0x04、0x06 这些是 16 位寄存器，占两个地址（0x02 和 0x03），<b>低字节在小地址</b>，而且数值不是从 bit0 开始放的，要先移位：</p>
+<table>
+<tr><th>想设</th><th>编码</th><th>移位</th><th>16 位值</th><th>写到 0x?? / 0x??+1</th></tr>
+<tr><td>充电电流 320 mA</td><td>320 / 40 = 8</td><td>ICHG 在 bit11~5：8 &lt;&lt; 5</td><td class="m">0x0100</td><td class="m">0x02 ← 0x00，0x03 ← 0x01</td></tr>
+<tr><td>充满电压 4200 mV</td><td>4200 / 10 = 420 = 0x1A4</td><td>VREG 在 bit11~3：0x1A4 &lt;&lt; 3</td><td class="m">0x0D20</td><td class="m">0x04 ← 0x20，0x05 ← 0x0D</td></tr>
+<tr><td>输入限流 500 mA</td><td>500 / 20 = 25 = 0x19</td><td>IINDPM 在 bit11~4：0x19 &lt;&lt; 4</td><td class="m">0x0190</td><td class="m">0x06 ← 0x90，0x07 ← 0x01</td></tr>
+</table>
+<p class="note">核对：手册写 0x04 的复位值 = 0x0D20、0x06 的复位值 = 0x0A00（3200 mA = 0xA0 &lt;&lt; 4），和上面的算法一致。</p>
+
+<h2>8. 要用到的寄存器速查</h2>
+<table>
+<tr><th>地址</th><th>名字</th><th>要用的位</th><th>复位值 / 默认</th></tr>
+<tr><td class="m">0x02</td><td>充电电流 ICHG</td><td>bit11~5，40 mA 一格，40~1520 mA</td><td>320 mA。<b>看门狗超时会减半</b></td></tr>
+<tr><td class="m">0x04</td><td>充满电压 VREG</td><td>bit11~3，10 mV 一格，3.5~4.8 V</td><td>4.2 V</td></tr>
+<tr><td class="m">0x06</td><td>输入限流 IINDPM</td><td>bit11~4，20 mA 一格</td><td>3.2 A（ILIM 脚另限 490 mA）</td></tr>
+<tr><td class="m">0x0E</td><td>最低系统电压 VSYSMIN</td><td>bit11~6，80 mV 一格</td><td>3.52 V</td></tr>
+<tr><td class="m">0x14</td><td>充电控制</td><td>EN_TERM、VRECHG、ITRICKLE、补充定时</td><td class="m">0x06</td></tr>
+<tr class="hl"><td class="m">0x16</td><td>控制 0</td><td><b>bit5 EN_CHG</b>、bit4 EN_HIZ、<b>bit2 WD_RST</b>、<b>bit1~0 WATCHDOG</b></td><td class="m">0xA1（充电允许，看门狗 50 s）</td></tr>
+<tr><td class="m">0x17</td><td>控制 1</td><td>bit7 REG_RST（恢复全部默认）、bit6 TREG</td><td class="m">0x4F</td></tr>
+<tr class="hl"><td class="m">0x1D</td><td>状态 0</td><td>bit0 WD_STAT（看门狗超时）、bit3 IINDPM_STAT、bit5 TREG_STAT</td><td>只读</td></tr>
+<tr class="hl"><td class="m">0x1E</td><td>状态 1</td><td><b>bit4~3 CHG_STAT</b>、bit2~0 VBUS_STAT</td><td>只读</td></tr>
+<tr class="hl"><td class="m">0x1F</td><td>故障</td><td>bit7 VBUS、bit6 电池、bit5 SYS、bit3 过热、bit2~0 电池温度区</td><td>只读</td></tr>
+<tr><td class="m">0x26 / 0x30</td><td>ADC 控制 / 电池电压</td><td>先开 ADC，再读 VBAT（16 位）</td><td>—</td></tr>
+<tr class="hl"><td class="m">0x38</td><td>芯片信息</td><td>PN、DEV_REV</td><td class="m">0x13</td></tr>
+</table>
+<h3>解码器：把读到的值翻译成人话</h3>
+<div class="tool"><div class="row">寄存器 <select id="decReg"><option value="16">0x16 控制 0</option><option value="1e" selected>0x1E 状态 1</option><option value="1d">0x1D 状态 0</option><option value="1f">0x1F 故障</option><option value="38">0x38 芯片信息</option></select>　读到的值 0x<input id="decVal" value="0C" size="4"></div>
+<div class="dec" id="decBits"></div><div id="decOut"></div></div>
+
+<h2>9. 看门狗：改了参数就要“喂”</h2>
+<p>手册 6.4（Watchdog）：芯片上电时处于<b>“看门狗已超时”的默认模式</b>，按默认参数自己充（默认模式下还有安全定时器：涓流 1 小时、预充 2 小时、快充 12 小时，超时就停充）。单片机<b>只要写任何一个寄存器</b>，芯片就进入“主机模式”，<b>看门狗开始计时（默认 50 s）</b>。如果到时间单片机没有写 <b>WD_RST = 1</b>，芯片就认为单片机死机了，回到默认模式：</p>
+<ul><li>很多参数（表里标着 “Reset by: WATCHDOG” 的）恢复默认，比如 EN_CHG、EN_HIZ、EN_TERM；</li><li><b>ICHG 变成原来的一半</b>（手册 0x02 的说明）；</li><li>状态 0x1D 的 WD_STAT 置 1。</li></ul>
+<table><tr><th>做法</th><th>写法</th><th>好处 / 代价</th></tr>
+<tr><td>定期喂狗</td><td>每隔 &lt; 50 s 把 0x16 的 bit2 写 1</td><td>单片机真死机时芯片能回到安全默认值</td></tr>
+<tr><td>关掉看门狗</td><td>0x16 的 bit1~0 写 00</td><td>简单；但单片机异常时参数会一直保持</td></tr></table>
+
+<h2>10. /QON 和 DPI 键</h2>
+<p>DPI 按键按下时会把 /QON 拉低（第 2 页 DPI SWITCH 框，R71）。手册给的两个时间：</p>
+<table><tr><th>按住多久</th><th>条件</th><th>结果</th></tr>
+<tr><td>0.8 s（tSM_EXIT）</td><td>芯片在运输模式（ship mode）</td><td>退出运输模式，电池重新给整机供电</td></tr>
+<tr><td>12.5 s（tQON_RST）</td><td>没插 USB（或 BATFET_CTRL_WVBUS = 1）</td><td><b>整机断电重启</b></td></tr></table>
+<p class="note">也就是说，用电池时一直按住 DPI 键约 12 秒，鼠标会重启。平时点按 DPI 不受影响。运输模式要单片机通过 I2C 设置才会进入，现在的固件不会进。</p>
+
+<h2>11. 固件里现成的 I2C 代码</h2>
+<table>
+<tr><th>文件</th><th>方式</th><th>引脚</th><th>现状</th></tr>
+<tr><td><code>src/I2C.c</code></td><td>单片机硬件 I2C 外设</td><td>PIO0_4 / PIO0_5</td><td>在工程里；但 <code>InitI2C()</code> 的调用被注释掉了（device.c:431），读写函数在 <code>#if 0</code> 里（I2C.c:287~546），用不了</td></tr>
+<tr class="hl"><td><code>src/my_i2c.c</code></td><td>杰哥写的<b>软件模拟 I2C</b>（用 GPIO 一位一位翻 SCL、SDA）</td><td>handleI2c1 = <b>PIO0_4 / PIO0_5</b>（my_i2c.h），正好是充电芯片这组</td><td>函数完整，但<b>不在当前 Keil 工程里</b>，要先加进工程</td></tr>
+</table>
+<p>读寄存器的函数就是第 7 节那张帧图的代码版：</p>
+<div class="fh"><span class="tg fw">固件 · C</span><b>src/my_i2c.c</b></div><div class="code"><div class="hasx"><span class="n">201</span><span>uint8_t soft_i2c_read_fast(I2C_GPIOType_t *hi2c, uint8_t dev_addr_7bit,</span><span class="x"><b>谁写的</b>：杰哥 2026-01-05（文件头）。<b>谁调</b>：现在没人调，而且 my_i2c.c <b>不在当前 Keil 工程里</b>（output/Sample.lnp 没有 my_i2c.o），要用得先加进工程。<br>参数：用哪组引脚、7 位器件地址（充电芯片 0x6A）、寄存器地址、读到哪、读几个字节。</span></div><div><span class="n">202</span><span>                          uint8_t reg_addr, uint8_t* const readbuff, int length)</span><span class="x"></span></div><div><span class="n">203</span><span>{</span><span class="x"></span></div><div class="hasx"><span class="n">204</span><span>  soft_i2c_start(hi2c);</span><span class="x">① <b>起始信号 S</b>：SCL 高时把 SDA 拉低。</span></div><div class="hasx"><span class="n">205</span><span>  if (soft_i2c_write_byte(hi2c, dev_addr_7bit &lt;&lt; 1))</span><span class="x">② 发<b>地址 + 写</b>：0x6A &lt;&lt; 1 = <b>0xD4</b>（最低位 0 = 写）。芯片回 ACK（拉低 SDA）返回 0；没人应答返回 1 → 出错退出。</span></div><div><span class="n">206</span><span>  {</span><span class="x"></span></div><div><span class="n">207</span><span>    soft_i2c_stop(hi2c);</span><span class="x"></span></div><div><span class="n">208</span><span>    return 1;</span><span class="x"></span></div><div><span class="n">209</span><span>  }</span><span class="x"></span></div><div><span class="n">210</span><span> </span><span class="x"></span></div><div class="hasx"><span class="n">211</span><span>  if (soft_i2c_write_byte(hi2c, reg_addr))</span><span class="x">③ 发<b>寄存器地址</b>，比如 0x38。这一步是“告诉芯片我要从哪一格开始读”。</span></div><div><span class="n">212</span><span>  {</span><span class="x"></span></div><div><span class="n">213</span><span>    soft_i2c_stop(hi2c);</span><span class="x"></span></div><div><span class="n">214</span><span>    return 1;</span><span class="x"></span></div><div><span class="n">215</span><span>  }</span><span class="x"></span></div><div><span class="n">216</span><span> </span><span class="x"></span></div><div class="hasx"><span class="n">217</span><span>  soft_i2c_start(hi2c);</span><span class="x">④ <b>重复起始 Sr</b>：不发停止，直接再来一个起始，方向要换成读了。</span></div><div class="hasx"><span class="n">218</span><span>  if (soft_i2c_write_byte(hi2c, (dev_addr_7bit &lt;&lt; 1) | 0x01))</span><span class="x">⑤ 发<b>地址 + 读</b>：0xD4 | 1 = <b>0xD5</b>。</span></div><div><span class="n">219</span><span>  {</span><span class="x"></span></div><div><span class="n">220</span><span>    soft_i2c_stop(hi2c);</span><span class="x"></span></div><div><span class="n">221</span><span>    return 1;</span><span class="x"></span></div><div><span class="n">222</span><span>  }</span><span class="x"></span></div><div><span class="n">223</span><span> </span><span class="x"></span></div><div class="hasx"><span class="n">224</span><span>  for (int i = 0; i &lt; length; i++)</span><span class="x">⑥ 一个字节一个字节收。</span></div><div><span class="n">225</span><span>  {</span><span class="x"></span></div><div class="hasx"><span class="n">226</span><span>    readbuff[i] = soft_i2c_read_byte(hi2c, i == length - 1 ? 0 : 1);</span><span class="x">除了最后一个字节回 ACK（“还要”），最后一个回 NACK（“够了”）。芯片读一个字节后地址自动 +1，所以 length = 2 能一次读完一个 16 位寄存器。</span></div><div><span class="n">227</span><span>  }</span><span class="x"></span></div><div><span class="n">228</span><span> </span><span class="x"></span></div><div class="hasx"><span class="n">229</span><span>  soft_i2c_stop(hi2c);</span><span class="x">⑦ <b>停止信号 P</b>：SCL 高时把 SDA 放高。</span></div><div class="hasx"><span class="n">230</span><span>  return 0;</span><span class="x">返回 0 = 成功。</span></div><div><span class="n">231</span><span>}</span><span class="x"></span></div></div>
+<p class="note">PIO0_4、PIO0_5 是这颗单片机专门的 I2C 引脚，本身就是开漏（UM10462 Table 80、81），FUNC = 0 当 GPIO、FUNC = 1 当硬件 I2C 都可以。</p>
+
+<h2>12. 接下来怎么做（建议）</h2>
+<table>
+<tr><th>步</th><th>做什么</th><th>怎么算成功</th><th>风险</th></tr>
+<tr><td>1</td><td>把 my_i2c.c 加进工程，开机后读一次 0x38，用 InfoLog 打出来</td><td>读到 0x13</td><td>只读，没有风险</td></tr>
+<tr><td>2</td><td>每秒读 0x1D、0x1E、0x1F 打印，插拔 USB 看变化</td><td>VBUS_STAT 随插拔变化</td><td>只读</td></tr>
+<tr><td>3</td><td>PIO0_1 输出低，允许充电</td><td>CHG_STAT 变成 01 或 10</td><td><b>先找杰哥确认</b>（ISP 脚）</td></tr>
+<tr><td>4</td><td>按电池规格设 ICHG、VREG，处理看门狗</td><td>读回的值和写的一样</td><td><b>VREG 不能超过电池规格</b>，锂电池过充危险</td></tr>
+<tr><td>5</td><td>（可选）把充电状态、电池电压报给 GUI</td><td>GUI 能显示</td><td>—</td></tr>
+</table>
+<h3>需要杰哥确认的</h3>
+<ul>
+<li>电池的规格：容量、充满电压、最大充电电流（决定 VREG、ICHG 设多少）。</li>
+<li>/CE 是不是就由固件把 PIO0_1 拉低？平时一直拉低，还是按条件控制？</li>
+<li>用 my_i2c.c 的软件 I2C，还是用硬件 I2C？</li>
+<li>看门狗：喂还是关？</li>
+<li>要不要充电指示（灯、GUI）？STAT、/INT 没接单片机，以后会不会改板？</li>
+</ul>
+</div>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const NS='http://www.w3.org/2000/svg';
+function el(p,t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e}
+function T(p,x,y,s,a){const e=el(p,'text',Object.assign({x,y,'font-size':12,fill:'var(--fg)','font-family':'var(--font-b)'},a||{}));e.textContent=s;return e}
+
+/* power path */
+const PP={
+ usb:{note:'<b>现在的固件</b>：插上 USB，/CE 被分压到 1.56 V（高）→ <b>不充电</b>。U2 只把 5V 降压后从 SYS 送给整机，电池既不充也不放。',on:['usb','u1','u2in','sys','load'],bat:'idle'},
+ chg:{note:'<b>单片机把 PIO0_1 拉低</b>：/CE 低 → U2 一边从 SYS 给整机供电，一边从 BAT 给电池充电（默认 320 mA、充到 4.2 V）。输入总电流被 ILIM 限在约 490 mA。',on:['usb','u1','u2in','sys','load','bat'],bat:'chg'},
+ bat:{note:'<b>拔掉 USB</b>：U2 内部的 BATFET 导通，电池 → BAT → SYS → 整机。SW1 拨在中间时不给整机供电。',on:['sys','load','bat'],bat:'dis'}};
+let ppK='usb';
+document.querySelectorAll('#ppBtns button').forEach(b=>b.onclick=()=>{ppK=b.dataset.k;document.querySelectorAll('#ppBtns button').forEach(x=>x.setAttribute('aria-pressed',x===b));drawPP()});
+function drawPP(){const s=$('ppF');s.innerHTML='';const st=PP[ppK],on=k=>st.on.includes(k);
+ function box(x,y,w,h,col,a,b,c,lit){el(s,'rect',{x,y,width:w,height:h,rx:8,fill:lit?'color-mix(in srgb,var(--'+col+') 14%,var(--panel))':'var(--panel)',stroke:'var(--'+col+')','stroke-width':lit?2.5:1.2,opacity:lit?1:.55});T(s,x+10,y+22,a,{'font-weight':700});if(b)T(s,x+10,y+42,b,{'font-size':11,fill:'var(--muted)'});if(c)T(s,x+10,y+60,c,{'font-size':11,fill:'var(--muted)'})}
+ function wire(pts,lit,col,lab,dir){const d='M'+pts.map(p=>p.join(' ')).join(' L ');el(s,'path',{d,fill:'none',stroke:lit?'var(--'+(col||'bad')+')':'var(--line)','stroke-width':lit?4:2,'stroke-dasharray':lit?'':'6 5'});if(lab){const p=pts[0],q=pts[1];T(s,(p[0]+q[0])/2,(p[1]+q[1])/2-8,lab,{'font-size':11,'text-anchor':'middle',fill:lit?'var(--'+(col||'bad')+')':'var(--muted)'})}}
+ box(20,60,150,70,'hw','USB 口','5V 输入','',on('usb'));
+ box(240,60,170,70,'muted','U1 LP5308','过压 / 过流保护','',on('u1'));
+ box(500,40,300,200,'per','U2 BQ21128','充电 + 电源路径','',on('u2in'));
+ T(s,512,110,'VBUS (18)',{'font-size':11});T(s,700,110,'SW→L2→SYS (9)',{'font-size':11});T(s,512,215,'/CE (14)',{'font-size':11,fill:'var(--bad)'});T(s,700,215,'BAT (8)',{'font-size':11});T(s,590,160,'SCL/SDA (13/12)',{'font-size':11});
+ box(900,60,180,70,'gold','SW1 拨动开关','Charger_OUT→SYS_PWR','中间位置：断开',on('sys'));
+ box(1150,40,190,110,'good','整机','U3 1.9V / U4 3.3V','U5 7V 线圈 / MCU…',on('load'));
+ box(900,280,180,80,'gold','电池 CON1','VBAT + NTC',st.bat==='chg'?'正在充电 ↑':(st.bat==='dis'?'正在放电 ↓':'不充也不放'),st.bat!=='idle');
+ box(240,280,170,80,'pc','单片机','PIO0_1 → /CE','PIO0_4/5 → I2C',true);
+ wire([[170,95],[238,95]],on('usb'),'bad');wire([[410,95],[498,95]],on('u1'),'bad','5V');
+ wire([[800,95],[898,95]],on('sys'),'bad','SYS');wire([[1080,95],[1148,95]],on('load'),'bad');
+ wire([[760,240],[760,320],[898,320]],st.bat!=='idle',st.bat==='chg'?'good':'gold',st.bat==='chg'?'':'');
+ T(s,780,312,st.bat==='chg'?'充电电流 →':(st.bat==='dis'?'← 电池供电':'无电流'),{'font-size':11,fill:st.bat==='idle'?'var(--muted)':'var(--good)'});
+ const ceLow=ppK==='chg';
+ wire([[410,300],[560,300],[560,240]],true,ceLow?'good':'bad');T(s,420,292,ceLow?'/CE = 低（单片机拉低）':'/CE = 1.56 V 高（R13/R14 分压）',{'font-size':11,fill:ceLow?'var(--good)':'var(--bad)'});
+ wire([[410,340],[640,340],[640,240]],true,'per');T(s,420,358,'I2C：读写寄存器（0x6A）',{'font-size':11,fill:'var(--per)'});
+ $('ppNote').innerHTML=st.note}
+drawPP();
+
+/* charge curve */
+(function(){const s=$('cvF');const X0=90,X1=1300,Y0=40,Y1=300;
+ const V=v=>Y1-(v-2.0)/(4.4-2.0)*(Y1-Y0);const I=i=>Y1-i/360*(Y1-Y0);
+ el(s,'line',{x1:X0,y1:Y1,x2:X1,y2:Y1,stroke:'var(--line)'});el(s,'line',{x1:X0,y1:Y0,x2:X0,y2:Y1,stroke:'var(--line)'});
+ T(s,20,30,'电池电压（蓝）/ 充电电流（红）随时间',{'font-weight':700});
+ const ph=[[X0,180,'涓流'],[180,260,'预充'],[260,900,'恒流 CC'],[900,1180,'恒压 CV'],[1180,X1,'截止']];
+ ph.forEach(([a,b,n],i)=>{el(s,'rect',{x:a,y:Y0,width:b-a,height:Y1-Y0,fill:i%2?'var(--soft)':'transparent'});T(s,(a+b)/2,Y1+20,n,{'text-anchor':'middle','font-size':12,'font-weight':600})});
+ const vp=[[X0,1.9],[180,2.25],[260,3.0],[900,4.2],[1180,4.2],[X1,4.18]];
+ el(s,'path',{d:'M'+vp.map(p=>p[0]+' '+V(p[1])).join(' L '),fill:'none',stroke:'var(--per)','stroke-width':3});
+ el(s,'path',{d:`M${X0} ${I(10)} L180 ${I(10)} L180 ${I(30)} L260 ${I(30)} L260 ${I(320)} L900 ${I(320)} Q1000 ${I(60)} 1180 ${I(20)} L1180 ${Y1} L${X1} ${Y1}`,fill:'none',stroke:'var(--bad)','stroke-width':3});
+ [[2.25,'2.25 V'],[3.0,'3.0 V'],[4.2,'4.2 V（VREG）']].forEach(([v,t])=>{el(s,'line',{x1:X0,y1:V(v),x2:X1,y2:V(v),stroke:'var(--per)','stroke-dasharray':'3 4',opacity:.5});T(s,X1-4,V(v)-4,t,{'font-size':11,'text-anchor':'end',fill:'var(--per)'})});
+ T(s,600,I(320)-8,'320 mA（ICHG 默认）',{'font-size':11,fill:'var(--bad)'});T(s,1000,I(20)-34,'降到 20 mA 截止',{'font-size':11,fill:'var(--bad)'});
+ T(s,100,I(30)-8,'10 / 30 mA',{'font-size':11,fill:'var(--bad)'});
+ T(s,X0,Y1+44,'示意图：电压、电流各用各的刻度，时间轴不按比例。实际是哪个阶段，可以读 0x1E 的 CHG_STAT。',{'font-size':11,fill:'var(--muted)'});})();
+
+/* decoder */
+const DEC={
+ '16':[['EN_AUTO_IBATDIS',v=>v?'电池过压时自动放电':'—'],['FORCE_IBATDIS',v=>v?'强制电池放电 30 mA':'—'],['EN_CHG',v=>v?'<b>允许充电</b>':'<b>禁止充电</b>'],['EN_HIZ',v=>v?'高阻：不从 VBUS 取电':'—'],['FORCE_PMID_DIS',v=>v?'PMID 放电':'—'],['WD_RST',v=>v?'喂狗中':'—'],['WATCHDOG',null],['',null]],
+ '1d':[['RESERVED',()=>'—'],['ADC_DONE_STAT',v=>v?'ADC 单次转换完成':'—'],['TREG_STAT',v=>v?'芯片过热，正在降电流':'—'],['VSYS_STAT',v=>v?'电池低于 VSYSMIN':'—'],['IINDPM_STAT',v=>v?'输入电流到上限了':'—'],['VINDPM_STAT',v=>v?'输入电压被拉低了':'—'],['SAFETY_TMR_STAT',v=>v?'安全定时器超时':'—'],['WD_STAT',v=>v?'<b>看门狗已超时</b>（默认模式）':'看门狗正常']],
+ '1e':[['RESERVED',()=>'—'],['RESERVED',()=>'—'],['RESERVED',()=>'—'],['CHG_STAT',null],['',null],['VBUS_STAT',null],['',null],['',null]],
+ '1f':[['VBUS_FAULT',v=>v?'输入过压或太低':'—'],['BAT_FAULT',v=>v?'电池过流或过压':'—'],['SYS_FAULT',v=>v?'SYS 短路或过压':'—'],['RESERVED',()=>'—'],['TSHUT',v=>v?'芯片过热关断':'—'],['TS_STAT',null],['',null],['',null]],
+ '38':[['RESERVED',()=>'—'],['RESERVED',()=>'—'],['PN',null],['',null],['',null],['DEV_REV',null],['',null],['',null]]};
+function decode(){const r=$('decReg').value;let v=parseInt($('decVal').value,16);if(isNaN(v))v=0;v&=255;
+ const D=DEC[r];$('decBits').innerHTML=D.map((d,i)=>{const b=(v>>(7-i))&1;return `<div class="${b?'on':''}"><small>bit${7-i}</small>${b}<small>${d[0]}</small></div>`}).join('');
+ const out=[];
+ if(r==='16'){D.slice(0,6).forEach((d,i)=>{const t=d[1]((v>>(7-i))&1);if(t!=='—')out.push(t)});const w=v&3;out.push('WATCHDOG = '+['<b>关</b>','50 s','100 s','200 s'][w])}
+ if(r==='1d'||r==='1f'){D.forEach((d,i)=>{if(d[1]){const t=d[1]((v>>(7-i))&1);if(t!=='—')out.push(t)}});if(r==='1d'&&!(v&1))out.push('看门狗正常');if(r==='1f'){out.push('电池温度区：'+['正常','冷 / 偏置电源没有','热','凉','温','预凉','预温','TS 偏置故障'][v&7])}}
+ if(r==='1e'){out.push('CHG_STAT = '+['00 没在充 / 已充满','01 涓流、预充或恒流','10 恒压','11 补充定时'][(v>>3)&3]);const vb=v&7;out.push('VBUS_STAT = '+(vb===0?'000 没有合格的输入':vb===4?'100 有输入（未知适配器，用默认限流）':vb.toString(2).padStart(3,'0')+'（手册未列）'))}
+ if(r==='38'){out.push('PN = '+((v>>3)&7)+((((v>>3)&7)===2)?'（BQ21128 ✓）':'（不是 2，检查通信）'));out.push('DEV_REV = '+(v&7))}
+ $('decOut').innerHTML=out.join('；')||'全部正常'}
+$('decReg').onchange=()=>{$('decVal').value={'16':'a1','1e':'0c','1d':'01','1f':'00','38':'13'}[$('decReg').value];decode()};$('decVal').oninput=decode;decode();
+})();
+</script>
